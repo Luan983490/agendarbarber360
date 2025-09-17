@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Star, MapPin, Clock, Heart, Share2, Calendar } from "lucide-react";
+import { BarberShopProfile } from "./BarberShopProfile";
+import { BookingModal } from "./BookingModal";
 
 interface BarberShop {
   id: string;
@@ -118,17 +120,21 @@ export const BarberShopCard = ({ barberShop }: BarberShopCardProps) => {
 
         {/* Actions */}
         <div className="flex space-x-2">
-          <Button 
-            className="flex-1"
-            variant="gradient"
-            size="sm"
-          >
-            <Calendar className="mr-2 h-4 w-4" />
-            Agendar
-          </Button>
-          <Button variant="elegant" size="sm">
-            Ver Perfil
-          </Button>
+          <BookingModal barberShop={barberShop}>
+            <Button 
+              className="flex-1"
+              variant="gradient"
+              size="sm"
+            >
+              <Calendar className="mr-2 h-4 w-4" />
+              Agendar
+            </Button>
+          </BookingModal>
+          <BarberShopProfile barberShop={barberShop}>
+            <Button variant="elegant" size="sm">
+              Ver Perfil
+            </Button>
+          </BarberShopProfile>
         </div>
       </CardContent>
     </Card>

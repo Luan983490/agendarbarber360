@@ -29,13 +29,34 @@ export const Header = () => {
 
         {/* Navigation - Hidden on mobile */}
         <nav className="hidden md:flex items-center space-x-6">
-          <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+          <Button 
+            variant="ghost" 
+            className="text-muted-foreground hover:text-foreground"
+            onClick={() => {
+              const searchSection = document.querySelector('.location-search');
+              searchSection?.scrollIntoView({ behavior: 'smooth' });
+            }}
+          >
             Encontrar Barbearias
           </Button>
-          <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+          <Button 
+            variant="ghost" 
+            className="text-muted-foreground hover:text-foreground"
+            onClick={() => {
+              // TODO: Implementar página para empresas
+              console.log('Navegando para área empresarial');
+            }}
+          >
             Para Empresas
           </Button>
-          <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+          <Button 
+            variant="ghost" 
+            className="text-muted-foreground hover:text-foreground"
+            onClick={() => {
+              // TODO: Implementar página de ajuda
+              console.log('Navegando para ajuda');
+            }}
+          >
             Ajuda
           </Button>
         </nav>
@@ -94,13 +115,32 @@ export const Header = () => {
             </SheetTrigger>
             <SheetContent side="right" className="w-[300px] sm:w-[400px]">
               <nav className="flex flex-col space-y-4 mt-6">
-                <Button variant="ghost" className="justify-start">
+                <Button 
+                  variant="ghost" 
+                  className="justify-start"
+                  onClick={() => {
+                    const searchSection = document.querySelector('.location-search');
+                    searchSection?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                >
                   Encontrar Barbearias
                 </Button>
-                <Button variant="ghost" className="justify-start">
+                <Button 
+                  variant="ghost" 
+                  className="justify-start"
+                  onClick={() => {
+                    console.log('Navegando para área empresarial');
+                  }}
+                >
                   Para Empresas
                 </Button>
-                <Button variant="ghost" className="justify-start">
+                <Button 
+                  variant="ghost" 
+                  className="justify-start"
+                  onClick={() => {
+                    console.log('Navegando para ajuda');
+                  }}
+                >
                   Ajuda
                 </Button>
                 <div className="border-t pt-4 mt-4">

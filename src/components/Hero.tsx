@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, MapPin, Star } from "lucide-react";
+import { HowItWorks } from "./HowItWorks";
 import heroImage from "@/assets/barbershop-hero.jpg";
 
 export const Hero = () => {
@@ -38,9 +39,11 @@ export const Hero = () => {
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
             
-            <Button variant="elegant" size="lg">
-              Como Funciona
-            </Button>
+            <HowItWorks>
+              <Button variant="elegant" size="lg">
+                Como Funciona
+              </Button>
+            </HowItWorks>
           </div>
 
           {/* Stats */}
