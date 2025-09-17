@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar as CalendarIcon, Clock, User, Scissors } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, User, Scissors, ShoppingBag, Wifi, Car, Coffee, AirVent, Volume2 } from "lucide-react";
 import { useState } from "react";
 
 interface BookingModalProps {
@@ -22,6 +22,7 @@ export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedService, setSelectedService] = useState("");
   const [selectedBarber, setSelectedBarber] = useState("");
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
 
   const services = [
@@ -37,11 +38,35 @@ export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
     { id: "carlos", name: "Carlos Lima", specialty: "Cortes modernos" },
   ];
 
+  const products = [
+    { id: "pomada", name: "Pomada Modeladora", price: "R$ 35", brand: "Premium Hair" },
+    { id: "shampoo", name: "Shampoo Anticaspa", price: "R$ 28", brand: "BarberCare" },
+    { id: "oleo", name: "Óleo para Barba", price: "R$ 45", brand: "Beard Master" },
+    { id: "cera", name: "Cera Fixadora", price: "R$ 32", brand: "Style Pro" },
+    { id: "tonico", name: "Tônico Capilar", price: "R$ 38", brand: "Hair Force" },
+  ];
+
+  const amenities = [
+    { id: "wifi", name: "Wi-Fi Gratuito", icon: Wifi },
+    { id: "estacionamento", name: "Estacionamento", icon: Car },
+    { id: "cafe", name: "Café Cortesia", icon: Coffee },
+    { id: "ar", name: "Ar Condicionado", icon: AirVent },
+    { id: "som", name: "Som Ambiente", icon: Volume2 },
+  ];
+
   const availableTimes = [
     "08:00", "08:30", "09:00", "09:30", "10:00", "10:30",
     "11:00", "11:30", "14:00", "14:30", "15:00", "15:30",
     "16:00", "16:30", "17:00", "17:30"
   ];
+
+  const toggleProduct = (productId: string) => {
+    setSelectedProducts(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   const handleBooking = () => {
     // TODO: Implementar lógica de agendamento
@@ -50,11 +75,18 @@ export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
       time: selectedTime,
       service: selectedService,
       barber: selectedBarber,
+      products: selectedProducts,
       notes
     });
   };
 
   const selectedServiceData = services.find(s => s.id === selectedService);
+  const selectedProductsData = products.filter(p => selectedProducts.includes(p.id));
+  const productsTotal = selectedProductsData.reduce((sum, product) => {
+    return sum + parseFloat(product.price.replace('R$ ', ''));
+  }, 0);
+  const servicePrice = selectedServiceData ? parseFloat(selectedServiceData.price.replace('R$ ', '')) : 0;
+  const totalPrice = servicePrice + productsTotal;
 
   return (
     <Dialog>
@@ -115,6 +147,49 @@ export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Products Selection */}
+          <div className="space-y-3">
+            <Label>Produtos (opcional)</Label>
+            <div className="grid gap-3">
+              {products.map((product) => (
+                <Card 
+                  key={product.id} 
+                  className={`cursor-pointer transition-all ${selectedProducts.includes(product.id) ? 'ring-2 ring-primary' : ''}`}
+                  onClick={() => toggleProduct(product.id)}
+                >
+                  <CardContent className="p-4 flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <ShoppingBag className="h-5 w-5 text-primary" />
+                      <div>
+                        <h4 className="font-medium">{product.name}</h4>
+                        <p className="text-sm text-muted-foreground">{product.brand}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-bold text-primary">{product.price}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+
+          {/* Amenities */}
+          <div className="space-y-3">
+            <Label>Comodidades disponíveis</Label>
+            <div className="grid grid-cols-2 gap-3">
+              {amenities.map((amenity) => {
+                const IconComponent = amenity.icon;
+                return (
+                  <div key={amenity.id} className="flex items-center space-x-2 p-3 rounded-lg border bg-muted/30">
+                    <IconComponent className="h-4 w-4 text-primary" />
+                    <span className="text-sm">{amenity.name}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {/* Date Selection */}
@@ -183,9 +258,34 @@ export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
                     <span>Profissional:</span>
                     <span className="font-medium">{barbers.find(b => b.id === selectedBarber)?.name || "A definir"}</span>
                   </div>
-                  <div className="border-t pt-2 flex justify-between font-bold">
-                    <span>Total:</span>
-                    <span className="text-primary">{selectedServiceData?.price}</span>
+                  {selectedProductsData.length > 0 && (
+                    <div className="space-y-1">
+                      <span className="text-sm text-muted-foreground">Produtos:</span>
+                      {selectedProductsData.map((product) => (
+                        <div key={product.id} className="flex justify-between text-xs pl-2">
+                          <span>• {product.name}</span>
+                          <span>{product.price}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="border-t pt-2">
+                    {selectedServiceData && (
+                      <div className="flex justify-between text-sm">
+                        <span>Subtotal Serviço:</span>
+                        <span>{selectedServiceData.price}</span>
+                      </div>
+                    )}
+                    {productsTotal > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span>Subtotal Produtos:</span>
+                        <span>R$ {productsTotal.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between font-bold mt-1">
+                      <span>Total:</span>
+                      <span className="text-primary">R$ {totalPrice.toFixed(2)}</span>
+                    </div>
                   </div>
                 </div>
               </CardContent>
