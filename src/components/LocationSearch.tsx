@@ -16,7 +16,7 @@ export const LocationSearch = ({
   onSearchChange 
 }: LocationSearchProps) => {
   return (
-    <div className="bg-card rounded-xl p-6 shadow-elegant mb-8">
+    <div className="bg-card rounded-xl p-6 shadow-elegant mb-8 location-search">
       <h2 className="text-2xl font-semibold text-foreground mb-6">
         Encontre sua barbearia ideal
       </h2>
@@ -59,6 +59,10 @@ export const LocationSearch = ({
         <Button 
           variant="gradient"
           size="default"
+          onClick={() => {
+            // TODO: Implementar lógica de busca
+            console.log('Buscando barbearias...', { location, searchQuery });
+          }}
         >
           <Search className="mr-2 h-5 w-5" />
           Buscar

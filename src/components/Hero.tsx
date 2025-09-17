@@ -24,7 +24,15 @@ export const Hero = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <Button variant="gradient" size="lg">
+            <Button 
+              variant="gradient" 
+              size="lg"
+              onClick={() => {
+                // Scroll para a seção de busca
+                const searchSection = document.querySelector('.location-search');
+                searchSection?.scrollIntoView({ behavior: 'smooth' });
+              }}
+            >
               <MapPin className="mr-2 h-5 w-5" />
               Encontrar Próximo a Mim
               <ArrowRight className="ml-2 h-5 w-5" />
