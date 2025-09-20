@@ -6,8 +6,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Scissors, Calendar, Package, Store, Plus } from 'lucide-react';
+import { Scissors, Calendar, Package, Store, Users, DollarSign, Star } from 'lucide-react';
 import { Header } from '@/components/Header';
+import BarbershopSetup from '@/components/BarbershopSetup';
+import ServiceForm from '@/components/ServiceForm';
+import ProductForm from '@/components/ProductForm';
 
 interface Profile {
   id: string;
@@ -22,12 +25,44 @@ interface Barbershop {
   address: string;
   phone: string;
   rating?: number;
+  total_reviews: number;
+}
+
+interface Service {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  duration: number;
+  is_active: boolean;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  stock_quantity: number;
+  is_active: boolean;
+}
+
+interface DashboardStats {
+  todayBookings: number;
+  monthlyRevenue: number;
+  totalClients: number;
 }
 
 const Dashboard = () => {
   const { user, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [barbershop, setBarbershop] = useState<Barbershop | null>(null);
+  const [services, setServices] = useState<Service[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [stats, setStats] = useState<DashboardStats>({
+    todayBookings: 0,
+    monthlyRevenue: 0,
+    totalClients: 0
+  });
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -36,6 +71,14 @@ const Dashboard = () => {
       fetchUserProfile();
     }
   }, [user]);
+
+  useEffect(() => {
+    if (barbershop) {
+      fetchServices();
+      fetchProducts();
+      fetchStats();
+    }
+  }, [barbershop]);
 
   const fetchUserProfile = async () => {
     try {
@@ -67,6 +110,92 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchServices = async () => {
+    if (!barbershop) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('services')
+        .select('*')
+        .eq('barbershop_id', barbershop.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setServices(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao carregar serviços",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const fetchProducts = async () => {
+    if (!barbershop) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('barbershop_id', barbershop.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setProducts(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao carregar produtos",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const fetchStats = async () => {
+    if (!barbershop) return;
+
+    try {
+      // Fetch today's bookings
+      const today = new Date().toISOString().split('T')[0];
+      const { data: todayBookingsData } = await supabase
+        .from('bookings')
+        .select('id')
+        .eq('barbershop_id', barbershop.id)
+        .eq('booking_date', today);
+
+      // Fetch monthly revenue
+      const currentMonth = new Date().toISOString().slice(0, 7);
+      const { data: monthlyBookingsData } = await supabase
+        .from('bookings')
+        .select('total_price')
+        .eq('barbershop_id', barbershop.id)
+        .gte('booking_date', `${currentMonth}-01`)
+        .eq('status', 'completed');
+
+      // Fetch total unique clients
+      const { data: clientsData } = await supabase
+        .from('bookings')
+        .select('client_id')
+        .eq('barbershop_id', barbershop.id);
+
+      const uniqueClients = new Set(clientsData?.map(booking => booking.client_id)).size;
+      const monthlyRevenue = monthlyBookingsData?.reduce((sum, booking) => sum + booking.total_price, 0) || 0;
+
+      setStats({
+        todayBookings: todayBookingsData?.length || 0,
+        monthlyRevenue,
+        totalClients: uniqueClients
+      });
+    } catch (error: any) {
+      console.error('Erro ao carregar estatísticas:', error);
+    }
+  };
+
+  const handleBarbershopCreated = () => {
+    fetchUserProfile(); // Refresh to get the new barbershop data
   };
 
   if (authLoading || loading) {
@@ -101,23 +230,7 @@ const Dashboard = () => {
         </div>
 
         {!barbershop ? (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Store className="h-5 w-5" />
-                Configure sua Barbearia
-              </CardTitle>
-              <CardDescription>
-                Você precisa configurar os dados da sua barbearia para começar a receber agendamentos.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Configurar Barbearia
-              </Button>
-            </CardContent>
-          </Card>
+          <BarbershopSetup onBarbershopCreated={handleBarbershopCreated} />
         ) : (
           <Tabs defaultValue="overview" className="space-y-6">
             <TabsList className="grid w-full grid-cols-4">
@@ -149,7 +262,7 @@ const Dashboard = () => {
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">0</div>
+                    <div className="text-2xl font-bold">{stats.todayBookings}</div>
                   </CardContent>
                 </Card>
 
@@ -158,10 +271,10 @@ const Dashboard = () => {
                     <CardTitle className="text-sm font-medium">
                       Receita do Mês
                     </CardTitle>
-                    <Package className="h-4 w-4 text-muted-foreground" />
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">R$ 0,00</div>
+                    <div className="text-2xl font-bold">R$ {stats.monthlyRevenue.toFixed(2)}</div>
                   </CardContent>
                 </Card>
 
@@ -170,10 +283,10 @@ const Dashboard = () => {
                     <CardTitle className="text-sm font-medium">
                       Total de Clientes
                     </CardTitle>
-                    <Store className="h-4 w-4 text-muted-foreground" />
+                    <Users className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">0</div>
+                    <div className="text-2xl font-bold">{stats.totalClients}</div>
                   </CardContent>
                 </Card>
 
@@ -182,10 +295,11 @@ const Dashboard = () => {
                     <CardTitle className="text-sm font-medium">
                       Avaliação Média
                     </CardTitle>
-                    <Scissors className="h-4 w-4 text-muted-foreground" />
+                    <Star className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{barbershop.rating || '0.0'}</div>
+                    <div className="text-2xl font-bold">{barbershop.rating?.toFixed(1) || '0.0'}</div>
+                    <p className="text-xs text-muted-foreground">{barbershop.total_reviews} avaliações</p>
                   </CardContent>
                 </Card>
               </div>
@@ -199,6 +313,14 @@ const Dashboard = () => {
                   <p><strong>Endereço:</strong> {barbershop.address}</p>
                   <p><strong>Telefone:</strong> {barbershop.phone}</p>
                   <p><strong>Descrição:</strong> {barbershop.description}</p>
+                  <div className="flex gap-4 mt-4">
+                    <div>
+                      <strong>Serviços:</strong> {services.length}
+                    </div>
+                    <div>
+                      <strong>Produtos:</strong> {products.length}
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -220,47 +342,19 @@ const Dashboard = () => {
             </TabsContent>
 
             <TabsContent value="services">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle>Serviços</CardTitle>
-                    <CardDescription>
-                      Gerencie os serviços oferecidos pela sua barbearia
-                    </CardDescription>
-                  </div>
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Adicionar Serviço
-                  </Button>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-center text-muted-foreground py-8">
-                    Nenhum serviço cadastrado. Adicione serviços para que os clientes possam agendar.
-                  </p>
-                </CardContent>
-              </Card>
+              <ServiceForm
+                barbershopId={barbershop.id}
+                services={services}
+                onServicesChange={fetchServices}
+              />
             </TabsContent>
 
             <TabsContent value="products">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle>Produtos</CardTitle>
-                    <CardDescription>
-                      Gerencie os produtos vendidos pela sua barbearia
-                    </CardDescription>
-                  </div>
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Adicionar Produto
-                  </Button>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-center text-muted-foreground py-8">
-                    Nenhum produto cadastrado. Adicione produtos para venda aos clientes.
-                  </p>
-                </CardContent>
-              </Card>
+              <ProductForm
+                barbershopId={barbershop.id}
+                products={products}
+                onProductsChange={fetchProducts}
+              />
             </TabsContent>
           </Tabs>
         )}
