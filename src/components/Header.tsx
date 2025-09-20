@@ -1,162 +1,128 @@
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Search, Menu, User, Bell, X } from "lucide-react";
-import { useState } from "react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Menu, Scissors, User, Settings, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 export const Header = () => {
-  const [isSignupOpen, setIsSignupOpen] = useState(false);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
-  const handleSignup = (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: Implementar lógica de cadastro
-    setIsSignupOpen(false);
+  const handleDashboard = () => {
+    navigate('/dashboard');
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-        {/* Logo */}
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-lg">B</span>
+    <div className="w-full">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            {/* Logo */}
+            <Link to="/" className="flex items-center gap-2">
+              <Scissors className="h-6 w-6 text-primary" />
+              <span className="text-xl font-bold">BarberBook</span>
+            </Link>
+
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center gap-6">
+              <a href="#" className="text-foreground hover:text-primary transition-colors">
+                Encontrar Barbearias
+              </a>
+              <a href="#" className="text-foreground hover:text-primary transition-colors">
+                Para Empresas
+              </a>
+              <a href="#" className="text-foreground hover:text-primary transition-colors">
+                Ajuda
+              </a>
+            </nav>
+
+            {/* Desktop Actions */}
+            <div className="hidden md:flex items-center gap-3">
+              {user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback>
+                          {user.email?.charAt(0).toUpperCase() || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <DropdownMenuItem onClick={handleDashboard}>
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Dashboard</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Configurações</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={signOut}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Sair</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <>
+                  <Link to="/auth">
+                    <Button variant="outline">Entrar</Button>
+                  </Link>
+                  <Link to="/auth">
+                    <Button>Cadastrar-se</Button>
+                  </Link>
+                </>
+              )}
+            </div>
+
+            {/* Mobile Menu */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="icon" className="md:hidden">
+                  <Menu className="h-4 w-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent>
+                <div className="flex flex-col gap-4 mt-8">
+                  <a href="#" className="text-foreground hover:text-primary transition-colors">
+                    Encontrar Barbearias
+                  </a>
+                  <a href="#" className="text-foreground hover:text-primary transition-colors">
+                    Para Empresas
+                  </a>
+                  <a href="#" className="text-foreground hover:text-primary transition-colors">
+                    Ajuda
+                  </a>
+                  <div className="flex flex-col gap-3 mt-6">
+                    {user ? (
+                      <>
+                        <Button variant="outline" onClick={handleDashboard}>
+                          Dashboard
+                        </Button>
+                        <Button variant="outline" onClick={signOut}>
+                          Sair
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Link to="/auth">
+                          <Button variant="outline" className="w-full">Entrar</Button>
+                        </Link>
+                        <Link to="/auth">
+                          <Button className="w-full">Cadastrar-se</Button>
+                        </Link>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
-          <h1 className="text-xl font-bold text-foreground">BarberBook</h1>
         </div>
-
-        {/* Navigation - Hidden on mobile */}
-        <nav className="hidden md:flex items-center space-x-6">
-          <Button 
-            variant="ghost" 
-            className="text-muted-foreground hover:text-foreground"
-            onClick={() => {
-              const searchSection = document.querySelector('.location-search');
-              searchSection?.scrollIntoView({ behavior: 'smooth' });
-            }}
-          >
-            Encontrar Barbearias
-          </Button>
-          <Button 
-            variant="ghost" 
-            className="text-muted-foreground hover:text-foreground"
-            onClick={() => {
-              // TODO: Implementar página para empresas
-              console.log('Navegando para área empresarial');
-            }}
-          >
-            Para Empresas
-          </Button>
-          <Button 
-            variant="ghost" 
-            className="text-muted-foreground hover:text-foreground"
-            onClick={() => {
-              // TODO: Implementar página de ajuda
-              console.log('Navegando para ajuda');
-            }}
-          >
-            Ajuda
-          </Button>
-        </nav>
-
-        {/* User Actions */}
-        <div className="flex items-center space-x-3">
-          <Button variant="ghost" size="icon" className="hidden md:flex">
-            <Bell className="h-5 w-5" />
-          </Button>
-          
-          <Button variant="ghost" className="hidden md:flex">
-            <User className="h-4 w-4 mr-2" />
-            Entrar
-          </Button>
-
-          <Dialog open={isSignupOpen} onOpenChange={setIsSignupOpen}>
-            <DialogTrigger asChild>
-              <Button variant="gradient" className="hover:opacity-90 transition-opacity">
-                Cadastrar-se
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Criar sua conta</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSignup} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nome completo</Label>
-                  <Input id="name" type="text" required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Telefone</Label>
-                  <Input id="phone" type="tel" required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Senha</Label>
-                  <Input id="password" type="password" required />
-                </div>
-                <Button type="submit" variant="gradient" className="w-full">
-                  Criar conta
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-
-          {/* Mobile Menu */}
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-              <nav className="flex flex-col space-y-4 mt-6">
-                <Button 
-                  variant="ghost" 
-                  className="justify-start"
-                  onClick={() => {
-                    const searchSection = document.querySelector('.location-search');
-                    searchSection?.scrollIntoView({ behavior: 'smooth' });
-                  }}
-                >
-                  Encontrar Barbearias
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  className="justify-start"
-                  onClick={() => {
-                    console.log('Navegando para área empresarial');
-                  }}
-                >
-                  Para Empresas
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  className="justify-start"
-                  onClick={() => {
-                    console.log('Navegando para ajuda');
-                  }}
-                >
-                  Ajuda
-                </Button>
-                <div className="border-t pt-4 mt-4">
-                  <Button variant="ghost" className="justify-start w-full mb-2">
-                    <User className="h-4 w-4 mr-2" />
-                    Entrar
-                  </Button>
-                  <Button variant="gradient" className="w-full" onClick={() => setIsSignupOpen(true)}>
-                    Cadastrar-se
-                  </Button>
-                </div>
-              </nav>
-            </SheetContent>
-          </Sheet>
-        </div>
-      </div>
-    </header>
+      </header>
+    </div>
   );
 };
