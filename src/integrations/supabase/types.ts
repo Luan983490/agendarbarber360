@@ -19,6 +19,7 @@ export type Database = {
           barbershop_id: string
           created_at: string
           id: string
+          image_url: string | null
           is_active: boolean | null
           name: string
           phone: string | null
@@ -29,6 +30,7 @@ export type Database = {
           barbershop_id: string
           created_at?: string
           id?: string
+          image_url?: string | null
           is_active?: boolean | null
           name: string
           phone?: string | null
@@ -39,6 +41,7 @@ export type Database = {
           barbershop_id?: string
           created_at?: string
           id?: string
+          image_url?: string | null
           is_active?: boolean | null
           name?: string
           phone?: string | null

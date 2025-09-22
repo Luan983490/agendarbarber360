@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Store } from 'lucide-react';
+import ImageUpload from './ImageUpload';
 
 interface BarbershopSetupProps {
   onBarbershopCreated: () => void;
@@ -23,6 +24,7 @@ const BarbershopSetup = ({ onBarbershopCreated }: BarbershopSetupProps) => {
     address: '',
     phone: '',
     email: '',
+    image_url: '',
     amenities: [] as string[]
   });
 
@@ -62,6 +64,7 @@ const BarbershopSetup = ({ onBarbershopCreated }: BarbershopSetupProps) => {
           address: formData.address,
           phone: formData.phone,
           email: formData.email,
+          image_url: formData.image_url,
           amenities: formData.amenities,
           opening_hours: {
             monday: { open: '09:00', close: '18:00' },
@@ -179,6 +182,16 @@ const BarbershopSetup = ({ onBarbershopCreated }: BarbershopSetupProps) => {
                 </div>
               ))}
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Imagem da Barbearia</Label>
+            <ImageUpload
+              currentImageUrl={formData.image_url}
+              onImageUploaded={(url) => setFormData(prev => ({ ...prev, image_url: url }))}
+              bucket="barbershop-images"
+              folder="main"
+            />
           </div>
 
           <Button type="submit" className="w-full" disabled={loading}>

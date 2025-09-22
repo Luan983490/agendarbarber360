@@ -15,6 +15,7 @@ interface Barber {
   name: string;
   specialty?: string;
   phone?: string;
+  image_url?: string;
   is_active: boolean;
 }
 
@@ -28,7 +29,8 @@ const BarberForm = ({ barbershopId, barbers, onBarbersChange }: BarberFormProps)
   const [formData, setFormData] = useState({
     name: '',
     specialty: '',
-    phone: ''
+    phone: '',
+    image_url: ''
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -86,7 +88,7 @@ const BarberForm = ({ barbershopId, barbers, onBarbersChange }: BarberFormProps)
       }
 
       // Reset form
-      setFormData({ name: '', specialty: '', phone: '' });
+      setFormData({ name: '', specialty: '', phone: '', image_url: '' });
       setEditingId(null);
       onBarbersChange();
 
@@ -105,7 +107,8 @@ const BarberForm = ({ barbershopId, barbers, onBarbersChange }: BarberFormProps)
     setFormData({
       name: barber.name,
       specialty: barber.specialty || '',
-      phone: barber.phone || ''
+      phone: barber.phone || '',
+      image_url: barber.image_url || ''
     });
     setEditingId(barber.id);
   };
@@ -163,7 +166,7 @@ const BarberForm = ({ barbershopId, barbers, onBarbersChange }: BarberFormProps)
   };
 
   const cancelEdit = () => {
-    setFormData({ name: '', specialty: '', phone: '' });
+    setFormData({ name: '', specialty: '', phone: '', image_url: '' });
     setEditingId(null);
   };
 

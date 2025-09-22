@@ -12,6 +12,7 @@ import BarbershopSetup from '@/components/BarbershopSetup';
 import ServiceForm from '@/components/ServiceForm';
 import ProductForm from '@/components/ProductForm';
 import BarberForm from '@/components/BarberForm';
+import BookingsManagement from '@/components/BookingsManagement';
 
 interface Profile {
   id: string;
@@ -25,6 +26,7 @@ interface Barbershop {
   description: string;
   address: string;
   phone: string;
+  image_url?: string;
   rating?: number;
   total_reviews: number;
 }
@@ -344,20 +346,31 @@ const Dashboard = () => {
                 <CardHeader>
                   <CardTitle>Informações da Barbearia</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2">
-                  <p><strong>Nome:</strong> {barbershop.name}</p>
-                  <p><strong>Endereço:</strong> {barbershop.address}</p>
-                  <p><strong>Telefone:</strong> {barbershop.phone}</p>
-                  <p><strong>Descrição:</strong> {barbershop.description}</p>
-                  <div className="flex gap-4 mt-4">
-                    <div>
-                      <strong>Serviços:</strong> {services.length}
+                <CardContent className="space-y-4">
+                  {barbershop.image_url && (
+                    <div className="w-full max-w-md">
+                      <img
+                        src={barbershop.image_url}
+                        alt={barbershop.name}
+                        className="w-full h-48 object-cover rounded-lg border"
+                      />
                     </div>
-                    <div>
-                      <strong>Barbeiros:</strong> {barbers.length}
-                    </div>
-                    <div>
-                      <strong>Produtos:</strong> {products.length}
+                  )}
+                  <div className="space-y-2">
+                    <p><strong>Nome:</strong> {barbershop.name}</p>
+                    <p><strong>Endereço:</strong> {barbershop.address}</p>
+                    <p><strong>Telefone:</strong> {barbershop.phone}</p>
+                    <p><strong>Descrição:</strong> {barbershop.description}</p>
+                    <div className="flex gap-4 mt-4">
+                      <div>
+                        <strong>Serviços:</strong> {services.length}
+                      </div>
+                      <div>
+                        <strong>Barbeiros:</strong> {barbers.length}
+                      </div>
+                      <div>
+                        <strong>Produtos:</strong> {products.length}
+                      </div>
                     </div>
                   </div>
                 </CardContent>
@@ -365,19 +378,7 @@ const Dashboard = () => {
             </TabsContent>
 
             <TabsContent value="bookings">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Gerenciar Agendamentos</CardTitle>
-                  <CardDescription>
-                    Visualize e gerencie todos os agendamentos da sua barbearia
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-center text-muted-foreground py-8">
-                    Nenhum agendamento encontrado. Os agendamentos aparecerão aqui quando os clientes começarem a agendar.
-                  </p>
-                </CardContent>
-              </Card>
+              <BookingsManagement barbershopId={barbershop.id} />
             </TabsContent>
 
             <TabsContent value="services">

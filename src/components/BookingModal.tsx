@@ -32,8 +32,7 @@ interface Barber {
   id: string;
   name: string;
   specialty?: string;
-  phone?: string;
-  is_active: boolean;
+  image_url?: string;
 }
 
 interface Product {
@@ -91,7 +90,7 @@ export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
     try {
       const { data, error } = await supabase
         .from('barbers')
-        .select('*')
+        .select('id, name, specialty, image_url')
         .eq('barbershop_id', barberShop.id)
         .eq('is_active', true);
 
@@ -324,19 +323,27 @@ export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
                       <SelectValue placeholder="Selecione um barbeiro" />
                     </SelectTrigger>
                     <SelectContent>
-                      {barbers.map((barber) => (
-                        <SelectItem key={barber.id} value={barber.id}>
-                          <div className="flex items-center space-x-2">
-                            <User className="h-4 w-4" />
-                            <div>
-                              <div className="font-medium">{barber.name}</div>
-                              {barber.specialty && (
-                                <div className="text-xs text-muted-foreground">{barber.specialty}</div>
-                              )}
-                            </div>
-                          </div>
-                        </SelectItem>
-                      ))}
+                       {barbers.map((barber) => (
+                         <SelectItem key={barber.id} value={barber.id}>
+                           <div className="flex items-center space-x-2">
+                             {barber.image_url ? (
+                               <img
+                                 src={barber.image_url}
+                                 alt={barber.name}
+                                 className="w-6 h-6 rounded-full object-cover"
+                               />
+                             ) : (
+                               <User className="h-4 w-4" />
+                             )}
+                             <div>
+                               <div className="font-medium">{barber.name}</div>
+                               {barber.specialty && (
+                                 <div className="text-xs text-muted-foreground">{barber.specialty}</div>
+                               )}
+                             </div>
+                           </div>
+                         </SelectItem>
+                       ))}
                     </SelectContent>
                   </Select>
                 ) : (
