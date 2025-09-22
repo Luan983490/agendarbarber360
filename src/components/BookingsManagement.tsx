@@ -55,10 +55,16 @@ const BookingsManagement = ({ barbershopId }: BookingsManagementProps) => {
       const { data: bookingsData, error: bookingsError } = await supabase
         .from('bookings')
         .select(`
-          *,
-          services(name, duration),
+          id,
+          booking_date,
+          booking_time,
+          status,
+          total_price,
+          notes,
+          client_id,
+          services!inner(name, duration),
           barbers(name),
-          profiles(display_name, phone)
+          profiles!bookings_client_id_fkey(display_name, phone)
         `)
         .eq('barbershop_id', barbershopId)
         .order('booking_date', { ascending: false })

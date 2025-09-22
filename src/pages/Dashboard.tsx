@@ -6,9 +6,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Scissors, Calendar, Package, Store, Users, DollarSign, Star } from 'lucide-react';
+import { Scissors, Calendar, Package, Store, Users, DollarSign, Star, Edit } from 'lucide-react';
 import { Header } from '@/components/Header';
 import BarbershopSetup from '@/components/BarbershopSetup';
+import BarbershopEdit from '@/components/BarbershopEdit';
 import ServiceForm from '@/components/ServiceForm';
 import ProductForm from '@/components/ProductForm';
 import BarberForm from '@/components/BarberForm';
@@ -26,9 +27,11 @@ interface Barbershop {
   description: string;
   address: string;
   phone: string;
+  email?: string;
   image_url?: string;
   rating?: number;
   total_reviews: number;
+  amenities?: string[];
 }
 
 interface Service {
@@ -54,6 +57,7 @@ interface Barber {
   name: string;
   specialty?: string;
   phone?: string;
+  image_url?: string;
   is_active: boolean;
 }
 
@@ -267,10 +271,14 @@ const Dashboard = () => {
           <BarbershopSetup onBarbershopCreated={handleBarbershopCreated} />
         ) : (
           <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="overview" className="flex items-center gap-2">
                 <Store className="h-4 w-4" />
                 Visão Geral
+              </TabsTrigger>
+              <TabsTrigger value="edit" className="flex items-center gap-2">
+                <Edit className="h-4 w-4" />
+                Editar
               </TabsTrigger>
               <TabsTrigger value="bookings" className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
@@ -375,6 +383,17 @@ const Dashboard = () => {
                   </div>
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="edit">
+              <BarbershopEdit 
+                barbershop={{
+                  ...barbershop,
+                  email: barbershop.email || '',
+                  amenities: barbershop.amenities || []
+                }} 
+                onBarbershopUpdated={fetchUserProfile}
+              />
             </TabsContent>
 
             <TabsContent value="bookings">
