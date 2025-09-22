@@ -50,26 +50,39 @@ const BookingsManagement = ({ barbershopId }: BookingsManagementProps) => {
 
   const fetchBookings = async () => {
     try {
-      const { data, error } = await supabase
+      console.log('Fetching bookings for barbershop:', barbershopId);
+      
+      const { data: bookingsData, error: bookingsError } = await supabase
         .from('bookings')
         .select(`
           *,
-          service:services(name, duration),
-          barber:barbers(name),
-          client:profiles!bookings_client_id_fkey(display_name, phone),
-          booking_products(
-            quantity,
-            unit_price,
-            product:products(name)
-          )
+          services(name, duration),
+          barbers(name),
+          profiles(display_name, phone)
         `)
         .eq('barbershop_id', barbershopId)
         .order('booking_date', { ascending: false })
         .order('booking_time', { ascending: false });
 
-      if (error) throw error;
-      setBookings(data || []);
+      if (bookingsError) {
+        console.error('Error fetching bookings:', bookingsError);
+        throw bookingsError;
+      }
+
+      console.log('Raw bookings data:', bookingsData);
+
+      // Transform the data to match our interface
+      const transformedBookings = bookingsData?.map(booking => ({
+        ...booking,
+        service: booking.services,
+        barber: booking.barbers,
+        client: booking.profiles
+      })) || [];
+
+      console.log('Transformed bookings:', transformedBookings);
+      setBookings(transformedBookings);
     } catch (error: any) {
+      console.error('Complete error:', error);
       toast({
         title: "Erro ao carregar agendamentos",
         description: error.message,

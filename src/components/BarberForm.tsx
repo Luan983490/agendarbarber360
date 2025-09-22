@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Trash2, Edit2, Plus, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import ImageUpload from './ImageUpload';
 
 interface Barber {
   id: string;
@@ -216,6 +217,16 @@ const BarberForm = ({ barbershopId, barbers, onBarbersChange }: BarberFormProps)
                 placeholder="Ex: Especialista em cortes clássicos, Expert em barbas..."
                 rows={2}
               />
+             </div>
+
+            <div className="space-y-2">
+              <Label>Foto do Barbeiro</Label>
+              <ImageUpload
+                currentImageUrl={formData.image_url}
+                onImageUploaded={(url) => setFormData(prev => ({ ...prev, image_url: url }))}
+                bucket="barber-images"
+                folder="profile"
+              />
             </div>
 
             <div className="flex gap-3">
@@ -245,21 +256,34 @@ const BarberForm = ({ barbershopId, barbers, onBarbersChange }: BarberFormProps)
           {barbers.length > 0 ? (
             <div className="space-y-4">
               {barbers.map((barber) => (
-                <div key={barber.id} className="flex items-start justify-between p-4 border rounded-lg">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h4 className="font-medium">{barber.name}</h4>
-                      <Badge variant={barber.is_active ? "default" : "secondary"}>
-                        {barber.is_active ? "Ativo" : "Inativo"}
-                      </Badge>
-                    </div>
-                    {barber.specialty && (
-                      <p className="text-sm text-muted-foreground mb-1">{barber.specialty}</p>
-                    )}
-                    {barber.phone && (
-                      <p className="text-sm text-muted-foreground">{barber.phone}</p>
-                    )}
-                  </div>
+                 <div key={barber.id} className="flex items-start justify-between p-4 border rounded-lg">
+                   <div className="flex items-start gap-4 flex-1">
+                     <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                       {barber.image_url ? (
+                         <img
+                           src={barber.image_url}
+                           alt={barber.name}
+                           className="w-full h-full object-cover"
+                         />
+                       ) : (
+                         <User className="h-6 w-6 text-primary" />
+                       )}
+                     </div>
+                     <div className="flex-1">
+                       <div className="flex items-center gap-2 mb-2">
+                         <h4 className="font-medium">{barber.name}</h4>
+                         <Badge variant={barber.is_active ? "default" : "secondary"}>
+                           {barber.is_active ? "Ativo" : "Inativo"}
+                         </Badge>
+                       </div>
+                       {barber.specialty && (
+                         <p className="text-sm text-muted-foreground mb-1">{barber.specialty}</p>
+                       )}
+                       {barber.phone && (
+                         <p className="text-sm text-muted-foreground">{barber.phone}</p>
+                       )}
+                     </div>
+                   </div>
                   
                   <div className="flex items-center gap-2">
                     <Switch
