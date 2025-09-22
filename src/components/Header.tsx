@@ -39,8 +39,7 @@ export const Header = () => {
     if (userType === 'barbershop_owner') {
       navigate('/dashboard');
     } else {
-      // For clients, navigate to their bookings or profile
-      navigate('/');
+      navigate('/my-bookings');
     }
   };
 

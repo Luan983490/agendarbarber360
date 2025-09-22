@@ -7,30 +7,64 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar as CalendarIcon, Clock, User, Scissors, ShoppingBag, Wifi, Car, Coffee, AirVent, Volume2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface BookingModalProps {
   children: React.ReactNode;
   barberShop: {
+    id: string;
     name: string;
     image: string;
   };
 }
 
+interface Service {
+  id: string;
+  name: string;
+  price: number;
+  duration: number;
+}
+
 export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedService, setSelectedService] = useState("");
   const [selectedBarber, setSelectedBarber] = useState("");
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
-  const services = [
-    { id: "corte", name: "Corte Masculino", price: "R$ 25", duration: "30 min" },
-    { id: "barba", name: "Barba Completa", price: "R$ 20", duration: "20 min" },
-    { id: "combo", name: "Corte + Barba", price: "R$ 40", duration: "45 min" },
-    { id: "tratamento", name: "Tratamento Capilar", price: "R$ 35", duration: "40 min" },
-  ];
+  useEffect(() => {
+    if (isOpen) {
+      fetchServices();
+    }
+  }, [isOpen, barberShop.id]);
+
+  const fetchServices = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('services')
+        .select('*')
+        .eq('barbershop_id', barberShop.id)
+        .eq('is_active', true);
+
+      if (error) throw error;
+      setServices(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao carregar serviços",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
 
   const barbers = [
     { id: "joao", name: "João Silva", specialty: "Especialista em cortes clássicos" },
@@ -68,16 +102,72 @@ export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
     );
   };
 
-  const handleBooking = () => {
-    // TODO: Implementar lógica de agendamento
-    console.log("Agendamento:", {
-      date: selectedDate,
-      time: selectedTime,
-      service: selectedService,
-      barber: selectedBarber,
-      products: selectedProducts,
-      notes
-    });
+  const handleBooking = async () => {
+    if (!user) {
+      toast({
+        title: "Erro",
+        description: "Você precisa estar logado para fazer um agendamento",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!selectedDate || !selectedTime || !selectedService) {
+      toast({
+        title: "Erro",
+        description: "Preencha todos os campos obrigatórios",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const selectedServiceData = services.find(s => s.id === selectedService);
+      if (!selectedServiceData) {
+        throw new Error("Serviço não encontrado");
+      }
+
+      // Format date for database (YYYY-MM-DD)
+      const bookingDate = selectedDate.toISOString().split('T')[0];
+      
+      const { error } = await supabase
+        .from('bookings')
+        .insert({
+          client_id: user.id,
+          barbershop_id: barberShop.id,
+          service_id: selectedService,
+          booking_date: bookingDate,
+          booking_time: selectedTime,
+          total_price: selectedServiceData.price,
+          notes: notes || null,
+          status: 'pending'
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Agendamento realizado!",
+        description: "Seu agendamento foi criado com sucesso. Você receberá uma confirmação em breve.",
+      });
+
+      // Reset form
+      setSelectedDate(new Date());
+      setSelectedTime("");
+      setSelectedService("");
+      setNotes("");
+      setIsOpen(false);
+
+    } catch (error: any) {
+      toast({
+        title: "Erro ao criar agendamento",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const selectedServiceData = services.find(s => s.id === selectedService);
@@ -85,11 +175,11 @@ export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
   const productsTotal = selectedProductsData.reduce((sum, product) => {
     return sum + parseFloat(product.price.replace('R$ ', ''));
   }, 0);
-  const servicePrice = selectedServiceData ? parseFloat(selectedServiceData.price.replace('R$ ', '')) : 0;
+  const servicePrice = selectedServiceData ? selectedServiceData.price : 0;
   const totalPrice = servicePrice + productsTotal;
 
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
@@ -102,208 +192,217 @@ export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
           {/* Service Selection */}
           <div className="space-y-3">
             <Label>Escolha o serviço</Label>
-            <div className="grid gap-3">
-              {services.map((service) => (
-                <Card 
-                  key={service.id} 
-                  className={`cursor-pointer transition-all ${selectedService === service.id ? 'ring-2 ring-primary' : ''}`}
-                  onClick={() => setSelectedService(service.id)}
-                >
-                  <CardContent className="p-4 flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <Scissors className="h-5 w-5 text-primary" />
-                      <div>
-                        <h4 className="font-medium">{service.name}</h4>
-                        <p className="text-sm text-muted-foreground">{service.duration}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className="font-bold text-primary">{service.price}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-
-          {/* Barber Selection */}
-          <div className="space-y-3">
-            <Label>Escolha o profissional</Label>
-            <Select value={selectedBarber} onValueChange={setSelectedBarber}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione um barbeiro" />
-              </SelectTrigger>
-              <SelectContent>
-                {barbers.map((barber) => (
-                  <SelectItem key={barber.id} value={barber.id}>
-                    <div className="flex items-center space-x-2">
-                      <User className="h-4 w-4" />
-                      <div>
-                        <div className="font-medium">{barber.name}</div>
-                        <div className="text-xs text-muted-foreground">{barber.specialty}</div>
-                      </div>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Products Selection */}
-          <div className="space-y-3">
-            <Label>Produtos (opcional)</Label>
-            <div className="grid gap-3">
-              {products.map((product) => (
-                <Card 
-                  key={product.id} 
-                  className={`cursor-pointer transition-all ${selectedProducts.includes(product.id) ? 'ring-2 ring-primary' : ''}`}
-                  onClick={() => toggleProduct(product.id)}
-                >
-                  <CardContent className="p-4 flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <ShoppingBag className="h-5 w-5 text-primary" />
-                      <div>
-                        <h4 className="font-medium">{product.name}</h4>
-                        <p className="text-sm text-muted-foreground">{product.brand}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className="font-bold text-primary">{product.price}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-
-          {/* Amenities */}
-          <div className="space-y-3">
-            <Label>Comodidades disponíveis</Label>
-            <div className="grid grid-cols-2 gap-3">
-              {amenities.map((amenity) => {
-                const IconComponent = amenity.icon;
-                return (
-                  <div key={amenity.id} className="flex items-center space-x-2 p-3 rounded-lg border bg-muted/30">
-                    <IconComponent className="h-4 w-4 text-primary" />
-                    <span className="text-sm">{amenity.name}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Date Selection */}
-          <div className="space-y-3">
-            <Label>Escolha a data</Label>
-            <div className="flex justify-center">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                disabled={(date) => date < new Date() || date.getDay() === 0}
-                className="rounded-md border"
-              />
-            </div>
-          </div>
-
-          {/* Time Selection */}
-          <div className="space-y-3">
-            <Label>Escolha o horário</Label>
-            <div className="grid grid-cols-4 gap-2">
-              {availableTimes.map((time) => (
-                <Button
-                  key={time}
-                  variant={selectedTime === time ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedTime(time)}
-                  className={selectedTime === time ? "bg-gradient-primary" : ""}
-                >
-                  <Clock className="mr-1 h-3 w-3" />
-                  {time}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          {/* Notes */}
-          <div className="space-y-3">
-            <Label>Observações (opcional)</Label>
-            <Textarea
-              placeholder="Alguma observação especial para o seu atendimento?"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={3}
-            />
-          </div>
-
-          {/* Summary */}
-          {selectedService && selectedDate && selectedTime && (
-            <Card>
-              <CardContent className="p-4">
-                <h4 className="font-medium mb-3">Resumo do agendamento</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>Serviço:</span>
-                    <span className="font-medium">{selectedServiceData?.name}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Data:</span>
-                    <span className="font-medium">{selectedDate?.toLocaleDateString('pt-BR')}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Horário:</span>
-                    <span className="font-medium">{selectedTime}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Profissional:</span>
-                    <span className="font-medium">{barbers.find(b => b.id === selectedBarber)?.name || "A definir"}</span>
-                  </div>
-                  {selectedProductsData.length > 0 && (
-                    <div className="space-y-1">
-                      <span className="text-sm text-muted-foreground">Produtos:</span>
-                      {selectedProductsData.map((product) => (
-                        <div key={product.id} className="flex justify-between text-xs pl-2">
-                          <span>• {product.name}</span>
-                          <span>{product.price}</span>
+            {services.length > 0 ? (
+              <div className="grid gap-3">
+                {services.map((service) => (
+                  <Card 
+                    key={service.id} 
+                    className={`cursor-pointer transition-all ${selectedService === service.id ? 'ring-2 ring-primary' : ''}`}
+                    onClick={() => setSelectedService(service.id)}
+                  >
+                    <CardContent className="p-4 flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <Scissors className="h-5 w-5 text-primary" />
+                        <div>
+                          <h4 className="font-medium">{service.name}</h4>
+                          <p className="text-sm text-muted-foreground">{service.duration} min</p>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                  <div className="border-t pt-2">
-                    {selectedServiceData && (
-                      <div className="flex justify-between text-sm">
-                        <span>Subtotal Serviço:</span>
-                        <span>{selectedServiceData.price}</span>
                       </div>
-                    )}
-                    {productsTotal > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span>Subtotal Produtos:</span>
-                        <span>R$ {productsTotal.toFixed(2)}</span>
+                      <div className="text-right">
+                        <span className="font-bold text-primary">R$ {service.price.toFixed(2)}</span>
                       </div>
-                    )}
-                    <div className="flex justify-between font-bold mt-1">
-                      <span>Total:</span>
-                      <span className="text-primary">R$ {totalPrice.toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Action Buttons */}
-          <div className="flex space-x-3">
-            <Button 
-              variant="gradient" 
-              className="flex-1"
-              onClick={handleBooking}
-              disabled={!selectedService || !selectedDate || !selectedTime}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              Confirmar Agendamento
-            </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-center py-4">
+                Esta barbearia ainda não cadastrou seus serviços.
+              </p>
+            )}
           </div>
+
+          {services.length > 0 && (
+            <>
+              {/* Barber Selection */}
+              <div className="space-y-3">
+                <Label>Escolha o profissional (opcional)</Label>
+                <Select value={selectedBarber} onValueChange={setSelectedBarber}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um barbeiro" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {barbers.map((barber) => (
+                      <SelectItem key={barber.id} value={barber.id}>
+                        <div className="flex items-center space-x-2">
+                          <User className="h-4 w-4" />
+                          <div>
+                            <div className="font-medium">{barber.name}</div>
+                            <div className="text-xs text-muted-foreground">{barber.specialty}</div>
+                          </div>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Products Selection */}
+              <div className="space-y-3">
+                <Label>Produtos (opcional)</Label>
+                <div className="grid gap-3">
+                  {products.map((product) => (
+                    <Card 
+                      key={product.id} 
+                      className={`cursor-pointer transition-all ${selectedProducts.includes(product.id) ? 'ring-2 ring-primary' : ''}`}
+                      onClick={() => toggleProduct(product.id)}
+                    >
+                      <CardContent className="p-4 flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <ShoppingBag className="h-5 w-5 text-primary" />
+                          <div>
+                            <h4 className="font-medium">{product.name}</h4>
+                            <p className="text-sm text-muted-foreground">{product.brand}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="font-bold text-primary">{product.price}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+
+              {/* Amenities */}
+              <div className="space-y-3">
+                <Label>Comodidades disponíveis</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  {amenities.map((amenity) => {
+                    const IconComponent = amenity.icon;
+                    return (
+                      <div key={amenity.id} className="flex items-center space-x-2 p-3 rounded-lg border bg-muted/30">
+                        <IconComponent className="h-4 w-4 text-primary" />
+                        <span className="text-sm">{amenity.name}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Date Selection */}
+              <div className="space-y-3">
+                <Label>Escolha a data</Label>
+                <div className="flex justify-center">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={setSelectedDate}
+                    disabled={(date) => date < new Date() || date.getDay() === 0}
+                    className="rounded-md border"
+                  />
+                </div>
+              </div>
+
+              {/* Time Selection */}
+              <div className="space-y-3">
+                <Label>Escolha o horário</Label>
+                <div className="grid grid-cols-4 gap-2">
+                  {availableTimes.map((time) => (
+                    <Button
+                      key={time}
+                      variant={selectedTime === time ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedTime(time)}
+                    >
+                      <Clock className="mr-1 h-3 w-3" />
+                      {time}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div className="space-y-3">
+                <Label>Observações (opcional)</Label>
+                <Textarea
+                  placeholder="Alguma observação especial para o seu atendimento?"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={3}
+                />
+              </div>
+
+              {/* Summary */}
+              {selectedService && selectedDate && selectedTime && (
+                <Card>
+                  <CardContent className="p-4">
+                    <h4 className="font-medium mb-3">Resumo do agendamento</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>Serviço:</span>
+                        <span className="font-medium">{selectedServiceData?.name}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Data:</span>
+                        <span className="font-medium">{selectedDate?.toLocaleDateString('pt-BR')}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Horário:</span>
+                        <span className="font-medium">{selectedTime}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Profissional:</span>
+                        <span className="font-medium">{barbers.find(b => b.id === selectedBarber)?.name || "A definir"}</span>
+                      </div>
+                      {selectedProductsData.length > 0 && (
+                        <div className="space-y-1">
+                          <span className="text-sm text-muted-foreground">Produtos:</span>
+                          {selectedProductsData.map((product) => (
+                            <div key={product.id} className="flex justify-between text-xs pl-2">
+                              <span>• {product.name}</span>
+                              <span>{product.price}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <div className="border-t pt-2">
+                        {selectedServiceData && (
+                          <div className="flex justify-between text-sm">
+                            <span>Subtotal Serviço:</span>
+                            <span>R$ {selectedServiceData.price.toFixed(2)}</span>
+                          </div>
+                        )}
+                        {productsTotal > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span>Subtotal Produtos:</span>
+                            <span>R$ {productsTotal.toFixed(2)}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between font-bold mt-1">
+                          <span>Total:</span>
+                          <span className="text-primary">R$ {totalPrice.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex space-x-3">
+                <Button 
+                  variant="default" 
+                  className="flex-1"
+                  onClick={handleBooking}
+                  disabled={!selectedService || !selectedDate || !selectedTime || loading}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {loading ? 'Agendando...' : 'Confirmar Agendamento'}
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>
