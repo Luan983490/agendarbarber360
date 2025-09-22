@@ -26,6 +26,17 @@ interface Booking {
     name: string;
     duration: number;
   };
+  barber?: {
+    name: string;
+    specialty?: string;
+  };
+  booking_products?: Array<{
+    quantity: number;
+    unit_price: number;
+    product: {
+      name: string;
+    };
+  }>;
 }
 
 const MyBookings = () => {
@@ -47,7 +58,13 @@ const MyBookings = () => {
         .select(`
           *,
           barbershop:barbershops(name, address, phone),
-          service:services(name, duration)
+          service:services(name, duration),
+          barber:barbers(name, specialty),
+          booking_products(
+            quantity,
+            unit_price,
+            product:products(name)
+          )
         `)
         .eq('client_id', user?.id)
         .order('booking_date', { ascending: false });
@@ -195,6 +212,18 @@ const MyBookings = () => {
                             <span className="font-medium">Serviço:</span>
                             <span>{booking.service.name}</span>
                           </div>
+                          {booking.barber && (
+                            <div className="flex items-center gap-2">
+                              <User className="h-4 w-4 text-primary" />
+                              <span className="font-medium">Profissional:</span>
+                              <span>{booking.barber.name}</span>
+                              {booking.barber.specialty && (
+                                <span className="text-sm text-muted-foreground">
+                                  - {booking.barber.specialty}
+                                </span>
+                              )}
+                            </div>
+                          )}
                           <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4 text-primary" />
                             <span className="font-medium">Duração:</span>
@@ -203,6 +232,20 @@ const MyBookings = () => {
                         </div>
                       </div>
                       
+                      {booking.booking_products && booking.booking_products.length > 0 && (
+                        <div className="p-3 bg-muted rounded-lg">
+                          <p className="font-medium text-sm mb-2">Produtos adquiridos:</p>
+                          <div className="space-y-1">
+                            {booking.booking_products.map((bp, index) => (
+                              <div key={index} className="flex justify-between text-sm">
+                                <span>{bp.quantity}x {bp.product.name}</span>
+                                <span>R$ {(bp.quantity * bp.unit_price).toFixed(2)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       {booking.notes && (
                         <div className="p-3 bg-muted rounded-lg">
                           <p className="text-sm">
@@ -277,6 +320,12 @@ const MyBookings = () => {
                         <span>{booking.service.name}</span>
                         <span>•</span>
                         <span>{booking.service.duration} min</span>
+                        {booking.barber && (
+                          <>
+                            <span>•</span>
+                            <span>{booking.barber.name}</span>
+                          </>
+                        )}
                       </div>
                       
                       {booking.status === 'completed' && (

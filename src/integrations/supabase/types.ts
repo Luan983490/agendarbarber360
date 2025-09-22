@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      barbers: {
+        Row: {
+          barbershop_id: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+          phone: string | null
+          specialty: string | null
+          updated_at: string
+        }
+        Insert: {
+          barbershop_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          phone?: string | null
+          specialty?: string | null
+          updated_at?: string
+        }
+        Update: {
+          barbershop_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          phone?: string | null
+          specialty?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "barbers_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       barbershops: {
         Row: {
           address: string
@@ -117,6 +158,7 @@ export type Database = {
       }
       bookings: {
         Row: {
+          barber_id: string | null
           barbershop_id: string
           booking_date: string
           booking_time: string
@@ -130,6 +172,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          barber_id?: string | null
           barbershop_id: string
           booking_date: string
           booking_time: string
@@ -143,6 +186,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          barber_id?: string | null
           barbershop_id?: string
           booking_date?: string
           booking_time?: string
@@ -156,6 +200,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "bookings_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "barbers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "bookings_barbershop_id_fkey"
             columns: ["barbershop_id"]

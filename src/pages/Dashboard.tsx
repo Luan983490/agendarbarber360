@@ -11,6 +11,7 @@ import { Header } from '@/components/Header';
 import BarbershopSetup from '@/components/BarbershopSetup';
 import ServiceForm from '@/components/ServiceForm';
 import ProductForm from '@/components/ProductForm';
+import BarberForm from '@/components/BarberForm';
 
 interface Profile {
   id: string;
@@ -46,6 +47,14 @@ interface Product {
   is_active: boolean;
 }
 
+interface Barber {
+  id: string;
+  name: string;
+  specialty?: string;
+  phone?: string;
+  is_active: boolean;
+}
+
 interface DashboardStats {
   todayBookings: number;
   monthlyRevenue: number;
@@ -58,6 +67,7 @@ const Dashboard = () => {
   const [barbershop, setBarbershop] = useState<Barbershop | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [barbers, setBarbers] = useState<Barber[]>([]);
   const [stats, setStats] = useState<DashboardStats>({
     todayBookings: 0,
     monthlyRevenue: 0,
@@ -76,6 +86,7 @@ const Dashboard = () => {
     if (barbershop) {
       fetchServices();
       fetchProducts();
+      fetchBarbers();
       fetchStats();
     }
   }, [barbershop]);
@@ -127,6 +138,27 @@ const Dashboard = () => {
     } catch (error: any) {
       toast({
         title: "Erro ao carregar serviços",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const fetchBarbers = async () => {
+    if (!barbershop) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('barbers')
+        .select('*')
+        .eq('barbershop_id', barbershop.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setBarbers(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao carregar barbeiros",
         description: error.message,
         variant: "destructive"
       });
@@ -233,7 +265,7 @@ const Dashboard = () => {
           <BarbershopSetup onBarbershopCreated={handleBarbershopCreated} />
         ) : (
           <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="overview" className="flex items-center gap-2">
                 <Store className="h-4 w-4" />
                 Visão Geral
@@ -245,6 +277,10 @@ const Dashboard = () => {
               <TabsTrigger value="services" className="flex items-center gap-2">
                 <Scissors className="h-4 w-4" />
                 Serviços
+              </TabsTrigger>
+              <TabsTrigger value="barbers" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Barbeiros
               </TabsTrigger>
               <TabsTrigger value="products" className="flex items-center gap-2">
                 <Package className="h-4 w-4" />
@@ -318,6 +354,9 @@ const Dashboard = () => {
                       <strong>Serviços:</strong> {services.length}
                     </div>
                     <div>
+                      <strong>Barbeiros:</strong> {barbers.length}
+                    </div>
+                    <div>
                       <strong>Produtos:</strong> {products.length}
                     </div>
                   </div>
@@ -346,6 +385,14 @@ const Dashboard = () => {
                 barbershopId={barbershop.id}
                 services={services}
                 onServicesChange={fetchServices}
+              />
+            </TabsContent>
+
+            <TabsContent value="barbers">
+              <BarberForm
+                barbershopId={barbershop.id}
+                barbers={barbers}
+                onBarbersChange={fetchBarbers}
               />
             </TabsContent>
 
