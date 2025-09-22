@@ -1,6 +1,8 @@
+import { useState, useEffect } from "react";
 import { BarberShopCard } from "@/components/BarberShopCard";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Filter } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface BarberShopGridProps {
   searchQuery: string;
@@ -8,65 +10,62 @@ interface BarberShopGridProps {
   location: string;
 }
 
-// Mock data for demonstration
-const mockBarberShops = [
-  {
-    id: "1",
-    name: "Barbearia Dom Corte",
-    image: "/placeholder.svg",
-    rating: 4.8,
-    reviewCount: 127,
-    distance: "0.5 km",
-    isOpen: true,
-    priceRange: "$$",
-    specialties: ["Corte masculino", "Barba", "Tratamento capilar"],
-    nextAvailable: "14:30",
-    promotions: ["20% OFF primeiro agendamento"]
-  },
-  {
-    id: "2", 
-    name: "Studio Masculino Elite",
-    image: "/placeholder.svg",
-    rating: 4.9,
-    reviewCount: 89,
-    distance: "1.2 km",
-    isOpen: true,
-    priceRange: "$$$",
-    specialties: ["Corte premium", "Barba", "Relaxamento"],
-    nextAvailable: "15:00",
-    promotions: []
-  },
-  {
-    id: "3",
-    name: "Barber Shop Classic",
-    image: "/placeholder.svg", 
-    rating: 4.6,
-    reviewCount: 203,
-    distance: "2.1 km",
-    isOpen: false,
-    priceRange: "$",
-    specialties: ["Corte tradicional", "Barba", "Sobrancelha"],
-    nextAvailable: "Amanhã 09:00",
-    promotions: ["Pacote corte + barba"]
-  },
-  {
-    id: "4",
-    name: "Gentleman's Choice",
-    image: "/placeholder.svg",
-    rating: 4.7,
-    reviewCount: 156,
-    distance: "0.8 km", 
-    isOpen: true,
-    priceRange: "$$",
-    specialties: ["Corte moderno", "Barba", "Hidratação"],
-    nextAvailable: "16:15",
-    promotions: []
-  }
-];
+interface BarberShop {
+  id: string;
+  name: string;
+  image: string;
+  rating: number;
+  reviewCount: number;
+  distance: string;
+  isOpen: boolean;
+  priceRange: string;
+  specialties: string[];
+  nextAvailable: string;
+  promotions: string[];
+}
 
 export const BarberShopGrid = ({ searchQuery, activeFilters, location }: BarberShopGridProps) => {
-  // Filter logic (simplified for demo)
-  const filteredShops = mockBarberShops.filter(shop => {
+  const [barbershops, setBarbershops] = useState<BarberShop[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchBarbershops();
+  }, []);
+
+  const fetchBarbershops = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('barbershops')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Transform database data to match BarberShop interface
+      const transformedData = data?.map(shop => ({
+        id: shop.id,
+        name: shop.name,
+        image: shop.image_url || "/placeholder.svg",
+        rating: shop.rating || 0,
+        reviewCount: shop.total_reviews || 0,
+        distance: "-- km", // This would need geolocation calculation
+        isOpen: true, // This would need business hours logic
+        priceRange: "$$", // This could be derived from service prices
+        specialties: ["Corte", "Barba"], // This could be derived from services
+        nextAvailable: "Disponível", // This would need booking availability logic
+        promotions: [] // This could be a separate table
+      })) || [];
+
+      setBarbershops(transformedData);
+    } catch (error) {
+      console.error('Erro ao carregar barbearias:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Filter logic
+  const filteredShops = barbershops.filter(shop => {
     if (searchQuery && !shop.name.toLowerCase().includes(searchQuery.toLowerCase())) {
       return false;
     }
@@ -107,11 +106,19 @@ export const BarberShopGrid = ({ searchQuery, activeFilters, location }: BarberS
       </div>
 
       {/* Grid of Barbershops */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {filteredShops.map((shop) => (
-          <BarberShopCard key={shop.id} barberShop={shop} />
-        ))}
-      </div>
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-64 bg-muted rounded-lg animate-pulse" />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {filteredShops.map((shop) => (
+            <BarberShopCard key={shop.id} barberShop={shop} />
+          ))}
+        </div>
+      )}
 
       {filteredShops.length === 0 && (
         <div className="text-center py-12">

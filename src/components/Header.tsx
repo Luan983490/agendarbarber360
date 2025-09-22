@@ -1,17 +1,47 @@
 import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Menu, Scissors, User, Settings, LogOut } from "lucide-react";
+import { Menu, Scissors, User, Settings, LogOut, Calendar, Store } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Header = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const [userType, setUserType] = useState<string>('client');
+
+  useEffect(() => {
+    if (user) {
+      fetchUserType();
+    }
+  }, [user]);
+
+  const fetchUserType = async () => {
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('user_type')
+        .eq('user_id', user?.id)
+        .single();
+      
+      if (data) {
+        setUserType(data.user_type);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar tipo de usuário:', error);
+    }
+  };
 
   const handleDashboard = () => {
-    navigate('/dashboard');
+    if (userType === 'barbershop_owner') {
+      navigate('/dashboard');
+    } else {
+      // For clients, navigate to their bookings or profile
+      navigate('/');
+    }
   };
 
   return (
@@ -51,15 +81,22 @@ export const Header = () => {
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56" align="end" forceMount>
-                    <DropdownMenuItem onClick={handleDashboard}>
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Dashboard</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Configurações</span>
-                    </DropdownMenuItem>
+                   <DropdownMenuContent className="w-56" align="end" forceMount>
+                     {userType === 'barbershop_owner' ? (
+                       <DropdownMenuItem onClick={handleDashboard}>
+                         <Store className="mr-2 h-4 w-4" />
+                         <span>Dashboard</span>
+                       </DropdownMenuItem>
+                     ) : (
+                       <DropdownMenuItem onClick={handleDashboard}>
+                         <Calendar className="mr-2 h-4 w-4" />
+                         <span>Meus Agendamentos</span>
+                       </DropdownMenuItem>
+                     )}
+                     <DropdownMenuItem>
+                       <Settings className="mr-2 h-4 w-4" />
+                       <span>Configurações</span>
+                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={signOut}>
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Sair</span>
@@ -97,16 +134,16 @@ export const Header = () => {
                     Ajuda
                   </a>
                   <div className="flex flex-col gap-3 mt-6">
-                    {user ? (
-                      <>
-                        <Button variant="outline" onClick={handleDashboard}>
-                          Dashboard
-                        </Button>
-                        <Button variant="outline" onClick={signOut}>
-                          Sair
-                        </Button>
-                      </>
-                    ) : (
+                     {user ? (
+                       <>
+                         <Button variant="outline" onClick={handleDashboard}>
+                           {userType === 'barbershop_owner' ? 'Dashboard' : 'Meus Agendamentos'}
+                         </Button>
+                         <Button variant="outline" onClick={signOut}>
+                           Sair
+                         </Button>
+                       </>
+                     ) : (
                       <>
                         <Link to="/auth">
                           <Button variant="outline" className="w-full">Entrar</Button>

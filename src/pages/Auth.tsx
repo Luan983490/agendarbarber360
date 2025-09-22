@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,10 +7,12 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Scissors, User, Store } from 'lucide-react';
 
 const Auth = () => {
   const { user, signIn, signUp } = useAuth();
+  const navigate = useNavigate();
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [signupData, setSignupData] = useState({ 
     email: '', 
@@ -20,15 +22,44 @@ const Auth = () => {
   });
   const [loading, setLoading] = useState(false);
 
-  // Redirect if already logged in
+  // Check user profile and redirect accordingly
+  useEffect(() => {
+    if (user) {
+      checkUserProfileAndRedirect();
+    }
+  }, [user]);
+
+  const checkUserProfileAndRedirect = async () => {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('user_type')
+        .eq('user_id', user?.id)
+        .single();
+
+      if (profile?.user_type === 'barbershop_owner') {
+        navigate('/dashboard', { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
+    } catch (error) {
+      console.error('Erro ao verificar perfil:', error);
+      navigate('/', { replace: true });
+    }
+  };
+
+  // Don't render if user is already logged in
   if (user) {
-    return <Navigate to="/" replace />;
+    return null;
   }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    await signIn(loginData.email, loginData.password);
+    const { error } = await signIn(loginData.email, loginData.password);
+    if (!error) {
+      // Redirect will be handled by the useEffect above
+    }
     setLoading(false);
   };
 
