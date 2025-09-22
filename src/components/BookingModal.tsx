@@ -1,12 +1,10 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar as CalendarIcon, Clock, User, Scissors, ShoppingBag, Wifi, Car, Coffee, AirVent, Volume2 } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Scissors, Wifi, Car, Coffee, AirVent, Volume2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +24,7 @@ interface Service {
   name: string;
   price: number;
   duration: number;
+  description?: string;
 }
 
 export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
@@ -34,8 +33,6 @@ export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedService, setSelectedService] = useState("");
-  const [selectedBarber, setSelectedBarber] = useState("");
-  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(false);
@@ -66,20 +63,6 @@ export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
     }
   };
 
-  const barbers = [
-    { id: "joao", name: "João Silva", specialty: "Especialista em cortes clássicos" },
-    { id: "pedro", name: "Pedro Santos", specialty: "Expert em barbas" },
-    { id: "carlos", name: "Carlos Lima", specialty: "Cortes modernos" },
-  ];
-
-  const products = [
-    { id: "pomada", name: "Pomada Modeladora", price: "R$ 35", brand: "Premium Hair" },
-    { id: "shampoo", name: "Shampoo Anticaspa", price: "R$ 28", brand: "BarberCare" },
-    { id: "oleo", name: "Óleo para Barba", price: "R$ 45", brand: "Beard Master" },
-    { id: "cera", name: "Cera Fixadora", price: "R$ 32", brand: "Style Pro" },
-    { id: "tonico", name: "Tônico Capilar", price: "R$ 38", brand: "Hair Force" },
-  ];
-
   const amenities = [
     { id: "wifi", name: "Wi-Fi Gratuito", icon: Wifi },
     { id: "estacionamento", name: "Estacionamento", icon: Car },
@@ -94,14 +77,6 @@ export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
     "16:00", "16:30", "17:00", "17:30"
   ];
 
-  const toggleProduct = (productId: string) => {
-    setSelectedProducts(prev => 
-      prev.includes(productId) 
-        ? prev.filter(id => id !== productId)
-        : [...prev, productId]
-    );
-  };
-
   const handleBooking = async () => {
     if (!user) {
       toast({
@@ -115,7 +90,7 @@ export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
     if (!selectedDate || !selectedTime || !selectedService) {
       toast({
         title: "Erro",
-        description: "Preencha todos os campos obrigatórios",
+        description: "Preencha todos os campos obrigatórios: data, horário e serviço",
         variant: "destructive"
       });
       return;
@@ -132,7 +107,18 @@ export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
       // Format date for database (YYYY-MM-DD)
       const bookingDate = selectedDate.toISOString().split('T')[0];
       
-      const { error } = await supabase
+      console.log("Dados do agendamento:", {
+        client_id: user.id,
+        barbershop_id: barberShop.id,
+        service_id: selectedService,
+        booking_date: bookingDate,
+        booking_time: selectedTime,
+        total_price: selectedServiceData.price,
+        notes: notes || null,
+        status: 'pending'
+      });
+      
+      const { data, error } = await supabase
         .from('bookings')
         .insert({
           client_id: user.id,
@@ -143,9 +129,15 @@ export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
           total_price: selectedServiceData.price,
           notes: notes || null,
           status: 'pending'
-        });
+        })
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erro do Supabase:", error);
+        throw error;
+      }
+
+      console.log("Agendamento criado:", data);
 
       toast({
         title: "Agendamento realizado!",
@@ -160,9 +152,10 @@ export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
       setIsOpen(false);
 
     } catch (error: any) {
+      console.error("Erro completo:", error);
       toast({
         title: "Erro ao criar agendamento",
-        description: error.message,
+        description: error.message || "Ocorreu um erro inesperado",
         variant: "destructive"
       });
     } finally {
@@ -171,12 +164,6 @@ export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
   };
 
   const selectedServiceData = services.find(s => s.id === selectedService);
-  const selectedProductsData = products.filter(p => selectedProducts.includes(p.id));
-  const productsTotal = selectedProductsData.reduce((sum, product) => {
-    return sum + parseFloat(product.price.replace('R$ ', ''));
-  }, 0);
-  const servicePrice = selectedServiceData ? selectedServiceData.price : 0;
-  const totalPrice = servicePrice + productsTotal;
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -191,7 +178,7 @@ export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
         <div className="space-y-6">
           {/* Service Selection */}
           <div className="space-y-3">
-            <Label>Escolha o serviço</Label>
+            <Label>Escolha o serviço *</Label>
             {services.length > 0 ? (
               <div className="grid gap-3">
                 {services.map((service) => (
@@ -206,6 +193,9 @@ export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
                         <div>
                           <h4 className="font-medium">{service.name}</h4>
                           <p className="text-sm text-muted-foreground">{service.duration} min</p>
+                          {service.description && (
+                            <p className="text-xs text-muted-foreground mt-1">{service.description}</p>
+                          )}
                         </div>
                       </div>
                       <div className="text-right">
@@ -216,64 +206,18 @@ export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
                 ))}
               </div>
             ) : (
-              <p className="text-muted-foreground text-center py-4">
-                Esta barbearia ainda não cadastrou seus serviços.
-              </p>
+              <Card>
+                <CardContent className="p-4 text-center text-muted-foreground">
+                  <Scissors className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p>Esta barbearia ainda não cadastrou serviços.</p>
+                  <p className="text-sm">Entre em contato para mais informações.</p>
+                </CardContent>
+              </Card>
             )}
           </div>
 
           {services.length > 0 && (
             <>
-              {/* Barber Selection */}
-              <div className="space-y-3">
-                <Label>Escolha o profissional (opcional)</Label>
-                <Select value={selectedBarber} onValueChange={setSelectedBarber}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um barbeiro" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {barbers.map((barber) => (
-                      <SelectItem key={barber.id} value={barber.id}>
-                        <div className="flex items-center space-x-2">
-                          <User className="h-4 w-4" />
-                          <div>
-                            <div className="font-medium">{barber.name}</div>
-                            <div className="text-xs text-muted-foreground">{barber.specialty}</div>
-                          </div>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Products Selection */}
-              <div className="space-y-3">
-                <Label>Produtos (opcional)</Label>
-                <div className="grid gap-3">
-                  {products.map((product) => (
-                    <Card 
-                      key={product.id} 
-                      className={`cursor-pointer transition-all ${selectedProducts.includes(product.id) ? 'ring-2 ring-primary' : ''}`}
-                      onClick={() => toggleProduct(product.id)}
-                    >
-                      <CardContent className="p-4 flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <ShoppingBag className="h-5 w-5 text-primary" />
-                          <div>
-                            <h4 className="font-medium">{product.name}</h4>
-                            <p className="text-sm text-muted-foreground">{product.brand}</p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <span className="font-bold text-primary">{product.price}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-
               {/* Amenities */}
               <div className="space-y-3">
                 <Label>Comodidades disponíveis</Label>
@@ -292,7 +236,7 @@ export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
 
               {/* Date Selection */}
               <div className="space-y-3">
-                <Label>Escolha a data</Label>
+                <Label>Escolha a data *</Label>
                 <div className="flex justify-center">
                   <Calendar
                     mode="single"
@@ -302,11 +246,14 @@ export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
                     className="rounded-md border"
                   />
                 </div>
+                <p className="text-xs text-muted-foreground text-center">
+                  * Fechado aos domingos
+                </p>
               </div>
 
               {/* Time Selection */}
               <div className="space-y-3">
-                <Label>Escolha o horário</Label>
+                <Label>Escolha o horário *</Label>
                 <div className="grid grid-cols-4 gap-2">
                   {availableTimes.map((time) => (
                     <Button
@@ -352,36 +299,13 @@ export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
                         <span className="font-medium">{selectedTime}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Profissional:</span>
-                        <span className="font-medium">{barbers.find(b => b.id === selectedBarber)?.name || "A definir"}</span>
+                        <span>Duração:</span>
+                        <span className="font-medium">{selectedServiceData?.duration} min</span>
                       </div>
-                      {selectedProductsData.length > 0 && (
-                        <div className="space-y-1">
-                          <span className="text-sm text-muted-foreground">Produtos:</span>
-                          {selectedProductsData.map((product) => (
-                            <div key={product.id} className="flex justify-between text-xs pl-2">
-                              <span>• {product.name}</span>
-                              <span>{product.price}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
                       <div className="border-t pt-2">
-                        {selectedServiceData && (
-                          <div className="flex justify-between text-sm">
-                            <span>Subtotal Serviço:</span>
-                            <span>R$ {selectedServiceData.price.toFixed(2)}</span>
-                          </div>
-                        )}
-                        {productsTotal > 0 && (
-                          <div className="flex justify-between text-sm">
-                            <span>Subtotal Produtos:</span>
-                            <span>R$ {productsTotal.toFixed(2)}</span>
-                          </div>
-                        )}
-                        <div className="flex justify-between font-bold mt-1">
+                        <div className="flex justify-between font-bold">
                           <span>Total:</span>
-                          <span className="text-primary">R$ {totalPrice.toFixed(2)}</span>
+                          <span className="text-primary">R$ {selectedServiceData?.price.toFixed(2)}</span>
                         </div>
                       </div>
                     </div>
