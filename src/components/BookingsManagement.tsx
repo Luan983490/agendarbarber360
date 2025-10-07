@@ -15,17 +15,18 @@ interface Booking {
   status: string;
   total_price: number;
   notes?: string;
+  client_id: string;
   service: {
     name: string;
     duration: number;
-  };
+  } | null;
   barber?: {
     name: string;
-  };
+  } | null;
   client: {
     display_name: string;
     phone?: string;
-  };
+  } | null;
   booking_products?: {
     quantity: number;
     unit_price: number;
@@ -46,26 +47,38 @@ const BookingsManagement = ({ barbershopId }: BookingsManagementProps) => {
 
   useEffect(() => {
     fetchBookings();
+    
+    // Setup realtime subscription for automatic updates
+    const channel = supabase
+      .channel('bookings-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'bookings',
+          filter: `barbershop_id=eq.${barbershopId}`
+        },
+        (payload) => {
+          console.log('Realtime update:', payload);
+          fetchBookings(); // Refresh bookings on any change
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [barbershopId]);
 
   const fetchBookings = async () => {
     try {
       console.log('Fetching bookings for barbershop:', barbershopId);
       
+      // Fetch bookings with separate queries for related data
       const { data: bookingsData, error: bookingsError } = await supabase
         .from('bookings')
-        .select(`
-          id,
-          booking_date,
-          booking_time,
-          status,
-          total_price,
-          notes,
-          client_id,
-          services!inner(name, duration),
-          barbers(name),
-          profiles!bookings_client_id_fkey(display_name, phone)
-        `)
+        .select('*')
         .eq('barbershop_id', barbershopId)
         .order('booking_date', { ascending: false })
         .order('booking_time', { ascending: false });
@@ -77,13 +90,59 @@ const BookingsManagement = ({ barbershopId }: BookingsManagementProps) => {
 
       console.log('Raw bookings data:', bookingsData);
 
-      // Transform the data to match our interface
-      const transformedBookings = bookingsData?.map(booking => ({
-        ...booking,
-        service: booking.services,
-        barber: booking.barbers,
-        client: booking.profiles
-      })) || [];
+      if (!bookingsData || bookingsData.length === 0) {
+        setBookings([]);
+        setLoading(false);
+        return;
+      }
+
+      // Fetch related data separately
+      const serviceIds = [...new Set(bookingsData.map(b => b.service_id))];
+      const barberIds = [...new Set(bookingsData.map(b => b.barber_id).filter(Boolean))];
+      const clientIds = [...new Set(bookingsData.map(b => b.client_id))];
+
+      const [servicesRes, barbersRes, profilesRes] = await Promise.all([
+        supabase.from('services').select('id, name, duration').in('id', serviceIds),
+        barberIds.length > 0 
+          ? supabase.from('barbers').select('id, name').in('id', barberIds)
+          : Promise.resolve({ data: [], error: null }),
+        supabase.from('profiles').select('user_id, display_name, phone').in('user_id', clientIds)
+      ]);
+
+      console.log('Services:', servicesRes.data);
+      console.log('Barbers:', barbersRes.data);
+      console.log('Profiles:', profilesRes.data);
+
+      // Create lookup maps
+      const servicesMap = new Map<string, { id: string; name: string; duration: number }>();
+      servicesRes.data?.forEach(s => servicesMap.set(s.id, s));
+      
+      const barbersMap = new Map<string, { id: string; name: string }>();
+      barbersRes.data?.forEach(b => barbersMap.set(b.id, b));
+      
+      const profilesMap = new Map<string, { user_id: string; display_name: string; phone?: string }>();
+      profilesRes.data?.forEach(p => profilesMap.set(p.user_id, p));
+
+      // Transform the data
+      const transformedBookings: Booking[] = bookingsData.map(booking => {
+        const service = servicesMap.get(booking.service_id);
+        const barber = booking.barber_id ? barbersMap.get(booking.barber_id) : null;
+        const profile = profilesMap.get(booking.client_id);
+
+        return {
+          id: booking.id,
+          booking_date: booking.booking_date,
+          booking_time: booking.booking_time,
+          status: booking.status,
+          total_price: booking.total_price,
+          notes: booking.notes,
+          client_id: booking.client_id,
+          service: service ? { name: service.name, duration: service.duration } : { name: 'Serviço removido', duration: 0 },
+          barber: barber ? { name: barber.name } : null,
+          client: profile ? { display_name: profile.display_name, phone: profile.phone } : { display_name: 'Cliente não encontrado', phone: undefined },
+          booking_products: []
+        };
+      });
 
       console.log('Transformed bookings:', transformedBookings);
       setBookings(transformedBookings);
@@ -91,7 +150,7 @@ const BookingsManagement = ({ barbershopId }: BookingsManagementProps) => {
       console.error('Complete error:', error);
       toast({
         title: "Erro ao carregar agendamentos",
-        description: error.message,
+        description: error.message || "Não foi possível carregar os agendamentos",
         variant: "destructive"
       });
     } finally {
@@ -186,8 +245,10 @@ const BookingsManagement = ({ barbershopId }: BookingsManagementProps) => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-medium">{booking.client.display_name}</span>
-                          {booking.client.phone && (
+                          <span className="font-medium">
+                            {booking.client?.display_name || 'Cliente não identificado'}
+                          </span>
+                          {booking.client?.phone && (
                             <div className="flex items-center gap-1 text-sm text-muted-foreground">
                               <Phone className="h-3 w-3" />
                               {booking.client.phone}
@@ -206,10 +267,12 @@ const BookingsManagement = ({ barbershopId }: BookingsManagementProps) => {
                         
                         <div className="flex items-center gap-2">
                           <Scissors className="h-4 w-4 text-muted-foreground" />
-                          <span>{booking.service.name}</span>
-                          <span className="text-sm text-muted-foreground">
-                            ({booking.service.duration}min)
-                          </span>
+                          <span>{booking.service?.name || 'Serviço não disponível'}</span>
+                          {booking.service?.duration && (
+                            <span className="text-sm text-muted-foreground">
+                              ({booking.service.duration}min)
+                            </span>
+                          )}
                         </div>
                         
                         {booking.barber && (
