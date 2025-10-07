@@ -4,6 +4,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Star, MapPin, Clock, Heart, Share2, Calendar } from "lucide-react";
 import { BarberShopProfile } from "./BarberShopProfile";
 import { BookingModal } from "./BookingModal";
+import { useFavorites } from "@/hooks/useFavorites";
+import { useAuth } from "@/hooks/useAuth";
+import { cn } from "@/lib/utils";
 
 interface BarberShop {
   id: string;
@@ -24,6 +27,15 @@ interface BarberShopCardProps {
 }
 
 export const BarberShopCard = ({ barberShop }: BarberShopCardProps) => {
+  const { user } = useAuth();
+  const { isFavorited, toggleFavorite } = useFavorites(user?.id);
+  const isFav = isFavorited(barberShop.id);
+
+  const handleToggleFavorite = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toggleFavorite(barberShop.id);
+  };
+
   return (
     <Card className="group hover:shadow-elegant transition-all duration-300 bg-gradient-card border-border overflow-hidden">
       <div className="relative">
@@ -37,8 +49,19 @@ export const BarberShopCard = ({ barberShop }: BarberShopCardProps) => {
           
           {/* Overlay Actions */}
           <div className="absolute top-3 right-3 flex space-x-2">
-            <Button variant="secondary" size="icon" className="h-8 w-8 bg-background/80 hover:bg-background">
-              <Heart className="h-4 w-4" />
+            <Button 
+              variant="secondary" 
+              size="icon" 
+              className={cn(
+                "h-8 w-8 bg-background/80 hover:bg-background transition-colors",
+                isFav && "bg-red-500/80 hover:bg-red-500"
+              )}
+              onClick={handleToggleFavorite}
+            >
+              <Heart className={cn(
+                "h-4 w-4 transition-all",
+                isFav && "fill-white text-white"
+              )} />
             </Button>
             <Button variant="secondary" size="icon" className="h-8 w-8 bg-background/80 hover:bg-background">
               <Share2 className="h-4 w-4" />

@@ -233,6 +233,35 @@ export type Database = {
           },
         ]
       }
+      favorites: {
+        Row: {
+          barbershop_id: string
+          client_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          barbershop_id: string
+          client_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          barbershop_id?: string
+          client_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           barbershop_id: string
