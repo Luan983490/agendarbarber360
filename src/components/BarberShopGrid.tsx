@@ -30,6 +30,26 @@ export const BarberShopGrid = ({ searchQuery, activeFilters, location }: BarberS
 
   useEffect(() => {
     fetchBarbershops();
+
+    // Subscribe to real-time changes in barbershops table
+    const channel = supabase
+      .channel('barbershops-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'barbershops'
+        },
+        () => {
+          fetchBarbershops();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchBarbershops = async () => {
