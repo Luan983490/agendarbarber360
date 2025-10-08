@@ -7,8 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { TimeSlot } from './TimeSlot';
 import { BlockTimeDialog } from './BlockTimeDialog';
+import { BookingDetailsDialog } from './BookingDetailsDialog';
+import { CreateBookingDialog } from './CreateBookingDialog';
+import { BlockOptionsDialog } from './BlockOptionsDialog';
 import { Calendar, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
-import { format, addDays, startOfWeek, addWeeks, subWeeks } from 'date-fns';
+import { format, addDays, startOfWeek, addWeeks, subWeeks, endOfWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface Booking {
@@ -58,6 +61,10 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
     isBlocked: boolean;
     blockId?: string;
   } | null>(null);
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [bookingDetailsOpen, setBookingDetailsOpen] = useState(false);
+  const [createBookingOpen, setCreateBookingOpen] = useState(false);
+  const [blockOptionsOpen, setBlockOptionsOpen] = useState(false);
 
   // Maps para dados relacionados
   const [servicesMap, setServicesMap] = useState<Map<string, any>>(new Map());
@@ -229,12 +236,20 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
     const slotInfo = getSlotType(date, time);
 
     if (slotInfo.type === 'booked') {
-      // Não permitir ação em horários agendados
-      toast({
-        title: 'Horário ocupado',
-        description: 'Este horário já está agendado',
-        variant: 'destructive'
-      });
+      // Abrir detalhes do agendamento
+      const booking = bookings.find(
+        b => b.booking_date === dateStr && b.booking_time === time
+      );
+      if (booking) {
+        const service = servicesMap.get(booking.service_id);
+        const profile = profilesMap.get(booking.client_id);
+        setSelectedBooking({
+          ...booking,
+          client_name: profile?.display_name || 'Cliente',
+          service_name: service?.name || 'Serviço'
+        });
+        setBookingDetailsOpen(true);
+      }
       return;
     }
 
@@ -250,45 +265,78 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
         isBlocked: true,
         blockId: block?.id
       });
+      setDialogOpen(true);
     } else {
-      // Bloquear
+      // Mostrar opções de bloqueio ou criar agendamento
       setSelectedSlot({
         time,
         date,
         isBlocked: false
       });
+      setBlockOptionsOpen(true);
     }
-
-    setDialogOpen(true);
   };
 
-  const handleBlock = async (reason: string) => {
+  const handleBlock = async (type: 'single' | 'day' | 'week', reason: string) => {
     if (!selectedSlot || !selectedBarber) return;
 
     try {
-      const endTime = WORK_HOURS[WORK_HOURS.indexOf(selectedSlot.time) + 1] || '20:00';
-
-      const { error } = await supabase
-        .from('barber_blocks')
-        .insert({
+      const blocksToInsert = [];
+      
+      if (type === 'single') {
+        const endTime = WORK_HOURS[WORK_HOURS.indexOf(selectedSlot.time) + 1] || '20:00';
+        blocksToInsert.push({
           barber_id: selectedBarber,
           block_date: format(selectedSlot.date, 'yyyy-MM-dd'),
           start_time: selectedSlot.time,
           end_time: endTime,
           reason: reason || null
         });
+      } else if (type === 'day') {
+        // Bloquear todos os horários do dia
+        for (let i = 0; i < WORK_HOURS.length - 1; i++) {
+          blocksToInsert.push({
+            barber_id: selectedBarber,
+            block_date: format(selectedSlot.date, 'yyyy-MM-dd'),
+            start_time: WORK_HOURS[i],
+            end_time: WORK_HOURS[i + 1],
+            reason: reason || null
+          });
+        }
+      } else if (type === 'week') {
+        // Bloquear toda a semana
+        const weekStart = startOfWeek(selectedSlot.date, { locale: ptBR });
+        for (let day = 0; day < 7; day++) {
+          const currentDay = addDays(weekStart, day);
+          for (let i = 0; i < WORK_HOURS.length - 1; i++) {
+            blocksToInsert.push({
+              barber_id: selectedBarber,
+              block_date: format(currentDay, 'yyyy-MM-dd'),
+              start_time: WORK_HOURS[i],
+              end_time: WORK_HOURS[i + 1],
+              reason: reason || null
+            });
+          }
+        }
+      }
+
+      const { error } = await supabase
+        .from('barber_blocks')
+        .insert(blocksToInsert);
 
       if (error) throw error;
 
       toast({
         title: 'Horário bloqueado',
-        description: 'O horário foi bloqueado com sucesso'
+        description: type === 'single' ? 'O horário foi bloqueado' : 
+                     type === 'day' ? 'O dia foi bloqueado' : 
+                     'A semana foi bloqueada'
       });
 
       fetchScheduleData();
     } catch (error: any) {
       toast({
-        title: 'Erro ao bloquear horário',
+        title: 'Erro ao bloquear',
         description: error.message,
         variant: 'destructive'
       });
@@ -447,8 +495,8 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
         </CardContent>
       </Card>
 
-      {/* Dialog de Bloqueio */}
-      {selectedSlot && (
+      {/* Dialog de Desbloquear */}
+      {selectedSlot && selectedSlot.isBlocked && (
         <BlockTimeDialog
           open={dialogOpen}
           onOpenChange={setDialogOpen}
@@ -456,10 +504,118 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
           date={selectedSlot.date}
           isBlocked={selectedSlot.isBlocked}
           blockId={selectedSlot.blockId}
-          onBlock={handleBlock}
+          onBlock={() => {}}
           onUnblock={handleUnblock}
         />
       )}
+
+      {/* Dialog de Opções de Bloqueio */}
+      {selectedSlot && !selectedSlot.isBlocked && (
+        <BlockOptionsDialog
+          open={blockOptionsOpen}
+          onOpenChange={(open) => {
+            setBlockOptionsOpen(open);
+            if (!open) {
+              // Quando fechar sem bloquear, mostrar opção de criar agendamento
+              if (selectedSlot && !open) {
+                setCreateBookingOpen(true);
+              }
+            }
+          }}
+          time={selectedSlot.time}
+          date={selectedSlot.date}
+          onBlock={handleBlock}
+        />
+      )}
+
+      {/* Dialog de Criar Agendamento */}
+      {selectedSlot && (
+        <CreateBookingDialog
+          open={createBookingOpen}
+          onOpenChange={setCreateBookingOpen}
+          barberId={selectedBarber}
+          barbershopId={barbershopId}
+          date={selectedSlot.date}
+          time={selectedSlot.time}
+          onSuccess={fetchScheduleData}
+        />
+      )}
+
+      {/* Dialog de Detalhes do Agendamento */}
+      <BookingDetailsDialog
+        open={bookingDetailsOpen}
+        onOpenChange={setBookingDetailsOpen}
+        booking={selectedBooking}
+        onUpdateStatus={async (bookingId, status) => {
+          try {
+            const { error } = await supabase
+              .from('bookings')
+              .update({ status })
+              .eq('id', bookingId);
+            
+            if (error) throw error;
+            
+            toast({
+              title: 'Status atualizado',
+              description: 'O status do agendamento foi atualizado'
+            });
+            
+            fetchScheduleData();
+          } catch (error: any) {
+            toast({
+              title: 'Erro',
+              description: error.message,
+              variant: 'destructive'
+            });
+          }
+        }}
+        onUpdateNotes={async (bookingId, notes) => {
+          try {
+            const { error } = await supabase
+              .from('bookings')
+              .update({ notes })
+              .eq('id', bookingId);
+            
+            if (error) throw error;
+            
+            toast({
+              title: 'Observações atualizadas',
+              description: 'As observações foram salvas'
+            });
+            
+            fetchScheduleData();
+          } catch (error: any) {
+            toast({
+              title: 'Erro',
+              description: error.message,
+              variant: 'destructive'
+            });
+          }
+        }}
+        onCancel={async (bookingId) => {
+          try {
+            const { error } = await supabase
+              .from('bookings')
+              .update({ status: 'cancelled' })
+              .eq('id', bookingId);
+            
+            if (error) throw error;
+            
+            toast({
+              title: 'Agendamento cancelado',
+              description: 'O agendamento foi cancelado'
+            });
+            
+            fetchScheduleData();
+          } catch (error: any) {
+            toast({
+              title: 'Erro',
+              description: error.message,
+              variant: 'destructive'
+            });
+          }
+        }}
+      />
     </div>
   );
 };
