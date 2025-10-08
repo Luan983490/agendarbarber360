@@ -14,8 +14,7 @@ import ServiceForm from '@/components/ServiceForm';
 import ProductForm from '@/components/ProductForm';
 import BarberForm from '@/components/BarberForm';
 import BookingsManagement from '@/components/BookingsManagement';
-import ScheduleManagement from '@/components/ScheduleManagement';
-import { BarberBlocksManagement } from '@/components/BarberBlocksManagement';
+import { BarberScheduleCalendar } from '@/components/BarberScheduleCalendar';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -288,7 +287,7 @@ const Dashboard = () => {
             )}
 
             <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8">
+            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-7">
               <TabsTrigger value="overview" className="flex items-center gap-2">
                 <Store className="h-4 w-4" />
                 Visão Geral
@@ -300,10 +299,6 @@ const Dashboard = () => {
               <TabsTrigger value="schedule" className="flex items-center gap-2">
                 <CalendarDays className="h-4 w-4" />
                 Agenda
-              </TabsTrigger>
-              <TabsTrigger value="blocks" className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                Bloqueios
               </TabsTrigger>
               <TabsTrigger value="bookings" className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
@@ -421,13 +416,9 @@ const Dashboard = () => {
               />
             </TabsContent>
 
-            <TabsContent value="schedule">
-              <ScheduleManagement barbershopId={barbershop.id} />
-            </TabsContent>
-
-            <TabsContent value="blocks">
-              <BarberBlocksManagement barbershopId={barbershop.id} />
-            </TabsContent>
+          <TabsContent value="schedule">
+            <BarberScheduleCalendar barbershopId={barbershop.id} />
+          </TabsContent>
 
             <TabsContent value="bookings">
               <BookingsManagement barbershopId={barbershop.id} />
