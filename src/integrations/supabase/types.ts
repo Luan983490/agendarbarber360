@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      barber_blocks: {
+        Row: {
+          barber_id: string
+          block_date: string
+          created_at: string
+          end_time: string
+          id: string
+          reason: string | null
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          barber_id: string
+          block_date: string
+          created_at?: string
+          end_time: string
+          id?: string
+          reason?: string | null
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          barber_id?: string
+          block_date?: string
+          created_at?: string
+          end_time?: string
+          id?: string
+          reason?: string | null
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "barber_blocks_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "barbers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       barbers: {
         Row: {
           barbershop_id: string
@@ -338,6 +379,44 @@ export type Database = {
           user_type?: string | null
         }
         Relationships: []
+      }
+      reviews: {
+        Row: {
+          barbershop_id: string
+          client_id: string
+          comment: string | null
+          created_at: string
+          id: string
+          rating: number
+          updated_at: string
+        }
+        Insert: {
+          barbershop_id: string
+          client_id: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating: number
+          updated_at?: string
+        }
+        Update: {
+          barbershop_id?: string
+          client_id?: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       services: {
         Row: {

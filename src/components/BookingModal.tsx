@@ -175,6 +175,31 @@ export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
 
       // Format date for database (YYYY-MM-DD)
       const bookingDate = selectedDate.toISOString().split('T')[0];
+
+      // Check if selected barber has any blocks for this date/time
+      if (selectedBarber) {
+        const { data: blocks, error: blocksError } = await supabase
+          .from('barber_blocks')
+          .select('*')
+          .eq('barber_id', selectedBarber)
+          .eq('block_date', bookingDate);
+
+        if (blocksError) throw blocksError;
+
+        const isBlocked = blocks?.some(block => {
+          return selectedTime >= block.start_time && selectedTime < block.end_time;
+        });
+
+        if (isBlocked) {
+          toast({
+            title: "Horário indisponível",
+            description: "Este horário está bloqueado pelo barbeiro. Por favor, escolha outro horário.",
+            variant: "destructive"
+          });
+          setLoading(false);
+          return;
+        }
+      }
       
       console.log("Dados do agendamento:", {
         client_id: user.id,

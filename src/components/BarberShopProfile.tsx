@@ -7,6 +7,8 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Star, MapPin, Clock, Phone, Share2, Heart, Calendar, Scissors, DollarSign, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ReviewsSection } from "./ReviewsSection";
+import { useAuth } from "@/hooks/useAuth";
 
 interface BarberShopProfileProps {
   children: React.ReactNode;
@@ -55,6 +57,7 @@ interface Barber {
 }
 
 export const BarberShopProfile = ({ children, barberShop }: BarberShopProfileProps) => {
+  const { user } = useAuth();
   const [realBarbershop, setRealBarbershop] = useState<RealBarbershop | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [barbers, setBarbers] = useState<Barber[]>([]);
@@ -177,8 +180,8 @@ export const BarberShopProfile = ({ children, barberShop }: BarberShopProfilePro
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="services">Serviços</TabsTrigger>
               <TabsTrigger value="barbers">Barbeiros</TabsTrigger>
-              <TabsTrigger value="reviews">Avaliações</TabsTrigger>
               <TabsTrigger value="info">Informações</TabsTrigger>
+              <TabsTrigger value="reviews">Avaliações</TabsTrigger>
             </TabsList>
             
             <TabsContent value="services" className="space-y-4">
@@ -251,27 +254,10 @@ export const BarberShopProfile = ({ children, barberShop }: BarberShopProfilePro
             </TabsContent>
             
             <TabsContent value="reviews" className="space-y-4">
-              {reviews.map((review, index) => (
-                <Card key={index}>
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h4 className="font-medium">{review.name}</h4>
-                        <div className="flex items-center space-x-1">
-                          {[...Array(5)].map((_, i) => (
-                            <Star 
-                              key={i} 
-                              className={`h-4 w-4 ${i < review.rating ? 'text-primary fill-current' : 'text-muted-foreground'}`} 
-                            />
-                          ))}
-                        </div>
-                      </div>
-                      <span className="text-sm text-muted-foreground">{review.date}</span>
-                    </div>
-                    <p className="text-muted-foreground">{review.comment}</p>
-                  </CardContent>
-                </Card>
-              ))}
+              <ReviewsSection 
+                barbershopId={barberShop.id} 
+                currentUserId={user?.id}
+              />
             </TabsContent>
             
             <TabsContent value="info" className="space-y-4">
