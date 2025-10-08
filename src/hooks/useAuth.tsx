@@ -79,7 +79,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
     });
@@ -90,6 +90,43 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         description: error.message,
         variant: "destructive"
       });
+      return { error };
+    }
+
+    // Check if user is a barbershop owner and verify subscription
+    if (data.user) {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('user_type')
+        .eq('user_id', data.user.id)
+        .single();
+
+      if (profileData?.user_type === 'barbershop_owner') {
+        const { data: barbershopData } = await supabase
+          .from('barbershops')
+          .select('id')
+          .eq('owner_id', data.user.id)
+          .single();
+
+        if (barbershopData) {
+          const { data: subscriptionData } = await supabase
+            .rpc('check_subscription_status', { barbershop_uuid: barbershopData.id });
+
+          if (subscriptionData && subscriptionData.length > 0) {
+            const sub = subscriptionData[0];
+            
+            if (!sub.is_active) {
+              await supabase.auth.signOut();
+              toast({
+                title: "Teste gratuito encerrado",
+                description: "Seu teste gratuito terminou. Faça upgrade para continuar.",
+                variant: "destructive"
+              });
+              return { error: { message: "Subscription expired" } };
+            }
+          }
+        }
+      }
     }
 
     return { error };

@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Scissors, Calendar, Package, Store, Users, DollarSign, Star, Edit } from 'lucide-react';
+import { Scissors, Calendar, Package, Store, Users, DollarSign, Star, Edit, CalendarDays, AlertCircle } from 'lucide-react';
 import { Header } from '@/components/Header';
 import BarbershopSetup from '@/components/BarbershopSetup';
 import BarbershopEdit from '@/components/BarbershopEdit';
@@ -14,6 +14,9 @@ import ServiceForm from '@/components/ServiceForm';
 import ProductForm from '@/components/ProductForm';
 import BarberForm from '@/components/BarberForm';
 import BookingsManagement from '@/components/BookingsManagement';
+import ScheduleManagement from '@/components/ScheduleManagement';
+import { useSubscription } from '@/hooks/useSubscription';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface Profile {
   id: string;
@@ -81,6 +84,7 @@ const Dashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { subscription } = useSubscription(barbershop?.id || null);
 
   useEffect(() => {
     if (user) {
@@ -270,8 +274,20 @@ const Dashboard = () => {
         {!barbershop ? (
           <BarbershopSetup onBarbershopCreated={handleBarbershopCreated} />
         ) : (
-          <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-6">
+          <>
+            {subscription && subscription.plan_type === 'teste_gratis' && subscription.days_remaining <= 2 && (
+              <Alert variant="destructive" className="mb-6">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Teste Gratuito Encerrando</AlertTitle>
+                <AlertDescription>
+                  Seu teste gratuito termina em {subscription.days_remaining} dia(s). 
+                  Faça upgrade para continuar usando todas as funcionalidades.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <Tabs defaultValue="overview" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-7">
               <TabsTrigger value="overview" className="flex items-center gap-2">
                 <Store className="h-4 w-4" />
                 Visão Geral
@@ -280,9 +296,13 @@ const Dashboard = () => {
                 <Edit className="h-4 w-4" />
                 Editar
               </TabsTrigger>
+              <TabsTrigger value="schedule" className="flex items-center gap-2">
+                <CalendarDays className="h-4 w-4" />
+                Agenda
+              </TabsTrigger>
               <TabsTrigger value="bookings" className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
-                Agendamentos
+                Lista
               </TabsTrigger>
               <TabsTrigger value="services" className="flex items-center gap-2">
                 <Scissors className="h-4 w-4" />
@@ -396,6 +416,10 @@ const Dashboard = () => {
               />
             </TabsContent>
 
+            <TabsContent value="schedule">
+              <ScheduleManagement barbershopId={barbershop.id} />
+            </TabsContent>
+
             <TabsContent value="bookings">
               <BookingsManagement barbershopId={barbershop.id} />
             </TabsContent>
@@ -424,6 +448,7 @@ const Dashboard = () => {
               />
             </TabsContent>
           </Tabs>
+          </>
         )}
       </main>
     </div>
