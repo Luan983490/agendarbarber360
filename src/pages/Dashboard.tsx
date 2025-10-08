@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
+import { useUserRole } from '@/hooks/useUserRole';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -72,6 +73,7 @@ interface DashboardStats {
 
 const Dashboard = () => {
   const { user, loading: authLoading } = useAuth();
+  const { userType, loading: roleLoading } = useUserRole();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [barbershop, setBarbershop] = useState<Barbershop | null>(null);
   const [services, setServices] = useState<Service[]>([]);
@@ -240,7 +242,7 @@ const Dashboard = () => {
     fetchUserProfile(); // Refresh to get the new barbershop data
   };
 
-  if (authLoading || loading) {
+  if (authLoading || loading || roleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -253,6 +255,11 @@ const Dashboard = () => {
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // Redirecionar barbeiros para seu próprio painel
+  if (userType === 'barber') {
+    return <Navigate to="/barber-dashboard" replace />;
   }
 
   if (profile?.user_type !== 'barbershop_owner') {

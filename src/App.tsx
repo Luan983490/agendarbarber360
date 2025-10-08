@@ -8,6 +8,7 @@ import { useSupabasePing } from "@/hooks/use-supabase-ping";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import BarberDashboard from "./pages/BarberDashboard";
 import MyBookings from "./pages/MyBookings";
 import NotFound from "./pages/NotFound";
 
@@ -25,6 +26,7 @@ const AppContent = () => {
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/barber-dashboard" element={<BarberDashboard />} />
           <Route path="/my-bookings" element={<MyBookings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

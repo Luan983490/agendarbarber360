@@ -12,6 +12,7 @@ import { CreateBookingDialog } from './CreateBookingDialog';
 import { BlockOptionsDialog } from './BlockOptionsDialog';
 import { SlotActionMenu } from './SlotActionMenu';
 import { MultiBlockDialog } from './MultiBlockDialog';
+import { useUserRole } from '@/hooks/useUserRole';
 import { Calendar, ChevronLeft, ChevronRight, Loader2, Ban } from 'lucide-react';
 import { format, addDays, startOfWeek, addWeeks, subWeeks, endOfWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -50,6 +51,7 @@ const WORK_HOURS = [
 ];
 
 export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarProps) => {
+  const { userType, barberId: currentBarberId } = useUserRole();
   const [barbers, setBarbers] = useState<Barber[]>([]);
   const [selectedBarber, setSelectedBarber] = useState<string>('');
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(startOfWeek(new Date(), { locale: ptBR }));
@@ -123,16 +125,30 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
 
   const fetchBarbers = async () => {
     try {
-      const { data, error } = await supabase
-        .from('barbers')
-        .select('id, name')
-        .eq('barbershop_id', barbershopId)
-        .eq('is_active', true);
+      // Se for barbeiro, apenas buscar seus próprios dados
+      if (userType === 'barber' && currentBarberId) {
+        const { data, error } = await supabase
+          .from('barbers')
+          .select('id, name')
+          .eq('id', currentBarberId)
+          .single();
 
-      if (error) throw error;
-      setBarbers(data || []);
-      if (data && data.length > 0) {
-        setSelectedBarber(data[0].id);
+        if (error) throw error;
+        setBarbers([data]);
+        setSelectedBarber(data.id);
+      } else {
+        // Se for dono, buscar todos os barbeiros da barbearia
+        const { data, error } = await supabase
+          .from('barbers')
+          .select('id, name')
+          .eq('barbershop_id', barbershopId)
+          .eq('is_active', true);
+
+        if (error) throw error;
+        setBarbers(data || []);
+        if (data && data.length > 0) {
+          setSelectedBarber(data[0].id);
+        }
       }
     } catch (error: any) {
       console.error('Erro ao carregar barbeiros:', error);
@@ -437,21 +453,29 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Seletor de Barbeiro */}
-          <div className="flex items-center gap-4">
-            <Select value={selectedBarber} onValueChange={setSelectedBarber}>
-              <SelectTrigger className="w-[280px]">
-                <SelectValue placeholder="Selecione o barbeiro" />
-              </SelectTrigger>
-              <SelectContent>
-                {barbers.map((barber) => (
-                  <SelectItem key={barber.id} value={barber.id}>
-                    {barber.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Seletor de Barbeiro - apenas para donos */}
+          {userType !== 'barber' && barbers.length > 1 && (
+            <div className="flex items-center gap-4">
+              <Select value={selectedBarber} onValueChange={setSelectedBarber}>
+                <SelectTrigger className="w-[280px]">
+                  <SelectValue placeholder="Selecione o barbeiro" />
+                </SelectTrigger>
+                <SelectContent>
+                  {barbers.map((barber) => (
+                    <SelectItem key={barber.id} value={barber.id}>
+                      {barber.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          
+          {userType === 'barber' && barbers.length > 0 && (
+            <div className="text-lg font-semibold">
+              {barbers[0].name}
+            </div>
+          )}
 
           {/* Navegação de Semana */}
           <div className="flex items-center justify-between">

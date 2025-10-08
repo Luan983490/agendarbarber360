@@ -66,6 +66,7 @@ export type Database = {
           phone: string | null
           specialty: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           barbershop_id: string
@@ -77,6 +78,7 @@ export type Database = {
           phone?: string | null
           specialty?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           barbershop_id?: string
@@ -88,6 +90,7 @@ export type Database = {
           phone?: string | null
           specialty?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
