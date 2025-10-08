@@ -13,7 +13,7 @@ interface TimeSlotProps {
   block?: {
     reason: string | null;
   };
-  onClick?: () => void;
+  onClick?: (event: React.MouseEvent) => void;
 }
 
 export const TimeSlot = ({ time, type, booking, block, onClick }: TimeSlotProps) => {
@@ -41,18 +41,39 @@ export const TimeSlot = ({ time, type, booking, block, onClick }: TimeSlotProps)
     }
   };
 
+  const getStatusBadge = () => {
+    if (type !== 'booked' || !booking) return null;
+    
+    const statusColors = {
+      pending: 'bg-yellow-500',
+      confirmed: 'bg-green-500',
+      cancelled: 'bg-red-500',
+      completed: 'bg-blue-500',
+    };
+    
+    return (
+      <div className={cn('w-2 h-2 rounded-full', statusColors[booking.status as keyof typeof statusColors] || 'bg-gray-500')} />
+    );
+  };
+
   const slotContent = (
     <div
       className={cn(
-        'p-2 rounded-md border-2 transition-all',
+        'p-2 rounded-md border-2 transition-all min-h-[60px] flex flex-col justify-between hover:scale-105',
         getSlotStyles()
       )}
       onClick={onClick}
     >
       <div className="flex items-center justify-between gap-1">
         {getIcon()}
-        <span className="text-xs font-medium">{time}</span>
+        {getStatusBadge()}
       </div>
+      {type === 'booked' && booking && (
+        <div className="text-[10px] truncate">
+          <p className="font-semibold truncate">{booking.client_name}</p>
+          <p className="text-muted-foreground truncate">{booking.service_name}</p>
+        </div>
+      )}
     </div>
   );
 

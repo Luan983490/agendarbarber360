@@ -10,7 +10,9 @@ import { BlockTimeDialog } from './BlockTimeDialog';
 import { BookingDetailsDialog } from './BookingDetailsDialog';
 import { CreateBookingDialog } from './CreateBookingDialog';
 import { BlockOptionsDialog } from './BlockOptionsDialog';
-import { Calendar, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { SlotActionMenu } from './SlotActionMenu';
+import { MultiBlockDialog } from './MultiBlockDialog';
+import { Calendar, ChevronLeft, ChevronRight, Loader2, Ban } from 'lucide-react';
 import { format, addDays, startOfWeek, addWeeks, subWeeks, endOfWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -65,6 +67,10 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
   const [bookingDetailsOpen, setBookingDetailsOpen] = useState(false);
   const [createBookingOpen, setCreateBookingOpen] = useState(false);
   const [blockOptionsOpen, setBlockOptionsOpen] = useState(false);
+  const [actionMenuOpen, setActionMenuOpen] = useState(false);
+  const [actionMenuPosition, setActionMenuPosition] = useState({ x: 0, y: 0 });
+  const [multiBlockOpen, setMultiBlockOpen] = useState(false);
+  const [selectedSlots, setSelectedSlots] = useState<Array<{ date: Date; time: string }>>([]);
 
   // Maps para dados relacionados
   const [servicesMap, setServicesMap] = useState<Map<string, any>>(new Map());
@@ -231,12 +237,12 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
     return { type: 'available' };
   };
 
-  const handleSlotClick = (date: Date, time: string) => {
+  const handleSlotClick = (date: Date, time: string, event: React.MouseEvent) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     const slotInfo = getSlotType(date, time);
 
+    // Se for agendado, abrir detalhes
     if (slotInfo.type === 'booked') {
-      // Abrir detalhes do agendamento
       const booking = bookings.find(
         b => b.booking_date === dateStr && b.booking_time === time
       );
@@ -253,8 +259,8 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
       return;
     }
 
+    // Se for bloqueado, desbloquear
     if (slotInfo.type === 'blocked') {
-      // Desbloquear
       const block = blocks.find(b => {
         if (b.block_date !== dateStr) return false;
         return time >= b.start_time && time < b.end_time;
@@ -266,15 +272,17 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
         blockId: block?.id
       });
       setDialogOpen(true);
-    } else {
-      // Mostrar opções de bloqueio ou criar agendamento
-      setSelectedSlot({
-        time,
-        date,
-        isBlocked: false
-      });
-      setBlockOptionsOpen(true);
+      return;
     }
+
+    // Se for disponível, mostrar menu de ações
+    setSelectedSlot({
+      time,
+      date,
+      isBlocked: false
+    });
+    setActionMenuPosition({ x: event.clientX, y: event.clientY });
+    setActionMenuOpen(true);
   };
 
   const handleBlock = async (type: 'single' | 'day' | 'week', reason: string) => {
@@ -293,7 +301,6 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
           reason: reason || null
         });
       } else if (type === 'day') {
-        // Bloquear todos os horários do dia
         for (let i = 0; i < WORK_HOURS.length - 1; i++) {
           blocksToInsert.push({
             barber_id: selectedBarber,
@@ -304,7 +311,6 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
           });
         }
       } else if (type === 'week') {
-        // Bloquear toda a semana
         const weekStart = startOfWeek(selectedSlot.date, { locale: ptBR });
         for (let day = 0; day < 7; day++) {
           const currentDay = addDays(weekStart, day);
@@ -337,6 +343,48 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
     } catch (error: any) {
       toast({
         title: 'Erro ao bloquear',
+        description: error.message,
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleMultiDayBlock = async (startDate: Date, endDate: Date, reason: string) => {
+    if (!selectedBarber) return;
+
+    try {
+      const blocksToInsert = [];
+      let currentDate = new Date(startDate);
+      const end = new Date(endDate);
+
+      while (currentDate <= end) {
+        for (let i = 0; i < WORK_HOURS.length - 1; i++) {
+          blocksToInsert.push({
+            barber_id: selectedBarber,
+            block_date: format(currentDate, 'yyyy-MM-dd'),
+            start_time: WORK_HOURS[i],
+            end_time: WORK_HOURS[i + 1],
+            reason: reason || null
+          });
+        }
+        currentDate = addDays(currentDate, 1);
+      }
+
+      const { error } = await supabase
+        .from('barber_blocks')
+        .insert(blocksToInsert);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Período bloqueado',
+        description: `${blocksToInsert.length} horários foram bloqueados`
+      });
+
+      fetchScheduleData();
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao bloquear período',
         description: error.message,
         variant: 'destructive'
       });
@@ -429,20 +477,30 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
             </Button>
           </div>
 
-          {/* Legenda */}
-          <div className="flex flex-wrap gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-success/10 border-2 border-success/30" />
-              <span>Disponível</span>
+          {/* Ações e Legenda */}
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex flex-wrap gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded bg-success/10 border-2 border-success/30" />
+                <span>Disponível</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded bg-primary/10 border-2 border-primary/30" />
+                <span>Agendado</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded bg-destructive/10 border-2 border-destructive/30" />
+                <span>Bloqueado</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-primary/10 border-2 border-primary/30" />
-              <span>Agendado</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-destructive/10 border-2 border-destructive/30" />
-              <span>Bloqueado</span>
-            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setMultiBlockOpen(true)}
+            >
+              <Ban className="mr-2 h-4 w-4" />
+              Bloquear Múltiplos Dias
+            </Button>
           </div>
 
           {/* Grade de Horários */}
@@ -483,7 +541,7 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
                           type={slotInfo.type}
                           booking={slotInfo.booking}
                           block={slotInfo.block}
-                          onClick={() => handleSlotClick(day, time)}
+                          onClick={(e) => handleSlotClick(day, time, e)}
                         />
                       );
                     })}
@@ -509,24 +567,41 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
         />
       )}
 
+      {/* Menu de Ações */}
+      {selectedSlot && !selectedSlot.isBlocked && (
+        <SlotActionMenu
+          open={actionMenuOpen}
+          onOpenChange={setActionMenuOpen}
+          position={actionMenuPosition}
+          onCreateBooking={() => {
+            setActionMenuOpen(false);
+            setCreateBookingOpen(true);
+          }}
+          onBlockTime={() => {
+            setActionMenuOpen(false);
+            setBlockOptionsOpen(true);
+          }}
+        />
+      )}
+
       {/* Dialog de Opções de Bloqueio */}
       {selectedSlot && !selectedSlot.isBlocked && (
         <BlockOptionsDialog
           open={blockOptionsOpen}
-          onOpenChange={(open) => {
-            setBlockOptionsOpen(open);
-            if (!open) {
-              // Quando fechar sem bloquear, mostrar opção de criar agendamento
-              if (selectedSlot && !open) {
-                setCreateBookingOpen(true);
-              }
-            }
-          }}
+          onOpenChange={setBlockOptionsOpen}
           time={selectedSlot.time}
           date={selectedSlot.date}
           onBlock={handleBlock}
         />
       )}
+
+      {/* Dialog de Bloqueio de Múltiplos Dias */}
+      <MultiBlockDialog
+        open={multiBlockOpen}
+        onOpenChange={setMultiBlockOpen}
+        barberId={selectedBarber}
+        onBlock={handleMultiDayBlock}
+      />
 
       {/* Dialog de Criar Agendamento */}
       {selectedSlot && (
