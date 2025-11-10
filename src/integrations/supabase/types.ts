@@ -277,6 +277,116 @@ export type Database = {
           },
         ]
       }
+      client_packages: {
+        Row: {
+          barbershop_id: string
+          client_id: string
+          created_at: string
+          expiry_date: string
+          id: string
+          package_id: string
+          purchase_date: string
+          sessions_remaining: number
+          sessions_total: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          barbershop_id: string
+          client_id: string
+          created_at?: string
+          expiry_date: string
+          id?: string
+          package_id: string
+          purchase_date?: string
+          sessions_remaining: number
+          sessions_total: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          barbershop_id?: string
+          client_id?: string
+          created_at?: string
+          expiry_date?: string
+          id?: string
+          package_id?: string
+          purchase_date?: string
+          sessions_remaining?: number
+          sessions_total?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_packages_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_packages_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_subscriptions: {
+        Row: {
+          barbershop_id: string
+          benefits: Json | null
+          client_id: string
+          created_at: string
+          id: string
+          next_billing_date: string
+          plan_description: string | null
+          plan_name: string
+          price_monthly: number
+          start_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          barbershop_id: string
+          benefits?: Json | null
+          client_id: string
+          created_at?: string
+          id?: string
+          next_billing_date: string
+          plan_description?: string | null
+          plan_name: string
+          price_monthly: number
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          barbershop_id?: string
+          benefits?: Json | null
+          client_id?: string
+          created_at?: string
+          id?: string
+          next_billing_date?: string
+          plan_description?: string | null
+          plan_name?: string
+          price_monthly?: number
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_subscriptions_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       favorites: {
         Row: {
           barbershop_id: string
@@ -305,6 +415,92 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      packages: {
+        Row: {
+          barbershop_id: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          price: number
+          sessions_included: number
+          updated_at: string
+          validity_days: number
+        }
+        Insert: {
+          barbershop_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          price: number
+          sessions_included?: number
+          updated_at?: string
+          validity_days?: number
+        }
+        Update: {
+          barbershop_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          price?: number
+          sessions_included?: number
+          updated_at?: string
+          validity_days?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "packages_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_cards: {
+        Row: {
+          card_brand: string
+          cardholder_name: string
+          client_id: string
+          created_at: string
+          expiry_month: number
+          expiry_year: number
+          id: string
+          is_default: boolean | null
+          last_four_digits: string
+          updated_at: string
+        }
+        Insert: {
+          card_brand: string
+          cardholder_name: string
+          client_id: string
+          created_at?: string
+          expiry_month: number
+          expiry_year: number
+          id?: string
+          is_default?: boolean | null
+          last_four_digits: string
+          updated_at?: string
+        }
+        Update: {
+          card_brand?: string
+          cardholder_name?: string
+          client_id?: string
+          created_at?: string
+          expiry_month?: number
+          expiry_year?: number
+          id?: string
+          is_default?: boolean | null
+          last_four_digits?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       products: {
         Row: {
