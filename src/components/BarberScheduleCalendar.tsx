@@ -228,16 +228,35 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
       const newServicesMap = new Map();
       const newProfilesMap = new Map();
       
-      bookingsData?.forEach(booking => {
-        // Armazenar serviço
+      bookingsData?.forEach((booking: any) => {
+        // Debug: verificar estrutura dos dados
+        console.log('Booking data:', {
+          id: booking.id,
+          services: booking.services,
+          profiles: booking.profiles,
+          client_name: booking.client_name,
+          is_external: booking.is_external_booking
+        });
+        
+        // Armazenar serviço (pode vir como objeto ou array)
         if (booking.services) {
-          newServicesMap.set(booking.service_id, booking.services);
+          const service = Array.isArray(booking.services) ? booking.services[0] : booking.services;
+          if (service) {
+            newServicesMap.set(booking.service_id, service);
+          }
         }
-        // Armazenar perfil
+        
+        // Armazenar perfil (pode vir como objeto ou array)
         if (booking.profiles && booking.client_id) {
-          newProfilesMap.set(booking.client_id, booking.profiles);
+          const profile = Array.isArray(booking.profiles) ? booking.profiles[0] : booking.profiles;
+          if (profile) {
+            newProfilesMap.set(booking.client_id, profile);
+          }
         }
       });
+      
+      console.log('Services map:', Array.from(newServicesMap.entries()));
+      console.log('Profiles map:', Array.from(newProfilesMap.entries()));
       
       setServicesMap(newServicesMap);
       setProfilesMap(newProfilesMap);
