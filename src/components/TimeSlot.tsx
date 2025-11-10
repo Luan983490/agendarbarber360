@@ -4,7 +4,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/h
 
 interface TimeSlotProps {
   time: string;
-  type: 'available' | 'booked' | 'blocked';
+  type: 'available' | 'booked' | 'booked-external' | 'blocked';
   booking?: {
     client_name: string;
     service_name: string;
@@ -23,6 +23,8 @@ export const TimeSlot = ({ time, type, booking, block, onClick }: TimeSlotProps)
         return 'bg-success/10 hover:bg-success/20 border-success/30 cursor-pointer';
       case 'booked':
         return 'bg-primary/10 border-primary/30 cursor-pointer';
+      case 'booked-external':
+        return 'bg-amber-500/10 border-amber-500/30 cursor-pointer hover:bg-amber-500/20';
       case 'blocked':
         return 'bg-destructive/10 border-destructive/30 cursor-pointer';
       default:
@@ -36,6 +38,8 @@ export const TimeSlot = ({ time, type, booking, block, onClick }: TimeSlotProps)
         return <Clock className="h-3 w-3 text-success" />;
       case 'booked':
         return <User className="h-3 w-3 text-primary" />;
+      case 'booked-external':
+        return <User className="h-3 w-3 text-amber-500" />;
       case 'blocked':
         return <Ban className="h-3 w-3 text-destructive" />;
     }
@@ -68,7 +72,7 @@ export const TimeSlot = ({ time, type, booking, block, onClick }: TimeSlotProps)
         {getIcon()}
         {getStatusBadge()}
       </div>
-      {type === 'booked' && booking && (
+      {(type === 'booked' || type === 'booked-external') && booking && (
         <div className="text-[10px] truncate">
           <p className="font-semibold truncate">{booking.client_name}</p>
           <p className="text-muted-foreground truncate">{booking.service_name}</p>
@@ -77,7 +81,7 @@ export const TimeSlot = ({ time, type, booking, block, onClick }: TimeSlotProps)
     </div>
   );
 
-  if (type === 'booked' && booking) {
+  if ((type === 'booked' || type === 'booked-external') && booking) {
     return (
       <HoverCard>
         <HoverCardTrigger asChild>
@@ -86,7 +90,7 @@ export const TimeSlot = ({ time, type, booking, block, onClick }: TimeSlotProps)
         <HoverCardContent className="w-64">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-primary" />
+              <User className={cn("h-4 w-4", type === 'booked-external' ? "text-amber-500" : "text-primary")} />
               <p className="text-sm font-semibold">{booking.client_name}</p>
             </div>
             <div className="flex items-center gap-2">

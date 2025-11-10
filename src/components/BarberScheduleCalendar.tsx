@@ -220,7 +220,7 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
   };
 
   const getSlotType = (date: Date, time: string): {
-    type: 'available' | 'booked' | 'blocked';
+    type: 'available' | 'booked' | 'booked-external' | 'blocked';
     booking?: any;
     block?: any;
   } => {
@@ -236,13 +236,13 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
       
       let clientName = 'Cliente';
       if (booking.is_external_booking) {
-        clientName = booking.client_name ? `${booking.client_name} (Externo)` : 'Reserva Externa';
+        clientName = booking.client_name || 'Cliente Externo';
       } else {
         clientName = booking.client_name || profile?.display_name || 'Cliente';
       }
       
       return {
-        type: 'booked',
+        type: booking.is_external_booking ? 'booked-external' : 'booked',
         booking: {
           client_name: clientName,
           service_name: service?.name || 'Serviço',
@@ -271,7 +271,7 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
     const slotInfo = getSlotType(date, time);
 
     // Se for agendado, abrir detalhes
-    if (slotInfo.type === 'booked') {
+    if (slotInfo.type === 'booked' || slotInfo.type === 'booked-external') {
       const booking = bookings.find(
         b => b.booking_date === dateStr && b.booking_time === time
       );
@@ -281,7 +281,7 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
         
         let clientName = 'Cliente';
         if (booking.is_external_booking) {
-          clientName = booking.client_name ? `${booking.client_name} (Externo)` : 'Reserva Externa';
+          clientName = booking.client_name || 'Cliente Externo';
         } else {
           clientName = booking.client_name || profile?.display_name || 'Cliente';
         }
@@ -536,6 +536,10 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-primary/10 border-2 border-primary/30" />
                 <span>Agendado</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-amber-500/10 border-2 border-amber-500/30" />
+                <span>Agendado sem Cadastro</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-destructive/10 border-2 border-destructive/30" />
