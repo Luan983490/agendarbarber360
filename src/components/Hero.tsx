@@ -24,7 +24,7 @@ export const Hero = () => {
             Agende serviços nas melhores barbearias da sua região. Rápido, fácil e sem complicações.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
               variant="gradient" 
               size="lg"
@@ -44,23 +44,6 @@ export const Hero = () => {
                 Como Funciona
               </Button>
             </HowItWorks>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-3xl mx-auto">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary mb-2">500+</div>
-              <p className="text-muted-foreground">Barbearias Parceiras</p>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary mb-2">50k+</div>
-              <p className="text-muted-foreground">Agendamentos Realizados</p>
-            </div>
-            <div className="text-center flex items-center justify-center">
-              <Star className="h-6 w-6 text-primary mr-2 fill-current" />
-              <div className="text-3xl font-bold text-primary mr-1">4.9</div>
-              <p className="text-muted-foreground">Avaliação Média</p>
-            </div>
           </div>
         </div>
       </div>
