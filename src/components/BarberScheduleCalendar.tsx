@@ -275,10 +275,10 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
     const dateStr = format(date, 'yyyy-MM-dd');
     const timeStr = time.substring(0, 5); // Normalizar para "HH:MM"
 
-    // Verificar se há agendamento
+    // Verificar se há agendamento (ignorar cancelados)
     const booking = bookings.find((b: any) => {
       const bookingTime = b.booking_time.substring(0, 5); // Normalizar para "HH:MM"
-      return b.booking_date === dateStr && bookingTime === timeStr;
+      return b.booking_date === dateStr && bookingTime === timeStr && b.status !== 'cancelled';
     });
     
     if (booking) {
@@ -324,7 +324,7 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
     if (slotInfo.type === 'booked' || slotInfo.type === 'booked-external') {
       const booking = bookings.find((b: any) => {
         const bookingTime = b.booking_time.substring(0, 5);
-        return b.booking_date === dateStr && bookingTime === timeStr;
+        return b.booking_date === dateStr && bookingTime === timeStr && b.status !== 'cancelled';
       });
       
       if (booking) {
