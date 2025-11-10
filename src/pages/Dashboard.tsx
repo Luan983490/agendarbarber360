@@ -425,9 +425,12 @@ const Dashboard = () => {
             <main className="flex-1 overflow-auto w-full">
               <div className="w-full">
                 <div className="sticky top-0 z-10 bg-background border-b px-4 py-3 lg:px-6">
-                  <div className="flex items-center gap-4">
-                    <SidebarTrigger>
-                      <Menu className="h-6 w-6" />
+                  <div className="flex items-center gap-3">
+                    <SidebarTrigger asChild>
+                      <Button variant="outline" size="sm" className="gap-2">
+                        <Menu className="h-4 w-4" />
+                        <span className="hidden sm:inline">Menu</span>
+                      </Button>
                     </SidebarTrigger>
                     <div className="flex-1 min-w-0">
                       <h1 className="text-xl lg:text-3xl font-bold truncate">Dashboard da Barbearia</h1>

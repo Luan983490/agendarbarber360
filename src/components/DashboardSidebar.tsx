@@ -33,16 +33,20 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
 
   return (
     <Sidebar className="border-r" collapsible="offcanvas">
-      <SidebarHeader className="border-b p-4">
+      <SidebarHeader className="border-b p-4 bg-muted/50">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Menu</h2>
+          <div className="flex items-center gap-2">
+            <Store className="h-5 w-5 text-primary" />
+            <h2 className="text-lg font-semibold">Menu Dashboard</h2>
+          </div>
           <Button 
             variant="ghost" 
-            size="icon"
-            className="lg:hidden"
+            size="sm"
+            className="lg:hidden gap-1"
             onClick={() => setOpen(false)}
           >
             <X className="h-4 w-4" />
+            <span className="text-xs">Fechar</span>
           </Button>
         </div>
       </SidebarHeader>
