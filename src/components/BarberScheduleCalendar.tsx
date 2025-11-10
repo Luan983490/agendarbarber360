@@ -273,11 +273,13 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
     block?: any;
   } => {
     const dateStr = format(date, 'yyyy-MM-dd');
+    const timeStr = time.substring(0, 5); // Normalizar para "HH:MM"
 
     // Verificar se há agendamento
-    const booking = bookings.find(
-      (b: any) => b.booking_date === dateStr && b.booking_time === time
-    );
+    const booking = bookings.find((b: any) => {
+      const bookingTime = b.booking_time.substring(0, 5); // Normalizar para "HH:MM"
+      return b.booking_date === dateStr && bookingTime === timeStr;
+    });
     
     if (booking) {
       return {
@@ -295,7 +297,7 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
       if (b.block_date !== dateStr) return false;
       
       // Normalizar os horários removendo segundos para comparação
-      const slotTime = time.substring(0, 5); // "08:00"
+      const slotTime = timeStr;
       const blockStart = b.start_time.substring(0, 5);
       const blockEnd = b.end_time.substring(0, 5);
       
@@ -315,13 +317,16 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
 
   const handleSlotClick = (date: Date, time: string, event: React.MouseEvent) => {
     const dateStr = format(date, 'yyyy-MM-dd');
+    const timeStr = time.substring(0, 5);
     const slotInfo = getSlotType(date, time);
 
     // Se for agendado, abrir detalhes
     if (slotInfo.type === 'booked' || slotInfo.type === 'booked-external') {
-      const booking = bookings.find(
-        (b: any) => b.booking_date === dateStr && b.booking_time === time
-      );
+      const booking = bookings.find((b: any) => {
+        const bookingTime = b.booking_time.substring(0, 5);
+        return b.booking_date === dateStr && bookingTime === timeStr;
+      });
+      
       if (booking) {
         setSelectedBooking({
           ...booking,
