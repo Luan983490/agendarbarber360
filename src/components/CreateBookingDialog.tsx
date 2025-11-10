@@ -423,43 +423,18 @@ export const CreateBookingDialog = ({
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label className="text-sm text-muted-foreground">Dia:</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal h-10 border-input bg-muted/30 hover:bg-muted/50",
-                        !date && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{date ? format(date, 'dd/MM/yyyy') : "Selecione"}</span>
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={date}
-                      onSelect={(newDate) => newDate && setDate(newDate)}
-                      initialFocus
-                      className="pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
+                <Input type="text" value={date ? format(date, 'dd/MM/yyyy') : ''} readOnly className="h-10 bg-muted/30" />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="time" className="text-sm text-muted-foreground">Hora Início:</Label>
-                <div className="relative">
-                  <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
-                  <Input
-                    id="time"
-                    type="time"
-                    value={time}
-                    onChange={(e) => setTime(e.target.value)}
-                    className="pl-10 h-10 bg-muted/30 border-input"
-                  />
-                </div>
+                <Input
+                  id="time"
+                  type="text"
+                  value={time}
+                  readOnly
+                  className="h-10 bg-muted/30"
+                />
               </div>
 
               <div className="space-y-2">
@@ -501,25 +476,23 @@ export const CreateBookingDialog = ({
                   Duração:
                   <HelpCircle className="h-3 w-3" />
                 </Label>
-                <Select disabled value={calculateTotalDuration() > 0 ? `${calculateTotalDuration()}` : undefined}>
-                  <SelectTrigger className="h-10 bg-muted/30 border-input">
-                    <SelectValue placeholder={calculateTotalDuration() ? `${calculateTotalDuration()} min` : ""} />
-                  </SelectTrigger>
-                </Select>
+                <Input 
+                  value={services.find(s => s.id === selectedService)?.duration ? `${services.find(s => s.id === selectedService)?.duration} min` : ''} 
+                  readOnly 
+                  className="h-10 bg-muted/30" 
+                />
               </div>
             </div>
 
-            <Button
+            <button
               type="button"
-              variant="ghost"
-              size="sm"
               onClick={addService}
               disabled={!selectedService}
-              className="w-full justify-center border border-dashed border-input hover:bg-muted/30 h-10 text-sm"
+              className="w-full text-sm text-primary flex items-center justify-center gap-1 py-2 hover:underline disabled:opacity-50"
             >
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4" />
               Adicionar serviço
-            </Button>
+            </button>
 
             <div className="space-y-2">
               <Label htmlFor="client" className="text-sm text-muted-foreground">Cliente:</Label>
@@ -576,7 +549,7 @@ export const CreateBookingDialog = ({
                 id="notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder=""
+                placeholder="Digite observações..."
                 rows={3}
                 className="resize-none bg-muted/30 border-input"
               />
@@ -592,70 +565,94 @@ export const CreateBookingDialog = ({
           </TabsContent>
 
           <TabsContent value="block" className="space-y-4 mt-6 px-1">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label className="text-sm text-muted-foreground">Tipo:</Label>
+              <Select defaultValue="single">
+                <SelectTrigger className="h-10 bg-muted/30 border-input">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="single">Horário único</SelectItem>
+                  <SelectItem value="range">Período</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-sm text-muted-foreground">Dia:</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal h-10 border-input bg-muted/30 hover:bg-muted/50",
-                        !date && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{date ? format(date, 'dd/MM/yyyy') : "Selecione"}</span>
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={date}
-                      onSelect={(newDate) => newDate && setDate(newDate)}
-                      initialFocus
-                      className="pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
+                <Label className="text-sm text-muted-foreground">Dia Início:</Label>
+                <Input type="text" value={date ? format(date, 'dd/MM/yyyy') : ''} readOnly className="h-10 bg-muted/30" />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="block-start" className="text-sm text-muted-foreground">Hora Início:</Label>
-                <div className="relative">
-                  <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
-                  <Input
-                    id="block-start"
-                    type="time"
-                    value={blockStartTime}
-                    onChange={(e) => setBlockStartTime(e.target.value)}
-                    className="pl-10 h-10 bg-muted/30 border-input"
-                  />
-                </div>
+                <Select value={blockStartTime} onValueChange={setBlockStartTime}>
+                  <SelectTrigger className="h-10 bg-muted/30 border-input">
+                    <SelectValue placeholder="Hora" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border-border z-50 max-h-60">
+                    {Array.from({ length: 48 }, (_, i) => {
+                      const hour = Math.floor(i / 2).toString().padStart(2, '0');
+                      const minute = (i % 2) * 30;
+                      const minuteStr = minute.toString().padStart(2, '0');
+                      return `${hour}:${minuteStr}`;
+                    }).map(timeOption => (
+                      <SelectItem key={timeOption} value={timeOption}>{timeOption}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm text-muted-foreground">Dia Fim:</Label>
+                <Input type="text" value={date ? format(date, 'dd/MM/yyyy') : ''} readOnly className="h-10 bg-muted/30" />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="block-end" className="text-sm text-muted-foreground">Hora Fim:</Label>
-                <div className="relative">
-                  <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
-                  <Input
-                    id="block-end"
-                    type="time"
-                    value={blockEndTime}
-                    onChange={(e) => setBlockEndTime(e.target.value)}
-                    className="pl-10 h-10 bg-muted/30 border-input"
-                  />
-                </div>
+                <Select value={blockEndTime} onValueChange={setBlockEndTime}>
+                  <SelectTrigger className="h-10 bg-muted/30 border-input">
+                    <SelectValue placeholder="Hora" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border-border z-50 max-h-60">
+                    {Array.from({ length: 48 }, (_, i) => {
+                      const hour = Math.floor(i / 2).toString().padStart(2, '0');
+                      const minute = (i % 2) * 30;
+                      const minuteStr = minute.toString().padStart(2, '0');
+                      return `${hour}:${minuteStr}`;
+                    }).map(timeOption => (
+                      <SelectItem key={timeOption} value={timeOption}>{timeOption}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="block-reason" className="text-sm text-muted-foreground">Motivo (opcional)</Label>
+              <Label htmlFor="block-barber" className="text-sm text-muted-foreground">Profissional:</Label>
+              <Select value={selectedBarber} onValueChange={setSelectedBarber}>
+                <SelectTrigger id="block-barber" className="h-10 bg-muted/30 border-input">
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border z-50">
+                  {barbers.map((barber) => (
+                    <SelectItem key={barber.id} value={barber.id}>
+                      {barber.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="block-reason" className="text-sm text-muted-foreground">Observações</Label>
               <Textarea
                 id="block-reason"
                 value={blockReason}
                 onChange={(e) => setBlockReason(e.target.value)}
-                placeholder="Ex: Almoço, consulta médica, etc."
+                placeholder="Digite observações..."
                 rows={3}
                 className="resize-none bg-muted/30 border-input"
               />
@@ -664,49 +661,58 @@ export const CreateBookingDialog = ({
             <Button 
               onClick={handleBlockTime}
               className="w-full h-11 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm mt-2"
+              disabled={!blockStartTime || !blockEndTime || !selectedBarber}
             >
-              <Ban className="mr-2 h-4 w-4" />
-              BLOQUEAR HORÁRIO
+              BLOQUEAR
             </Button>
           </TabsContent>
 
           <TabsContent value="unblock" className="space-y-4 mt-6 px-1">
-            <div className="space-y-2">
-              <Label className="text-sm text-muted-foreground">Horários Bloqueados</Label>
-              {blocks.length === 0 ? (
-                <p className="text-center text-muted-foreground text-sm py-8">
-                  Nenhum horário bloqueado
-                </p>
-              ) : (
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {blocks.map((block) => (
-                    <div
-                      key={block.id}
-                      className="flex items-center justify-between p-3 border rounded-lg bg-muted/30"
-                    >
-                      <div className="space-y-1">
-                        <p className="font-medium text-sm">
-                          {format(new Date(block.block_date), 'dd/MM/yyyy', { locale: ptBR })}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {block.start_time.substring(0, 5)} - {block.end_time.substring(0, 5)}
-                        </p>
-                        {block.reason && (
-                          <p className="text-xs text-muted-foreground italic">{block.reason}</p>
-                        )}
-                      </div>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleUnblock(block.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm text-muted-foreground">Dia Início:</Label>
+                <Input type="date" className="h-10 bg-muted/30 border-input" />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm text-muted-foreground">Hora Início:</Label>
+                <Input type="time" className="h-10 bg-muted/30 border-input" />
+              </div>
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm text-muted-foreground">Dia Fim:</Label>
+                <Input type="date" className="h-10 bg-muted/30 border-input" />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm text-muted-foreground">Hora Fim:</Label>
+                <Input type="time" className="h-10 bg-muted/30 border-input" />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm text-muted-foreground">Profissional:</Label>
+              <Select value={selectedBarber} onValueChange={setSelectedBarber}>
+                <SelectTrigger className="h-10 bg-muted/30 border-input">
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border z-50">
+                  {barbers.map((barber) => (
+                    <SelectItem key={barber.id} value={barber.id}>
+                      {barber.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button 
+              className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm mt-2"
+            >
+              DESBLOQUEAR
+            </Button>
           </TabsContent>
 
           <TabsContent value="recurring" className="space-y-4 mt-6 px-1">
