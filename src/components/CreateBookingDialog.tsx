@@ -103,48 +103,36 @@ export const CreateBookingDialog = ({
     setLoading(true);
     try {
       const service = services.find(s => s.id === selectedService);
-      let clientId = selectedClient;
+      
+      // Criar agendamento com client_id ou client_name (walk-in)
+      const bookingData: any = {
+        barbershop_id: barbershopId,
+        barber_id: barberId,
+        service_id: selectedService,
+        booking_date: date.toISOString().split('T')[0],
+        booking_time: time,
+        total_price: service.price,
+        status: 'confirmed',
+        notes: notes || null
+      };
 
-      // Se não selecionou cliente existente, criar um novo
-      if (!clientId && clientName) {
-        // Primeiro, criar um usuário anônimo no auth (sem email/senha)
-        // Como não podemos criar usuários sem auth, vamos usar um ID temporário
-        // e salvar apenas no perfil com user_id null ou criar um perfil "temporário"
-        
-        // Vamos criar um perfil temporário sem user_id vinculado ao auth
-        const { data: authUser } = await supabase.auth.getUser();
-        
-        // Criar um UUID temporário para este cliente
-        const tempUserId = crypto.randomUUID();
-        
-        const { data: newProfile, error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            user_id: tempUserId,
-            display_name: clientName,
-            phone: clientPhone || null,
-            user_type: 'client'
-          })
-          .select()
-          .single();
-
-        if (profileError) throw profileError;
-        clientId = tempUserId;
+      // Se selecionou cliente existente, usar client_id
+      if (selectedClient) {
+        bookingData.client_id = selectedClient;
+      } 
+      // Senão, usar client_name para cliente walk-in
+      else if (clientName) {
+        bookingData.client_name = clientName;
+        if (clientPhone) {
+          bookingData.notes = bookingData.notes 
+            ? `${bookingData.notes}\nTelefone: ${clientPhone}` 
+            : `Telefone: ${clientPhone}`;
+        }
       }
       
       const { error } = await supabase
         .from('bookings')
-        .insert({
-          barbershop_id: barbershopId,
-          barber_id: barberId,
-          client_id: clientId,
-          service_id: selectedService,
-          booking_date: date.toISOString().split('T')[0],
-          booking_time: time,
-          total_price: service.price,
-          status: 'confirmed',
-          notes: notes || null
-        });
+        .insert(bookingData);
 
       if (error) throw error;
 

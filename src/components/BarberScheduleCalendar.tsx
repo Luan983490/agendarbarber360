@@ -23,7 +23,8 @@ interface Booking {
   booking_time: string;
   status: string;
   service_id: string;
-  client_id: string;
+  client_id: string | null;
+  client_name?: string;
 }
 
 interface BarberBlock {
@@ -165,7 +166,7 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
       // Buscar agendamentos - incluir tanto os com barber_id específico quanto os sem barbeiro (null)
       const { data: bookingsData, error: bookingsError } = await supabase
         .from('bookings')
-        .select('id, booking_date, booking_time, status, service_id, client_id, barber_id')
+        .select('id, booking_date, booking_time, status, service_id, client_id, barber_id, client_name')
         .eq('barbershop_id', barbershopId)
         .or(`barber_id.eq.${selectedBarber},barber_id.is.null`)
         .gte('booking_date', format(currentWeekStart, 'yyyy-MM-dd'))
@@ -186,12 +187,14 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
       // Buscar dados relacionados
       if (bookingsData && bookingsData.length > 0) {
         const serviceIds = [...new Set(bookingsData.map(b => b.service_id))];
-        const clientIds = [...new Set(bookingsData.map(b => b.client_id))];
+        const clientIds = [...new Set(bookingsData.filter(b => b.client_id).map(b => b.client_id))];
 
-        const [servicesData, profilesData] = await Promise.all([
-          supabase.from('services').select('id, name, duration, price').in('id', serviceIds),
-          supabase.from('profiles').select('user_id, display_name').in('user_id', clientIds)
-        ]);
+        const servicesPromise = supabase.from('services').select('id, name, duration, price').in('id', serviceIds);
+        const profilesPromise = clientIds.length > 0 
+          ? supabase.from('profiles').select('user_id, display_name').in('user_id', clientIds)
+          : Promise.resolve({ data: [] });
+
+        const [servicesData, profilesData] = await Promise.all([servicesPromise, profilesPromise]);
 
         const newServicesMap = new Map();
         servicesData.data?.forEach(s => newServicesMap.set(s.id, s));
@@ -228,11 +231,11 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
     );
     if (booking) {
       const service = servicesMap.get(booking.service_id);
-      const profile = profilesMap.get(booking.client_id);
+      const profile = booking.client_id ? profilesMap.get(booking.client_id) : null;
       return {
         type: 'booked',
         booking: {
-          client_name: profile?.display_name || 'Cliente',
+          client_name: booking.client_name || profile?.display_name || 'Cliente',
           service_name: service?.name || 'Serviço',
           status: booking.status
         }
@@ -265,10 +268,10 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
       );
       if (booking) {
         const service = servicesMap.get(booking.service_id);
-        const profile = profilesMap.get(booking.client_id);
+        const profile = booking.client_id ? profilesMap.get(booking.client_id) : null;
         setSelectedBooking({
           ...booking,
-          client_name: profile?.display_name || 'Cliente',
+          client_name: booking.client_name || profile?.display_name || 'Cliente',
           service_name: service?.name || 'Serviço'
         });
         setBookingDetailsOpen(true);

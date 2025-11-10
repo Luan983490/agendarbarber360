@@ -210,6 +210,7 @@ export type Database = {
           booking_date: string
           booking_time: string
           client_id: string
+          client_name: string | null
           created_at: string
           id: string
           notes: string | null
@@ -224,6 +225,7 @@ export type Database = {
           booking_date: string
           booking_time: string
           client_id: string
+          client_name?: string | null
           created_at?: string
           id?: string
           notes?: string | null
@@ -238,6 +240,7 @@ export type Database = {
           booking_date?: string
           booking_time?: string
           client_id?: string
+          client_name?: string | null
           created_at?: string
           id?: string
           notes?: string | null

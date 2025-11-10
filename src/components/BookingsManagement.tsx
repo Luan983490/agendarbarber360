@@ -99,14 +99,20 @@ const BookingsManagement = ({ barbershopId }: BookingsManagementProps) => {
       // Fetch related data separately
       const serviceIds = [...new Set(bookingsData.map(b => b.service_id))];
       const barberIds = [...new Set(bookingsData.map(b => b.barber_id).filter(Boolean))];
-      const clientIds = [...new Set(bookingsData.map(b => b.client_id))];
+      const clientIds = [...new Set(bookingsData.map(b => b.client_id).filter(Boolean))];
+
+      const servicesPromise = supabase.from('services').select('id, name, duration').in('id', serviceIds);
+      const barbersPromise = barberIds.length > 0 
+        ? supabase.from('barbers').select('id, name').in('id', barberIds)
+        : Promise.resolve({ data: [], error: null });
+      const profilesPromise = clientIds.length > 0
+        ? supabase.from('profiles').select('user_id, display_name, phone').in('user_id', clientIds)
+        : Promise.resolve({ data: [], error: null });
 
       const [servicesRes, barbersRes, profilesRes] = await Promise.all([
-        supabase.from('services').select('id, name, duration').in('id', serviceIds),
-        barberIds.length > 0 
-          ? supabase.from('barbers').select('id, name').in('id', barberIds)
-          : Promise.resolve({ data: [], error: null }),
-        supabase.from('profiles').select('user_id, display_name, phone').in('user_id', clientIds)
+        servicesPromise,
+        barbersPromise,
+        profilesPromise
       ]);
 
       console.log('Services:', servicesRes.data);
@@ -127,7 +133,7 @@ const BookingsManagement = ({ barbershopId }: BookingsManagementProps) => {
       const transformedBookings: Booking[] = bookingsData.map(booking => {
         const service = servicesMap.get(booking.service_id);
         const barber = booking.barber_id ? barbersMap.get(booking.barber_id) : null;
-        const profile = profilesMap.get(booking.client_id);
+        const profile = booking.client_id ? profilesMap.get(booking.client_id) : null;
 
         return {
           id: booking.id,
@@ -139,7 +145,10 @@ const BookingsManagement = ({ barbershopId }: BookingsManagementProps) => {
           client_id: booking.client_id,
           service: service ? { name: service.name, duration: service.duration } : { name: 'Serviço removido', duration: 0 },
           barber: barber ? { name: barber.name } : null,
-          client: profile ? { display_name: profile.display_name, phone: profile.phone } : { display_name: 'Cliente não encontrado', phone: undefined },
+          client: {
+            display_name: (booking as any).client_name || profile?.display_name || 'Cliente',
+            phone: profile?.phone
+          },
           booking_products: []
         };
       });

@@ -83,7 +83,7 @@ export const ScheduleManagement = ({ barbershopId }: ScheduleManagementProps) =>
 
       const { data: bookingsData, error: bookingsError } = await supabase
         .from('bookings')
-        .select('id, booking_date, booking_time, status, barber_id, service_id, client_id')
+        .select('id, booking_date, booking_time, status, barber_id, service_id, client_id, client_name')
         .eq('barbershop_id', barbershopId)
         .gte('booking_date', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
         .order('booking_date', { ascending: true })
@@ -93,14 +93,20 @@ export const ScheduleManagement = ({ barbershopId }: ScheduleManagementProps) =>
 
       const serviceIds = [...new Set(bookingsData?.map(b => b.service_id))];
       const barberIds = [...new Set(bookingsData?.map(b => b.barber_id).filter(Boolean))] as string[];
-      const clientIds = [...new Set(bookingsData?.map(b => b.client_id))];
+      const clientIds = [...new Set(bookingsData?.map(b => b.client_id).filter(Boolean))] as string[];
+
+      const servicesPromise = supabase.from('services').select('id, name, duration, price').in('id', serviceIds);
+      const barbersPromise = barberIds.length > 0 
+        ? supabase.from('barbers').select('id, name').in('id', barberIds)
+        : Promise.resolve({ data: [], error: null });
+      const profilesPromise = clientIds.length > 0
+        ? supabase.from('profiles').select('user_id, display_name').in('user_id', clientIds)
+        : Promise.resolve({ data: [], error: null });
 
       const [servicesData, barbersData, profilesData] = await Promise.all([
-        supabase.from('services').select('id, name, duration, price').in('id', serviceIds),
-        barberIds.length > 0 
-          ? supabase.from('barbers').select('id, name').in('id', barberIds)
-          : { data: [], error: null },
-        supabase.from('profiles').select('user_id, display_name').in('user_id', clientIds)
+        servicesPromise,
+        barbersPromise,
+        profilesPromise
       ]);
 
       const servicesMap = new Map<string, { id: string; name: string; duration: number; price: number }>();
@@ -112,12 +118,18 @@ export const ScheduleManagement = ({ barbershopId }: ScheduleManagementProps) =>
       const profilesMap = new Map<string, { user_id: string; display_name: string }>();
       profilesData.data?.forEach(p => profilesMap.set(p.user_id, p));
 
-      const mappedBookings: Booking[] = bookingsData?.map(booking => ({
-        ...booking,
-        service: servicesMap.get(booking.service_id) || { id: '', name: 'N/A', duration: 0, price: 0 },
-        barber: booking.barber_id ? (barbersMap.get(booking.barber_id) || null) : null,
-        client: profilesMap.get(booking.client_id) || { user_id: booking.client_id, display_name: 'Cliente' }
-      })) || [];
+      const mappedBookings: Booking[] = bookingsData?.map(booking => {
+        const profile = booking.client_id ? profilesMap.get(booking.client_id) : null;
+        return {
+          ...booking,
+          service: servicesMap.get(booking.service_id) || { id: '', name: 'N/A', duration: 0, price: 0 },
+          barber: booking.barber_id ? (barbersMap.get(booking.barber_id) || null) : null,
+          client: {
+            user_id: booking.client_id || '',
+            display_name: booking.client_name || profile?.display_name || 'Cliente'
+          }
+        };
+      }) || [];
 
       setBookings(mappedBookings);
     } catch (error: any) {
