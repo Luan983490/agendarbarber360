@@ -65,7 +65,7 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
             <Store className="h-5 w-5 text-primary flex-shrink-0" />
-            <h2 className="text-lg font-semibold truncate">Menu Dashboard</h2>
+            <h2 className="text-lg font-semibold truncate">Dashboard</h2>
           </div>
           <Button 
             variant="ghost" 
