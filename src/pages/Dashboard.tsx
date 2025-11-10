@@ -19,7 +19,6 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { DashboardSidebar } from '@/components/DashboardSidebar';
-import { DashboardMenuButton } from '@/components/DashboardMenuButton';
 
 interface Profile {
   id: string;
@@ -427,7 +426,6 @@ const Dashboard = () => {
               <div className="w-full">
                 <div className="sticky top-0 z-10 bg-background border-b px-4 py-3 lg:px-6">
                   <div className="flex items-center gap-3">
-                    <DashboardMenuButton />
                     <div className="flex-1 min-w-0">
                       <h1 className="text-xl lg:text-3xl font-bold truncate">Dashboard da Barbearia</h1>
                       <p className="text-sm text-muted-foreground hidden sm:block">
