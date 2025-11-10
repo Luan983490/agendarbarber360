@@ -1,4 +1,4 @@
-import { Store, Edit, CalendarDays, Calendar, Scissors, Users, Package, X, CreditCard, Gift } from 'lucide-react';
+import { Store, Edit, CalendarDays, Calendar, Scissors, Users, Package, X, CreditCard, Gift, ShoppingBag } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   Sidebar,
@@ -26,7 +26,7 @@ const menuItems = [
   { id: 'bookings', title: 'Lista', icon: Calendar },
   { id: 'services', title: 'Serviços', icon: Scissors },
   { id: 'barbers', title: 'Barbeiros', icon: Users },
-  { id: 'products', title: 'Produtos', icon: Package },
+  { id: 'products', title: 'Produtos', icon: ShoppingBag },
   { id: 'packages', title: 'Pacotes', icon: Package },
   { id: 'subscriptions', title: 'Assinaturas', icon: CreditCard },
   { id: 'loyalty', title: 'Fidelidade', icon: Gift },
