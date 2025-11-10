@@ -183,10 +183,30 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
         endDate = endOfMonth(currentDate);
       }
 
-      // Buscar agendamentos - incluir tanto os com barber_id específico quanto os sem barbeiro (null)
+      // Buscar agendamentos com dados relacionados (serviços e perfis)
       const { data: bookingsData, error: bookingsError } = await supabase
         .from('bookings')
-        .select('id, booking_date, booking_time, status, service_id, client_id, barber_id, client_name, is_external_booking')
+        .select(`
+          id,
+          booking_date,
+          booking_time,
+          status,
+          service_id,
+          client_id,
+          barber_id,
+          client_name,
+          is_external_booking,
+          services:service_id (
+            id,
+            name,
+            duration,
+            price
+          ),
+          profiles:client_id (
+            user_id,
+            display_name
+          )
+        `)
         .eq('barbershop_id', barbershopId)
         .eq('barber_id', selectedBarber)
         .gte('booking_date', format(startDate, 'yyyy-MM-dd'))
@@ -204,26 +224,23 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
 
       if (blocksError) throw blocksError;
 
-      // Buscar dados relacionados
-      if (bookingsData && bookingsData.length > 0) {
-        const serviceIds = [...new Set(bookingsData.map(b => b.service_id))];
-        const clientIds = [...new Set(bookingsData.filter(b => b.client_id).map(b => b.client_id))];
-
-        const servicesPromise = supabase.from('services').select('id, name, duration, price').in('id', serviceIds);
-        const profilesPromise = clientIds.length > 0 
-          ? supabase.from('profiles').select('user_id, display_name').in('user_id', clientIds)
-          : Promise.resolve({ data: [] });
-
-        const [servicesData, profilesData] = await Promise.all([servicesPromise, profilesPromise]);
-
-        const newServicesMap = new Map();
-        servicesData.data?.forEach(s => newServicesMap.set(s.id, s));
-        setServicesMap(newServicesMap);
-
-        const newProfilesMap = new Map();
-        profilesData.data?.forEach(p => newProfilesMap.set(p.user_id, p));
-        setProfilesMap(newProfilesMap);
-      }
+      // Processar dados relacionados dos JOINs
+      const newServicesMap = new Map();
+      const newProfilesMap = new Map();
+      
+      bookingsData?.forEach(booking => {
+        // Armazenar serviço
+        if (booking.services) {
+          newServicesMap.set(booking.service_id, booking.services);
+        }
+        // Armazenar perfil
+        if (booking.profiles && booking.client_id) {
+          newProfilesMap.set(booking.client_id, booking.profiles);
+        }
+      });
+      
+      setServicesMap(newServicesMap);
+      setProfilesMap(newProfilesMap);
 
       setBookings(bookingsData || []);
       setBlocks(blocksData || []);
