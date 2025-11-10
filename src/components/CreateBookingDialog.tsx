@@ -48,9 +48,12 @@ export const CreateBookingDialog = ({
   useEffect(() => {
     if (open) {
       fetchServices();
-      fetchClients();
+      // Só buscar clientes se NÃO for reserva externa
+      if (!isExternalBooking) {
+        fetchClients();
+      }
     }
-  }, [open, barbershopId]);
+  }, [open, barbershopId, isExternalBooking]);
 
   const fetchServices = async () => {
     const { data } = await supabase
@@ -63,6 +66,9 @@ export const CreateBookingDialog = ({
   };
 
   const fetchClients = async () => {
+    // Não buscar se for reserva externa
+    if (isExternalBooking) return;
+    
     const { data } = await supabase
       .from('profiles')
       .select('user_id, display_name, phone')
@@ -74,11 +80,11 @@ export const CreateBookingDialog = ({
   };
 
   useEffect(() => {
-    if (searchTerm) {
+    if (searchTerm && !isExternalBooking) {
       const timer = setTimeout(fetchClients, 300);
       return () => clearTimeout(timer);
     }
-  }, [searchTerm]);
+  }, [searchTerm, isExternalBooking]);
 
   const handleCreate = async () => {
     if (!selectedService) {
@@ -192,8 +198,8 @@ export const CreateBookingDialog = ({
             </div>
           </div>
 
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 p-3 border rounded-md">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 p-3 border rounded-md bg-muted/50">
               <input
                 type="checkbox"
                 id="external-booking"
@@ -203,11 +209,15 @@ export const CreateBookingDialog = ({
                   setSelectedClient('');
                   setSearchTerm('');
                   setExternalClientName('');
+                  setClients([]); // Limpar clientes ao alternar
                 }}
-                className="w-4 h-4"
+                className="w-4 h-4 cursor-pointer"
               />
-              <Label htmlFor="external-booking" className="cursor-pointer">
-                Reserva Externa (telefone, presencial, etc.)
+              <Label htmlFor="external-booking" className="cursor-pointer flex-1">
+                <span className="font-medium">Reserva Externa</span>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Para agendamentos feitos por telefone, WhatsApp ou presencialmente
+                </p>
               </Label>
             </div>
 
@@ -216,17 +226,15 @@ export const CreateBookingDialog = ({
                 <Label htmlFor="external-name">Nome do Cliente *</Label>
                 <Input
                   id="external-name"
-                  placeholder="Digite o nome..."
+                  placeholder="Ex: João Silva"
                   value={externalClientName}
                   onChange={(e) => setExternalClientName(e.target.value)}
+                  autoFocus
                 />
-                <p className="text-xs text-muted-foreground">
-                  Para agendamentos feitos fora da plataforma (telefone, WhatsApp, presencial)
-                </p>
               </div>
             ) : (
               <div className="space-y-2">
-                <Label htmlFor="client-search">Buscar Cliente</Label>
+                <Label htmlFor="client-search">Buscar Cliente Cadastrado *</Label>
                 <Input
                   id="client-search"
                   placeholder="Digite o nome do cliente..."
@@ -248,8 +256,8 @@ export const CreateBookingDialog = ({
                   </Select>
                 )}
                 {searchTerm && clients.length === 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    Nenhum cliente encontrado. Use a opção "Reserva Externa" acima.
+                  <p className="text-xs text-yellow-600 dark:text-yellow-500">
+                    Nenhum cliente encontrado. Marque "Reserva Externa" acima para agendar sem cadastro.
                   </p>
                 )}
               </div>
