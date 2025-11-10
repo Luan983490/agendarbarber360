@@ -169,7 +169,7 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
         .from('bookings')
         .select('id, booking_date, booking_time, status, service_id, client_id, barber_id, client_name, is_external_booking')
         .eq('barbershop_id', barbershopId)
-        .or(`barber_id.eq.${selectedBarber},barber_id.is.null`)
+        .eq('barber_id', selectedBarber)
         .gte('booking_date', format(currentWeekStart, 'yyyy-MM-dd'))
         .lte('booking_date', format(weekEnd, 'yyyy-MM-dd'));
 
@@ -234,11 +234,17 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
       const service = servicesMap.get(booking.service_id);
       const profile = booking.client_id ? profilesMap.get(booking.client_id) : null;
       
+      // Prioridade: 1) client_name do booking, 2) display_name do profile, 3) fallback
       let clientName = 'Cliente';
       if (booking.is_external_booking) {
+        // Para reservas externas, sempre usar client_name
         clientName = booking.client_name || 'Cliente Externo';
-      } else {
-        clientName = booking.client_name || profile?.display_name || 'Cliente';
+      } else if (booking.client_name) {
+        // Se tem client_name no booking (mesmo não sendo externo), usar
+        clientName = booking.client_name;
+      } else if (profile?.display_name) {
+        // Se não, usar o display_name do perfil
+        clientName = profile.display_name;
       }
       
       return {
@@ -254,12 +260,20 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
     // Verificar se há bloqueio
     const block = blocks.find(b => {
       if (b.block_date !== dateStr) return false;
-      return time >= b.start_time && time < b.end_time;
+      
+      // Normalizar os horários removendo segundos para comparação
+      const slotTime = time.substring(0, 5); // "08:00"
+      const blockStart = b.start_time.substring(0, 5);
+      const blockEnd = b.end_time.substring(0, 5);
+      
+      // Verificar se o horário está dentro do intervalo do bloqueio
+      return slotTime >= blockStart && slotTime < blockEnd;
     });
+    
     if (block) {
       return {
         type: 'blocked',
-        block: { reason: block.reason }
+        block: { reason: block.reason, id: block.id }
       };
     }
 
@@ -279,11 +293,14 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
         const service = servicesMap.get(booking.service_id);
         const profile = booking.client_id ? profilesMap.get(booking.client_id) : null;
         
+        // Usar a mesma lógica de prioridade
         let clientName = 'Cliente';
         if (booking.is_external_booking) {
           clientName = booking.client_name || 'Cliente Externo';
-        } else {
-          clientName = booking.client_name || profile?.display_name || 'Cliente';
+        } else if (booking.client_name) {
+          clientName = booking.client_name;
+        } else if (profile?.display_name) {
+          clientName = profile.display_name;
         }
         
         setSelectedBooking({
@@ -300,15 +317,21 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
     if (slotInfo.type === 'blocked') {
       const block = blocks.find(b => {
         if (b.block_date !== dateStr) return false;
-        return time >= b.start_time && time < b.end_time;
+        const slotTime = time.substring(0, 5);
+        const blockStart = b.start_time.substring(0, 5);
+        const blockEnd = b.end_time.substring(0, 5);
+        return slotTime >= blockStart && slotTime < blockEnd;
       });
-      setSelectedSlot({
-        time,
-        date,
-        isBlocked: true,
-        blockId: block?.id
-      });
-      setDialogOpen(true);
+      
+      if (block) {
+        setSelectedSlot({
+          time,
+          date,
+          isBlocked: true,
+          blockId: block.id
+        });
+        setDialogOpen(true);
+      }
       return;
     }
 
