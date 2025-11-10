@@ -14,8 +14,10 @@ import { SlotActionMenu } from './SlotActionMenu';
 import { MultiBlockDialog } from './MultiBlockDialog';
 import { useUserRole } from '@/hooks/useUserRole';
 import { Calendar, ChevronLeft, ChevronRight, Loader2, Ban } from 'lucide-react';
-import { format, addDays, startOfWeek, addWeeks, subWeeks, endOfWeek } from 'date-fns';
+import { format, addDays, startOfWeek, addWeeks, subWeeks, endOfWeek, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+
+type ViewMode = 'day' | 'week' | 'month';
 
 interface Booking {
   id: string;
@@ -56,6 +58,8 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
   const { userType, barberId: currentBarberId } = useUserRole();
   const [barbers, setBarbers] = useState<Barber[]>([]);
   const [selectedBarber, setSelectedBarber] = useState<string>('');
+  const [viewMode, setViewMode] = useState<ViewMode>('week');
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(startOfWeek(new Date(), { locale: ptBR }));
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [blocks, setBlocks] = useState<BarberBlock[]>([]);
@@ -90,7 +94,7 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
     if (selectedBarber) {
       fetchScheduleData();
     }
-  }, [selectedBarber, currentWeekStart]);
+  }, [selectedBarber, currentWeekStart, currentDate, viewMode]);
 
   useEffect(() => {
     const channel = supabase
@@ -162,7 +166,21 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
 
     try {
       setLoading(true);
-      const weekEnd = addDays(currentWeekStart, 6);
+      
+      let startDate: Date;
+      let endDate: Date;
+      
+      if (viewMode === 'day') {
+        startDate = currentDate;
+        endDate = currentDate;
+      } else if (viewMode === 'week') {
+        startDate = currentWeekStart;
+        endDate = addDays(currentWeekStart, 6);
+      } else {
+        // month
+        startDate = startOfMonth(currentDate);
+        endDate = endOfMonth(currentDate);
+      }
 
       // Buscar agendamentos - incluir tanto os com barber_id específico quanto os sem barbeiro (null)
       const { data: bookingsData, error: bookingsError } = await supabase
@@ -170,8 +188,8 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
         .select('id, booking_date, booking_time, status, service_id, client_id, barber_id, client_name, is_external_booking')
         .eq('barbershop_id', barbershopId)
         .eq('barber_id', selectedBarber)
-        .gte('booking_date', format(currentWeekStart, 'yyyy-MM-dd'))
-        .lte('booking_date', format(weekEnd, 'yyyy-MM-dd'));
+        .gte('booking_date', format(startDate, 'yyyy-MM-dd'))
+        .lte('booking_date', format(endDate, 'yyyy-MM-dd'));
 
       if (bookingsError) throw bookingsError;
 
@@ -180,8 +198,8 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
         .from('barber_blocks')
         .select('id, block_date, start_time, end_time, reason')
         .eq('barber_id', selectedBarber)
-        .gte('block_date', format(currentWeekStart, 'yyyy-MM-dd'))
-        .lte('block_date', format(weekEnd, 'yyyy-MM-dd'));
+        .gte('block_date', format(startDate, 'yyyy-MM-dd'))
+        .lte('block_date', format(endDate, 'yyyy-MM-dd'));
 
       if (blocksError) throw blocksError;
 
@@ -478,6 +496,47 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
   };
 
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(currentWeekStart, i));
+  const displayDays = viewMode === 'day' 
+    ? [currentDate] 
+    : viewMode === 'week' 
+    ? weekDays 
+    : Array.from({ length: 7 }, (_, i) => addDays(startOfWeek(currentDate, { locale: ptBR }), i));
+
+  const handlePrevious = () => {
+    if (viewMode === 'day') {
+      setCurrentDate(addDays(currentDate, -1));
+    } else if (viewMode === 'week') {
+      setCurrentWeekStart(subWeeks(currentWeekStart, 1));
+    } else {
+      setCurrentDate(subMonths(currentDate, 1));
+    }
+  };
+
+  const handleNext = () => {
+    if (viewMode === 'day') {
+      setCurrentDate(addDays(currentDate, 1));
+    } else if (viewMode === 'week') {
+      setCurrentWeekStart(addWeeks(currentWeekStart, 1));
+    } else {
+      setCurrentDate(addMonths(currentDate, 1));
+    }
+  };
+
+  const handleToday = () => {
+    const today = new Date();
+    setCurrentDate(today);
+    setCurrentWeekStart(startOfWeek(today, { locale: ptBR }));
+  };
+
+  const getDateRangeLabel = () => {
+    if (viewMode === 'day') {
+      return format(currentDate, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+    } else if (viewMode === 'week') {
+      return `${format(currentWeekStart, "dd 'de' MMM", { locale: ptBR })} - ${format(addDays(currentWeekStart, 6), "dd 'de' MMM 'de' yyyy", { locale: ptBR })}`;
+    } else {
+      return format(currentDate, "MMMM 'de' yyyy", { locale: ptBR });
+    }
+  };
 
   if (loading && !selectedBarber) {
     return (
@@ -521,32 +580,64 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
             </div>
           )}
 
-          {/* Navegação de Semana */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentWeekStart(subWeeks(currentWeekStart, 1))}
-              className="w-full sm:w-auto"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              <span className="hidden sm:inline ml-1">Semana Anterior</span>
-              <span className="sm:hidden ml-1">Anterior</span>
-            </Button>
-            <span className="font-semibold text-sm sm:text-base text-center">
-              {format(currentWeekStart, "dd 'de' MMM", { locale: ptBR })} -{' '}
-              {format(addDays(currentWeekStart, 6), "dd 'de' MMM 'de' yyyy", { locale: ptBR })}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentWeekStart(addWeeks(currentWeekStart, 1))}
-              className="w-full sm:w-auto"
-            >
-              <span className="hidden sm:inline mr-1">Próxima Semana</span>
-              <span className="sm:hidden mr-1">Próxima</span>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+          {/* Botões de Visualização e Navegação */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <div className="flex gap-1 bg-muted p-1 rounded-md w-full sm:w-auto">
+              <Button
+                variant={viewMode === 'day' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('day')}
+                className="flex-1 sm:flex-initial"
+              >
+                Dia
+              </Button>
+              <Button
+                variant={viewMode === 'week' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('week')}
+                className="flex-1 sm:flex-initial"
+              >
+                Semana
+              </Button>
+              <Button
+                variant={viewMode === 'month' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('month')}
+                className="flex-1 sm:flex-initial"
+              >
+                Mês
+              </Button>
+            </div>
+            
+            <div className="flex items-center justify-between sm:justify-center gap-2 sm:gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePrevious}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleToday}
+                className="hidden sm:inline-flex"
+              >
+                Hoje
+              </Button>
+              <span className="font-semibold text-xs sm:text-sm text-center min-w-[200px]">
+                {getDateRangeLabel()}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNext}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <div className="w-full sm:w-auto" />
           </div>
 
           {/* Ações e Legenda */}
@@ -590,9 +681,9 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
             <div className="overflow-x-auto">
               <div className="min-w-[800px]">
                 {/* Cabeçalho dos dias */}
-                <div className="grid grid-cols-8 gap-2 mb-2">
+                <div className={`grid gap-2 mb-2`} style={{ gridTemplateColumns: `80px repeat(${displayDays.length}, 1fr)` }}>
                   <div className="font-semibold text-sm"></div>
-                  {weekDays.map((day, i) => (
+                  {displayDays.map((day, i) => (
                     <div key={i} className="text-center">
                       <p className="font-semibold text-sm">
                         {format(day, 'EEE', { locale: ptBR })}
@@ -606,11 +697,11 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
 
                 {/* Linhas de horários */}
                 {WORK_HOURS.map((time) => (
-                  <div key={time} className="grid grid-cols-8 gap-2 mb-2">
+                  <div key={time} className="grid gap-2 mb-2" style={{ gridTemplateColumns: `80px repeat(${displayDays.length}, 1fr)` }}>
                     <div className="text-xs font-medium text-muted-foreground flex items-center">
                       {time}
                     </div>
-                    {weekDays.map((day, i) => {
+                    {displayDays.map((day, i) => {
                       const slotInfo = getSlotType(day, time);
                       return (
                         <TimeSlot
