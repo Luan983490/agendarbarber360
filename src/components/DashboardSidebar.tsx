@@ -29,7 +29,7 @@ const menuItems = [
 ];
 
 export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarProps) {
-  const { open, setOpen } = useSidebar();
+  const { setOpen } = useSidebar();
 
   return (
     <Sidebar className="border-r" collapsible="offcanvas">

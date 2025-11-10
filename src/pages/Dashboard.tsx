@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Scissors, Calendar, Package, Store, Users, DollarSign, Star, Edit, CalendarDays, AlertCircle, Menu } from 'lucide-react';
+import { Scissors, Calendar, Package, Store, Users, DollarSign, Star, Edit, CalendarDays, AlertCircle } from 'lucide-react';
 import { Header } from '@/components/Header';
 import BarbershopSetup from '@/components/BarbershopSetup';
 import BarbershopEdit from '@/components/BarbershopEdit';
@@ -17,8 +17,9 @@ import BookingsManagement from '@/components/BookingsManagement';
 import { BarberScheduleCalendar } from '@/components/BarberScheduleCalendar';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { DashboardSidebar } from '@/components/DashboardSidebar';
+import { DashboardMenuButton } from '@/components/DashboardMenuButton';
 
 interface Profile {
   id: string;
@@ -426,12 +427,7 @@ const Dashboard = () => {
               <div className="w-full">
                 <div className="sticky top-0 z-10 bg-background border-b px-4 py-3 lg:px-6">
                   <div className="flex items-center gap-3">
-                    <SidebarTrigger asChild>
-                      <Button variant="outline" size="sm" className="gap-2">
-                        <Menu className="h-4 w-4" />
-                        <span className="hidden sm:inline">Menu</span>
-                      </Button>
-                    </SidebarTrigger>
+                    <DashboardMenuButton />
                     <div className="flex-1 min-w-0">
                       <h1 className="text-xl lg:text-3xl font-bold truncate">Dashboard da Barbearia</h1>
                       <p className="text-sm text-muted-foreground hidden sm:block">
