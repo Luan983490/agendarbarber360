@@ -548,9 +548,12 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: Json | null
           avatar_url: string | null
+          birth_date: string | null
           created_at: string
           display_name: string | null
+          gender: string | null
           id: string
           phone: string | null
           updated_at: string
@@ -558,9 +561,12 @@ export type Database = {
           user_type: string | null
         }
         Insert: {
+          address?: Json | null
           avatar_url?: string | null
+          birth_date?: string | null
           created_at?: string
           display_name?: string | null
+          gender?: string | null
           id?: string
           phone?: string | null
           updated_at?: string
@@ -568,9 +574,12 @@ export type Database = {
           user_type?: string | null
         }
         Update: {
+          address?: Json | null
           avatar_url?: string | null
+          birth_date?: string | null
           created_at?: string
           display_name?: string | null
+          gender?: string | null
           id?: string
           phone?: string | null
           updated_at?: string

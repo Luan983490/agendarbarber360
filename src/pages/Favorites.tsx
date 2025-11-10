@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/Header';
 import { HeartCrack } from 'lucide-react';
-import { BarberShopGrid } from '@/components/BarberShopGrid';
+import { BarberShopCard } from '@/components/BarberShopCard';
 
 const Favorites = () => {
   const { user, loading: authLoading } = useAuth();
@@ -67,7 +67,26 @@ const Favorites = () => {
         </div>
 
         {favorites.length > 0 ? (
-          <BarberShopGrid barbershops={favorites} />
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {favorites.map((shop) => (
+              <BarberShopCard
+                key={shop.id}
+                barberShop={{
+                  id: shop.id,
+                  name: shop.name,
+                  image: shop.image_url || "/placeholder.svg",
+                  rating: shop.rating || 0,
+                  reviewCount: shop.total_reviews || 0,
+                  distance: "-- km",
+                  isOpen: true,
+                  priceRange: "$$",
+                  specialties: ["Corte", "Barba"],
+                  nextAvailable: "Disponível",
+                  promotions: []
+                }}
+              />
+            ))}
+          </div>
         ) : (
           <Card>
             <CardContent className="text-center py-16">

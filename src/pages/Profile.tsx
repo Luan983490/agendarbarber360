@@ -72,9 +72,9 @@ const Profile = () => {
           display_name: data.display_name || '',
           phone: data.phone || '',
           avatar_url: data.avatar_url,
-          birth_date: data.birth_date,
-          gender: data.gender,
-          address: data.address || profile.address
+          birth_date: (data as any).birth_date,
+          gender: (data as any).gender,
+          address: (data as any).address || profile.address
         });
       }
     } catch (error: any) {

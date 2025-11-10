@@ -2,9 +2,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Menu, Scissors, User, Settings, LogOut, Calendar, Store } from "lucide-react";
+import { Menu, Scissors, User, Settings, LogOut, Calendar, Store, History, Package, CreditCard, Heart } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -87,11 +87,38 @@ export const Header = () => {
                          <span>Dashboard</span>
                        </DropdownMenuItem>
                      ) : (
-                       <DropdownMenuItem onClick={handleDashboard}>
-                         <Calendar className="mr-2 h-4 w-4" />
-                         <span>Meus Agendamentos</span>
-                       </DropdownMenuItem>
+                       <>
+                         <DropdownMenuItem onClick={handleDashboard}>
+                           <Calendar className="mr-2 h-4 w-4" />
+                           <span>Meus Agendamentos</span>
+                         </DropdownMenuItem>
+                         <DropdownMenuItem onClick={() => navigate('/historico')}>
+                           <History className="mr-2 h-4 w-4" />
+                           <span>Histórico</span>
+                         </DropdownMenuItem>
+                         <DropdownMenuItem onClick={() => navigate('/pacotes')}>
+                           <Package className="mr-2 h-4 w-4" />
+                           <span>Meus Pacotes</span>
+                         </DropdownMenuItem>
+                         <DropdownMenuItem onClick={() => navigate('/assinaturas')}>
+                           <Calendar className="mr-2 h-4 w-4" />
+                           <span>Minhas Assinaturas</span>
+                         </DropdownMenuItem>
+                         <DropdownMenuItem onClick={() => navigate('/cartoes')}>
+                           <CreditCard className="mr-2 h-4 w-4" />
+                           <span>Meus Cartões</span>
+                         </DropdownMenuItem>
+                         <DropdownMenuItem onClick={() => navigate('/favoritos')}>
+                           <Heart className="mr-2 h-4 w-4" />
+                           <span>Favoritos</span>
+                         </DropdownMenuItem>
+                         <DropdownMenuSeparator />
+                       </>
                      )}
+                     <DropdownMenuItem onClick={() => navigate('/perfil')}>
+                       <User className="mr-2 h-4 w-4" />
+                       <span>Perfil</span>
+                     </DropdownMenuItem>
                      <DropdownMenuItem>
                        <Settings className="mr-2 h-4 w-4" />
                        <span>Configurações</span>
