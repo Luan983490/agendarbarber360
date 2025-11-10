@@ -146,7 +146,9 @@ const BookingsManagement = ({ barbershopId }: BookingsManagementProps) => {
           service: service ? { name: service.name, duration: service.duration } : { name: 'Serviço removido', duration: 0 },
           barber: barber ? { name: barber.name } : null,
           client: {
-            display_name: (booking as any).client_name || profile?.display_name || 'Cliente',
+            display_name: (booking as any).is_external_booking 
+              ? ((booking as any).client_name ? `${(booking as any).client_name} (Externo)` : 'Reserva Externa')
+              : ((booking as any).client_name || profile?.display_name || 'Cliente'),
             phone: profile?.phone
           },
           booking_products: []

@@ -83,7 +83,7 @@ export const ScheduleManagement = ({ barbershopId }: ScheduleManagementProps) =>
 
       const { data: bookingsData, error: bookingsError } = await supabase
         .from('bookings')
-        .select('id, booking_date, booking_time, status, barber_id, service_id, client_id, client_name')
+        .select('id, booking_date, booking_time, status, barber_id, service_id, client_id, client_name, is_external_booking')
         .eq('barbershop_id', barbershopId)
         .gte('booking_date', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
         .order('booking_date', { ascending: true })
@@ -120,13 +120,21 @@ export const ScheduleManagement = ({ barbershopId }: ScheduleManagementProps) =>
 
       const mappedBookings: Booking[] = bookingsData?.map(booking => {
         const profile = booking.client_id ? profilesMap.get(booking.client_id) : null;
+        
+        let clientDisplayName = 'Cliente';
+        if (booking.is_external_booking) {
+          clientDisplayName = booking.client_name ? `${booking.client_name} (Externo)` : 'Reserva Externa';
+        } else {
+          clientDisplayName = booking.client_name || profile?.display_name || 'Cliente';
+        }
+        
         return {
           ...booking,
           service: servicesMap.get(booking.service_id) || { id: '', name: 'N/A', duration: 0, price: 0 },
           barber: booking.barber_id ? (barbersMap.get(booking.barber_id) || null) : null,
           client: {
             user_id: booking.client_id || '',
-            display_name: booking.client_name || profile?.display_name || 'Cliente'
+            display_name: clientDisplayName
           }
         };
       }) || [];

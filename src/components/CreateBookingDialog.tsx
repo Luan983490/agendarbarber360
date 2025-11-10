@@ -41,9 +41,8 @@ export const CreateBookingDialog = ({
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [clientName, setClientName] = useState('');
-  const [clientPhone, setClientPhone] = useState('');
-  const [showNewClientForm, setShowNewClientForm] = useState(false);
+  const [isExternalBooking, setIsExternalBooking] = useState(false);
+  const [externalClientName, setExternalClientName] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -91,10 +90,21 @@ export const CreateBookingDialog = ({
       return;
     }
 
-    if (!selectedClient && !clientName) {
+    // Para reservas externas, exigir apenas o nome
+    if (isExternalBooking && !externalClientName.trim()) {
       toast({
         title: 'Erro',
-        description: 'Informe o nome do cliente',
+        description: 'Informe o nome do cliente para reserva externa',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // Para reservas pela plataforma, exigir cliente selecionado
+    if (!isExternalBooking && !selectedClient) {
+      toast({
+        title: 'Erro',
+        description: 'Selecione um cliente',
         variant: 'destructive'
       });
       return;
@@ -104,7 +114,6 @@ export const CreateBookingDialog = ({
     try {
       const service = services.find(s => s.id === selectedService);
       
-      // Criar agendamento com client_id ou client_name (walk-in)
       const bookingData: any = {
         barbershop_id: barbershopId,
         barber_id: barberId,
@@ -113,21 +122,17 @@ export const CreateBookingDialog = ({
         booking_time: time,
         total_price: service.price,
         status: 'confirmed',
-        notes: notes || null
+        notes: notes || null,
+        is_external_booking: isExternalBooking
       };
 
-      // Se selecionou cliente existente, usar client_id
-      if (selectedClient) {
-        bookingData.client_id = selectedClient;
+      // Se for reserva externa, usar client_name
+      if (isExternalBooking) {
+        bookingData.client_name = externalClientName;
       } 
-      // Senão, usar client_name para cliente walk-in
-      else if (clientName) {
-        bookingData.client_name = clientName;
-        if (clientPhone) {
-          bookingData.notes = bookingData.notes 
-            ? `${bookingData.notes}\nTelefone: ${clientPhone}` 
-            : `Telefone: ${clientPhone}`;
-        }
+      // Senão, usar client_id
+      else {
+        bookingData.client_id = selectedClient;
       }
       
       const { error } = await supabase
@@ -138,7 +143,9 @@ export const CreateBookingDialog = ({
 
       toast({
         title: 'Agendamento criado',
-        description: 'O agendamento foi criado com sucesso'
+        description: isExternalBooking 
+          ? 'Reserva externa criada com sucesso'
+          : 'Agendamento criado com sucesso'
       });
 
       onSuccess();
@@ -160,9 +167,8 @@ export const CreateBookingDialog = ({
     setSelectedService('');
     setNotes('');
     setSearchTerm('');
-    setClientName('');
-    setClientPhone('');
-    setShowNewClientForm(false);
+    setIsExternalBooking(false);
+    setExternalClientName('');
   };
 
   return (
@@ -186,25 +192,41 @@ export const CreateBookingDialog = ({
             </div>
           </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label>Cliente</Label>
-              <Button
-                type="button"
-                variant="link"
-                size="sm"
-                onClick={() => {
-                  setShowNewClientForm(!showNewClientForm);
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 p-3 border rounded-md">
+              <input
+                type="checkbox"
+                id="external-booking"
+                checked={isExternalBooking}
+                onChange={(e) => {
+                  setIsExternalBooking(e.target.checked);
                   setSelectedClient('');
                   setSearchTerm('');
+                  setExternalClientName('');
                 }}
-              >
-                {showNewClientForm ? 'Buscar Existente' : 'Novo Cliente'}
-              </Button>
+                className="w-4 h-4"
+              />
+              <Label htmlFor="external-booking" className="cursor-pointer">
+                Reserva Externa (telefone, presencial, etc.)
+              </Label>
             </div>
 
-            {!showNewClientForm ? (
-              <>
+            {isExternalBooking ? (
+              <div className="space-y-2">
+                <Label htmlFor="external-name">Nome do Cliente *</Label>
+                <Input
+                  id="external-name"
+                  placeholder="Digite o nome..."
+                  value={externalClientName}
+                  onChange={(e) => setExternalClientName(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Para agendamentos feitos fora da plataforma (telefone, WhatsApp, presencial)
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label htmlFor="client-search">Buscar Cliente</Label>
                 <Input
                   id="client-search"
                   placeholder="Digite o nome do cliente..."
@@ -225,27 +247,11 @@ export const CreateBookingDialog = ({
                     </SelectContent>
                   </Select>
                 )}
-              </>
-            ) : (
-              <div className="space-y-3 p-3 border rounded-md">
-                <div className="space-y-2">
-                  <Label htmlFor="client-name">Nome do Cliente *</Label>
-                  <Input
-                    id="client-name"
-                    placeholder="Digite o nome..."
-                    value={clientName}
-                    onChange={(e) => setClientName(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="client-phone">Telefone (opcional)</Label>
-                  <Input
-                    id="client-phone"
-                    placeholder="(00) 00000-0000"
-                    value={clientPhone}
-                    onChange={(e) => setClientPhone(e.target.value)}
-                  />
-                </div>
+                {searchTerm && clients.length === 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Nenhum cliente encontrado. Use a opção "Reserva Externa" acima.
+                  </p>
+                )}
               </div>
             )}
           </div>

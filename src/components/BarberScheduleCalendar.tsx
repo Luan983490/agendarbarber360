@@ -25,6 +25,7 @@ interface Booking {
   service_id: string;
   client_id: string | null;
   client_name?: string;
+  is_external_booking?: boolean;
 }
 
 interface BarberBlock {
@@ -166,7 +167,7 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
       // Buscar agendamentos - incluir tanto os com barber_id específico quanto os sem barbeiro (null)
       const { data: bookingsData, error: bookingsError } = await supabase
         .from('bookings')
-        .select('id, booking_date, booking_time, status, service_id, client_id, barber_id, client_name')
+        .select('id, booking_date, booking_time, status, service_id, client_id, barber_id, client_name, is_external_booking')
         .eq('barbershop_id', barbershopId)
         .or(`barber_id.eq.${selectedBarber},barber_id.is.null`)
         .gte('booking_date', format(currentWeekStart, 'yyyy-MM-dd'))
@@ -232,10 +233,18 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
     if (booking) {
       const service = servicesMap.get(booking.service_id);
       const profile = booking.client_id ? profilesMap.get(booking.client_id) : null;
+      
+      let clientName = 'Cliente';
+      if (booking.is_external_booking) {
+        clientName = booking.client_name ? `${booking.client_name} (Externo)` : 'Reserva Externa';
+      } else {
+        clientName = booking.client_name || profile?.display_name || 'Cliente';
+      }
+      
       return {
         type: 'booked',
         booking: {
-          client_name: booking.client_name || profile?.display_name || 'Cliente',
+          client_name: clientName,
           service_name: service?.name || 'Serviço',
           status: booking.status
         }
@@ -269,9 +278,17 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
       if (booking) {
         const service = servicesMap.get(booking.service_id);
         const profile = booking.client_id ? profilesMap.get(booking.client_id) : null;
+        
+        let clientName = 'Cliente';
+        if (booking.is_external_booking) {
+          clientName = booking.client_name ? `${booking.client_name} (Externo)` : 'Reserva Externa';
+        } else {
+          clientName = booking.client_name || profile?.display_name || 'Cliente';
+        }
+        
         setSelectedBooking({
           ...booking,
-          client_name: booking.client_name || profile?.display_name || 'Cliente',
+          client_name: clientName,
           service_name: service?.name || 'Serviço'
         });
         setBookingDetailsOpen(true);
