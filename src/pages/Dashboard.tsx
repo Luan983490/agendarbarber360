@@ -419,7 +419,7 @@ const Dashboard = () => {
           <BarbershopSetup onBarbershopCreated={handleBarbershopCreated} />
         </main>
       ) : (
-        <SidebarProvider defaultOpen={false}>
+        <SidebarProvider defaultOpen={true}>
           <div className="flex min-h-screen w-full mt-16">
             <DashboardSidebar currentTab={currentTab} onTabChange={setCurrentTab} />
             
