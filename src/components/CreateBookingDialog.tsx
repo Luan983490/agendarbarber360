@@ -21,6 +21,7 @@ import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { DateRange } from 'react-day-picker';
 import { Checkbox } from '@/components/ui/checkbox';
+import { CreateClientDialog } from './CreateClientDialog';
 
 interface CreateBookingDialogProps {
   open: boolean;
@@ -60,6 +61,10 @@ export const CreateBookingDialog = ({
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [recurringDays, setRecurringDays] = useState<number[]>([]);
   const [blocks, setBlocks] = useState<any[]>([]);
+  const [createClientOpen, setCreateClientOpen] = useState(false);
+  const [recurringType, setRecurringType] = useState('single');
+  const [recurringPeriodicity, setRecurringPeriodicity] = useState('weekly');
+  const [recurringQuantity, setRecurringQuantity] = useState('1');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -525,7 +530,12 @@ export const CreateBookingDialog = ({
                     ))}
                   </SelectContent>
                 </Select>
-                <Button type="button" size="icon" className="h-10 w-10 bg-cyan-600 hover:bg-cyan-700 shrink-0">
+                <Button 
+                  type="button" 
+                  size="icon" 
+                  className="h-10 w-10 bg-cyan-600 hover:bg-cyan-700 shrink-0"
+                  onClick={() => setCreateClientOpen(true)}
+                >
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
@@ -717,96 +727,148 @@ export const CreateBookingDialog = ({
 
           <TabsContent value="recurring" className="space-y-4 mt-6 px-1">
             <div className="space-y-2">
-              <Label className="text-sm text-muted-foreground">Selecione o período</Label>
-              <Calendar
-                mode="range"
-                selected={dateRange}
-                onSelect={setDateRange}
-                locale={ptBR}
-                className="rounded-md border pointer-events-auto"
-              />
+              <Label className="text-sm text-muted-foreground">Tipo</Label>
+              <Select value={recurringType} onValueChange={setRecurringType}>
+                <SelectTrigger className="h-10 bg-muted/30 border-input">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="single">Agendar</SelectItem>
+                  <SelectItem value="recurring">Recorrente</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            {dateRange?.from && dateRange?.to && (
-              <div className="p-3 bg-muted/20 rounded-md border">
-                <p className="text-sm font-medium">Período selecionado:</p>
-                <p className="text-sm text-muted-foreground">
-                  {format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} até{' '}
-                  {format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}
-                </p>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm text-muted-foreground">Dia Início:</Label>
+                <Input type="text" value={date ? format(date, 'dd/MM/yyyy') : ''} readOnly className="h-10 bg-muted/30" />
               </div>
-            )}
 
-            <div className="space-y-2">
-              <Label className="text-sm text-muted-foreground">Dias da semana</Label>
-              <div className="grid grid-cols-7 gap-2">
-                {weekDays.map((day) => (
-                  <Button
-                    key={day.value}
-                    type="button"
-                    variant={recurringDays.includes(day.value) ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => toggleRecurringDay(day.value)}
-                    className="h-10"
-                  >
-                    {day.label}
-                  </Button>
-                ))}
+              <div className="space-y-2">
+                <Label className="text-sm text-muted-foreground">Hora:</Label>
+                <Input type="text" value={time} readOnly className="h-10 bg-muted/30" />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm text-muted-foreground">Profissional:</Label>
+                <Select value={selectedBarber} onValueChange={setSelectedBarber}>
+                  <SelectTrigger className="h-10 bg-muted/30 border-input">
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border-border z-50">
+                    {barbers.map((barber) => (
+                      <SelectItem key={barber.id} value={barber.id}>
+                        {barber.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="recurring-start" className="text-sm text-muted-foreground">Hora Início:</Label>
-                <div className="relative">
-                  <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
-                  <Input
-                    id="recurring-start"
-                    type="time"
-                    value={blockStartTime}
-                    onChange={(e) => setBlockStartTime(e.target.value)}
-                    className="pl-10 h-10 bg-muted/30 border-input"
-                  />
-                </div>
+                <Label className="text-sm text-muted-foreground">Serviço:</Label>
+                <Select value={selectedService} onValueChange={setSelectedService}>
+                  <SelectTrigger className="h-10 bg-muted/30 border-input">
+                    <SelectValue placeholder="Selecione um Serviço" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border-border z-50">
+                    {services.map((service) => (
+                      <SelectItem key={service.id} value={service.id}>
+                        {service.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="recurring-end" className="text-sm text-muted-foreground">Hora Fim:</Label>
-                <div className="relative">
-                  <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
-                  <Input
-                    id="recurring-end"
-                    type="time"
-                    value={blockEndTime}
-                    onChange={(e) => setBlockEndTime(e.target.value)}
-                    className="pl-10 h-10 bg-muted/30 border-input"
-                  />
-                </div>
+                <Label className="flex items-center gap-1 text-sm text-muted-foreground">
+                  Duração:
+                </Label>
+                <Input 
+                  value={services.find(s => s.id === selectedService)?.duration ? `${services.find(s => s.id === selectedService)?.duration} min` : ''} 
+                  readOnly 
+                  className="h-10 bg-muted/30" 
+                />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="recurring-reason" className="text-sm text-muted-foreground">Motivo (opcional)</Label>
-              <Textarea
-                id="recurring-reason"
-                value={blockReason}
-                onChange={(e) => setBlockReason(e.target.value)}
-                placeholder="Ex: Férias, viagem, etc."
-                rows={3}
-                className="resize-none bg-muted/30 border-input"
-              />
+              <Label className="text-sm text-muted-foreground">Cliente:</Label>
+              <Select 
+                value={isExternalBooking ? 'sem-cadastro' : selectedClient} 
+                onValueChange={(value) => {
+                  if (value === 'sem-cadastro') {
+                    setIsExternalBooking(true);
+                    setSelectedClient('');
+                  } else {
+                    setIsExternalBooking(false);
+                    setSelectedClient(value);
+                  }
+                }}
+              >
+                <SelectTrigger className="h-10 bg-muted/30 border-input">
+                  <SelectValue placeholder="Sem Cliente" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border z-50">
+                  <SelectItem value="sem-cadastro">Sem Cliente</SelectItem>
+                  {clients.map((client) => (
+                    <SelectItem key={client.user_id} value={client.user_id}>
+                      {client.display_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm text-muted-foreground">Periodicidade:</Label>
+                <Select value={recurringPeriodicity} onValueChange={setRecurringPeriodicity}>
+                  <SelectTrigger className="h-10 bg-muted/30 border-input">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="weekly">Semanal</SelectItem>
+                    <SelectItem value="biweekly">Quinzenal</SelectItem>
+                    <SelectItem value="monthly">Mensal</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm text-muted-foreground">Quantidade de agendamentos:</Label>
+                <Select value={recurringQuantity} onValueChange={setRecurringQuantity}>
+                  <SelectTrigger className="h-10 bg-muted/30 border-input">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
+                      <SelectItem key={num} value={num.toString()}>{num}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <Button 
-              onClick={handleRecurringBlock}
-              className="w-full h-11 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm mt-2"
+              onClick={handleCreate}
+              disabled={loading}
+              className="w-full h-11 bg-green-600 hover:bg-green-700 text-white font-semibold text-sm mt-2"
             >
-              <Ban className="mr-2 h-4 w-4" />
-              CRIAR BLOQUEIOS RECORRENTES
+              {loading ? 'AGENDANDO...' : 'AGENDAR'}
             </Button>
           </TabsContent>
         </Tabs>
       </DialogContent>
+      <CreateClientDialog 
+        open={createClientOpen}
+        onOpenChange={setCreateClientOpen}
+        onSuccess={fetchClients}
+      />
     </Dialog>
   );
 };
