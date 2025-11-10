@@ -360,14 +360,13 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
       return;
     }
 
-    // Se for disponível, mostrar menu de ações
+    // Se for disponível, abrir dialog de agendamento
     setSelectedSlot({
       time,
       date,
       isBlocked: false
     });
-    setActionMenuPosition({ x: event.clientX, y: event.clientY });
-    setActionMenuOpen(true);
+    setCreateBookingOpen(true);
   };
 
   const handleBlock = async (type: 'single' | 'day' | 'week', reason: string) => {

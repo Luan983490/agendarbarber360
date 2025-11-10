@@ -11,13 +11,16 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar as CalendarIcon, Clock, Plus, HelpCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, Plus, HelpCircle, Ban, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
+import { format, addDays } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { DateRange } from 'react-day-picker';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface CreateBookingDialogProps {
   open: boolean;
@@ -51,6 +54,12 @@ export const CreateBookingDialog = ({
   const [loading, setLoading] = useState(false);
   const [isExternalBooking, setIsExternalBooking] = useState(true);
   const [externalClientName, setExternalClientName] = useState('');
+  const [blockReason, setBlockReason] = useState('');
+  const [blockStartTime, setBlockStartTime] = useState(initialTime);
+  const [blockEndTime, setBlockEndTime] = useState('');
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [recurringDays, setRecurringDays] = useState<number[]>([]);
+  const [blocks, setBlocks] = useState<any[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -59,9 +68,11 @@ export const CreateBookingDialog = ({
       setTime(initialTime);
       setSelectedBarber(barberId);
       setIsExternalBooking(true);
+      setBlockStartTime(initialTime);
       fetchServices();
       fetchBarbers();
       fetchClients();
+      fetchBlocks();
     }
   }, [open, barbershopId, initialDate, initialTime, barberId]);
 
@@ -93,6 +104,19 @@ export const CreateBookingDialog = ({
       .limit(50);
     
     setClients(data || []);
+  };
+
+  const fetchBlocks = async () => {
+    const { data } = await supabase
+      .from('barber_blocks')
+      .select('*')
+      .eq('barber_id', barberId)
+      .gte('block_date', format(initialDate, 'yyyy-MM-dd'))
+      .lte('block_date', format(addDays(initialDate, 7), 'yyyy-MM-dd'))
+      .order('block_date', { ascending: true })
+      .order('start_time', { ascending: true });
+    
+    setBlocks(data || []);
   };
 
   const addService = () => {
@@ -200,7 +224,161 @@ export const CreateBookingDialog = ({
     setNotes('');
     setIsExternalBooking(true);
     setExternalClientName('');
+    setBlockReason('');
+    setDateRange(undefined);
+    setRecurringDays([]);
   };
+
+  const handleBlockTime = async () => {
+    if (!blockStartTime || !blockEndTime) {
+      toast({
+        title: 'Erro',
+        description: 'Informe o horário de início e fim',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('barber_blocks')
+        .insert({
+          barber_id: selectedBarber,
+          block_date: format(date, 'yyyy-MM-dd'),
+          start_time: blockStartTime,
+          end_time: blockEndTime,
+          reason: blockReason || null
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Horário bloqueado',
+        description: 'Horário bloqueado com sucesso'
+      });
+
+      onSuccess();
+      onOpenChange(false);
+      resetForm();
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao bloquear horário',
+        description: error.message,
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleUnblock = async (blockId: string) => {
+    try {
+      const { error } = await supabase
+        .from('barber_blocks')
+        .delete()
+        .eq('id', blockId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Horário desbloqueado',
+        description: 'Horário desbloqueado com sucesso'
+      });
+
+      fetchBlocks();
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao desbloquear',
+        description: error.message,
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleRecurringBlock = async () => {
+    if (!dateRange?.from || !dateRange?.to) {
+      toast({
+        title: 'Erro',
+        description: 'Selecione um período',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    if (recurringDays.length === 0) {
+      toast({
+        title: 'Erro',
+        description: 'Selecione pelo menos um dia da semana',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    if (!blockStartTime || !blockEndTime) {
+      toast({
+        title: 'Erro',
+        description: 'Informe o horário de início e fim',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      const blocks = [];
+      let currentDate = dateRange.from;
+      
+      while (currentDate <= dateRange.to) {
+        const dayOfWeek = currentDate.getDay();
+        if (recurringDays.includes(dayOfWeek)) {
+          blocks.push({
+            barber_id: selectedBarber,
+            block_date: format(currentDate, 'yyyy-MM-dd'),
+            start_time: blockStartTime,
+            end_time: blockEndTime,
+            reason: blockReason || null
+          });
+        }
+        currentDate = addDays(currentDate, 1);
+      }
+
+      const { error } = await supabase
+        .from('barber_blocks')
+        .insert(blocks);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Bloqueios criados',
+        description: `${blocks.length} bloqueios criados com sucesso`
+      });
+
+      onSuccess();
+      onOpenChange(false);
+      resetForm();
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao criar bloqueios',
+        description: error.message,
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const toggleRecurringDay = (day: number) => {
+    if (recurringDays.includes(day)) {
+      setRecurringDays(recurringDays.filter(d => d !== day));
+    } else {
+      setRecurringDays([...recurringDays, day]);
+    }
+  };
+
+  const weekDays = [
+    { label: 'Dom', value: 0 },
+    { label: 'Seg', value: 1 },
+    { label: 'Ter', value: 2 },
+    { label: 'Qua', value: 3 },
+    { label: 'Qui', value: 4 },
+    { label: 'Sex', value: 5 },
+    { label: 'Sáb', value: 6 }
+  ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -413,22 +591,213 @@ export const CreateBookingDialog = ({
             </Button>
           </TabsContent>
 
-          <TabsContent value="block" className="mt-6 py-12">
-            <p className="text-muted-foreground text-center text-sm">
-              Funcionalidade de bloqueio de horário
-            </p>
+          <TabsContent value="block" className="space-y-4 mt-6 px-1">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm text-muted-foreground">Dia:</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal h-10 border-input bg-muted/30 hover:bg-muted/50",
+                        !date && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">{date ? format(date, 'dd/MM/yyyy') : "Selecione"}</span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={date}
+                      onSelect={(newDate) => newDate && setDate(newDate)}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="block-start" className="text-sm text-muted-foreground">Hora Início:</Label>
+                <div className="relative">
+                  <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
+                  <Input
+                    id="block-start"
+                    type="time"
+                    value={blockStartTime}
+                    onChange={(e) => setBlockStartTime(e.target.value)}
+                    className="pl-10 h-10 bg-muted/30 border-input"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="block-end" className="text-sm text-muted-foreground">Hora Fim:</Label>
+                <div className="relative">
+                  <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
+                  <Input
+                    id="block-end"
+                    type="time"
+                    value={blockEndTime}
+                    onChange={(e) => setBlockEndTime(e.target.value)}
+                    className="pl-10 h-10 bg-muted/30 border-input"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="block-reason" className="text-sm text-muted-foreground">Motivo (opcional)</Label>
+              <Textarea
+                id="block-reason"
+                value={blockReason}
+                onChange={(e) => setBlockReason(e.target.value)}
+                placeholder="Ex: Almoço, consulta médica, etc."
+                rows={3}
+                className="resize-none bg-muted/30 border-input"
+              />
+            </div>
+
+            <Button 
+              onClick={handleBlockTime}
+              className="w-full h-11 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm mt-2"
+            >
+              <Ban className="mr-2 h-4 w-4" />
+              BLOQUEAR HORÁRIO
+            </Button>
           </TabsContent>
 
-          <TabsContent value="unblock" className="mt-6 py-12">
-            <p className="text-muted-foreground text-center text-sm">
-              Funcionalidade de desbloqueio de horário
-            </p>
+          <TabsContent value="unblock" className="space-y-4 mt-6 px-1">
+            <div className="space-y-2">
+              <Label className="text-sm text-muted-foreground">Horários Bloqueados</Label>
+              {blocks.length === 0 ? (
+                <p className="text-center text-muted-foreground text-sm py-8">
+                  Nenhum horário bloqueado
+                </p>
+              ) : (
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {blocks.map((block) => (
+                    <div
+                      key={block.id}
+                      className="flex items-center justify-between p-3 border rounded-lg bg-muted/30"
+                    >
+                      <div className="space-y-1">
+                        <p className="font-medium text-sm">
+                          {format(new Date(block.block_date), 'dd/MM/yyyy', { locale: ptBR })}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {block.start_time.substring(0, 5)} - {block.end_time.substring(0, 5)}
+                        </p>
+                        {block.reason && (
+                          <p className="text-xs text-muted-foreground italic">{block.reason}</p>
+                        )}
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleUnblock(block.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </TabsContent>
 
-          <TabsContent value="recurring" className="mt-6 py-12">
-            <p className="text-muted-foreground text-center text-sm">
-              Funcionalidade de agenda recorrente
-            </p>
+          <TabsContent value="recurring" className="space-y-4 mt-6 px-1">
+            <div className="space-y-2">
+              <Label className="text-sm text-muted-foreground">Selecione o período</Label>
+              <Calendar
+                mode="range"
+                selected={dateRange}
+                onSelect={setDateRange}
+                locale={ptBR}
+                className="rounded-md border pointer-events-auto"
+              />
+            </div>
+
+            {dateRange?.from && dateRange?.to && (
+              <div className="p-3 bg-muted/20 rounded-md border">
+                <p className="text-sm font-medium">Período selecionado:</p>
+                <p className="text-sm text-muted-foreground">
+                  {format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} até{' '}
+                  {format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}
+                </p>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label className="text-sm text-muted-foreground">Dias da semana</Label>
+              <div className="grid grid-cols-7 gap-2">
+                {weekDays.map((day) => (
+                  <Button
+                    key={day.value}
+                    type="button"
+                    variant={recurringDays.includes(day.value) ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => toggleRecurringDay(day.value)}
+                    className="h-10"
+                  >
+                    {day.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="recurring-start" className="text-sm text-muted-foreground">Hora Início:</Label>
+                <div className="relative">
+                  <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
+                  <Input
+                    id="recurring-start"
+                    type="time"
+                    value={blockStartTime}
+                    onChange={(e) => setBlockStartTime(e.target.value)}
+                    className="pl-10 h-10 bg-muted/30 border-input"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="recurring-end" className="text-sm text-muted-foreground">Hora Fim:</Label>
+                <div className="relative">
+                  <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
+                  <Input
+                    id="recurring-end"
+                    type="time"
+                    value={blockEndTime}
+                    onChange={(e) => setBlockEndTime(e.target.value)}
+                    className="pl-10 h-10 bg-muted/30 border-input"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="recurring-reason" className="text-sm text-muted-foreground">Motivo (opcional)</Label>
+              <Textarea
+                id="recurring-reason"
+                value={blockReason}
+                onChange={(e) => setBlockReason(e.target.value)}
+                placeholder="Ex: Férias, viagem, etc."
+                rows={3}
+                className="resize-none bg-muted/30 border-input"
+              />
+            </div>
+
+            <Button 
+              onClick={handleRecurringBlock}
+              className="w-full h-11 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm mt-2"
+            >
+              <Ban className="mr-2 h-4 w-4" />
+              CRIAR BLOQUEIOS RECORRENTES
+            </Button>
           </TabsContent>
         </Tabs>
       </DialogContent>
