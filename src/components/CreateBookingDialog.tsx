@@ -208,35 +208,53 @@ export const CreateBookingDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-lg">
+          <DialogTitle className="flex items-center gap-2 text-base font-normal">
             <CalendarIcon className="h-5 w-5" />
             Agendar novo horário
           </DialogTitle>
         </DialogHeader>
 
         <Tabs defaultValue="schedule" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="schedule">Agendar Horário</TabsTrigger>
-            <TabsTrigger value="block" className="gap-1">
+          <TabsList className="grid w-full grid-cols-4 bg-transparent border-b rounded-none h-auto p-0">
+            <TabsTrigger 
+              value="schedule"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            >
+              Agendar Horário
+            </TabsTrigger>
+            <TabsTrigger 
+              value="block"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none gap-1"
+            >
               Bloquear Horário
               <HelpCircle className="h-3 w-3" />
             </TabsTrigger>
-            <TabsTrigger value="unblock">Desbloquear Horário</TabsTrigger>
-            <TabsTrigger value="recurring">Agenda Recorrente</TabsTrigger>
+            <TabsTrigger 
+              value="unblock"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            >
+              Desbloquear Horário
+            </TabsTrigger>
+            <TabsTrigger 
+              value="recurring"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            >
+              Agenda Recorrente
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="schedule" className="space-y-4 mt-4">
+          <TabsContent value="schedule" className="space-y-5 mt-6">
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label>Dia:</Label>
+                <Label className="text-sm font-medium">Dia:</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
                       className={cn(
-                        "w-full justify-start text-left font-normal",
+                        "w-full justify-start text-left font-normal h-10 bg-muted/50",
                         !date && "text-muted-foreground"
                       )}
                     >
@@ -257,26 +275,26 @@ export const CreateBookingDialog = ({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="time">Hora Início:</Label>
+                <Label htmlFor="time" className="text-sm font-medium">Hora Início:</Label>
                 <div className="relative">
-                  <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                  <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
                   <Input
                     id="time"
                     type="time"
                     value={time}
                     onChange={(e) => setTime(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 h-10 bg-muted/50"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="barber">Profissional:</Label>
+                <Label htmlFor="barber" className="text-sm font-medium">Profissional:</Label>
                 <Select value={selectedBarber} onValueChange={setSelectedBarber}>
-                  <SelectTrigger id="barber">
+                  <SelectTrigger id="barber" className="h-10 bg-muted/50">
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-background">
                     {barbers.map((barber) => (
                       <SelectItem key={barber.id} value={barber.id}>
                         {barber.name}
@@ -289,15 +307,15 @@ export const CreateBookingDialog = ({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="service">Serviço:</Label>
+                <Label htmlFor="service" className="text-sm font-medium">Serviço:</Label>
                 <Select value={selectedService} onValueChange={setSelectedService}>
-                  <SelectTrigger id="service">
+                  <SelectTrigger id="service" className="h-10 bg-muted/50">
                     <SelectValue placeholder="Selecione um Serviço" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-background">
                     {services.map((service) => (
                       <SelectItem key={service.id} value={service.id}>
-                        {service.name} - R$ {service.price}
+                        {service.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -305,54 +323,32 @@ export const CreateBookingDialog = ({
               </div>
 
               <div className="space-y-2">
-                <Label className="flex items-center gap-1">
+                <Label className="flex items-center gap-1 text-sm font-medium">
                   Duração:
                   <HelpCircle className="h-3 w-3 text-muted-foreground" />
                 </Label>
-                <Input
-                  value={`${calculateTotalDuration()} min`}
-                  readOnly
-                  className="bg-muted"
-                />
+                <Select disabled>
+                  <SelectTrigger className="h-10 bg-muted/50">
+                    <SelectValue placeholder={calculateTotalDuration() ? `${calculateTotalDuration()} min` : "Selecione"} />
+                  </SelectTrigger>
+                </Select>
               </div>
             </div>
 
-            {selectedServices.length > 0 && (
-              <div className="space-y-2">
-                <Label>Serviços Selecionados:</Label>
-                <div className="flex flex-wrap gap-2">
-                  {selectedServices.map(serviceId => {
-                    const service = services.find(s => s.id === serviceId);
-                    return service ? (
-                      <div key={serviceId} className="flex items-center gap-2 bg-primary/10 px-3 py-1 rounded-md">
-                        <span className="text-sm">{service.name}</span>
-                        <button
-                          onClick={() => removeService(serviceId)}
-                          className="text-destructive hover:text-destructive/80"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ) : null;
-                  })}
-                </div>
-              </div>
-            )}
-
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               size="sm"
               onClick={addService}
               disabled={!selectedService}
-              className="w-full"
+              className="w-full justify-center border border-dashed hover:bg-muted/50"
             >
               <Plus className="h-4 w-4 mr-2" />
               Adicionar serviço
             </Button>
 
             <div className="space-y-2">
-              <Label htmlFor="client">Cliente:</Label>
+              <Label htmlFor="client" className="text-sm font-medium">Cliente:</Label>
               <div className="flex gap-2">
                 <Select 
                   value={isExternalBooking ? 'sem-cadastro' : selectedClient} 
@@ -366,10 +362,10 @@ export const CreateBookingDialog = ({
                     }
                   }}
                 >
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Selecione o cliente" />
+                  <SelectTrigger className="flex-1 h-10 bg-muted/50">
+                    <SelectValue placeholder="Sem Cadastro" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-background">
                     <SelectItem value="sem-cadastro">Sem Cadastro</SelectItem>
                     {clients.map((client) => (
                       <SelectItem key={client.user_id} value={client.user_id}>
@@ -378,7 +374,7 @@ export const CreateBookingDialog = ({
                     ))}
                   </SelectContent>
                 </Select>
-                <Button type="button" size="icon" variant="default">
+                <Button type="button" size="icon" className="h-10 w-10 bg-cyan-600 hover:bg-cyan-700">
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
@@ -386,50 +382,51 @@ export const CreateBookingDialog = ({
 
             {isExternalBooking && (
               <div className="space-y-2">
-                <Label htmlFor="external-name">Nome do Cliente:</Label>
                 <Input
                   id="external-name"
                   placeholder="Digite o nome do cliente"
                   value={externalClientName}
                   onChange={(e) => setExternalClientName(e.target.value)}
+                  className="h-10 bg-muted/50"
                 />
               </div>
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="notes">Observações</Label>
+              <Label htmlFor="notes" className="text-sm font-medium">Observações</Label>
               <Textarea
                 id="notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Adicione observações..."
+                placeholder=""
                 rows={3}
+                className="resize-none bg-muted/50"
               />
             </div>
 
             <Button 
               onClick={handleCreate} 
               disabled={loading}
-              className="w-full bg-green-600 hover:bg-green-700 text-white"
+              className="w-full h-11 bg-green-600 hover:bg-green-700 text-white font-medium"
             >
               {loading ? 'AGENDANDO...' : 'AGENDAR'}
             </Button>
           </TabsContent>
 
-          <TabsContent value="block" className="mt-4">
-            <p className="text-muted-foreground text-center py-8">
+          <TabsContent value="block" className="mt-6 py-8">
+            <p className="text-muted-foreground text-center">
               Funcionalidade de bloqueio de horário
             </p>
           </TabsContent>
 
-          <TabsContent value="unblock" className="mt-4">
-            <p className="text-muted-foreground text-center py-8">
+          <TabsContent value="unblock" className="mt-6 py-8">
+            <p className="text-muted-foreground text-center">
               Funcionalidade de desbloqueio de horário
             </p>
           </TabsContent>
 
-          <TabsContent value="recurring" className="mt-4">
-            <p className="text-muted-foreground text-center py-8">
+          <TabsContent value="recurring" className="mt-6 py-8">
+            <p className="text-muted-foreground text-center">
               Funcionalidade de agenda recorrente
             </p>
           </TabsContent>
