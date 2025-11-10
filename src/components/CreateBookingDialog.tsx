@@ -136,9 +136,12 @@ export const CreateBookingDialog = ({
       if (isExternalBooking) {
         bookingData.client_name = externalClientName;
       } 
-      // Senão, usar client_id
+      // Senão, usar client_id e também preencher client_name
       else {
         bookingData.client_id = selectedClient;
+        // Pegar o nome do cliente selecionado para preencher client_name
+        const selectedClientData = clients.find(c => c.user_id === selectedClient);
+        bookingData.client_name = selectedClientData?.display_name || 'Cliente';
       }
       
       const { error } = await supabase

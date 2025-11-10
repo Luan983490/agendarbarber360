@@ -58,6 +58,8 @@ export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [blockedTimes, setBlockedTimes] = useState<string[]>([]);
+  const [bookedTimes, setBookedTimes] = useState<string[]>([]);
 
   useEffect(() => {
     if (isOpen) {
@@ -66,6 +68,16 @@ export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
       fetchProducts();
     }
   }, [isOpen, barberShop.id]);
+
+  // Buscar horários bloqueados e agendados quando data ou barbeiro mudar
+  useEffect(() => {
+    if (selectedDate && selectedBarber) {
+      fetchBlockedAndBookedTimes();
+    } else {
+      setBlockedTimes([]);
+      setBookedTimes([]);
+    }
+  }, [selectedDate, selectedBarber]);
 
   const fetchServices = async () => {
     try {
@@ -121,6 +133,53 @@ export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
         description: error.message,
         variant: "destructive"
       });
+    }
+  };
+
+  const fetchBlockedAndBookedTimes = async () => {
+    if (!selectedDate || !selectedBarber) return;
+
+    const bookingDate = selectedDate.toISOString().split('T')[0];
+
+    try {
+      // Buscar bloqueios
+      const { data: blocks, error: blocksError } = await supabase
+        .from('barber_blocks')
+        .select('start_time, end_time')
+        .eq('barber_id', selectedBarber)
+        .eq('block_date', bookingDate);
+
+      if (blocksError) throw blocksError;
+
+      // Buscar agendamentos
+      const { data: bookings, error: bookingsError } = await supabase
+        .from('bookings')
+        .select('booking_time')
+        .eq('barber_id', selectedBarber)
+        .eq('booking_date', bookingDate)
+        .in('status', ['pending', 'confirmed']);
+
+      if (bookingsError) throw bookingsError;
+
+      // Processar bloqueios para obter todos os horários bloqueados
+      const blocked: string[] = [];
+      blocks?.forEach(block => {
+        const startTime = block.start_time.substring(0, 5);
+        const endTime = block.end_time.substring(0, 5);
+        availableTimes.forEach(time => {
+          if (time >= startTime && time < endTime) {
+            blocked.push(time);
+          }
+        });
+      });
+
+      // Processar agendamentos
+      const booked = bookings?.map(b => b.booking_time.substring(0, 5)) || [];
+
+      setBlockedTimes(blocked);
+      setBookedTimes(booked);
+    } catch (error: any) {
+      console.error('Erro ao buscar horários indisponíveis:', error);
     }
   };
 
@@ -213,6 +272,13 @@ export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
         status: 'pending'
       });
       
+      // Buscar o nome do cliente do perfil
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('user_id', user.id)
+        .single();
+      
       const { data: bookingData, error } = await supabase
         .from('bookings')
         .insert({
@@ -224,7 +290,8 @@ export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
           booking_time: selectedTime,
           total_price: selectedServiceData.price + selectedProductsTotal,
           notes: notes || null,
-          status: 'pending'
+          status: 'pending',
+          client_name: profileData?.display_name || 'Cliente'
         })
         .select()
         .single();
@@ -453,18 +520,31 @@ export const BookingModal = ({ children, barberShop }: BookingModalProps) => {
               <div className="space-y-3">
                 <Label>Escolha o horário *</Label>
                 <div className="grid grid-cols-4 gap-2">
-                  {availableTimes.map((time) => (
-                    <Button
-                      key={time}
-                      variant={selectedTime === time ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setSelectedTime(time)}
-                    >
-                      <Clock className="mr-1 h-3 w-3" />
-                      {time}
-                    </Button>
-                  ))}
+                  {availableTimes.map((time) => {
+                    const isBlocked = blockedTimes.includes(time);
+                    const isBooked = bookedTimes.includes(time);
+                    const isUnavailable = isBlocked || isBooked;
+                    
+                    return (
+                      <Button
+                        key={time}
+                        variant={selectedTime === time ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => !isUnavailable && setSelectedTime(time)}
+                        disabled={isUnavailable}
+                        className={isUnavailable ? 'opacity-50 cursor-not-allowed' : ''}
+                      >
+                        <Clock className="mr-1 h-3 w-3" />
+                        {time}
+                      </Button>
+                    );
+                  })}
                 </div>
+                {selectedBarber && (blockedTimes.length > 0 || bookedTimes.length > 0) && (
+                  <p className="text-xs text-muted-foreground">
+                    Horários bloqueados ou já agendados não estão disponíveis
+                  </p>
+                )}
               </div>
 
               {/* Notes */}
