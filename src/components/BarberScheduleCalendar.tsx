@@ -181,30 +181,10 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
         endDate = endOfMonth(currentDate);
       }
 
-      // Buscar agendamentos com dados relacionados (serviços e perfis)
+      // 1. Buscar agendamentos básicos
       const { data: bookingsData, error: bookingsError } = await supabase
         .from('bookings')
-        .select(`
-          id,
-          booking_date,
-          booking_time,
-          status,
-          service_id,
-          client_id,
-          barber_id,
-          client_name,
-          is_external_booking,
-          services:service_id (
-            id,
-            name,
-            duration,
-            price
-          ),
-          profiles:client_id (
-            user_id,
-            display_name
-          )
-        `)
+        .select('*')
         .eq('barbershop_id', barbershopId)
         .eq('barber_id', selectedBarber)
         .gte('booking_date', format(startDate, 'yyyy-MM-dd'))
@@ -212,64 +192,73 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
 
       if (bookingsError) throw bookingsError;
 
-      // Buscar bloqueios
+      // 2. Buscar bloqueios
       const { data: blocksData, error: blocksError } = await supabase
         .from('barber_blocks')
-        .select('id, block_date, start_time, end_time, reason')
+        .select('*')
         .eq('barber_id', selectedBarber)
         .gte('block_date', format(startDate, 'yyyy-MM-dd'))
         .lte('block_date', format(endDate, 'yyyy-MM-dd'));
 
       if (blocksError) throw blocksError;
 
-      // Processar dados relacionados dos JOINs e criar bookings processados
-      const processedBookings: any[] = [];
-      
-      console.log('📅 Total bookings received:', bookingsData?.length);
-      
-      bookingsData?.forEach((booking: any) => {
-        // Extrair serviço (pode vir como objeto ou null)
-        const service = booking.services;
-        const serviceName = service?.name || 'Serviço';
-        
-        // Extrair perfil (pode vir como objeto ou null)
-        const profile = booking.profiles;
-        
-        // Determinar o nome do cliente com prioridade correta
-        let clientName = 'Cliente';
-        if (booking.is_external_booking) {
-          // Para reservas externas, sempre usar client_name
-          clientName = booking.client_name || 'Cliente Externo';
-        } else if (booking.client_name) {
-          // Se tem client_name no booking, usar
-          clientName = booking.client_name;
-        } else if (profile?.display_name) {
-          // Se não, usar o display_name do perfil
-          clientName = profile.display_name;
-        }
-        
-        console.log('🔍 Booking processado:', {
-          id: booking.id,
-          date: booking.booking_date,
-          time: booking.booking_time,
-          service: serviceName,
-          client: clientName,
-          is_external: booking.is_external_booking,
-          raw_service: service,
-          raw_profile: profile
-        });
-        
-        // Criar booking processado com todos os dados
-        processedBookings.push({
-          ...booking,
-          client_display_name: clientName,
-          service_display_name: serviceName
-        });
-      });
+      // 3. Buscar serviços e perfis relacionados
+      if (bookingsData && bookingsData.length > 0) {
+        const serviceIds = [...new Set(bookingsData.map(b => b.service_id).filter(Boolean))];
+        const clientIds = [...new Set(bookingsData.map(b => b.client_id).filter(Boolean))];
 
-      console.log('✅ Processed bookings:', processedBookings.length);
-      
-      setBookings(processedBookings);
+        // Buscar serviços
+        const { data: servicesData } = await supabase
+          .from('services')
+          .select('id, name')
+          .in('id', serviceIds);
+
+        // Buscar perfis
+        const { data: profilesData } = clientIds.length > 0 
+          ? await supabase
+              .from('profiles')
+              .select('user_id, display_name')
+              .in('user_id', clientIds)
+          : { data: [] };
+
+        // 4. Criar mapas para lookup rápido
+        const servicesMap = new Map<string, string>();
+        servicesData?.forEach(s => servicesMap.set(s.id, s.name));
+        
+        const profilesMap = new Map<string, string>();
+        profilesData?.forEach(p => profilesMap.set(p.user_id, p.display_name));
+
+        // 5. Processar bookings com os dados completos
+        const processedBookings = bookingsData.map(booking => {
+          let clientName = 'Cliente';
+          let serviceName = 'Serviço';
+
+          // Determinar nome do serviço
+          if (booking.service_id && servicesMap.has(booking.service_id)) {
+            serviceName = servicesMap.get(booking.service_id) as string;
+          }
+
+          // Determinar nome do cliente
+          if (booking.is_external_booking) {
+            clientName = booking.client_name || 'Cliente Externo';
+          } else if (booking.client_id && profilesMap.has(booking.client_id)) {
+            clientName = profilesMap.get(booking.client_id) as string;
+          } else if (booking.client_name) {
+            clientName = booking.client_name;
+          }
+
+          return {
+            ...booking,
+            client_display_name: clientName,
+            service_display_name: serviceName
+          };
+        });
+
+        setBookings(processedBookings);
+      } else {
+        setBookings([]);
+      }
+
       setBlocks(blocksData || []);
     } catch (error: any) {
       toast({
