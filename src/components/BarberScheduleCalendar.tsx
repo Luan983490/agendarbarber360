@@ -176,7 +176,6 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
         startDate = currentWeekStart;
         endDate = addDays(currentWeekStart, 6);
       } else {
-        // month
         startDate = startOfMonth(currentDate);
         endDate = endOfMonth(currentDate);
       }
@@ -184,113 +183,77 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
       const startDateStr = format(startDate, 'yyyy-MM-dd');
       const endDateStr = format(endDate, 'yyyy-MM-dd');
 
-      // 1. Buscar TODOS os agendamentos do período
-      const { data: rawBookings, error: bookingsError } = await supabase
-        .from('bookings')
-        .select('*')
-        .eq('barber_id', selectedBarber)
-        .gte('booking_date', startDateStr)
-        .lte('booking_date', endDateStr);
+      // Buscar tudo em paralelo
+      const [bookingsResult, servicesResult, blocksResult] = await Promise.all([
+        supabase
+          .from('bookings')
+          .select('*')
+          .eq('barber_id', selectedBarber)
+          .gte('booking_date', startDateStr)
+          .lte('booking_date', endDateStr),
+        
+        supabase
+          .from('services')
+          .select('id, name')
+          .eq('barbershop_id', barbershopId),
+        
+        supabase
+          .from('barber_blocks')
+          .select('*')
+          .eq('barber_id', selectedBarber)
+          .gte('block_date', startDateStr)
+          .lte('block_date', endDateStr)
+      ]);
 
-      if (bookingsError) {
-        console.error('Erro ao buscar bookings:', bookingsError);
-        throw bookingsError;
-      }
+      if (bookingsResult.error) throw bookingsResult.error;
+      if (blocksResult.error) throw blocksResult.error;
 
-      console.log('📦 Raw bookings:', rawBookings);
+      const rawBookings = bookingsResult.data || [];
+      const allServices = servicesResult.data || [];
+      const blocksData = blocksResult.data || [];
 
-      // 2. Buscar TODOS os serviços da barbearia
-      const { data: allServices, error: servicesError } = await supabase
-        .from('services')
-        .select('id, name')
-        .eq('barbershop_id', barbershopId);
-
-      if (servicesError) {
-        console.error('Erro ao buscar serviços:', servicesError);
-      }
-
-      console.log('🔧 All services:', allServices);
-
-      // 3. Buscar TODOS os perfis (não tem filtro por barbershop)
-      const clientIds = rawBookings?.filter(b => b.client_id).map(b => b.client_id) || [];
-      let allProfiles: any[] = [];
+      // Buscar perfis apenas dos bookings que têm client_id
+      const clientIds = rawBookings
+        .filter(b => b.client_id)
+        .map(b => b.client_id);
       
+      let allProfiles: any[] = [];
       if (clientIds.length > 0) {
-        const { data: profiles, error: profilesError } = await supabase
+        const profilesResult = await supabase
           .from('profiles')
           .select('user_id, display_name')
           .in('user_id', clientIds);
-
-        if (profilesError) {
-          console.error('Erro ao buscar perfis:', profilesError);
-        } else {
-          allProfiles = profiles || [];
-        }
+        
+        allProfiles = profilesResult.data || [];
       }
 
-      console.log('👤 All profiles:', allProfiles);
-
-      // 4. Criar mapas para lookup rápido
+      // Criar maps
       const servicesMap = new Map<string, string>();
-      allServices?.forEach(s => {
-        servicesMap.set(s.id, s.name);
-      });
+      allServices.forEach(s => servicesMap.set(s.id, s.name));
 
       const profilesMap = new Map<string, string>();
-      allProfiles?.forEach(p => {
-        profilesMap.set(p.user_id, p.display_name);
-      });
+      allProfiles.forEach(p => profilesMap.set(p.user_id, p.display_name));
 
-      // 5. Processar cada booking
-      const processedBookings = (rawBookings || []).map(booking => {
-        // Buscar nome do serviço
-        const serviceName = servicesMap.get(booking.service_id) || 'Serviço não encontrado';
+      // Processar bookings
+      const processed = rawBookings.map(b => {
+        const serviceName = servicesMap.get(b.service_id) || 'Serviço';
         
-        // Buscar nome do cliente
         let clientName = 'Cliente';
-        if (booking.is_external_booking) {
-          // Para bookings externos, usar o client_name que foi digitado
-          clientName = booking.client_name || 'Cliente Externo';
-        } else if (booking.client_id) {
-          // Para bookings com cadastro, buscar no profiles
-          clientName = profilesMap.get(booking.client_id) || 'Cliente';
+        if (b.is_external_booking) {
+          clientName = b.client_name || 'Cliente Externo';
+        } else if (b.client_id) {
+          clientName = profilesMap.get(b.client_id) || 'Cliente';
         }
 
-        console.log('✅ Booking processado:', {
-          id: booking.id,
-          date: booking.booking_date,
-          time: booking.booking_time,
-          service_id: booking.service_id,
-          service_name: serviceName,
-          client_id: booking.client_id,
-          client_name: clientName,
-          is_external: booking.is_external_booking
-        });
-
         return {
-          ...booking,
+          ...b,
           client_display_name: clientName,
           service_display_name: serviceName
         };
       });
 
-      console.log('🎯 Final processed bookings:', processedBookings);
-
-      setBookings(processedBookings);
-
-      // 6. Buscar bloqueios
-      const { data: blocksData, error: blocksError } = await supabase
-        .from('barber_blocks')
-        .select('*')
-        .eq('barber_id', selectedBarber)
-        .gte('block_date', startDateStr)
-        .lte('block_date', endDateStr);
-
-      if (blocksError) {
-        console.error('Erro ao buscar bloqueios:', blocksError);
-      }
-
-      setBlocks(blocksData || []);
+      setBookings(processed);
+      setBlocks(blocksData);
 
     } catch (error: any) {
       console.error('Erro geral:', error);
