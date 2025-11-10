@@ -1,4 +1,4 @@
-import { Store, Edit, CalendarDays, Calendar, Scissors, Users, Package, X } from 'lucide-react';
+import { Store, Edit, CalendarDays, Calendar, Scissors, Users, Package, X, CreditCard } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   Sidebar,
@@ -27,6 +27,8 @@ const menuItems = [
   { id: 'services', title: 'Serviços', icon: Scissors },
   { id: 'barbers', title: 'Barbeiros', icon: Users },
   { id: 'products', title: 'Produtos', icon: Package },
+  { id: 'packages', title: 'Pacotes', icon: Package },
+  { id: 'subscriptions', title: 'Assinaturas', icon: CreditCard },
 ];
 
 export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarProps) {

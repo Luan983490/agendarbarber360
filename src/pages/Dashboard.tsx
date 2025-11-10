@@ -15,6 +15,8 @@ import ProductForm from '@/components/ProductForm';
 import BarberForm from '@/components/BarberForm';
 import BookingsManagement from '@/components/BookingsManagement';
 import { BarberScheduleCalendar } from '@/components/BarberScheduleCalendar';
+import { PackagesManagement } from '@/components/PackagesManagement';
+import { SubscriptionsManagement } from '@/components/SubscriptionsManagement';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -398,6 +400,10 @@ const Dashboard = () => {
             onProductsChange={fetchProducts}
           />
         );
+      case 'packages':
+        return <PackagesManagement barbershopId={barbershop!.id} />;
+      case 'subscriptions':
+        return <SubscriptionsManagement barbershopId={barbershop!.id} />;
       default:
         return null;
     }
