@@ -387,6 +387,7 @@ export type Database = {
           id: string
           next_billing_date: string
           plan_description: string | null
+          plan_id: string | null
           plan_name: string
           price_monthly: number
           start_date: string
@@ -401,6 +402,7 @@ export type Database = {
           id?: string
           next_billing_date: string
           plan_description?: string | null
+          plan_id?: string | null
           plan_name: string
           price_monthly: number
           start_date?: string
@@ -415,6 +417,7 @@ export type Database = {
           id?: string
           next_billing_date?: string
           plan_description?: string | null
+          plan_id?: string | null
           plan_name?: string
           price_monthly?: number
           start_date?: string
@@ -427,6 +430,13 @@ export type Database = {
             columns: ["barbershop_id"]
             isOneToOne: false
             referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
             referencedColumns: ["id"]
           },
         ]
@@ -841,6 +851,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "services_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_plans: {
+        Row: {
+          barbershop_id: string
+          benefits: Json | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          plan_name: string
+          price_monthly: number
+          updated_at: string
+        }
+        Insert: {
+          barbershop_id: string
+          benefits?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          plan_name: string
+          price_monthly: number
+          updated_at?: string
+        }
+        Update: {
+          barbershop_id?: string
+          benefits?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          plan_name?: string
+          price_monthly?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_plans_barbershop_id_fkey"
             columns: ["barbershop_id"]
             isOneToOne: false
             referencedRelation: "barbershops"
