@@ -3,11 +3,10 @@ import { Navigate } from 'react-router-dom';
 import { useUserRole } from '@/hooks/useUserRole';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Scissors, Calendar, Package, Store, Users, DollarSign, Star, Edit, CalendarDays, AlertCircle } from 'lucide-react';
+import { Scissors, Calendar, Package, Store, Users, DollarSign, Star, Edit, CalendarDays, AlertCircle, Menu } from 'lucide-react';
 import { Header } from '@/components/Header';
 import BarbershopSetup from '@/components/BarbershopSetup';
 import BarbershopEdit from '@/components/BarbershopEdit';
@@ -18,6 +17,8 @@ import BookingsManagement from '@/components/BookingsManagement';
 import { BarberScheduleCalendar } from '@/components/BarberScheduleCalendar';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { DashboardSidebar } from '@/components/DashboardSidebar';
 
 interface Profile {
   id: string;
@@ -85,6 +86,7 @@ const Dashboard = () => {
     totalClients: 0
   });
   const [loading, setLoading] = useState(true);
+  const [currentTab, setCurrentTab] = useState('overview');
   const { toast } = useToast();
   const { subscription } = useSubscription(barbershop?.id || null);
 
@@ -266,198 +268,191 @@ const Dashboard = () => {
     return <Navigate to="/" replace />;
   }
 
+  const renderContent = () => {
+    switch (currentTab) {
+      case 'overview':
+        return (
+          <div className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Agendamentos Hoje
+                  </CardTitle>
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.todayBookings}</div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Receita do Mês
+                  </CardTitle>
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">R$ {stats.monthlyRevenue.toFixed(2)}</div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Total de Clientes
+                  </CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.totalClients}</div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Avaliação Média
+                  </CardTitle>
+                  <Star className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{barbershop?.rating?.toFixed(1) || '0.0'}</div>
+                  <p className="text-xs text-muted-foreground">{barbershop?.total_reviews} avaliações</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Informações da Barbearia</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {barbershop?.image_url && (
+                  <div className="w-full max-w-md">
+                    <img
+                      src={barbershop.image_url}
+                      alt={barbershop.name}
+                      className="w-full h-48 object-cover rounded-lg border"
+                    />
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <p><strong>Nome:</strong> {barbershop?.name}</p>
+                  <p><strong>Endereço:</strong> {barbershop?.address}</p>
+                  <p><strong>Telefone:</strong> {barbershop?.phone}</p>
+                  <p><strong>Descrição:</strong> {barbershop?.description}</p>
+                  <div className="flex gap-4 mt-4">
+                    <div>
+                      <strong>Serviços:</strong> {services.length}
+                    </div>
+                    <div>
+                      <strong>Barbeiros:</strong> {barbers.length}
+                    </div>
+                    <div>
+                      <strong>Produtos:</strong> {products.length}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
+      case 'edit':
+        return (
+          <BarbershopEdit 
+            barbershop={{
+              ...barbershop!,
+              email: barbershop?.email || '',
+              amenities: barbershop?.amenities || []
+            }} 
+            onBarbershopUpdated={fetchUserProfile}
+          />
+        );
+      case 'schedule':
+        return <BarberScheduleCalendar barbershopId={barbershop!.id} />;
+      case 'bookings':
+        return <BookingsManagement barbershopId={barbershop!.id} />;
+      case 'services':
+        return (
+          <ServiceForm
+            barbershopId={barbershop!.id}
+            services={services}
+            onServicesChange={fetchServices}
+          />
+        );
+      case 'barbers':
+        return (
+          <BarberForm
+            barbershopId={barbershop!.id}
+            barbers={barbers}
+            onBarbersChange={fetchBarbers}
+          />
+        );
+      case 'products':
+        return (
+          <ProductForm
+            barbershopId={barbershop!.id}
+            products={products}
+            onProductsChange={fetchProducts}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="container mx-auto px-4 py-8 mt-16">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Dashboard da Barbearia</h1>
-          <p className="text-muted-foreground">
-            Gerencie sua barbearia, agendamentos e produtos
-          </p>
-        </div>
-
-        {!barbershop ? (
+      {!barbershop ? (
+        <main className="container mx-auto px-4 py-8 mt-16">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-2">Dashboard da Barbearia</h1>
+            <p className="text-muted-foreground">
+              Gerencie sua barbearia, agendamentos e produtos
+            </p>
+          </div>
           <BarbershopSetup onBarbershopCreated={handleBarbershopCreated} />
-        ) : (
-          <>
-            {subscription && subscription.plan_type === 'teste_gratis' && subscription.days_remaining <= 2 && (
-              <Alert variant="destructive" className="mb-6">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Teste Gratuito Encerrando</AlertTitle>
-                <AlertDescription>
-                  Seu teste gratuito termina em {subscription.days_remaining} dia(s). 
-                  Faça upgrade para continuar usando todas as funcionalidades.
-                </AlertDescription>
-              </Alert>
-            )}
-
-            <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-7">
-              <TabsTrigger value="overview" className="flex items-center gap-2">
-                <Store className="h-4 w-4" />
-                Visão Geral
-              </TabsTrigger>
-              <TabsTrigger value="edit" className="flex items-center gap-2">
-                <Edit className="h-4 w-4" />
-                Editar
-              </TabsTrigger>
-              <TabsTrigger value="schedule" className="flex items-center gap-2">
-                <CalendarDays className="h-4 w-4" />
-                Agenda
-              </TabsTrigger>
-              <TabsTrigger value="bookings" className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                Lista
-              </TabsTrigger>
-              <TabsTrigger value="services" className="flex items-center gap-2">
-                <Scissors className="h-4 w-4" />
-                Serviços
-              </TabsTrigger>
-              <TabsTrigger value="barbers" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Barbeiros
-              </TabsTrigger>
-              <TabsTrigger value="products" className="flex items-center gap-2">
-                <Package className="h-4 w-4" />
-                Produtos
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="overview" className="space-y-6">
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Agendamentos Hoje
-                    </CardTitle>
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{stats.todayBookings}</div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Receita do Mês
-                    </CardTitle>
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">R$ {stats.monthlyRevenue.toFixed(2)}</div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Total de Clientes
-                    </CardTitle>
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{stats.totalClients}</div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Avaliação Média
-                    </CardTitle>
-                    <Star className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{barbershop.rating?.toFixed(1) || '0.0'}</div>
-                    <p className="text-xs text-muted-foreground">{barbershop.total_reviews} avaliações</p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Informações da Barbearia</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {barbershop.image_url && (
-                    <div className="w-full max-w-md">
-                      <img
-                        src={barbershop.image_url}
-                        alt={barbershop.name}
-                        className="w-full h-48 object-cover rounded-lg border"
-                      />
-                    </div>
-                  )}
-                  <div className="space-y-2">
-                    <p><strong>Nome:</strong> {barbershop.name}</p>
-                    <p><strong>Endereço:</strong> {barbershop.address}</p>
-                    <p><strong>Telefone:</strong> {barbershop.phone}</p>
-                    <p><strong>Descrição:</strong> {barbershop.description}</p>
-                    <div className="flex gap-4 mt-4">
-                      <div>
-                        <strong>Serviços:</strong> {services.length}
-                      </div>
-                      <div>
-                        <strong>Barbeiros:</strong> {barbers.length}
-                      </div>
-                      <div>
-                        <strong>Produtos:</strong> {products.length}
-                      </div>
-                    </div>
+        </main>
+      ) : (
+        <SidebarProvider>
+          <div className="flex min-h-screen w-full mt-16">
+            <DashboardSidebar currentTab={currentTab} onTabChange={setCurrentTab} />
+            
+            <main className="flex-1 overflow-auto">
+              <div className="container mx-auto px-4 py-8">
+                <div className="mb-6 flex items-center gap-4">
+                  <SidebarTrigger className="lg:hidden">
+                    <Menu className="h-6 w-6" />
+                  </SidebarTrigger>
+                  <div>
+                    <h1 className="text-3xl font-bold mb-2">Dashboard da Barbearia</h1>
+                    <p className="text-muted-foreground">
+                      Gerencie sua barbearia, agendamentos e produtos
+                    </p>
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+                </div>
 
-            <TabsContent value="edit">
-              <BarbershopEdit 
-                barbershop={{
-                  ...barbershop,
-                  email: barbershop.email || '',
-                  amenities: barbershop.amenities || []
-                }} 
-                onBarbershopUpdated={fetchUserProfile}
-              />
-            </TabsContent>
+                {subscription && subscription.plan_type === 'teste_gratis' && subscription.days_remaining <= 2 && (
+                  <Alert variant="destructive" className="mb-6">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Teste Gratuito Encerrando</AlertTitle>
+                    <AlertDescription>
+                      Seu teste gratuito termina em {subscription.days_remaining} dia(s). 
+                      Faça upgrade para continuar usando todas as funcionalidades.
+                    </AlertDescription>
+                  </Alert>
+                )}
 
-          <TabsContent value="schedule">
-            <BarberScheduleCalendar barbershopId={barbershop.id} />
-          </TabsContent>
-
-            <TabsContent value="bookings">
-              <BookingsManagement barbershopId={barbershop.id} />
-            </TabsContent>
-
-            <TabsContent value="services">
-              <ServiceForm
-                barbershopId={barbershop.id}
-                services={services}
-                onServicesChange={fetchServices}
-              />
-            </TabsContent>
-
-            <TabsContent value="barbers">
-              <BarberForm
-                barbershopId={barbershop.id}
-                barbers={barbers}
-                onBarbersChange={fetchBarbers}
-              />
-            </TabsContent>
-
-            <TabsContent value="products">
-              <ProductForm
-                barbershopId={barbershop.id}
-                products={products}
-                onProductsChange={fetchProducts}
-              />
-            </TabsContent>
-          </Tabs>
-          </>
-        )}
-      </main>
+                {renderContent()}
+              </div>
+            </main>
+          </div>
+        </SidebarProvider>
+      )}
     </div>
   );
 };
