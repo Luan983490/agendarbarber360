@@ -18,6 +18,7 @@ import { BarberScheduleCalendar } from '@/components/BarberScheduleCalendar';
 import { PackagesManagement } from '@/components/PackagesManagement';
 import { SubscriptionsManagement } from '@/components/SubscriptionsManagement';
 import { LoyaltyManagement } from '@/components/LoyaltyManagement';
+import { StaffManagement } from '@/components/StaffManagement';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -407,6 +408,8 @@ const Dashboard = () => {
         return <SubscriptionsManagement barbershopId={barbershop!.id} />;
       case 'loyalty':
         return <LoyaltyManagement />;
+      case 'staff':
+        return <StaffManagement barbershopId={barbershop!.id} />;
       default:
         return null;
     }

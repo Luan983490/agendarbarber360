@@ -1,9 +1,9 @@
 import { Navigate } from 'react-router-dom';
-import { useUserRole } from '@/hooks/useUserRole';
+import { useUserAccess } from '@/hooks/useUserAccess';
 import { Scissors } from 'lucide-react';
 
 export const DashboardRouter = () => {
-  const { userType, loading } = useUserRole();
+  const { role, loading } = useUserAccess();
 
   if (loading) {
     return (
@@ -16,11 +16,15 @@ export const DashboardRouter = () => {
     );
   }
 
-  if (userType === 'barber') {
+  if (role === 'barber') {
     return <Navigate to="/barber-dashboard" replace />;
   }
 
-  if (userType === 'barbershop_owner') {
+  if (role === 'attendant') {
+    return <Navigate to="/attendant-dashboard" replace />;
+  }
+
+  if (role === 'owner') {
     return <Navigate to="/dashboard" replace />;
   }
 

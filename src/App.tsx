@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import BarberDashboard from "./pages/BarberDashboard";
+import AttendantDashboard from "./pages/AttendantDashboard";
 import MyBookings from "./pages/MyBookings";
 import BookingsHistory from "./pages/BookingsHistory";
 import Packages from "./pages/Packages";
@@ -33,6 +34,7 @@ const AppContent = () => {
           <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/barber-dashboard" element={<BarberDashboard />} />
+          <Route path="/attendant-dashboard" element={<AttendantDashboard />} />
           <Route path="/my-bookings" element={<MyBookings />} />
           <Route path="/historico" element={<BookingsHistory />} />
           <Route path="/pacotes" element={<Packages />} />

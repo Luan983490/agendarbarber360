@@ -19,7 +19,7 @@ interface DashboardSidebarProps {
   onTabChange: (tab: string) => void;
 }
 
-const menuItems = [
+const ownerMenuItems = [
   { id: 'overview', title: 'Visão Geral', icon: Store },
   { id: 'edit', title: 'Editar', icon: Edit },
   { id: 'schedule', title: 'Agenda', icon: CalendarDays },
@@ -30,7 +30,10 @@ const menuItems = [
   { id: 'packages', title: 'Pacotes', icon: Package },
   { id: 'subscriptions', title: 'Assinaturas', icon: CreditCard },
   { id: 'loyalty', title: 'Fidelidade', icon: Gift },
+  { id: 'staff', title: 'Funcionários', icon: Users },
 ];
+
+const menuItems = ownerMenuItems;
 
 export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarProps) {
   const { setOpen, setOpenMobile, isMobile } = useSidebar();
