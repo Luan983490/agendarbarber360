@@ -273,7 +273,7 @@ const Dashboard = () => {
       case 'overview':
         return (
           <div className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">
@@ -418,36 +418,40 @@ const Dashboard = () => {
           <BarbershopSetup onBarbershopCreated={handleBarbershopCreated} />
         </main>
       ) : (
-        <SidebarProvider>
+        <SidebarProvider defaultOpen={false}>
           <div className="flex min-h-screen w-full mt-16">
             <DashboardSidebar currentTab={currentTab} onTabChange={setCurrentTab} />
             
-            <main className="flex-1 overflow-auto">
-              <div className="container mx-auto px-4 py-8">
-                <div className="mb-6 flex items-center gap-4">
-                  <SidebarTrigger className="lg:hidden">
-                    <Menu className="h-6 w-6" />
-                  </SidebarTrigger>
-                  <div>
-                    <h1 className="text-3xl font-bold mb-2">Dashboard da Barbearia</h1>
-                    <p className="text-muted-foreground">
-                      Gerencie sua barbearia, agendamentos e produtos
-                    </p>
+            <main className="flex-1 overflow-auto w-full">
+              <div className="w-full">
+                <div className="sticky top-0 z-10 bg-background border-b px-4 py-3 lg:px-6">
+                  <div className="flex items-center gap-4">
+                    <SidebarTrigger>
+                      <Menu className="h-6 w-6" />
+                    </SidebarTrigger>
+                    <div className="flex-1 min-w-0">
+                      <h1 className="text-xl lg:text-3xl font-bold truncate">Dashboard da Barbearia</h1>
+                      <p className="text-sm text-muted-foreground hidden sm:block">
+                        Gerencie sua barbearia, agendamentos e produtos
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                {subscription && subscription.plan_type === 'teste_gratis' && subscription.days_remaining <= 2 && (
-                  <Alert variant="destructive" className="mb-6">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Teste Gratuito Encerrando</AlertTitle>
-                    <AlertDescription>
-                      Seu teste gratuito termina em {subscription.days_remaining} dia(s). 
-                      Faça upgrade para continuar usando todas as funcionalidades.
-                    </AlertDescription>
-                  </Alert>
-                )}
+                <div className="p-4 lg:p-6">
+                  {subscription && subscription.plan_type === 'teste_gratis' && subscription.days_remaining <= 2 && (
+                    <Alert variant="destructive" className="mb-6">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertTitle>Teste Gratuito Encerrando</AlertTitle>
+                      <AlertDescription>
+                        Seu teste gratuito termina em {subscription.days_remaining} dia(s). 
+                        Faça upgrade para continuar usando todas as funcionalidades.
+                      </AlertDescription>
+                    </Alert>
+                  )}
 
-                {renderContent()}
+                  {renderContent()}
+                </div>
               </div>
             </main>
           </div>

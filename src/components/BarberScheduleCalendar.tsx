@@ -478,42 +478,46 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
           )}
 
           {/* Navegação de Semana */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setCurrentWeekStart(subWeeks(currentWeekStart, 1))}
+              className="w-full sm:w-auto"
             >
               <ChevronLeft className="h-4 w-4" />
-              Semana Anterior
+              <span className="hidden sm:inline ml-1">Semana Anterior</span>
+              <span className="sm:hidden ml-1">Anterior</span>
             </Button>
-            <span className="font-semibold">
-              {format(currentWeekStart, "dd 'de' MMMM", { locale: ptBR })} -{' '}
-              {format(addDays(currentWeekStart, 6), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+            <span className="font-semibold text-sm sm:text-base text-center">
+              {format(currentWeekStart, "dd 'de' MMM", { locale: ptBR })} -{' '}
+              {format(addDays(currentWeekStart, 6), "dd 'de' MMM 'de' yyyy", { locale: ptBR })}
             </span>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setCurrentWeekStart(addWeeks(currentWeekStart, 1))}
+              className="w-full sm:w-auto"
             >
-              Próxima Semana
+              <span className="hidden sm:inline mr-1">Próxima Semana</span>
+              <span className="sm:hidden mr-1">Próxima</span>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
 
           {/* Ações e Legenda */}
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex flex-wrap gap-4 text-sm">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex flex-wrap gap-3 text-xs sm:text-sm">
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-success/10 border-2 border-success/30" />
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-success/10 border-2 border-success/30" />
                 <span>Disponível</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-primary/10 border-2 border-primary/30" />
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-primary/10 border-2 border-primary/30" />
                 <span>Agendado</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-destructive/10 border-2 border-destructive/30" />
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-destructive/10 border-2 border-destructive/30" />
                 <span>Bloqueado</span>
               </div>
             </div>
@@ -521,9 +525,11 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
               variant="outline"
               size="sm"
               onClick={() => setMultiBlockOpen(true)}
+              className="w-full sm:w-auto"
             >
               <Ban className="mr-2 h-4 w-4" />
-              Bloquear Múltiplos Dias
+              <span className="hidden sm:inline">Bloquear Múltiplos Dias</span>
+              <span className="sm:hidden">Bloquear Dias</span>
             </Button>
           </div>
 

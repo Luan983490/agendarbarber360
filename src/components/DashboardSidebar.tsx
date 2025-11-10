@@ -1,4 +1,4 @@
-import { Store, Edit, CalendarDays, Calendar, Scissors, Users, Package } from 'lucide-react';
+import { Store, Edit, CalendarDays, Calendar, Scissors, Users, Package, X } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -9,7 +9,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
+  SidebarHeader,
 } from '@/components/ui/sidebar';
+import { Button } from '@/components/ui/button';
 
 interface DashboardSidebarProps {
   currentTab: string;
@@ -27,13 +29,25 @@ const menuItems = [
 ];
 
 export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarProps) {
-  const { open: collapsed } = useSidebar();
+  const { open, setOpen } = useSidebar();
 
   return (
-    <Sidebar className={collapsed ? "w-60" : "w-14"} collapsible="icon">
+    <Sidebar className="border-r" collapsible="offcanvas">
+      <SidebarHeader className="border-b p-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Menu</h2>
+          <Button 
+            variant="ghost" 
+            size="icon"
+            className="lg:hidden"
+            onClick={() => setOpen(false)}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
@@ -41,11 +55,19 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
                   <SidebarMenuButton 
                     asChild
                     isActive={currentTab === item.id}
-                    onClick={() => onTabChange(item.id)}
                   >
-                    <button className="w-full hover:bg-muted/50">
+                    <button 
+                      className="w-full hover:bg-muted/50"
+                      onClick={() => {
+                        onTabChange(item.id);
+                        // Fecha o menu em mobile após selecionar
+                        if (window.innerWidth < 1024) {
+                          setOpen(false);
+                        }
+                      }}
+                    >
                       <item.icon className="h-4 w-4" />
-                      {collapsed && <span>{item.title}</span>}
+                      <span>{item.title}</span>
                     </button>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
