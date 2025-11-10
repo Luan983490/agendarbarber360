@@ -225,6 +225,8 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
       // Processar dados relacionados dos JOINs e criar bookings processados
       const processedBookings: any[] = [];
       
+      console.log('📅 Total bookings received:', bookingsData?.length);
+      
       bookingsData?.forEach((booking: any) => {
         // Extrair serviço (pode vir como objeto ou null)
         const service = booking.services;
@@ -246,6 +248,17 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
           clientName = profile.display_name;
         }
         
+        console.log('🔍 Booking processado:', {
+          id: booking.id,
+          date: booking.booking_date,
+          time: booking.booking_time,
+          service: serviceName,
+          client: clientName,
+          is_external: booking.is_external_booking,
+          raw_service: service,
+          raw_profile: profile
+        });
+        
         // Criar booking processado com todos os dados
         processedBookings.push({
           ...booking,
@@ -254,6 +267,8 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
         });
       });
 
+      console.log('✅ Processed bookings:', processedBookings.length);
+      
       setBookings(processedBookings);
       setBlocks(blocksData || []);
     } catch (error: any) {
