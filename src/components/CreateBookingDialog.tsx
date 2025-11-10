@@ -41,6 +41,9 @@ export const CreateBookingDialog = ({
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [clientName, setClientName] = useState('');
+  const [clientPhone, setClientPhone] = useState('');
+  const [showNewClientForm, setShowNewClientForm] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -79,10 +82,19 @@ export const CreateBookingDialog = ({
   }, [searchTerm]);
 
   const handleCreate = async () => {
-    if (!selectedClient || !selectedService) {
+    if (!selectedService) {
       toast({
         title: 'Erro',
-        description: 'Selecione um cliente e um serviço',
+        description: 'Selecione um serviço',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    if (!selectedClient && !clientName) {
+      toast({
+        title: 'Erro',
+        description: 'Informe o nome do cliente',
         variant: 'destructive'
       });
       return;
@@ -91,13 +103,41 @@ export const CreateBookingDialog = ({
     setLoading(true);
     try {
       const service = services.find(s => s.id === selectedService);
+      let clientId = selectedClient;
+
+      // Se não selecionou cliente existente, criar um novo
+      if (!clientId && clientName) {
+        // Primeiro, criar um usuário anônimo no auth (sem email/senha)
+        // Como não podemos criar usuários sem auth, vamos usar um ID temporário
+        // e salvar apenas no perfil com user_id null ou criar um perfil "temporário"
+        
+        // Vamos criar um perfil temporário sem user_id vinculado ao auth
+        const { data: authUser } = await supabase.auth.getUser();
+        
+        // Criar um UUID temporário para este cliente
+        const tempUserId = crypto.randomUUID();
+        
+        const { data: newProfile, error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: tempUserId,
+            display_name: clientName,
+            phone: clientPhone || null,
+            user_type: 'client'
+          })
+          .select()
+          .single();
+
+        if (profileError) throw profileError;
+        clientId = tempUserId;
+      }
       
       const { error } = await supabase
         .from('bookings')
         .insert({
           barbershop_id: barbershopId,
           barber_id: barberId,
-          client_id: selectedClient,
+          client_id: clientId,
           service_id: selectedService,
           booking_date: date.toISOString().split('T')[0],
           booking_time: time,
@@ -132,6 +172,9 @@ export const CreateBookingDialog = ({
     setSelectedService('');
     setNotes('');
     setSearchTerm('');
+    setClientName('');
+    setClientPhone('');
+    setShowNewClientForm(false);
   };
 
   return (
@@ -156,26 +199,66 @@ export const CreateBookingDialog = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="client-search">Buscar Cliente</Label>
-            <Input
-              id="client-search"
-              placeholder="Digite o nome do cliente..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            {clients.length > 0 && (
-              <Select value={selectedClient} onValueChange={setSelectedClient}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o cliente" />
-                </SelectTrigger>
-                <SelectContent>
-                  {clients.map((client) => (
-                    <SelectItem key={client.user_id} value={client.user_id}>
-                      {client.display_name} {client.phone && `- ${client.phone}`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex items-center justify-between">
+              <Label>Cliente</Label>
+              <Button
+                type="button"
+                variant="link"
+                size="sm"
+                onClick={() => {
+                  setShowNewClientForm(!showNewClientForm);
+                  setSelectedClient('');
+                  setSearchTerm('');
+                }}
+              >
+                {showNewClientForm ? 'Buscar Existente' : 'Novo Cliente'}
+              </Button>
+            </div>
+
+            {!showNewClientForm ? (
+              <>
+                <Input
+                  id="client-search"
+                  placeholder="Digite o nome do cliente..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                {clients.length > 0 && (
+                  <Select value={selectedClient} onValueChange={setSelectedClient}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o cliente" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clients.map((client) => (
+                        <SelectItem key={client.user_id} value={client.user_id}>
+                          {client.display_name} {client.phone && `- ${client.phone}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </>
+            ) : (
+              <div className="space-y-3 p-3 border rounded-md">
+                <div className="space-y-2">
+                  <Label htmlFor="client-name">Nome do Cliente *</Label>
+                  <Input
+                    id="client-name"
+                    placeholder="Digite o nome..."
+                    value={clientName}
+                    onChange={(e) => setClientName(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="client-phone">Telefone (opcional)</Label>
+                  <Input
+                    id="client-phone"
+                    placeholder="(00) 00000-0000"
+                    value={clientPhone}
+                    onChange={(e) => setClientPhone(e.target.value)}
+                  />
+                </div>
+              </div>
             )}
           </div>
 

@@ -162,11 +162,12 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
       setLoading(true);
       const weekEnd = addDays(currentWeekStart, 6);
 
-      // Buscar agendamentos
+      // Buscar agendamentos - incluir tanto os com barber_id específico quanto os sem barbeiro (null)
       const { data: bookingsData, error: bookingsError } = await supabase
         .from('bookings')
-        .select('id, booking_date, booking_time, status, service_id, client_id')
-        .eq('barber_id', selectedBarber)
+        .select('id, booking_date, booking_time, status, service_id, client_id, barber_id')
+        .eq('barbershop_id', barbershopId)
+        .or(`barber_id.eq.${selectedBarber},barber_id.is.null`)
         .gte('booking_date', format(currentWeekStart, 'yyyy-MM-dd'))
         .lte('booking_date', format(weekEnd, 'yyyy-MM-dd'));
 
