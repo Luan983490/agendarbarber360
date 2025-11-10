@@ -16,6 +16,7 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { Calendar, ChevronLeft, ChevronRight, Loader2, Ban } from 'lucide-react';
 import { format, addDays, startOfWeek, addWeeks, subWeeks, endOfWeek, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 type ViewMode = 'day' | 'week' | 'month';
 
@@ -500,7 +501,36 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
     ? [currentDate] 
     : viewMode === 'week' 
     ? weekDays 
-    : Array.from({ length: 7 }, (_, i) => addDays(startOfWeek(currentDate, { locale: ptBR }), i));
+    : weekDays;
+
+  // Para visualização mensal, obter todos os dias do mês
+  const getMonthDays = () => {
+    const start = startOfMonth(currentDate);
+    const end = endOfMonth(currentDate);
+    const days = [];
+    let current = startOfWeek(start, { locale: ptBR });
+    const endDate = endOfWeek(end, { locale: ptBR });
+    
+    while (current <= endDate) {
+      days.push(current);
+      current = addDays(current, 1);
+    }
+    
+    return days;
+  };
+
+  const monthDays = viewMode === 'month' ? getMonthDays() : [];
+
+  const getBookingsCountForDay = (day: Date) => {
+    const dateStr = format(day, 'yyyy-MM-dd');
+    return bookings.filter(b => b.booking_date === dateStr).length;
+  };
+
+  const getBlocksCountForDay = (day: Date) => {
+    const dateStr = format(day, 'yyyy-MM-dd');
+    const dayBlocks = blocks.filter(b => b.block_date === dateStr);
+    return dayBlocks.length;
+  };
 
   const handlePrevious = () => {
     if (viewMode === 'day') {
@@ -672,12 +702,75 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
             </Button>
           </div>
 
-          {/* Grade de Horários */}
+          {/* Grade de Horários ou Calendário Mensal */}
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin" />
             </div>
+          ) : viewMode === 'month' ? (
+            /* Visualização Mensal - Calendário */
+            <div className="overflow-x-auto">
+              <div className="min-w-[600px]">
+                {/* Cabeçalho dos dias da semana */}
+                <div className="grid grid-cols-7 gap-2 mb-2">
+                  {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day, i) => (
+                    <div key={i} className="text-center font-semibold text-sm py-2 border-b">
+                      {day}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Grade de dias do mês */}
+                <div className="grid grid-cols-7 gap-2">
+                  {monthDays.map((day, i) => {
+                    const isCurrentMonth = day.getMonth() === currentDate.getMonth();
+                    const isToday = format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
+                    const bookingsCount = getBookingsCountForDay(day);
+                    const blocksCount = getBlocksCountForDay(day);
+                    
+                    return (
+                      <div
+                        key={i}
+                        className={cn(
+                          "min-h-[100px] p-2 border rounded-lg cursor-pointer transition-all hover:shadow-md",
+                          isCurrentMonth ? "bg-background" : "bg-muted/30",
+                          isToday && "ring-2 ring-primary"
+                        )}
+                        onClick={() => {
+                          setCurrentDate(day);
+                          setViewMode('day');
+                        }}
+                      >
+                        <div className="flex justify-between items-start mb-2">
+                          <span className={cn(
+                            "text-sm font-medium",
+                            !isCurrentMonth && "text-muted-foreground",
+                            isToday && "text-primary font-bold"
+                          )}>
+                            {format(day, 'd')}
+                          </span>
+                        </div>
+                        
+                        <div className="space-y-1">
+                          {bookingsCount > 0 && (
+                            <div className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                              {bookingsCount} agendamento{bookingsCount > 1 ? 's' : ''}
+                            </div>
+                          )}
+                          {blocksCount > 0 && (
+                            <div className="text-xs bg-destructive/10 text-destructive px-2 py-1 rounded">
+                              {blocksCount} bloqueio{blocksCount > 1 ? 's' : ''}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
           ) : (
+            /* Visualização Dia/Semana - Grade de Horários */
             <div className="overflow-x-auto">
               <div className="min-w-[800px]">
                 {/* Cabeçalho dos dias */}
