@@ -4,26 +4,25 @@ import { supabase } from '@/integrations/supabase/client';
 export const useSupabasePing = () => {
   useEffect(() => {
     const pingSupabase = async () => {
-      const lastPing = localStorage.getItem('lastPing');
-      const today = new Date().toDateString();
-
-      // Só executa o ping se ainda não foi feito hoje
-      if (lastPing !== today) {
-        try {
-          // Requisição leve: apenas conta 1 registro da tabela 'barbershops'
-          await supabase
-            .from('barbershops')
-            .select('id', { count: 'exact', head: true })
-            .limit(1);
-          
-          localStorage.setItem('lastPing', today);
-          console.log('🔄 Ping diário enviado ao Supabase');
-        } catch (error) {
-          console.error('❌ Erro ao enviar ping ao Supabase:', error);
-        }
+      try {
+        // Requisição leve: apenas conta 1 registro da tabela 'barbershops'
+        await supabase
+          .from('barbershops')
+          .select('id', { count: 'exact', head: true })
+          .limit(1);
+        
+        console.log('🔄 Ping enviado ao Supabase');
+      } catch (error) {
+        console.error('❌ Erro ao enviar ping ao Supabase:', error);
       }
     };
 
+    // Ping imediato ao carregar
     pingSupabase();
+
+    // Ping a cada 4 horas (14400000ms) enquanto o app estiver aberto
+    const intervalId = setInterval(pingSupabase, 4 * 60 * 60 * 1000);
+
+    return () => clearInterval(intervalId);
   }, []);
 };
