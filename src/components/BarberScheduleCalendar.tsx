@@ -29,6 +29,8 @@ interface Booking {
   client_id: string | null;
   client_name?: string;
   is_external_booking?: boolean;
+  client_display_name?: string;
+  service_display_name?: string;
 }
 
 interface BarberBlock {
@@ -80,10 +82,6 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
   const [actionMenuPosition, setActionMenuPosition] = useState({ x: 0, y: 0 });
   const [multiBlockOpen, setMultiBlockOpen] = useState(false);
   const [selectedSlots, setSelectedSlots] = useState<Array<{ date: Date; time: string }>>([]);
-
-  // Maps para dados relacionados
-  const [servicesMap, setServicesMap] = useState<Map<string, any>>(new Map());
-  const [profilesMap, setProfilesMap] = useState<Map<string, any>>(new Map());
 
   const { toast } = useToast();
 
@@ -224,44 +222,39 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
 
       if (blocksError) throw blocksError;
 
-      // Processar dados relacionados dos JOINs
-      const newServicesMap = new Map();
-      const newProfilesMap = new Map();
+      // Processar dados relacionados dos JOINs e criar bookings processados
+      const processedBookings: any[] = [];
       
       bookingsData?.forEach((booking: any) => {
-        // Debug: verificar estrutura dos dados
-        console.log('Booking data:', {
-          id: booking.id,
-          services: booking.services,
-          profiles: booking.profiles,
-          client_name: booking.client_name,
-          is_external: booking.is_external_booking
+        // Extrair serviço (pode vir como objeto ou null)
+        const service = booking.services;
+        const serviceName = service?.name || 'Serviço';
+        
+        // Extrair perfil (pode vir como objeto ou null)
+        const profile = booking.profiles;
+        
+        // Determinar o nome do cliente com prioridade correta
+        let clientName = 'Cliente';
+        if (booking.is_external_booking) {
+          // Para reservas externas, sempre usar client_name
+          clientName = booking.client_name || 'Cliente Externo';
+        } else if (booking.client_name) {
+          // Se tem client_name no booking, usar
+          clientName = booking.client_name;
+        } else if (profile?.display_name) {
+          // Se não, usar o display_name do perfil
+          clientName = profile.display_name;
+        }
+        
+        // Criar booking processado com todos os dados
+        processedBookings.push({
+          ...booking,
+          client_display_name: clientName,
+          service_display_name: serviceName
         });
-        
-        // Armazenar serviço (pode vir como objeto ou array)
-        if (booking.services) {
-          const service = Array.isArray(booking.services) ? booking.services[0] : booking.services;
-          if (service) {
-            newServicesMap.set(booking.service_id, service);
-          }
-        }
-        
-        // Armazenar perfil (pode vir como objeto ou array)
-        if (booking.profiles && booking.client_id) {
-          const profile = Array.isArray(booking.profiles) ? booking.profiles[0] : booking.profiles;
-          if (profile) {
-            newProfilesMap.set(booking.client_id, profile);
-          }
-        }
       });
-      
-      console.log('Services map:', Array.from(newServicesMap.entries()));
-      console.log('Profiles map:', Array.from(newProfilesMap.entries()));
-      
-      setServicesMap(newServicesMap);
-      setProfilesMap(newProfilesMap);
 
-      setBookings(bookingsData || []);
+      setBookings(processedBookings);
       setBlocks(blocksData || []);
     } catch (error: any) {
       toast({
@@ -283,30 +276,15 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
 
     // Verificar se há agendamento
     const booking = bookings.find(
-      b => b.booking_date === dateStr && b.booking_time === time
+      (b: any) => b.booking_date === dateStr && b.booking_time === time
     );
+    
     if (booking) {
-      const service = servicesMap.get(booking.service_id);
-      const profile = booking.client_id ? profilesMap.get(booking.client_id) : null;
-      
-      // Prioridade: 1) client_name do booking, 2) display_name do profile, 3) fallback
-      let clientName = 'Cliente';
-      if (booking.is_external_booking) {
-        // Para reservas externas, sempre usar client_name
-        clientName = booking.client_name || 'Cliente Externo';
-      } else if (booking.client_name) {
-        // Se tem client_name no booking (mesmo não sendo externo), usar
-        clientName = booking.client_name;
-      } else if (profile?.display_name) {
-        // Se não, usar o display_name do perfil
-        clientName = profile.display_name;
-      }
-      
       return {
         type: booking.is_external_booking ? 'booked-external' : 'booked',
         booking: {
-          client_name: clientName,
-          service_name: service?.name || 'Serviço',
+          client_name: booking.client_display_name || 'Cliente',
+          service_name: booking.service_display_name || 'Serviço',
           status: booking.status
         }
       };
@@ -342,26 +320,13 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
     // Se for agendado, abrir detalhes
     if (slotInfo.type === 'booked' || slotInfo.type === 'booked-external') {
       const booking = bookings.find(
-        b => b.booking_date === dateStr && b.booking_time === time
+        (b: any) => b.booking_date === dateStr && b.booking_time === time
       );
       if (booking) {
-        const service = servicesMap.get(booking.service_id);
-        const profile = booking.client_id ? profilesMap.get(booking.client_id) : null;
-        
-        // Usar a mesma lógica de prioridade
-        let clientName = 'Cliente';
-        if (booking.is_external_booking) {
-          clientName = booking.client_name || 'Cliente Externo';
-        } else if (booking.client_name) {
-          clientName = booking.client_name;
-        } else if (profile?.display_name) {
-          clientName = profile.display_name;
-        }
-        
         setSelectedBooking({
           ...booking,
-          client_name: clientName,
-          service_name: service?.name || 'Serviço'
+          client_name: booking.client_display_name || 'Cliente',
+          service_name: booking.service_display_name || 'Serviço'
         });
         setBookingDetailsOpen(true);
       }
