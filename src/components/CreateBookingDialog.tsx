@@ -71,6 +71,11 @@ export const CreateBookingDialog = ({
   const [recurringType, setRecurringType] = useState('single');
   const [recurringPeriodicity, setRecurringPeriodicity] = useState('weekly');
   const [recurringQuantity, setRecurringQuantity] = useState('1');
+  const [blockType, setBlockType] = useState('single');
+  const [blockRecurringDays, setBlockRecurringDays] = useState('');
+  const [blockRecurringPeriodicity, setBlockRecurringPeriodicity] = useState('');
+  const [recurringStartDate, setRecurringStartDate] = useState<Date>(initialDate);
+  const [recurringEndDate, setRecurringEndDate] = useState<Date>(initialDate);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -161,7 +166,7 @@ export const CreateBookingDialog = ({
       return;
     }
 
-    if (!selectedClient && !isExternalBooking) {
+    if (!isExternalBooking && !selectedClient) {
       toast({
         title: 'Erro',
         description: 'Selecione um cliente',
@@ -319,26 +324,20 @@ export const CreateBookingDialog = ({
 
     try {
       let currentDate = new Date(unblockStartDate);
-      const deletions = [];
       
       while (currentDate <= unblockEndDate) {
         const dateStr = format(currentDate, 'yyyy-MM-dd');
-        deletions.push(
-          supabase
-            .from('barber_blocks')
-            .delete()
-            .eq('barber_id', selectedBarber)
-            .eq('block_date', dateStr)
-            .gte('start_time', unblockStartTime)
-            .lte('end_time', unblockEndTime)
-        );
+        const { error } = await supabase
+          .from('barber_blocks')
+          .delete()
+          .eq('barber_id', selectedBarber)
+          .eq('block_date', dateStr)
+          .gte('start_time', unblockStartTime)
+          .lte('start_time', unblockEndTime);
+
+        if (error) throw error;
         currentDate = addDays(currentDate, 1);
       }
-
-      const results = await Promise.all(deletions);
-      const errors = results.filter(r => r.error);
-
-      if (errors.length > 0) throw errors[0].error;
 
       toast({
         title: 'Horário desbloqueado',
@@ -636,136 +635,303 @@ export const CreateBookingDialog = ({
           <TabsContent value="block" className="space-y-4 mt-6 px-1">
             <div className="space-y-2">
               <Label className="text-sm text-muted-foreground">Tipo:</Label>
-              <Select defaultValue="single">
+              <Select value={blockType} onValueChange={setBlockType}>
                 <SelectTrigger className="h-10 bg-muted/30 border-input">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="single">Horário único</SelectItem>
-                  <SelectItem value="range">Período</SelectItem>
+                  <SelectItem value="recurring">Recorrente</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-sm text-muted-foreground">Dia Início:</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full h-10 bg-muted/30 border-input justify-start text-left font-normal">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {blockStartDate ? format(blockStartDate, 'dd/MM/yyyy', { locale: ptBR }) : 'Selecione'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={blockStartDate}
-                      onSelect={(date) => date && setBlockStartDate(date)}
-                      initialFocus
-                      className="pointer-events-auto"
+            {blockType === 'recurring' ? (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">Quantidade de Dias:</Label>
+                    <Input
+                      type="number"
+                      placeholder="Quantidade de Dias (máximo: 180)"
+                      value={blockRecurringDays}
+                      onChange={(e) => setBlockRecurringDays(e.target.value)}
+                      max={180}
+                      className="h-10 bg-muted/30 border-input"
                     />
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="block-start" className="text-sm text-muted-foreground">Hora Início:</Label>
-                <Select value={blockStartTime} onValueChange={setBlockStartTime}>
-                  <SelectTrigger className="h-10 bg-muted/30 border-input">
-                    <SelectValue placeholder="Hora" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover border-border z-50 max-h-60">
-                    {Array.from({ length: 48 }, (_, i) => {
-                      const hour = Math.floor(i / 2).toString().padStart(2, '0');
-                      const minute = (i % 2) * 30;
-                      const minuteStr = minute.toString().padStart(2, '0');
-                      return `${hour}:${minuteStr}`;
-                    }).map(timeOption => (
-                      <SelectItem key={timeOption} value={timeOption}>{timeOption}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-sm text-muted-foreground">Dia Fim:</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full h-10 bg-muted/30 border-input justify-start text-left font-normal">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {blockEndDate ? format(blockEndDate, 'dd/MM/yyyy', { locale: ptBR }) : 'Selecione'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={blockEndDate}
-                      onSelect={(date) => date && setBlockEndDate(date)}
-                      initialFocus
-                      className="pointer-events-auto"
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">Periodicidade</Label>
+                    <Input
+                      type="number"
+                      placeholder="Periodicidade(máximo: 30)"
+                      value={blockRecurringPeriodicity}
+                      onChange={(e) => setBlockRecurringPeriodicity(e.target.value)}
+                      max={30}
+                      className="h-10 bg-muted/30 border-input"
                     />
-                  </PopoverContent>
-                </Popover>
-              </div>
+                  </div>
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="block-end" className="text-sm text-muted-foreground">Hora Fim:</Label>
-                <Select value={blockEndTime} onValueChange={setBlockEndTime}>
-                  <SelectTrigger className="h-10 bg-muted/30 border-input">
-                    <SelectValue placeholder="Hora" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover border-border z-50 max-h-60">
-                    {Array.from({ length: 48 }, (_, i) => {
-                      const hour = Math.floor(i / 2).toString().padStart(2, '0');
-                      const minute = (i % 2) * 30;
-                      const minuteStr = minute.toString().padStart(2, '0');
-                      return `${hour}:${minuteStr}`;
-                    }).map(timeOption => (
-                      <SelectItem key={timeOption} value={timeOption}>{timeOption}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+                <div className="space-y-2">
+                  <Label className="text-sm text-muted-foreground">Dia Início:</Label>
+                  <Input type="text" value={date ? format(date, 'dd/MM/yyyy') : ''} readOnly className="h-10 bg-muted/30" />
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="block-barber" className="text-sm text-muted-foreground">Profissional:</Label>
-              <Select value={selectedBarber} onValueChange={setSelectedBarber}>
-                <SelectTrigger id="block-barber" className="h-10 bg-muted/30 border-input">
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border-border z-50">
-                  {barbers.map((barber) => (
-                    <SelectItem key={barber.id} value={barber.id}>
-                      {barber.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">Hora Início:</Label>
+                    <Select value={blockStartTime} onValueChange={setBlockStartTime}>
+                      <SelectTrigger className="h-10 bg-muted/30 border-input">
+                        <SelectValue placeholder="Hora" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border-border z-50 max-h-60">
+                        {Array.from({ length: 48 }, (_, i) => {
+                          const hour = Math.floor(i / 2).toString().padStart(2, '0');
+                          const minute = (i % 2) * 30;
+                          const minuteStr = minute.toString().padStart(2, '0');
+                          return `${hour}:${minuteStr}`;
+                        }).map(timeOption => (
+                          <SelectItem key={timeOption} value={timeOption}>{timeOption}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="block-reason" className="text-sm text-muted-foreground">Observações</Label>
-              <Textarea
-                id="block-reason"
-                value={blockReason}
-                onChange={(e) => setBlockReason(e.target.value)}
-                placeholder="Digite observações..."
-                rows={3}
-                className="resize-none bg-muted/30 border-input"
-              />
-            </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">Hora Fim:</Label>
+                    <Select value={blockEndTime} onValueChange={setBlockEndTime}>
+                      <SelectTrigger className="h-10 bg-muted/30 border-input">
+                        <SelectValue placeholder="Hora" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border-border z-50 max-h-60">
+                        {Array.from({ length: 48 }, (_, i) => {
+                          const hour = Math.floor(i / 2).toString().padStart(2, '0');
+                          const minute = (i % 2) * 30;
+                          const minuteStr = minute.toString().padStart(2, '0');
+                          return `${hour}:${minuteStr}`;
+                        }).map(timeOption => (
+                          <SelectItem key={timeOption} value={timeOption}>{timeOption}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
 
-            <Button 
-              onClick={handleBlockTime}
-              className="w-full h-11 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm mt-2"
-              disabled={!blockStartTime || !blockEndTime || !selectedBarber}
-            >
-              BLOQUEAR
-            </Button>
+                <div className="space-y-2">
+                  <Label className="text-sm text-muted-foreground">Profissional:</Label>
+                  <Select value={selectedBarber} onValueChange={setSelectedBarber}>
+                    <SelectTrigger className="h-10 bg-muted/30 border-input">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border-border z-50">
+                      {barbers.map((barber) => (
+                        <SelectItem key={barber.id} value={barber.id}>
+                          {barber.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm text-muted-foreground">Observações</Label>
+                  <Textarea
+                    value={blockReason}
+                    onChange={(e) => setBlockReason(e.target.value)}
+                    placeholder="Digite observações..."
+                    rows={3}
+                    className="resize-none bg-muted/30 border-input"
+                  />
+                </div>
+
+                <Button 
+                  onClick={async () => {
+                    if (!blockRecurringDays || !blockRecurringPeriodicity) {
+                      toast({
+                        title: 'Erro',
+                        description: 'Preencha quantidade de dias e periodicidade',
+                        variant: 'destructive'
+                      });
+                      return;
+                    }
+                    
+                    if (!blockStartTime || !blockEndTime) {
+                      toast({
+                        title: 'Erro',
+                        description: 'Informe os horários',
+                        variant: 'destructive'
+                      });
+                      return;
+                    }
+
+                    try {
+                      const blocks = [];
+                      const days = parseInt(blockRecurringDays);
+                      const periodicity = parseInt(blockRecurringPeriodicity);
+                      let currentDate = new Date(date);
+                      
+                      for (let i = 0; i < days; i += periodicity) {
+                        blocks.push({
+                          barber_id: selectedBarber,
+                          block_date: format(addDays(currentDate, i), 'yyyy-MM-dd'),
+                          start_time: blockStartTime,
+                          end_time: blockEndTime,
+                          reason: blockReason || null
+                        });
+                      }
+
+                      const { error } = await supabase
+                        .from('barber_blocks')
+                        .insert(blocks);
+
+                      if (error) throw error;
+
+                      toast({
+                        title: 'Horários bloqueados',
+                        description: `${blocks.length} bloqueio(s) criado(s)`
+                      });
+
+                      onSuccess();
+                      onOpenChange(false);
+                      resetForm();
+                    } catch (error: any) {
+                      toast({
+                        title: 'Erro',
+                        description: error.message,
+                        variant: 'destructive'
+                      });
+                    }
+                  }}
+                  className="w-full h-11 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm mt-2"
+                  disabled={!blockStartTime || !blockEndTime || !selectedBarber}
+                >
+                  BLOQUEAR
+                </Button>
+              </>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">Dia Início:</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full h-10 bg-muted/30 border-input justify-start text-left font-normal">
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {blockStartDate ? format(blockStartDate, 'dd/MM/yyyy', { locale: ptBR }) : 'Selecione'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={blockStartDate}
+                          onSelect={(date) => date && setBlockStartDate(date)}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="block-start" className="text-sm text-muted-foreground">Hora Início:</Label>
+                    <Select value={blockStartTime} onValueChange={setBlockStartTime}>
+                      <SelectTrigger className="h-10 bg-muted/30 border-input">
+                        <SelectValue placeholder="Hora" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border-border z-50 max-h-60">
+                        {Array.from({ length: 48 }, (_, i) => {
+                          const hour = Math.floor(i / 2).toString().padStart(2, '0');
+                          const minute = (i % 2) * 30;
+                          const minuteStr = minute.toString().padStart(2, '0');
+                          return `${hour}:${minuteStr}`;
+                        }).map(timeOption => (
+                          <SelectItem key={timeOption} value={timeOption}>{timeOption}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">Dia Fim:</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full h-10 bg-muted/30 border-input justify-start text-left font-normal">
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {blockEndDate ? format(blockEndDate, 'dd/MM/yyyy', { locale: ptBR }) : 'Selecione'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={blockEndDate}
+                          onSelect={(date) => date && setBlockEndDate(date)}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="block-end" className="text-sm text-muted-foreground">Hora Fim:</Label>
+                    <Select value={blockEndTime} onValueChange={setBlockEndTime}>
+                      <SelectTrigger className="h-10 bg-muted/30 border-input">
+                        <SelectValue placeholder="Hora" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border-border z-50 max-h-60">
+                        {Array.from({ length: 48 }, (_, i) => {
+                          const hour = Math.floor(i / 2).toString().padStart(2, '0');
+                          const minute = (i % 2) * 30;
+                          const minuteStr = minute.toString().padStart(2, '0');
+                          return `${hour}:${minuteStr}`;
+                        }).map(timeOption => (
+                          <SelectItem key={timeOption} value={timeOption}>{timeOption}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="block-barber" className="text-sm text-muted-foreground">Profissional:</Label>
+                  <Select value={selectedBarber} onValueChange={setSelectedBarber}>
+                    <SelectTrigger id="block-barber" className="h-10 bg-muted/30 border-input">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border-border z-50">
+                      {barbers.map((barber) => (
+                        <SelectItem key={barber.id} value={barber.id}>
+                          {barber.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="block-reason" className="text-sm text-muted-foreground">Observações</Label>
+                  <Textarea
+                    id="block-reason"
+                    value={blockReason}
+                    onChange={(e) => setBlockReason(e.target.value)}
+                    placeholder="Digite observações..."
+                    rows={3}
+                    className="resize-none bg-muted/30 border-input"
+                  />
+                </div>
+
+                <Button 
+                  onClick={handleBlockTime}
+                  className="w-full h-11 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm mt-2"
+                  disabled={!blockStartTime || !blockEndTime || !selectedBarber}
+                >
+                  BLOQUEAR
+                </Button>
+              </>
+            )}
           </TabsContent>
 
           <TabsContent value="unblock" className="space-y-4 mt-6 px-1">
@@ -892,160 +1058,354 @@ export const CreateBookingDialog = ({
               </Select>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label className="text-sm text-muted-foreground">Dia Início:</Label>
-                <Input type="text" value={date ? format(date, 'dd/MM/yyyy') : ''} readOnly className="h-10 bg-muted/30" />
-              </div>
+            {recurringType === 'cancel' ? (
+              <>
+                <div className="space-y-2">
+                  <Label className="text-sm text-muted-foreground">Profissional:</Label>
+                  <Select value={selectedBarber} onValueChange={setSelectedBarber}>
+                    <SelectTrigger className="h-10 bg-muted/30 border-input">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border-border z-50">
+                      {barbers.map((barber) => (
+                        <SelectItem key={barber.id} value={barber.id}>
+                          {barber.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <div className="space-y-2">
-                <Label className="text-sm text-muted-foreground">Hora:</Label>
-                <Input type="text" value={time} readOnly className="h-10 bg-muted/30" />
-              </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">Serviço:</Label>
+                    <Select value={selectedService} onValueChange={setSelectedService}>
+                      <SelectTrigger className="h-10 bg-muted/30 border-input">
+                        <SelectValue placeholder="Selecione um Serviço" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border-border z-50">
+                        {services.map((service) => (
+                          <SelectItem key={service.id} value={service.id}>
+                            {service.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              <div className="space-y-2">
-                <Label className="text-sm text-muted-foreground">Profissional:</Label>
-                <Select value={selectedBarber} onValueChange={setSelectedBarber}>
-                  <SelectTrigger className="h-10 bg-muted/30 border-input">
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover border-border z-50">
-                    {barbers.map((barber) => (
-                      <SelectItem key={barber.id} value={barber.id}>
-                        {barber.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">Duração:</Label>
+                    <Input 
+                      value={services.find(s => s.id === selectedService)?.duration ? `${services.find(s => s.id === selectedService)?.duration} Minutos` : ''} 
+                      readOnly 
+                      className="h-10 bg-muted/30" 
+                    />
+                  </div>
+                </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-sm text-muted-foreground">Serviço:</Label>
-                <Select value={selectedService} onValueChange={setSelectedService}>
-                  <SelectTrigger className="h-10 bg-muted/30 border-input">
-                    <SelectValue placeholder="Selecione um Serviço" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover border-border z-50">
-                    {services.map((service) => (
-                      <SelectItem key={service.id} value={service.id}>
-                        {service.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                <div className="space-y-2">
+                  <Label className="text-sm text-muted-foreground">Cliente:</Label>
+                  <div className="flex gap-2">
+                    <Select 
+                      value={isExternalBooking ? 'sem-cadastro' : selectedClient} 
+                      onValueChange={(value) => {
+                        if (value === 'sem-cadastro') {
+                          setIsExternalBooking(true);
+                          setSelectedClient('');
+                        } else {
+                          setIsExternalBooking(false);
+                          setSelectedClient(value);
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="flex-1 h-10 bg-muted/30 border-input">
+                        <SelectValue placeholder="Sem Cliente" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border-border z-50">
+                        <SelectItem value="sem-cadastro">Sem Cliente</SelectItem>
+                        {clients.map((client) => (
+                          <SelectItem key={client.user_id} value={client.user_id}>
+                            {client.display_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button 
+                      type="button" 
+                      size="icon" 
+                      className="h-10 w-10 bg-cyan-600 hover:bg-cyan-700 shrink-0"
+                      onClick={() => setCreateClientOpen(true)}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
 
-              <div className="space-y-2">
-                <Label className="flex items-center gap-1 text-sm text-muted-foreground">
-                  Duração:
-                </Label>
-                <Input 
-                  value={services.find(s => s.id === selectedService)?.duration ? `${services.find(s => s.id === selectedService)?.duration} min` : ''} 
-                  readOnly 
-                  className="h-10 bg-muted/30" 
-                />
-              </div>
-            </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">Dia Início:</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full h-10 bg-muted/30 border-input justify-start text-left font-normal">
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {recurringStartDate ? format(recurringStartDate, 'dd/MM/yyyy', { locale: ptBR }) : 'Selecione'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={recurringStartDate}
+                          onSelect={(date) => date && setRecurringStartDate(date)}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
 
-            <div className="space-y-2">
-              <Label className="text-sm text-muted-foreground">Cliente:</Label>
-              <div className="flex gap-2">
-                <Select 
-                  value={isExternalBooking ? 'sem-cadastro' : selectedClient} 
-                  onValueChange={(value) => {
-                    if (value === 'sem-cadastro') {
-                      setIsExternalBooking(true);
-                      setSelectedClient('');
-                    } else {
-                      setIsExternalBooking(false);
-                      setSelectedClient(value);
-                      const client = clients.find(c => c.user_id === value);
-                      if (client) {
-                        setExternalClientName(client.display_name);
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">Dia Fim:</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full h-10 bg-muted/30 border-input justify-start text-left font-normal">
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {recurringEndDate ? format(recurringEndDate, 'dd/MM/yyyy', { locale: ptBR }) : 'Selecione'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={recurringEndDate}
+                          onSelect={(date) => date && setRecurringEndDate(date)}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
+
+                <Button 
+                  onClick={async () => {
+                    if (recurringStartDate > recurringEndDate) {
+                      toast({
+                        title: 'Erro',
+                        description: 'Data fim deve ser maior ou igual à data início',
+                        variant: 'destructive'
+                      });
+                      return;
+                    }
+
+                    try {
+                      const query = supabase
+                        .from('bookings')
+                        .update({ status: 'cancelled' })
+                        .eq('barber_id', selectedBarber)
+                        .gte('booking_date', format(recurringStartDate, 'yyyy-MM-dd'))
+                        .lte('booking_date', format(recurringEndDate, 'yyyy-MM-dd'))
+                        .neq('status', 'cancelled');
+
+                      if (selectedService) {
+                        query.eq('service_id', selectedService);
                       }
+
+                      if (!isExternalBooking && selectedClient) {
+                        query.eq('client_id', selectedClient);
+                      }
+
+                      const { error } = await query;
+                      if (error) throw error;
+
+                      toast({
+                        title: 'Agendamentos cancelados',
+                        description: 'Agendamentos recorrentes cancelados com sucesso'
+                      });
+
+                      onSuccess();
+                      onOpenChange(false);
+                      resetForm();
+                    } catch (error: any) {
+                      toast({
+                        title: 'Erro',
+                        description: error.message,
+                        variant: 'destructive'
+                      });
                     }
                   }}
+                  disabled={loading}
+                  className="w-full h-11 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-sm mt-2"
                 >
-                  <SelectTrigger className="flex-1 h-10 bg-muted/30 border-input">
-                    <SelectValue placeholder="Sem Cadastro" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover border-border z-50">
-                    <SelectItem value="sem-cadastro">Sem Cadastro</SelectItem>
-                    {clients.map((client) => (
-                      <SelectItem key={client.user_id} value={client.user_id}>
-                        {client.display_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button 
-                  type="button" 
-                  size="icon" 
-                  className="h-10 w-10 bg-cyan-600 hover:bg-cyan-700 shrink-0"
-                  onClick={() => setCreateClientOpen(true)}
-                >
-                  <Plus className="h-4 w-4" />
+                  Cancelar Agendamentos Recorrentes do Período
                 </Button>
-              </div>
-            </div>
+              </>
+            ) : (
+              <>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">Dia Início:</Label>
+                    <Input type="text" value={date ? format(date, 'dd/MM/yyyy') : ''} readOnly className="h-10 bg-muted/30" />
+                  </div>
 
-            {isExternalBooking && (
-              <div className="space-y-2">
-                <Input
-                  placeholder="Digite o nome do cliente"
-                  value={externalClientName}
-                  onChange={(e) => setExternalClientName(e.target.value)}
-                  className="h-10 bg-muted/30 border-input"
-                />
-              </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">Hora:</Label>
+                    <Input type="text" value={time} readOnly className="h-10 bg-muted/30" />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">Profissional:</Label>
+                    <Select value={selectedBarber} onValueChange={setSelectedBarber}>
+                      <SelectTrigger className="h-10 bg-muted/30 border-input">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border-border z-50">
+                        {barbers.map((barber) => (
+                          <SelectItem key={barber.id} value={barber.id}>
+                            {barber.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">Serviço:</Label>
+                    <Select value={selectedService} onValueChange={setSelectedService}>
+                      <SelectTrigger className="h-10 bg-muted/30 border-input">
+                        <SelectValue placeholder="Selecione um Serviço" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border-border z-50">
+                        {services.map((service) => (
+                          <SelectItem key={service.id} value={service.id}>
+                            {service.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-1 text-sm text-muted-foreground">
+                      Duração:
+                    </Label>
+                    <Input 
+                      value={services.find(s => s.id === selectedService)?.duration ? `${services.find(s => s.id === selectedService)?.duration} min` : ''} 
+                      readOnly 
+                      className="h-10 bg-muted/30" 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm text-muted-foreground">Cliente:</Label>
+                  <div className="flex gap-2">
+                    <Select 
+                      value={isExternalBooking ? 'sem-cadastro' : selectedClient} 
+                      onValueChange={(value) => {
+                        if (value === 'sem-cadastro') {
+                          setIsExternalBooking(true);
+                          setSelectedClient('');
+                        } else {
+                          setIsExternalBooking(false);
+                          setSelectedClient(value);
+                          const client = clients.find(c => c.user_id === value);
+                          if (client) {
+                            setExternalClientName(client.display_name);
+                          }
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="flex-1 h-10 bg-muted/30 border-input">
+                        <SelectValue placeholder="Sem Cadastro" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border-border z-50">
+                        <SelectItem value="sem-cadastro">Sem Cadastro</SelectItem>
+                        {clients.map((client) => (
+                          <SelectItem key={client.user_id} value={client.user_id}>
+                            {client.display_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button 
+                      type="button" 
+                      size="icon" 
+                      className="h-10 w-10 bg-cyan-600 hover:bg-cyan-700 shrink-0"
+                      onClick={() => setCreateClientOpen(true)}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                {isExternalBooking && (
+                  <div className="space-y-2">
+                    <Input
+                      placeholder="Digite o nome do cliente"
+                      value={externalClientName}
+                      onChange={(e) => setExternalClientName(e.target.value)}
+                      className="h-10 bg-muted/30 border-input"
+                    />
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">Periodicidade:</Label>
+                    <Select value={recurringPeriodicity} onValueChange={setRecurringPeriodicity}>
+                      <SelectTrigger className="h-10 bg-muted/30 border-input">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="weekly">Semanal</SelectItem>
+                        <SelectItem value="biweekly">Quinzenal</SelectItem>
+                        <SelectItem value="monthly">Mensal</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">Quantidade de agendamentos:</Label>
+                    <Select value={recurringQuantity} onValueChange={setRecurringQuantity}>
+                      <SelectTrigger className="h-10 bg-muted/30 border-input">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-60">
+                        {Array.from({ length: 40 }, (_, i) => i + 1).map(num => (
+                          <SelectItem key={num} value={num.toString()}>{num}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <Button 
+                  onClick={handleCreate}
+                  disabled={loading}
+                  className="w-full h-11 bg-green-600 hover:bg-green-700 text-white font-semibold text-sm mt-2"
+                >
+                  {loading ? 'AGENDANDO...' : 'AGENDAR'}
+                </Button>
+              </>
             )}
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-sm text-muted-foreground">Periodicidade:</Label>
-                <Select value={recurringPeriodicity} onValueChange={setRecurringPeriodicity}>
-                  <SelectTrigger className="h-10 bg-muted/30 border-input">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="weekly">Semanal</SelectItem>
-                    <SelectItem value="biweekly">Quinzenal</SelectItem>
-                    <SelectItem value="monthly">Mensal</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-sm text-muted-foreground">Quantidade de agendamentos:</Label>
-                <Select value={recurringQuantity} onValueChange={setRecurringQuantity}>
-                  <SelectTrigger className="h-10 bg-muted/30 border-input">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-60">
-                    {Array.from({ length: 40 }, (_, i) => i + 1).map(num => (
-                      <SelectItem key={num} value={num.toString()}>{num}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <Button 
-              onClick={handleCreate}
-              disabled={loading}
-              className="w-full h-11 bg-green-600 hover:bg-green-700 text-white font-semibold text-sm mt-2"
-            >
-              {loading ? 'AGENDANDO...' : 'AGENDAR'}
-            </Button>
           </TabsContent>
         </Tabs>
       </DialogContent>
       <CreateClientDialog 
         open={createClientOpen}
         onOpenChange={setCreateClientOpen}
-        onSuccess={fetchClients}
+        onSuccess={async (newClientId) => {
+          await fetchClients();
+          if (newClientId) {
+            setSelectedClient(newClientId);
+            setIsExternalBooking(false);
+            const newClient = clients.find(c => c.user_id === newClientId);
+            if (newClient) {
+              setExternalClientName(newClient.display_name);
+            }
+          }
+        }}
       />
     </Dialog>
   );

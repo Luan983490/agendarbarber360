@@ -16,7 +16,7 @@ import { UserPlus } from 'lucide-react';
 interface CreateClientDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess: () => void;
+  onSuccess: (newClientId?: string) => void;
 }
 
 export const CreateClientDialog = ({
@@ -73,7 +73,7 @@ export const CreateClientDialog = ({
           description: 'Cliente cadastrado com sucesso'
         });
 
-        onSuccess();
+        onSuccess(authData.user.id);
         onOpenChange(false);
         resetForm();
       }
