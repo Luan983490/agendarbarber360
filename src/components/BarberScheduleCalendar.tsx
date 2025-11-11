@@ -73,6 +73,7 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
     date: Date;
     isBlocked: boolean;
     blockId?: string;
+    overlappingBlocks?: BarberBlock[];
   } | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [bookingDetailsOpen, setBookingDetailsOpen] = useState(false);
@@ -338,7 +339,7 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
       return;
     }
 
-    // Se for bloqueado, encontrar TODOS os blocos que cobrem este horário
+    // Se for bloqueado, encontrar TODOS os blocos que cobrem este horário e perguntar
     if (slotInfo.type === 'blocked') {
       const overlappingBlocks = blocks.filter(b => {
         if (b.block_date !== dateStr) return false;
@@ -349,8 +350,15 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
       });
       
       if (overlappingBlocks.length > 0) {
-        // Desbloquear imediatamente todos os blocos sobrepostos
-        handleUnblockMultiple(overlappingBlocks);
+        // Abrir dialog de confirmação com todos os blocos sobrepostos
+        setSelectedSlot({
+          time,
+          date,
+          isBlocked: true,
+          blockId: overlappingBlocks[0].id,
+          overlappingBlocks
+        });
+        setDialogOpen(true);
       }
       return;
     }
@@ -505,6 +513,14 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
   };
 
   const handleUnblock = async () => {
+    // Se houver blocos sobrepostos, desbloquear todos
+    if (selectedSlot?.overlappingBlocks && selectedSlot.overlappingBlocks.length > 0) {
+      await handleUnblockMultiple(selectedSlot.overlappingBlocks);
+      setDialogOpen(false);
+      return;
+    }
+
+    // Caso contrário, desbloquear apenas o bloco único
     if (!selectedSlot?.blockId) return;
 
     try {
