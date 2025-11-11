@@ -338,9 +338,9 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
       return;
     }
 
-    // Se for bloqueado, desbloquear
+    // Se for bloqueado, encontrar TODOS os blocos que cobrem este horário
     if (slotInfo.type === 'blocked') {
-      const block = blocks.find(b => {
+      const overlappingBlocks = blocks.filter(b => {
         if (b.block_date !== dateStr) return false;
         const slotTime = time.substring(0, 5);
         const blockStart = b.start_time.substring(0, 5);
@@ -348,14 +348,9 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
         return slotTime >= blockStart && slotTime < blockEnd;
       });
       
-      if (block) {
-        setSelectedSlot({
-          time,
-          date,
-          isBlocked: true,
-          blockId: block.id
-        });
-        setDialogOpen(true);
+      if (overlappingBlocks.length > 0) {
+        // Desbloquear imediatamente todos os blocos sobrepostos
+        handleUnblockMultiple(overlappingBlocks);
       }
       return;
     }
@@ -469,6 +464,40 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
     } catch (error: any) {
       toast({
         title: 'Erro ao bloquear período',
+        description: error.message,
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleUnblockMultiple = async (blocksToRemove: BarberBlock[]) => {
+    if (blocksToRemove.length === 0) return;
+
+    try {
+      // Atualização otimista - remove todos os blocos do estado local imediatamente
+      const blockIds = blocksToRemove.map(b => b.id);
+      setBlocks(prev => prev.filter(b => !blockIds.includes(b.id)));
+      
+      // Mostra o toast
+      toast({
+        title: 'Horário desbloqueado',
+        description: 'O horário foi desbloqueado com sucesso'
+      });
+
+      // Deleta todos os blocos no banco de dados em segundo plano
+      const { error } = await supabase
+        .from('barber_blocks')
+        .delete()
+        .in('id', blockIds);
+
+      if (error) {
+        // Se houver erro, reverte e mostra mensagem
+        fetchScheduleData();
+        throw error;
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao desbloquear horário',
         description: error.message,
         variant: 'destructive'
       });
