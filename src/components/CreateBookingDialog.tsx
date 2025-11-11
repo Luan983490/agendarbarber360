@@ -58,6 +58,12 @@ export const CreateBookingDialog = ({
   const [blockReason, setBlockReason] = useState('');
   const [blockStartTime, setBlockStartTime] = useState(initialTime);
   const [blockEndTime, setBlockEndTime] = useState('');
+  const [blockStartDate, setBlockStartDate] = useState<Date>(initialDate);
+  const [blockEndDate, setBlockEndDate] = useState<Date>(initialDate);
+  const [unblockStartDate, setUnblockStartDate] = useState<Date>(initialDate);
+  const [unblockEndDate, setUnblockEndDate] = useState<Date>(initialDate);
+  const [unblockStartTime, setUnblockStartTime] = useState('');
+  const [unblockEndTime, setUnblockEndTime] = useState('');
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [recurringDays, setRecurringDays] = useState<number[]>([]);
   const [blocks, setBlocks] = useState<any[]>([]);
@@ -146,7 +152,7 @@ export const CreateBookingDialog = ({
   };
 
   const handleCreate = async () => {
-    if (selectedServices.length === 0) {
+    if (!selectedService && selectedServices.length === 0) {
       toast({
         title: 'Erro',
         description: 'Selecione pelo menos um serviço',
@@ -175,15 +181,16 @@ export const CreateBookingDialog = ({
 
     setLoading(true);
     try {
-      const totalPrice = calculateTotalPrice();
+      const serviceToUse = selectedService || selectedServices[0];
+      const service = services.find(s => s.id === serviceToUse);
       
       const bookingData: any = {
         barbershop_id: barbershopId,
         barber_id: selectedBarber,
-        service_id: selectedServices[0],
+        service_id: serviceToUse,
         booking_date: format(date, 'yyyy-MM-dd'),
         booking_time: time,
-        total_price: totalPrice,
+        total_price: service?.price || 0,
         status: 'confirmed',
         notes: notes || null,
         is_external_booking: isExternalBooking
@@ -244,22 +251,39 @@ export const CreateBookingDialog = ({
       return;
     }
 
+    if (blockStartDate > blockEndDate) {
+      toast({
+        title: 'Erro',
+        description: 'A data de fim deve ser maior ou igual à data de início',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     try {
-      const { error } = await supabase
-        .from('barber_blocks')
-        .insert({
+      const blocks = [];
+      let currentDate = new Date(blockStartDate);
+      
+      while (currentDate <= blockEndDate) {
+        blocks.push({
           barber_id: selectedBarber,
-          block_date: format(date, 'yyyy-MM-dd'),
+          block_date: format(currentDate, 'yyyy-MM-dd'),
           start_time: blockStartTime,
           end_time: blockEndTime,
           reason: blockReason || null
         });
+        currentDate = addDays(currentDate, 1);
+      }
+
+      const { error } = await supabase
+        .from('barber_blocks')
+        .insert(blocks);
 
       if (error) throw error;
 
       toast({
         title: 'Horário bloqueado',
-        description: 'Horário bloqueado com sucesso'
+        description: `${blocks.length} bloqueio(s) criado(s) com sucesso`
       });
 
       onSuccess();
@@ -274,21 +298,56 @@ export const CreateBookingDialog = ({
     }
   };
 
-  const handleUnblock = async (blockId: string) => {
-    try {
-      const { error } = await supabase
-        .from('barber_blocks')
-        .delete()
-        .eq('id', blockId);
+  const handleUnblock = async () => {
+    if (!unblockStartTime || !unblockEndTime) {
+      toast({
+        title: 'Erro',
+        description: 'Informe o horário de início e fim',
+        variant: 'destructive'
+      });
+      return;
+    }
 
-      if (error) throw error;
+    if (unblockStartDate > unblockEndDate) {
+      toast({
+        title: 'Erro',
+        description: 'A data de fim deve ser maior ou igual à data de início',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      let currentDate = new Date(unblockStartDate);
+      const deletions = [];
+      
+      while (currentDate <= unblockEndDate) {
+        const dateStr = format(currentDate, 'yyyy-MM-dd');
+        deletions.push(
+          supabase
+            .from('barber_blocks')
+            .delete()
+            .eq('barber_id', selectedBarber)
+            .eq('block_date', dateStr)
+            .gte('start_time', unblockStartTime)
+            .lte('end_time', unblockEndTime)
+        );
+        currentDate = addDays(currentDate, 1);
+      }
+
+      const results = await Promise.all(deletions);
+      const errors = results.filter(r => r.error);
+
+      if (errors.length > 0) throw errors[0].error;
 
       toast({
         title: 'Horário desbloqueado',
-        description: 'Horário desbloqueado com sucesso'
+        description: 'Horários desbloqueados com sucesso'
       });
 
-      fetchBlocks();
+      onSuccess();
+      onOpenChange(false);
+      resetForm();
     } catch (error: any) {
       toast({
         title: 'Erro ao desbloquear',
@@ -591,7 +650,23 @@ export const CreateBookingDialog = ({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-sm text-muted-foreground">Dia Início:</Label>
-                <Input type="text" value={date ? format(date, 'dd/MM/yyyy') : ''} readOnly className="h-10 bg-muted/30" />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full h-10 bg-muted/30 border-input justify-start text-left font-normal">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {blockStartDate ? format(blockStartDate, 'dd/MM/yyyy', { locale: ptBR }) : 'Selecione'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={blockStartDate}
+                      onSelect={(date) => date && setBlockStartDate(date)}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div className="space-y-2">
@@ -617,7 +692,23 @@ export const CreateBookingDialog = ({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-sm text-muted-foreground">Dia Fim:</Label>
-                <Input type="text" value={date ? format(date, 'dd/MM/yyyy') : ''} readOnly className="h-10 bg-muted/30" />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full h-10 bg-muted/30 border-input justify-start text-left font-normal">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {blockEndDate ? format(blockEndDate, 'dd/MM/yyyy', { locale: ptBR }) : 'Selecione'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={blockEndDate}
+                      onSelect={(date) => date && setBlockEndDate(date)}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div className="space-y-2">
@@ -681,24 +772,84 @@ export const CreateBookingDialog = ({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-sm text-muted-foreground">Dia Início:</Label>
-                <Input type="date" className="h-10 bg-muted/30 border-input" />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full h-10 bg-muted/30 border-input justify-start text-left font-normal">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {unblockStartDate ? format(unblockStartDate, 'dd/MM/yyyy', { locale: ptBR }) : 'Selecione'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={unblockStartDate}
+                      onSelect={(date) => date && setUnblockStartDate(date)}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div className="space-y-2">
                 <Label className="text-sm text-muted-foreground">Hora Início:</Label>
-                <Input type="time" className="h-10 bg-muted/30 border-input" />
+                <Select value={unblockStartTime} onValueChange={setUnblockStartTime}>
+                  <SelectTrigger className="h-10 bg-muted/30 border-input">
+                    <SelectValue placeholder="Hora" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border-border z-50 max-h-60">
+                    {Array.from({ length: 48 }, (_, i) => {
+                      const hour = Math.floor(i / 2).toString().padStart(2, '0');
+                      const minute = (i % 2) * 30;
+                      const minuteStr = minute.toString().padStart(2, '0');
+                      return `${hour}:${minuteStr}`;
+                    }).map(timeOption => (
+                      <SelectItem key={timeOption} value={timeOption}>{timeOption}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-sm text-muted-foreground">Dia Fim:</Label>
-                <Input type="date" className="h-10 bg-muted/30 border-input" />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full h-10 bg-muted/30 border-input justify-start text-left font-normal">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {unblockEndDate ? format(unblockEndDate, 'dd/MM/yyyy', { locale: ptBR }) : 'Selecione'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={unblockEndDate}
+                      onSelect={(date) => date && setUnblockEndDate(date)}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div className="space-y-2">
                 <Label className="text-sm text-muted-foreground">Hora Fim:</Label>
-                <Input type="time" className="h-10 bg-muted/30 border-input" />
+                <Select value={unblockEndTime} onValueChange={setUnblockEndTime}>
+                  <SelectTrigger className="h-10 bg-muted/30 border-input">
+                    <SelectValue placeholder="Hora" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border-border z-50 max-h-60">
+                    {Array.from({ length: 48 }, (_, i) => {
+                      const hour = Math.floor(i / 2).toString().padStart(2, '0');
+                      const minute = (i % 2) * 30;
+                      const minuteStr = minute.toString().padStart(2, '0');
+                      return `${hour}:${minuteStr}`;
+                    }).map(timeOption => (
+                      <SelectItem key={timeOption} value={timeOption}>{timeOption}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -719,6 +870,8 @@ export const CreateBookingDialog = ({
             </div>
 
             <Button 
+              onClick={handleUnblock}
+              disabled={!unblockStartTime || !unblockEndTime || !selectedBarber}
               className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm mt-2"
             >
               DESBLOQUEAR
@@ -734,7 +887,7 @@ export const CreateBookingDialog = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="single">Agendar</SelectItem>
-                  <SelectItem value="recurring">Recorrente</SelectItem>
+                  <SelectItem value="cancel">Cancelar</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -798,31 +951,56 @@ export const CreateBookingDialog = ({
 
             <div className="space-y-2">
               <Label className="text-sm text-muted-foreground">Cliente:</Label>
-              <Select 
-                value={isExternalBooking ? 'sem-cadastro' : selectedClient} 
-                onValueChange={(value) => {
-                  if (value === 'sem-cadastro') {
-                    setIsExternalBooking(true);
-                    setSelectedClient('');
-                  } else {
-                    setIsExternalBooking(false);
-                    setSelectedClient(value);
-                  }
-                }}
-              >
-                <SelectTrigger className="h-10 bg-muted/30 border-input">
-                  <SelectValue placeholder="Sem Cliente" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border-border z-50">
-                  <SelectItem value="sem-cadastro">Sem Cliente</SelectItem>
-                  {clients.map((client) => (
-                    <SelectItem key={client.user_id} value={client.user_id}>
-                      {client.display_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2">
+                <Select 
+                  value={isExternalBooking ? 'sem-cadastro' : selectedClient} 
+                  onValueChange={(value) => {
+                    if (value === 'sem-cadastro') {
+                      setIsExternalBooking(true);
+                      setSelectedClient('');
+                    } else {
+                      setIsExternalBooking(false);
+                      setSelectedClient(value);
+                      const client = clients.find(c => c.user_id === value);
+                      if (client) {
+                        setExternalClientName(client.display_name);
+                      }
+                    }
+                  }}
+                >
+                  <SelectTrigger className="flex-1 h-10 bg-muted/30 border-input">
+                    <SelectValue placeholder="Sem Cadastro" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border-border z-50">
+                    <SelectItem value="sem-cadastro">Sem Cadastro</SelectItem>
+                    {clients.map((client) => (
+                      <SelectItem key={client.user_id} value={client.user_id}>
+                        {client.display_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button 
+                  type="button" 
+                  size="icon" 
+                  className="h-10 w-10 bg-cyan-600 hover:bg-cyan-700 shrink-0"
+                  onClick={() => setCreateClientOpen(true)}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
+
+            {isExternalBooking && (
+              <div className="space-y-2">
+                <Input
+                  placeholder="Digite o nome do cliente"
+                  value={externalClientName}
+                  onChange={(e) => setExternalClientName(e.target.value)}
+                  className="h-10 bg-muted/30 border-input"
+                />
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -845,8 +1023,8 @@ export const CreateBookingDialog = ({
                   <SelectTrigger className="h-10 bg-muted/30 border-input">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
+                  <SelectContent className="max-h-60">
+                    {Array.from({ length: 40 }, (_, i) => i + 1).map(num => (
                       <SelectItem key={num} value={num.toString()}>{num}</SelectItem>
                     ))}
                   </SelectContent>
