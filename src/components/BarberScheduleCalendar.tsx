@@ -738,7 +738,7 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
                 <span>Disponível</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-primary" />
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-yellow-400" />
                 <span>Agendado</span>
               </div>
               <div className="flex items-center gap-2">
