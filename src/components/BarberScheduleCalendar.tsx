@@ -479,19 +479,29 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
     if (!selectedSlot?.blockId) return;
 
     try {
-      const { error } = await supabase
-        .from('barber_blocks')
-        .delete()
-        .eq('id', selectedSlot.blockId);
-
-      if (error) throw error;
-
+      // Atualização otimista - remove do estado local imediatamente
+      setBlocks(prev => prev.filter(b => b.id !== selectedSlot.blockId));
+      
+      // Fecha o dialog imediatamente
+      setDialogOpen(false);
+      
+      // Mostra o toast
       toast({
         title: 'Horário desbloqueado',
         description: 'O horário foi desbloqueado com sucesso'
       });
 
-      fetchScheduleData();
+      // Deleta no banco de dados em segundo plano
+      const { error } = await supabase
+        .from('barber_blocks')
+        .delete()
+        .eq('id', selectedSlot.blockId);
+
+      if (error) {
+        // Se houver erro, reverte e mostra mensagem
+        fetchScheduleData();
+        throw error;
+      }
     } catch (error: any) {
       toast({
         title: 'Erro ao desbloquear horário',
