@@ -734,19 +734,19 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex flex-wrap gap-3 text-xs sm:text-sm">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-success/10 border-2 border-success/30" />
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-success" />
                 <span>Disponível</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-primary/10 border-2 border-primary/30" />
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-primary" />
                 <span>Agendado</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-amber-500/10 border-2 border-amber-500/30" />
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-orange-500" />
                 <span>Agendado sem Cadastro</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-destructive/10 border-2 border-destructive/30" />
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-destructive" />
                 <span>Bloqueado</span>
               </div>
             </div>

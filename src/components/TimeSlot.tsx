@@ -24,7 +24,7 @@ export const TimeSlot = ({ time, type, booking, block, onClick }: TimeSlotProps)
       case 'booked':
         return 'bg-primary/10 border-primary/30 cursor-pointer';
       case 'booked-external':
-        return 'bg-amber-500/10 border-amber-500/30 cursor-pointer hover:bg-amber-500/20';
+        return 'bg-orange-500/10 border-orange-500/30 cursor-pointer hover:bg-orange-500/20';
       case 'blocked':
         return 'bg-destructive/10 border-destructive/30 cursor-pointer';
       default:
@@ -39,7 +39,7 @@ export const TimeSlot = ({ time, type, booking, block, onClick }: TimeSlotProps)
       case 'booked':
         return <User className="h-3 w-3 text-primary" />;
       case 'booked-external':
-        return <User className="h-3 w-3 text-amber-500" />;
+        return <User className="h-3 w-3 text-orange-500" />;
       case 'blocked':
         return <Ban className="h-3 w-3 text-destructive" />;
     }
@@ -90,7 +90,7 @@ export const TimeSlot = ({ time, type, booking, block, onClick }: TimeSlotProps)
         <HoverCardContent className="w-64">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <User className={cn("h-4 w-4", type === 'booked-external' ? "text-amber-500" : "text-primary")} />
+              <User className={cn("h-4 w-4", type === 'booked-external' ? "text-orange-500" : "text-primary")} />
               <p className="text-sm font-semibold">{booking.client_name}</p>
             </div>
             <div className="flex items-center gap-2">
