@@ -7,11 +7,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { User, Scissors, Clock, Calendar, AlertCircle, Edit } from 'lucide-react';
+import { AlertCircle, Edit, User as UserIcon, Smartphone, Mail, Plus, Receipt, Globe } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -40,20 +36,16 @@ export const BookingDetailsDialog = ({
   onUpdateNotes,
   onCancel,
 }: BookingDetailsDialogProps) => {
-  const [status, setStatus] = useState(booking?.status || 'pending');
   const [notes, setNotes] = useState(booking?.notes || '');
-  const [bookingType, setBookingType] = useState('tipo');
 
-  const handleSave = () => {
+  const handleUpdateNotes = () => {
     if (!booking) return;
-    
-    if (status !== booking.status) {
-      onUpdateStatus(booking.id, status);
-    }
-    if (notes !== booking.notes) {
-      onUpdateNotes(booking.id, notes);
-    }
-    
+    onUpdateNotes(booking.id, notes);
+  };
+
+  const handleComplete = () => {
+    if (!booking) return;
+    onUpdateStatus(booking.id, 'completed');
     onOpenChange(false);
   };
 
@@ -63,139 +55,147 @@ export const BookingDetailsDialog = ({
     onOpenChange(false);
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending': return 'bg-yellow-500';
-      case 'confirmed': return 'bg-green-500';
-      case 'cancelled': return 'bg-red-500';
-      case 'completed': return 'bg-blue-500';
-      default: return 'bg-gray-500';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'pending': return 'Pendente';
-      case 'confirmed': return 'Confirmado';
-      case 'cancelled': return 'Cancelado';
-      case 'completed': return 'Concluído';
-      default: return status;
-    }
-  };
-
   if (!booking) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Edit className="h-5 w-5" />
-            Editar Agendamento
+          <DialogTitle className="flex items-center gap-2 text-lg">
+            ℹ️ Selecione o que deseja fazer
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Campo Tipo */}
-          <div className="space-y-2">
-            <Label htmlFor="tipo">Tipo</Label>
-            <Select value={bookingType} onValueChange={setBookingType}>
-              <SelectTrigger id="tipo">
-                <SelectValue placeholder="Tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="tipo">Tipo</SelectItem>
-                <SelectItem value="apenas-horario">Apenas Horário</SelectItem>
-                <SelectItem value="apenas-servico">Apenas Serviço</SelectItem>
-                <SelectItem value="apenas-profissional">Apenas Profissional</SelectItem>
-                <SelectItem value="horario-profissional">Horário e Profissional</SelectItem>
-                <SelectItem value="horario-servico">Horário e Serviço</SelectItem>
-                <SelectItem value="profissional-servico">Profissional e Serviço</SelectItem>
-                <SelectItem value="servico-profissional-horario">Serviço, Profissional e Horário</SelectItem>
-                <SelectItem value="duracao">Duração</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Status:</span>
-            <Badge className={getStatusColor(booking.status)}>
-              {getStatusText(booking.status)}
-            </Badge>
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">Cliente</p>
-                <p className="font-semibold">{booking.client_name}</p>
-              </div>
+        <div className="space-y-3">
+          {/* Grid Layout - 2 colunas */}
+          <div className="grid grid-cols-1 sm:grid-cols-[120px_1fr] gap-3 text-sm">
+            {/* Usuário */}
+            <div className="font-medium">Usuário:</div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span>{booking.client_name || 'Sem Cadastro'}</span>
+              <Button size="sm" variant="outline" className="h-7 text-xs">
+                <UserIcon className="h-3 w-3 mr-1" />
+                Alterar Cliente
+              </Button>
+              <Button size="sm" variant="outline" className="h-7 text-xs px-2">
+                Info
+              </Button>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Scissors className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">Serviço</p>
-                <p className="font-semibold">{booking.service_name}</p>
-              </div>
+            {/* Serviço */}
+            <div className="font-medium">Serviço:</div>
+            <div>{booking.service_name} - {booking.booking_time}</div>
+
+            {/* Origem */}
+            <div className="font-medium">Origem:</div>
+            <div className="flex items-center gap-1">
+              <Globe className="h-4 w-4" />
+              <span>Web</span>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">Data</p>
-                <p className="font-semibold">
-                  {format(new Date(booking.booking_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                </p>
-              </div>
+            {/* Data/Usuário Cadastro */}
+            <div className="font-medium">Data/Usuário Cadastro:</div>
+            <div>
+              {format(new Date(booking.booking_date), "dd/MM/yyyy HH:mm", { locale: ptBR })}
             </div>
 
+            {/* Valor */}
+            <div className="font-medium">Valor:</div>
+            <div>50,00</div>
+
+            {/* Comanda */}
+            <div className="font-medium">Comanda:</div>
             <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">Horário</p>
-                <p className="font-semibold">{booking.booking_time}</p>
-              </div>
+              <span>50,00 | 177967317</span>
+              <Button size="sm" variant="outline" className="h-7 text-xs">
+                <Receipt className="h-3 w-3 mr-1" />
+                Ver
+              </Button>
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="status">Alterar Status</Label>
-            <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger id="status">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pending">Pendente</SelectItem>
-                <SelectItem value="confirmed">Confirmado</SelectItem>
-                <SelectItem value="completed">Concluído</SelectItem>
-                <SelectItem value="cancelled">Cancelado</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+            {/* Editar */}
+            <div className="font-medium">Editar:</div>
+            <div>
+              <Button size="sm" className="h-8 text-xs">
+                <Edit className="h-3 w-3 mr-1" />
+                Editar Agendamento
+              </Button>
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="notes">Observações</Label>
-            <Textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Adicione observações sobre o agendamento..."
-              rows={3}
-            />
+            {/* Celular */}
+            <div className="font-medium">Celular:</div>
+            <div>
+              <Button size="sm" variant="outline" className="h-8 w-8 p-0 bg-green-500 hover:bg-green-600 text-white border-0">
+                <Smartphone className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* E-mail */}
+            <div className="font-medium">E-mail:</div>
+            <div className="text-muted-foreground">-</div>
+
+            {/* Observações */}
+            <div className="font-medium">Observações:</div>
+            <div className="flex items-start gap-2">
+              <div className="flex-1 text-sm text-muted-foreground">
+                {notes || 'Sem observações'}
+              </div>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="h-7 text-xs"
+                onClick={handleUpdateNotes}
+              >
+                Alterar
+              </Button>
+            </div>
+
+            {/* Tags */}
+            <div className="font-medium">Tags:</div>
+            <div>
+              <Button size="sm" variant="outline" className="h-7 w-7 p-0">
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
 
-        <DialogFooter className="flex-col sm:flex-row gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
+        {/* Footer com botões de ação */}
+        <DialogFooter className="flex-col sm:flex-row gap-2 mt-4">
+          <Button 
+            className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white"
+            onClick={handleComplete}
+          >
+            Realizado/Comanda
+          </Button>
+          <Button 
+            className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white"
+            onClick={handleCancel}
+          >
+            Ausência
+          </Button>
+          <Button 
+            variant="outline"
+            className="w-full sm:w-auto"
+            onClick={handleCancel}
+          >
+            Cancelar
+          </Button>
+          <Button 
+            className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white"
+          >
+            + Serviço
+          </Button>
+          <Button 
+            className="w-full sm:w-auto bg-amber-700 hover:bg-amber-800 text-white"
+          >
+            + Produto
+          </Button>
+          <Button 
+            className="w-full sm:w-auto"
+            onClick={() => onOpenChange(false)}
+          >
             Fechar
-          </Button>
-          <Button variant="destructive" onClick={handleCancel} className="w-full sm:w-auto">
-            <AlertCircle className="mr-2 h-4 w-4" />
-            Cancelar Agendamento
-          </Button>
-          <Button onClick={handleSave} className="w-full sm:w-auto">
-            Salvar Alterações
           </Button>
         </DialogFooter>
       </DialogContent>
