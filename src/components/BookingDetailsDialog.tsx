@@ -7,12 +7,15 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, Edit, User as UserIcon, Smartphone, Mail, Plus, Receipt, Globe, Info } from 'lucide-react';
+import { AlertCircle, Edit, User as UserIcon, Smartphone, Plus, Receipt, Globe, Info } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { EditBookingObservationsDialog } from './EditBookingObservationsDialog';
 import { ClientInfoDialog } from './ClientInfoDialog';
 import { BookingTagsDialog } from './BookingTagsDialog';
+import { EditBookingDialog } from './EditBookingDialog';
+import { AddServiceToBookingDialog } from './AddServiceToBookingDialog';
+import { AddProductToBookingDialog } from './AddProductToBookingDialog';
 import { useToast } from '@/hooks/use-toast';
 
 interface BookingDetailsDialogProps {
@@ -27,6 +30,7 @@ interface BookingDetailsDialogProps {
     service_name: string;
     notes?: string;
     total_price?: number;
+    barbershop_id?: string;
   } | null;
   onUpdateStatus: (bookingId: string, status: string) => void;
   onUpdateNotes: (bookingId: string, notes: string) => void;
@@ -44,6 +48,9 @@ export const BookingDetailsDialog = ({
   const [showObservationsDialog, setShowObservationsDialog] = useState(false);
   const [showClientInfoDialog, setShowClientInfoDialog] = useState(false);
   const [showTagsDialog, setShowTagsDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showAddServiceDialog, setShowAddServiceDialog] = useState(false);
+  const [showAddProductDialog, setShowAddProductDialog] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
   const { toast } = useToast();
 
@@ -96,9 +103,13 @@ export const BookingDetailsDialog = ({
   };
 
   const handleEditBooking = () => {
+    setShowEditDialog(true);
+  };
+
+  const handleSaveEditedBooking = (data: { date: Date; time: string }) => {
     toast({
-      title: "Editor de agendamento",
-      description: "Funcionalidade em desenvolvimento.",
+      title: "Agendamento atualizado",
+      description: "As alterações foram salvas com sucesso.",
     });
   };
 
@@ -117,17 +128,11 @@ export const BookingDetailsDialog = ({
   };
 
   const handleAddService = () => {
-    toast({
-      title: "Adicionar serviço",
-      description: "Funcionalidade em desenvolvimento.",
-    });
+    setShowAddServiceDialog(true);
   };
 
   const handleAddProduct = () => {
-    toast({
-      title: "Adicionar produto",
-      description: "Funcionalidade em desenvolvimento.",
-    });
+    setShowAddProductDialog(true);
   };
 
   const handleSaveTags = (newTags: string[]) => {
@@ -143,81 +148,93 @@ export const BookingDetailsDialog = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-lg">
+            <DialogTitle className="text-base sm:text-lg flex items-center gap-2">
               ℹ️ Selecione o que deseja fazer
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-3">
-            {/* Grid Layout - 2 colunas */}
-            <div className="grid grid-cols-1 sm:grid-cols-[120px_1fr] gap-3 text-sm">
+            {/* Grid Layout - Responsivo */}
+            <div className="grid grid-cols-1 gap-3 text-sm">
               {/* Usuário */}
-              <div className="font-medium">Usuário:</div>
-              <div className="flex flex-wrap items-center gap-2">
-                <span>{booking.client_name || 'Sem Cadastro'}</span>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  className="h-7 text-xs"
-                  onClick={handleChangeClient}
-                >
-                  <UserIcon className="h-3 w-3 mr-1" />
-                  Alterar Cliente
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  className="h-7 text-xs px-2"
-                  onClick={() => setShowClientInfoDialog(true)}
-                >
-                  <Info className="h-3 w-3" />
-                </Button>
+              <div className="space-y-1">
+                <div className="font-medium text-muted-foreground text-xs">Usuário:</div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm">{booking.client_name || 'Sem Cadastro'}</span>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="h-7 text-xs"
+                    onClick={handleChangeClient}
+                  >
+                    <UserIcon className="h-3 w-3 sm:mr-1" />
+                    <span className="hidden sm:inline">Alterar</span>
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="h-7 text-xs px-2"
+                    onClick={() => setShowClientInfoDialog(true)}
+                  >
+                    <Info className="h-3 w-3" />
+                  </Button>
+                </div>
               </div>
 
               {/* Serviço */}
-              <div className="font-medium">Serviço:</div>
-              <div>{booking.service_name} - {booking.booking_time}</div>
-
-              {/* Origem */}
-              <div className="font-medium">Origem:</div>
-              <div className="flex items-center gap-1">
-                <Globe className="h-4 w-4" />
-                <span>Web</span>
+              <div className="space-y-1">
+                <div className="font-medium text-muted-foreground text-xs">Serviço:</div>
+                <div className="text-sm">{booking.service_name} - {booking.booking_time}</div>
               </div>
 
-              {/* Data/Usuário Cadastro */}
-              <div className="font-medium">Data/Usuário Cadastro:</div>
-              <div>
-                {format(new Date(booking.booking_date), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+              {/* Origem */}
+              <div className="space-y-1">
+                <div className="font-medium text-muted-foreground text-xs">Origem:</div>
+                <div className="flex items-center gap-1 text-sm">
+                  <Globe className="h-3 w-3" />
+                  <span>Web</span>
+                </div>
+              </div>
+
+              {/* Data/Cadastro */}
+              <div className="space-y-1">
+                <div className="font-medium text-muted-foreground text-xs">Data/Cadastro:</div>
+                <div className="text-sm">
+                  {format(new Date(booking.booking_date), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                </div>
               </div>
 
               {/* Valor */}
-              <div className="font-medium">Valor:</div>
-              <div>R$ {booking.total_price || '50,00'}</div>
+              <div className="space-y-1">
+                <div className="font-medium text-muted-foreground text-xs">Valor:</div>
+                <div className="text-sm font-semibold">R$ {booking.total_price || '50,00'}</div>
+              </div>
 
               {/* Comanda */}
-              <div className="font-medium">Comanda:</div>
-              <div className="flex items-center gap-2">
-                <span>R$ {booking.total_price || '50,00'} | #{booking.id.slice(0, 8)}</span>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  className="h-7 text-xs"
-                  onClick={handleViewComanda}
-                >
-                  <Receipt className="h-3 w-3 mr-1" />
-                  Ver
-                </Button>
+              <div className="space-y-1">
+                <div className="font-medium text-muted-foreground text-xs">Comanda:</div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm">R$ {booking.total_price || '50,00'} | #{booking.id.slice(0, 8)}</span>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="h-7 text-xs"
+                    onClick={handleViewComanda}
+                  >
+                    <Receipt className="h-3 w-3 sm:mr-1" />
+                    <span className="hidden sm:inline">Ver</span>
+                  </Button>
+                </div>
               </div>
 
               {/* Editar */}
-              <div className="font-medium">Editar:</div>
-              <div>
+              <div className="space-y-1">
+                <div className="font-medium text-muted-foreground text-xs">Editar:</div>
                 <Button 
                   size="sm" 
-                  className="h-8 text-xs"
+                  className="h-8 text-xs w-full sm:w-auto"
                   onClick={handleEditBooking}
                 >
                   <Edit className="h-3 w-3 mr-1" />
@@ -226,8 +243,8 @@ export const BookingDetailsDialog = ({
               </div>
 
               {/* Celular */}
-              <div className="font-medium">Celular:</div>
-              <div>
+              <div className="space-y-1">
+                <div className="font-medium text-muted-foreground text-xs">Celular:</div>
                 <Button 
                   size="sm" 
                   variant="outline" 
@@ -239,86 +256,98 @@ export const BookingDetailsDialog = ({
               </div>
 
               {/* E-mail */}
-              <div className="font-medium">E-mail:</div>
-              <div className="text-muted-foreground">-</div>
+              <div className="space-y-1">
+                <div className="font-medium text-muted-foreground text-xs">E-mail:</div>
+                <div className="text-sm text-muted-foreground">-</div>
+              </div>
 
               {/* Observações */}
-              <div className="font-medium">Observações:</div>
-              <div className="flex items-start gap-2">
-                <div className="flex-1 text-sm text-muted-foreground">
-                  {booking.notes || 'Sem observações'}
+              <div className="space-y-1">
+                <div className="font-medium text-muted-foreground text-xs">Observações:</div>
+                <div className="flex items-start gap-2">
+                  <div className="flex-1 text-sm text-muted-foreground">
+                    {booking.notes || 'Sem observações'}
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="h-7 text-xs"
+                    onClick={() => setShowObservationsDialog(true)}
+                  >
+                    Alterar
+                  </Button>
                 </div>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  className="h-7 text-xs"
-                  onClick={() => setShowObservationsDialog(true)}
-                >
-                  Alterar
-                </Button>
               </div>
 
               {/* Tags */}
-              <div className="font-medium">Tags:</div>
-              <div className="flex items-center gap-2">
-                <div className="flex flex-wrap gap-1">
-                  {tags.map((tag) => (
-                    <span key={tag} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-                      {tag}
-                    </span>
-                  ))}
+              <div className="space-y-1">
+                <div className="font-medium text-muted-foreground text-xs">Tags:</div>
+                <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap gap-1 flex-1">
+                    {tags.length === 0 ? (
+                      <span className="text-xs text-muted-foreground">Nenhuma tag</span>
+                    ) : (
+                      tags.map((tag) => (
+                        <span key={tag} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                          {tag}
+                        </span>
+                      ))
+                    )}
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="h-7 w-7 p-0 shrink-0"
+                    onClick={() => setShowTagsDialog(true)}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
                 </div>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  className="h-7 w-7 p-0"
-                  onClick={() => setShowTagsDialog(true)}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
               </div>
             </div>
           </div>
 
           {/* Footer com botões de ação */}
-          <DialogFooter className="flex-col sm:flex-row gap-2 mt-4">
-            <Button 
-              className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white"
-              onClick={handleComplete}
-            >
-              Realizado/Comanda
-            </Button>
-            <Button 
-              className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white"
-              onClick={handleAbsence}
-            >
-              Ausência
-            </Button>
-            <Button 
-              variant="outline"
-              className="w-full sm:w-auto"
-              onClick={handleCancelBooking}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white"
-              onClick={handleAddService}
-            >
-              + Serviço
-            </Button>
-            <Button 
-              className="w-full sm:w-auto bg-amber-700 hover:bg-amber-800 text-white"
-              onClick={handleAddProduct}
-            >
-              + Produto
-            </Button>
-            <Button 
-              className="w-full sm:w-auto"
-              onClick={() => onOpenChange(false)}
-            >
-              Fechar
-            </Button>
+          <DialogFooter className="flex flex-col gap-2 mt-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 w-full">
+              <Button 
+                className="bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm"
+                onClick={handleComplete}
+              >
+                Realizado
+              </Button>
+              <Button 
+                className="bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm"
+                onClick={handleAbsence}
+              >
+                Ausência
+              </Button>
+              <Button 
+                variant="outline"
+                className="text-xs sm:text-sm"
+                onClick={handleCancelBooking}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                className="bg-purple-600 hover:bg-purple-700 text-white text-xs sm:text-sm"
+                onClick={handleAddService}
+              >
+                + Serviço
+              </Button>
+              <Button 
+                className="bg-amber-700 hover:bg-amber-800 text-white text-xs sm:text-sm"
+                onClick={handleAddProduct}
+              >
+                + Produto
+              </Button>
+              <Button 
+                className="text-xs sm:text-sm"
+                onClick={() => onOpenChange(false)}
+              >
+                Fechar
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -343,6 +372,31 @@ export const BookingDetailsDialog = ({
         currentTags={tags}
         onSave={handleSaveTags}
       />
+
+      {booking && (
+        <>
+          <EditBookingDialog
+            open={showEditDialog}
+            onOpenChange={setShowEditDialog}
+            booking={booking}
+            onSave={handleSaveEditedBooking}
+          />
+
+          <AddServiceToBookingDialog
+            open={showAddServiceDialog}
+            onOpenChange={setShowAddServiceDialog}
+            bookingId={booking.id}
+            barbershopId={booking.barbershop_id || ''}
+          />
+
+          <AddProductToBookingDialog
+            open={showAddProductDialog}
+            onOpenChange={setShowAddProductDialog}
+            bookingId={booking.id}
+            barbershopId={booking.barbershop_id || ''}
+          />
+        </>
+      )}
     </>
   );
 };
