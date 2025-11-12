@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { User, Scissors, Clock, Calendar, AlertCircle } from 'lucide-react';
+import { User, Scissors, Clock, Calendar, AlertCircle, Edit } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -42,6 +42,7 @@ export const BookingDetailsDialog = ({
 }: BookingDetailsDialogProps) => {
   const [status, setStatus] = useState(booking?.status || 'pending');
   const [notes, setNotes] = useState(booking?.notes || '');
+  const [bookingType, setBookingType] = useState('tipo');
 
   const handleSave = () => {
     if (!booking) return;
@@ -86,15 +87,35 @@ export const BookingDetailsDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Detalhes do Agendamento
+            <Edit className="h-5 w-5" />
+            Editar Agendamento
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Campo Tipo */}
+          <div className="space-y-2">
+            <Label htmlFor="tipo">Tipo</Label>
+            <Select value={bookingType} onValueChange={setBookingType}>
+              <SelectTrigger id="tipo">
+                <SelectValue placeholder="Tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="tipo">Tipo</SelectItem>
+                <SelectItem value="apenas-horario">Apenas Horário</SelectItem>
+                <SelectItem value="apenas-servico">Apenas Serviço</SelectItem>
+                <SelectItem value="apenas-profissional">Apenas Profissional</SelectItem>
+                <SelectItem value="horario-profissional">Horário e Profissional</SelectItem>
+                <SelectItem value="horario-servico">Horário e Serviço</SelectItem>
+                <SelectItem value="profissional-servico">Profissional e Serviço</SelectItem>
+                <SelectItem value="servico-profissional-horario">Serviço, Profissional e Horário</SelectItem>
+                <SelectItem value="duracao">Duração</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Status:</span>
             <Badge className={getStatusColor(booking.status)}>
@@ -165,15 +186,15 @@ export const BookingDetailsDialog = ({
           </div>
         </div>
 
-        <DialogFooter className="flex gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="flex-col sm:flex-row gap-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
             Fechar
           </Button>
-          <Button variant="destructive" onClick={handleCancel}>
+          <Button variant="destructive" onClick={handleCancel} className="w-full sm:w-auto">
             <AlertCircle className="mr-2 h-4 w-4" />
             Cancelar Agendamento
           </Button>
-          <Button onClick={handleSave}>
+          <Button onClick={handleSave} className="w-full sm:w-auto">
             Salvar Alterações
           </Button>
         </DialogFooter>
