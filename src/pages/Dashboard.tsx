@@ -374,9 +374,9 @@ const Dashboard = () => {
             onBarbershopUpdated={fetchUserProfile}
           />
         );
-      case 'schedule':
-        return <BarberScheduleCalendar barbershopId={barbershop!.id} />;
       case 'bookings':
+        return <BarberScheduleCalendar barbershopId={barbershop!.id} />;
+      case 'schedule':
         return <BookingsManagement barbershopId={barbershop!.id} />;
       case 'services':
         return (
