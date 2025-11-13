@@ -16,6 +16,7 @@ import { BookingTagsDialog } from './BookingTagsDialog';
 import { EditBookingDialog } from './EditBookingDialog';
 import { AddServiceToBookingDialog } from './AddServiceToBookingDialog';
 import { AddProductToBookingDialog } from './AddProductToBookingDialog';
+import { ViewComandaDialog } from './ViewComandaDialog';
 import { useToast } from '@/hooks/use-toast';
 
 interface BookingDetailsDialogProps {
@@ -51,6 +52,7 @@ export const BookingDetailsDialog = ({
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showAddServiceDialog, setShowAddServiceDialog] = useState(false);
   const [showAddProductDialog, setShowAddProductDialog] = useState(false);
+  const [showViewComandaDialog, setShowViewComandaDialog] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
   const { toast } = useToast();
 
@@ -106,10 +108,10 @@ export const BookingDetailsDialog = ({
     setShowEditDialog(true);
   };
 
-  const handleSaveEditedBooking = (data: { date: Date; time: string }) => {
+  const handleSaveEditedBooking = (data: { tipo: string }) => {
     toast({
       title: "Agendamento atualizado",
-      description: "As alterações foram salvas com sucesso.",
+      description: `Tipo de edição: ${data.tipo}`,
     });
   };
 
@@ -121,10 +123,7 @@ export const BookingDetailsDialog = ({
   };
 
   const handleViewComanda = () => {
-    toast({
-      title: "Visualizar comanda",
-      description: "Funcionalidade em desenvolvimento.",
-    });
+    setShowViewComandaDialog(true);
   };
 
   const handleAddService = () => {
@@ -394,6 +393,12 @@ export const BookingDetailsDialog = ({
             onOpenChange={setShowAddProductDialog}
             bookingId={booking.id}
             barbershopId={booking.barbershop_id || ''}
+          />
+
+          <ViewComandaDialog
+            open={showViewComandaDialog}
+            onOpenChange={setShowViewComandaDialog}
+            booking={booking}
           />
         </>
       )}
