@@ -78,7 +78,7 @@ const menuStructure: MenuItem[] = [
 
 export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarProps) {
   const { setOpen, setOpenMobile, isMobile } = useSidebar();
-  const [openGroups, setOpenGroups] = useState<string[]>(['cadastros', 'comandas', 'configuracoes']);
+  const [openGroups, setOpenGroups] = useState<string[]>([]);
   
   // Manter sidebar sempre aberto
   useEffect(() => {
