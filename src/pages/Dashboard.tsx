@@ -434,33 +434,31 @@ const Dashboard = () => {
           <div className="flex min-h-screen w-full mt-16">
             <DashboardSidebar currentTab={currentTab} onTabChange={setCurrentTab} />
             
-            <main className="flex-1 overflow-auto w-full">
-              <div className="w-full">
-                <div className="sticky top-0 z-10 bg-background border-b px-4 py-3 lg:px-6">
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 min-w-0">
-                      <h1 className="text-xl lg:text-3xl font-bold truncate">Dashboard da Barbearia</h1>
-                      <p className="text-sm text-muted-foreground hidden sm:block">
-                        Gerencie sua barbearia, agendamentos e produtos
-                      </p>
-                    </div>
+            <main className="flex-1 flex flex-col w-full min-h-screen">
+              <div className="sticky top-0 z-10 bg-background border-b px-4 py-3 lg:px-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <h1 className="text-xl lg:text-3xl font-bold truncate">Dashboard da Barbearia</h1>
+                    <p className="text-sm text-muted-foreground hidden sm:block">
+                      Gerencie sua barbearia, agendamentos e produtos
+                    </p>
                   </div>
                 </div>
+              </div>
 
-                <div className="p-4 lg:p-6">
-                  {subscription && subscription.plan_type === 'teste_gratis' && subscription.days_remaining <= 2 && (
-                    <Alert variant="destructive" className="mb-6">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertTitle>Teste Gratuito Encerrando</AlertTitle>
-                      <AlertDescription>
-                        Seu teste gratuito termina em {subscription.days_remaining} dia(s). 
-                        Faça upgrade para continuar usando todas as funcionalidades.
-                      </AlertDescription>
-                    </Alert>
-                  )}
+              <div className="flex-1 overflow-y-auto p-4 lg:p-6">
+                {subscription && subscription.plan_type === 'teste_gratis' && subscription.days_remaining <= 2 && (
+                  <Alert variant="destructive" className="mb-6">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Teste Gratuito Encerrando</AlertTitle>
+                    <AlertDescription>
+                      Seu teste gratuito termina em {subscription.days_remaining} dia(s). 
+                      Faça upgrade para continuar usando todas as funcionalidades.
+                    </AlertDescription>
+                  </Alert>
+                )}
 
-                  {renderContent()}
-                </div>
+                {renderContent()}
               </div>
             </main>
           </div>
