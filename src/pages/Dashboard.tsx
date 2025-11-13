@@ -90,7 +90,7 @@ const Dashboard = () => {
     totalClients: 0
   });
   const [loading, setLoading] = useState(true);
-  const [currentTab, setCurrentTab] = useState('overview');
+  const [currentTab, setCurrentTab] = useState('bookings');
   const { toast } = useToast();
   const { subscription } = useSubscription(barbershop?.id || null);
 

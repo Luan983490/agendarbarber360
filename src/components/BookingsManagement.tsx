@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Calendar, Clock, User, Scissors, Package, Phone } from 'lucide-react';
@@ -16,6 +17,7 @@ interface Booking {
   total_price: number;
   notes?: string;
   client_id: string;
+  barber_id?: string;
   service: {
     name: string;
     duration: number;
@@ -36,17 +38,26 @@ interface Booking {
   }[];
 }
 
+interface Barber {
+  id: string;
+  name: string;
+}
+
 interface BookingsManagementProps {
   barbershopId: string;
 }
 
 const BookingsManagement = ({ barbershopId }: BookingsManagementProps) => {
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [allBookings, setAllBookings] = useState<Booking[]>([]);
+  const [barbers, setBarbers] = useState<Barber[]>([]);
+  const [selectedBarber, setSelectedBarber] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchBookings();
+    fetchBarbers();
     
     // Setup realtime subscription for automatic updates
     const channel = supabase
@@ -71,6 +82,36 @@ const BookingsManagement = ({ barbershopId }: BookingsManagementProps) => {
     };
   }, [barbershopId]);
 
+  useEffect(() => {
+    // Filter bookings when barber selection changes
+    if (selectedBarber === 'all') {
+      setBookings(allBookings);
+    } else {
+      setBookings(allBookings.filter(booking => booking.barber_id === selectedBarber));
+    }
+  }, [selectedBarber, allBookings]);
+
+  const fetchBarbers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('barbers')
+        .select('id, name')
+        .eq('barbershop_id', barbershopId)
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+      setBarbers(data || []);
+    } catch (error: any) {
+      console.error('Error fetching barbers:', error);
+      toast({
+        title: "Erro ao carregar barbeiros",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
   const fetchBookings = async () => {
     try {
       console.log('Fetching bookings for barbershop:', barbershopId);
@@ -92,6 +133,7 @@ const BookingsManagement = ({ barbershopId }: BookingsManagementProps) => {
 
       if (!bookingsData || bookingsData.length === 0) {
         setBookings([]);
+        setAllBookings([]);
         setLoading(false);
         return;
       }
@@ -143,6 +185,7 @@ const BookingsManagement = ({ barbershopId }: BookingsManagementProps) => {
           total_price: booking.total_price,
           notes: booking.notes,
           client_id: booking.client_id,
+          barber_id: booking.barber_id,
           service: service ? { name: service.name, duration: service.duration } : { name: 'Serviço removido', duration: 0 },
           barber: barber ? { name: barber.name } : null,
           client: {
@@ -157,6 +200,7 @@ const BookingsManagement = ({ barbershopId }: BookingsManagementProps) => {
 
       console.log('Transformed bookings:', transformedBookings);
       setBookings(transformedBookings);
+      setAllBookings(transformedBookings);
     } catch (error: any) {
       console.error('Complete error:', error);
       toast({
@@ -227,10 +271,32 @@ const BookingsManagement = ({ barbershopId }: BookingsManagementProps) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Gerenciar Agendamentos</CardTitle>
-        <CardDescription>
-          Visualize e gerencie todos os agendamentos da sua barbearia
-        </CardDescription>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <CardTitle>Gerenciar Agendamentos</CardTitle>
+            <CardDescription>
+              Visualize e gerencie todos os agendamentos da sua barbearia
+            </CardDescription>
+          </div>
+          
+          {barbers.length > 0 && (
+            <div className="w-full sm:w-64">
+              <Select value={selectedBarber} onValueChange={setSelectedBarber}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o profissional" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os profissionais</SelectItem>
+                  {barbers.map((barber) => (
+                    <SelectItem key={barber.id} value={barber.id}>
+                      {barber.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         {bookings.length === 0 ? (
