@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { SearchFilters } from "@/components/SearchFilters";
 import { BarberShopGrid } from "@/components/BarberShopGrid";
@@ -6,13 +7,42 @@ import { LocationSearch } from "@/components/LocationSearch";
 import { Hero } from "@/components/Hero";
 import FavoritesList from "@/components/FavoritesList";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserAccess } from "@/hooks/useUserAccess";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Scissors } from "lucide-react";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [location, setLocation] = useState("");
   const { user } = useAuth();
+  const { role, loading } = useUserAccess();
+  const navigate = useNavigate();
+
+  // Redirect barbershop owners to dashboard
+  useEffect(() => {
+    if (!loading && user && (role === 'owner' || role === 'barber' || role === 'attendant')) {
+      if (role === 'owner') {
+        navigate('/dashboard', { replace: true });
+      } else if (role === 'barber') {
+        navigate('/barber-dashboard', { replace: true });
+      } else if (role === 'attendant') {
+        navigate('/attendant-dashboard', { replace: true });
+      }
+    }
+  }, [user, role, loading, navigate]);
+
+  // Show loading while checking user role
+  if (loading && user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Scissors className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p>Carregando...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
