@@ -97,8 +97,8 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
 
   return (
     <Sidebar 
-      className="border-r" 
-      collapsible="icon"
+      className="border-r w-64" 
+      collapsible="none"
     >
       <SidebarHeader className="border-b p-4 bg-muted/50">
         <div className="flex items-center justify-between">
