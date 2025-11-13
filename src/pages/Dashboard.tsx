@@ -375,7 +375,7 @@ const Dashboard = () => {
           />
         );
       case 'bookings':
-        return <BarberScheduleCalendar barbershopId={barbershop!.id} />;
+        return <div className="h-full"><BarberScheduleCalendar barbershopId={barbershop!.id} /></div>;
       case 'schedule':
         return <BookingsManagement barbershopId={barbershop!.id} />;
       case 'services':
@@ -446,7 +446,7 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4 lg:p-6">
+              <div className="flex-1 overflow-y-auto p-4 lg:p-6 h-full">
                 {subscription && subscription.plan_type === 'teste_gratis' && subscription.days_remaining <= 2 && (
                   <Alert variant="destructive" className="mb-6">
                     <AlertCircle className="h-4 w-4" />
@@ -458,7 +458,9 @@ const Dashboard = () => {
                   </Alert>
                 )}
 
-                {renderContent()}
+                <div className="h-full">
+                  {renderContent()}
+                </div>
               </div>
             </main>
           </div>

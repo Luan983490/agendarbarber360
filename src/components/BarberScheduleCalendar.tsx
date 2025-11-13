@@ -637,18 +637,18 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
   }
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
+    <div className="flex flex-col h-full">
+      <Card className="flex flex-col h-full">
+        <CardHeader className="flex-shrink-0">
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
             Calendário de Agenda
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="flex flex-col flex-1 space-y-4 overflow-hidden">
           {/* Seletor de Barbeiro - apenas para donos */}
           {userType !== 'barber' && barbers.length > 1 && (
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 flex-shrink-0">
               <Select value={selectedBarber} onValueChange={setSelectedBarber}>
                 <SelectTrigger className="w-[280px]">
                   <SelectValue placeholder="Selecione o barbeiro" />
@@ -665,13 +665,13 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
           )}
           
           {userType === 'barber' && barbers.length > 0 && (
-            <div className="text-lg font-semibold">
+            <div className="text-lg font-semibold flex-shrink-0">
               {barbers[0].name}
             </div>
           )}
 
           {/* Botões de Visualização e Navegação */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 flex-shrink-0">
             <div className="flex gap-1 bg-muted p-1 rounded-md w-full sm:w-auto">
               <Button
                 variant={viewMode === 'day' ? 'default' : 'ghost'}
@@ -731,7 +731,7 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
           </div>
 
           {/* Ações e Legenda */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 flex-shrink-0">
             <div className="flex flex-wrap gap-3 text-xs sm:text-sm">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-success" />
@@ -762,116 +762,118 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
             </Button>
           </div>
 
-          {/* Grade de Horários ou Calendário Mensal */}
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
-          ) : viewMode === 'month' ? (
-            /* Visualização Mensal - Calendário */
-            <div className="overflow-x-auto">
-              <div className="min-w-[600px]">
-                {/* Cabeçalho dos dias da semana */}
-                <div className="grid grid-cols-7 gap-2 mb-2">
-                  {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day, i) => (
-                    <div key={i} className="text-center font-semibold text-sm py-2 border-b">
-                      {day}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Grade de dias do mês */}
-                <div className="grid grid-cols-7 gap-2">
-                  {monthDays.map((day, i) => {
-                    const isCurrentMonth = day.getMonth() === currentDate.getMonth();
-                    const isToday = format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
-                    const bookingsCount = getBookingsCountForDay(day);
-                    const blocksCount = getBlocksCountForDay(day);
-                    
-                    return (
-                      <div
-                        key={i}
-                        className={cn(
-                          "min-h-[100px] p-2 border rounded-lg cursor-pointer transition-all hover:shadow-md",
-                          isCurrentMonth ? "bg-background" : "bg-muted/30",
-                          isToday && "ring-2 ring-primary"
-                        )}
-                        onClick={() => {
-                          setCurrentDate(day);
-                          setViewMode('day');
-                        }}
-                      >
-                        <div className="flex justify-between items-start mb-2">
-                          <span className={cn(
-                            "text-sm font-medium",
-                            !isCurrentMonth && "text-muted-foreground",
-                            isToday && "text-primary font-bold"
-                          )}>
-                            {format(day, 'd')}
-                          </span>
-                        </div>
-                        
-                        <div className="space-y-1">
-                          {bookingsCount > 0 && (
-                            <div className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-                              {bookingsCount} agendamento{bookingsCount > 1 ? 's' : ''}
-                            </div>
-                          )}
-                          {blocksCount > 0 && (
-                            <div className="text-xs bg-destructive/10 text-destructive px-2 py-1 rounded">
-                              {blocksCount} bloqueio{blocksCount > 1 ? 's' : ''}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+          {/* Grade de Horários ou Calendário Mensal - COM SCROLL */}
+          <div className="flex-1 overflow-y-auto">
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin" />
               </div>
-            </div>
-          ) : (
-            /* Visualização Dia/Semana - Grade de Horários */
-            <div className="overflow-x-auto">
-              <div className="min-w-[800px]">
-                {/* Cabeçalho dos dias */}
-                <div className={`grid gap-2 mb-2`} style={{ gridTemplateColumns: `80px repeat(${displayDays.length}, 1fr)` }}>
-                  <div className="font-semibold text-sm"></div>
-                  {displayDays.map((day, i) => (
-                    <div key={i} className="text-center">
-                      <p className="font-semibold text-sm">
-                        {format(day, 'EEE', { locale: ptBR })}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {format(day, 'dd/MM')}
-                      </p>
-                    </div>
-                  ))}
-                </div>
+            ) : viewMode === 'month' ? (
+              /* Visualização Mensal - Calendário */
+              <div className="overflow-x-auto">
+                <div className="min-w-[600px]">
+                  {/* Cabeçalho dos dias da semana */}
+                  <div className="grid grid-cols-7 gap-2 mb-2">
+                    {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day, i) => (
+                      <div key={i} className="text-center font-semibold text-sm py-2 border-b">
+                        {day}
+                      </div>
+                    ))}
+                  </div>
 
-                {/* Linhas de horários */}
-                {WORK_HOURS.map((time) => (
-                  <div key={time} className="grid gap-2 mb-2" style={{ gridTemplateColumns: `80px repeat(${displayDays.length}, 1fr)` }}>
-                    <div className="text-xs font-medium text-muted-foreground flex items-center">
-                      {time}
-                    </div>
-                    {displayDays.map((day, i) => {
-                      const slotInfo = getSlotType(day, time);
+                  {/* Grade de dias do mês */}
+                  <div className="grid grid-cols-7 gap-2">
+                    {monthDays.map((day, i) => {
+                      const isCurrentMonth = day.getMonth() === currentDate.getMonth();
+                      const isToday = format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
+                      const bookingsCount = getBookingsCountForDay(day);
+                      const blocksCount = getBlocksCountForDay(day);
+                      
                       return (
-                        <TimeSlot
+                        <div
                           key={i}
-                          time={time}
-                          type={slotInfo.type}
-                          booking={slotInfo.booking}
-                          block={slotInfo.block}
-                          onClick={(e) => handleSlotClick(day, time, e)}
-                        />
+                          className={cn(
+                            "min-h-[100px] p-2 border rounded-lg cursor-pointer transition-all hover:shadow-md",
+                            isCurrentMonth ? "bg-background" : "bg-muted/30",
+                            isToday && "ring-2 ring-primary"
+                          )}
+                          onClick={() => {
+                            setCurrentDate(day);
+                            setViewMode('day');
+                          }}
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <span className={cn(
+                              "text-sm font-medium",
+                              !isCurrentMonth && "text-muted-foreground",
+                              isToday && "text-primary font-bold"
+                            )}>
+                              {format(day, 'd')}
+                            </span>
+                          </div>
+                          
+                          <div className="space-y-1">
+                            {bookingsCount > 0 && (
+                              <div className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                                {bookingsCount} agendamento{bookingsCount > 1 ? 's' : ''}
+                              </div>
+                            )}
+                            {blocksCount > 0 && (
+                              <div className="text-xs bg-destructive/10 text-destructive px-2 py-1 rounded">
+                                {blocksCount} bloqueio{blocksCount > 1 ? 's' : ''}
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       );
                     })}
                   </div>
-                ))}
+                </div>
               </div>
-            </div>
-          )}
+            ) : (
+              /* Visualização Dia/Semana - Grade de Horários */
+              <div className="overflow-x-auto">
+                <div className="min-w-[800px]">
+                  {/* Cabeçalho dos dias */}
+                  <div className={`grid gap-2 mb-2 sticky top-0 bg-background z-10 pb-2`} style={{ gridTemplateColumns: `80px repeat(${displayDays.length}, 1fr)` }}>
+                    <div className="font-semibold text-sm"></div>
+                    {displayDays.map((day, i) => (
+                      <div key={i} className="text-center">
+                        <p className="font-semibold text-sm">
+                          {format(day, 'EEE', { locale: ptBR })}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(day, 'dd/MM')}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Linhas de horários */}
+                  {WORK_HOURS.map((time) => (
+                    <div key={time} className="grid gap-2 mb-2" style={{ gridTemplateColumns: `80px repeat(${displayDays.length}, 1fr)` }}>
+                      <div className="text-xs font-medium text-muted-foreground flex items-center">
+                        {time}
+                      </div>
+                      {displayDays.map((day, i) => {
+                        const slotInfo = getSlotType(day, time);
+                        return (
+                          <TimeSlot
+                            key={i}
+                            time={time}
+                            type={slotInfo.type}
+                            booking={slotInfo.booking}
+                            block={slotInfo.block}
+                            onClick={(e) => handleSlotClick(day, time, e)}
+                          />
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 
