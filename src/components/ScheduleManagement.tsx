@@ -1,3 +1,14 @@
+/*
+====================================
+FEATURE TEMPORARIAMENTE DESATIVADA
+====================================
+Versão: v2.0 (pós-validação MVP)
+Data desativação: 15/12/2024
+Reativar quando: Após validar MVP com 10+ barbearias
+Feature: Comandas - Lista de Agendamentos
+====================================
+*/
+
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';

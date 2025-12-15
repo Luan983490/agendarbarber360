@@ -1,3 +1,14 @@
+/*
+====================================
+FEATURE TEMPORARIAMENTE DESATIVADA
+====================================
+Versão: v2.0 (pós-validação MVP)
+Data desativação: 15/12/2024
+Reativar quando: Após validar MVP com 10+ barbearias
+Feature: Comandas (Sistema PDV)
+====================================
+*/
+
 import { useState } from 'react';
 import {
   Dialog,
