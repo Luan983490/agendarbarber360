@@ -48,6 +48,7 @@ interface Barber {
 
 interface BarberScheduleCalendarProps {
   barbershopId: string;
+  barberIdFilter?: string; // If provided, only show this barber's schedule
 }
 
 const WORK_HOURS = [
@@ -57,10 +58,10 @@ const WORK_HOURS = [
   '17:00', '17:30', '18:00', '18:30', '19:00', '19:30'
 ];
 
-export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarProps) => {
+export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter }: BarberScheduleCalendarProps) => {
   const { userType, barberId: currentBarberId } = useUserRole();
   const [barbers, setBarbers] = useState<Barber[]>([]);
-  const [selectedBarber, setSelectedBarber] = useState<string>('');
+  const [selectedBarber, setSelectedBarber] = useState<string>(barberIdFilter || '');
   const [viewMode, setViewMode] = useState<ViewMode>('week');
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(startOfWeek(new Date(), { locale: ptBR }));
@@ -84,11 +85,18 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
   const [multiBlockOpen, setMultiBlockOpen] = useState(false);
   const [selectedSlots, setSelectedSlots] = useState<Array<{ date: Date; time: string }>>([]);
 
+  // Flag to hide barber selector when filtering by specific barber
+  const isBarberView = !!barberIdFilter;
+
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchBarbers();
-  }, [barbershopId]);
+    if (!isBarberView) {
+      fetchBarbers();
+    } else if (barberIdFilter) {
+      setSelectedBarber(barberIdFilter);
+    }
+  }, [barbershopId, barberIdFilter]);
 
   useEffect(() => {
     if (selectedBarber) {
@@ -646,8 +654,8 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col flex-1 space-y-4 overflow-hidden">
-          {/* Seletor de Barbeiro - apenas para donos */}
-          {userType !== 'barber' && barbers.length > 1 && (
+          {/* Seletor de Barbeiro - apenas para donos e quando não estiver em modo barbeiro */}
+          {!isBarberView && userType !== 'barber' && barbers.length > 1 && (
             <div className="flex items-center gap-4 flex-shrink-0">
               <Select value={selectedBarber} onValueChange={setSelectedBarber}>
                 <SelectTrigger className="w-[280px]">
@@ -661,12 +669,6 @@ export const BarberScheduleCalendar = ({ barbershopId }: BarberScheduleCalendarP
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-          )}
-          
-          {userType === 'barber' && barbers.length > 0 && (
-            <div className="text-lg font-semibold flex-shrink-0">
-              {barbers[0].name}
             </div>
           )}
 

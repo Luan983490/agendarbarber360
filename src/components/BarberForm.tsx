@@ -6,10 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Edit2, Plus, User } from 'lucide-react';
+import { Trash2, Edit2, Plus, User, Key, KeyRound } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import ImageUpload from './ImageUpload';
+import { CreateBarberAccessDialog } from './CreateBarberAccessDialog';
 
 interface Barber {
   id: string;
@@ -18,6 +19,7 @@ interface Barber {
   phone?: string;
   image_url?: string;
   is_active: boolean;
+  user_id?: string | null;
 }
 
 interface BarberFormProps {
@@ -35,6 +37,8 @@ const BarberForm = ({ barbershopId, barbers, onBarbersChange }: BarberFormProps)
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [accessDialogOpen, setAccessDialogOpen] = useState(false);
+  const [selectedBarberForAccess, setSelectedBarberForAccess] = useState<{ id: string; name: string } | null>(null);
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -166,6 +170,41 @@ const BarberForm = ({ barbershopId, barbers, onBarbersChange }: BarberFormProps)
     }
   };
 
+  const handleCreateAccess = (barber: Barber) => {
+    setSelectedBarberForAccess({ id: barber.id, name: barber.name });
+    setAccessDialogOpen(true);
+  };
+
+  const handleRemoveAccess = async (barberId: string) => {
+    if (!confirm('Tem certeza que deseja remover o acesso deste barbeiro? Ele não poderá mais fazer login.')) {
+      return;
+    }
+
+    try {
+      // Just remove the user_id from the barber record
+      // We don't delete the auth user to keep data integrity
+      const { error } = await supabase
+        .from('barbers')
+        .update({ user_id: null })
+        .eq('id', barberId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Acesso removido",
+        description: "O barbeiro não poderá mais fazer login."
+      });
+
+      onBarbersChange();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao remover acesso",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
   const cancelEdit = () => {
     setFormData({ name: '', specialty: '', phone: '', image_url: '' });
     setEditingId(null);
@@ -270,11 +309,22 @@ const BarberForm = ({ barbershopId, barbers, onBarbersChange }: BarberFormProps)
                        )}
                      </div>
                      <div className="flex-1">
-                       <div className="flex items-center gap-2 mb-2">
+                       <div className="flex items-center gap-2 mb-2 flex-wrap">
                          <h4 className="font-medium">{barber.name}</h4>
                          <Badge variant={barber.is_active ? "default" : "secondary"}>
                            {barber.is_active ? "Ativo" : "Inativo"}
                          </Badge>
+                         {barber.user_id ? (
+                           <Badge variant="outline" className="gap-1 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border-green-200">
+                             <KeyRound className="h-3 w-3" />
+                             Tem acesso
+                           </Badge>
+                         ) : (
+                           <Badge variant="outline" className="gap-1 text-muted-foreground">
+                             <Key className="h-3 w-3" />
+                             Sem acesso
+                           </Badge>
+                         )}
                        </div>
                        {barber.specialty && (
                          <p className="text-sm text-muted-foreground mb-1">{barber.specialty}</p>
@@ -285,7 +335,28 @@ const BarberForm = ({ barbershopId, barbers, onBarbersChange }: BarberFormProps)
                      </div>
                    </div>
                   
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap justify-end">
+                    {!barber.user_id ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCreateAccess(barber)}
+                        className="gap-1"
+                      >
+                        <Key className="h-4 w-4" />
+                        Criar Acesso
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleRemoveAccess(barber.id)}
+                        className="gap-1 text-destructive hover:text-destructive"
+                      >
+                        <Key className="h-4 w-4" />
+                        Remover Acesso
+                      </Button>
+                    )}
                     <Switch
                       checked={barber.is_active}
                       onCheckedChange={() => handleToggleActive(barber.id, barber.is_active)}
@@ -317,6 +388,17 @@ const BarberForm = ({ barbershopId, barbers, onBarbersChange }: BarberFormProps)
           )}
         </CardContent>
       </Card>
+
+      {/* Create Access Dialog */}
+      {selectedBarberForAccess && (
+        <CreateBarberAccessDialog
+          open={accessDialogOpen}
+          onOpenChange={setAccessDialogOpen}
+          barber={selectedBarberForAccess}
+          barbershopId={barbershopId}
+          onAccessCreated={onBarbersChange}
+        />
+      )}
     </div>
   );
 };
