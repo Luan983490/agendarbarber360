@@ -30,6 +30,9 @@ interface MenuItem {
   children?: MenuItem[];
 }
 
+// ============================================
+// 🚀 MENU PRINCIPAL - MVP v1.0
+// ============================================
 const menuStructure: MenuItem[] = [
   { id: 'bookings', title: 'Agenda', icon: CalendarDays },
   {
@@ -39,32 +42,7 @@ const menuStructure: MenuItem[] = [
     children: [
       { id: 'services', title: 'Serviços', icon: Scissors },
       { id: 'barbers', title: 'Barbeiros', icon: Users },
-      { id: 'products', title: 'Produtos', icon: ShoppingBag },
-      { id: 'packages', title: 'Pacotes', icon: Package },
-      { id: 'subscriptions', title: 'Assinaturas', icon: CreditCard },
-      { id: 'loyalty', title: 'Fidelidade', icon: Gift },
-      { id: 'staff', title: 'Funcionários', icon: Users },
     ],
-  },
-  {
-    id: 'comandas',
-    title: 'Comandas',
-    icon: Calendar,
-    children: [
-      { id: 'schedule', title: 'Lista de Agendamentos', icon: Calendar },
-    ],
-  },
-  {
-    id: 'financeiro',
-    title: 'Financeiro',
-    icon: DollarSign,
-    children: [],
-  },
-  {
-    id: 'relatorios',
-    title: 'Relatórios',
-    icon: BarChart3,
-    children: [],
   },
   {
     id: 'configuracoes',
@@ -75,6 +53,44 @@ const menuStructure: MenuItem[] = [
     ],
   },
 ];
+
+// ============================================
+// 🚀 FEATURES v2.0 - REATIVAR APÓS VALIDAÇÃO
+// ============================================
+// Features removidas para simplificar MVP
+// Critério reativação: 10+ barbearias ativas
+// Data: 15/12/2024
+// ============================================
+
+// [MVP v1.0] Removido temporariamente - Reativar na v2.0
+// Motivo: Simplificação para validação do core
+// { id: 'products', title: 'Produtos', icon: ShoppingBag },
+// { id: 'packages', title: 'Pacotes', icon: Package },
+// { id: 'subscriptions', title: 'Assinaturas', icon: CreditCard },
+// { id: 'loyalty', title: 'Fidelidade', icon: Gift },
+// { id: 'staff', title: 'Funcionários', icon: Users },
+
+// [MVP v1.0] Menus completos removidos - Reativar na v2.0
+// {
+//   id: 'comandas',
+//   title: 'Comandas',
+//   icon: Calendar,
+//   children: [
+//     { id: 'schedule', title: 'Lista de Agendamentos', icon: Calendar },
+//   ],
+// },
+// {
+//   id: 'financeiro',
+//   title: 'Financeiro',
+//   icon: DollarSign,
+//   children: [],
+// },
+// {
+//   id: 'relatorios',
+//   title: 'Relatórios',
+//   icon: BarChart3,
+//   children: [],
+// },
 
 export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarProps) {
   const { setOpen, setOpenMobile, isMobile } = useSidebar();

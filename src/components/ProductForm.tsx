@@ -1,3 +1,14 @@
+/*
+====================================
+FEATURE TEMPORARIAMENTE DESATIVADA
+====================================
+Versão: v2.0 (pós-validação MVP)
+Data desativação: 15/12/2024
+Reativar quando: Após validar MVP com 10+ barbearias
+Feature: Produtos (E-commerce)
+====================================
+*/
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

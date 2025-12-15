@@ -1,3 +1,14 @@
+/*
+====================================
+FEATURE TEMPORARIAMENTE DESATIVADA
+====================================
+Versão: v2.0 (pós-validação MVP)
+Data desativação: 15/12/2024
+Reativar quando: Após validar MVP com 10+ barbearias
+Feature: Fidelidade (Programa de Pontos)
+====================================
+*/
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
