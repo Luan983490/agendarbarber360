@@ -54,43 +54,32 @@ export function CreateBarberAccessDialog({
     const password = generatePassword();
 
     try {
-      // 1. Create user in Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: {
-            user_type: 'barber',
-            display_name: barber.name
-          }
+      // Call edge function to create user with admin privileges (no email confirmation)
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      const response = await fetch(
+        `https://ppmiandwpebzsfqqhhws.supabase.co/functions/v1/create-barber-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${sessionData.session?.access_token}`,
+          },
+          body: JSON.stringify({
+            email: email.trim(),
+            password,
+            barberName: barber.name,
+            barberId: barber.id,
+            barbershopId,
+          }),
         }
-      });
+      );
 
-      if (authError) throw authError;
+      const result = await response.json();
 
-      if (!authData.user) {
-        throw new Error('Erro ao criar usuário');
+      if (!response.ok) {
+        throw new Error(result.error || 'Erro ao criar acesso');
       }
-
-      // 2. Update the barber record with the user_id
-      const { error: updateError } = await supabase
-        .from('barbers')
-        .update({ user_id: authData.user.id })
-        .eq('id', barber.id);
-
-      if (updateError) throw updateError;
-
-      // 3. Create user_role entry
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: authData.user.id,
-          barbershop_id: barbershopId,
-          role: 'barber' as const
-        });
-
-      if (roleError) throw roleError;
 
       setGeneratedPassword(password);
       toast.success('Acesso criado com sucesso!');
