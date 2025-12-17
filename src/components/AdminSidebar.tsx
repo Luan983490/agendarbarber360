@@ -1,4 +1,5 @@
-import { Store, Edit, CalendarDays, Scissors, Users, X, ChevronRight, Settings, ClipboardList } from 'lucide-react';
+import { Edit, CalendarDays, Scissors, Users, X, ChevronRight, Settings, ClipboardList } from 'lucide-react';
+import barber360Logo from '@/assets/barber360-logo.png';
 import { useEffect, useState } from 'react';
 import {
   Sidebar,
@@ -72,8 +73,8 @@ export function AdminSidebar({ currentTab, onTabChange }: AdminSidebarProps) {
       <SidebarHeader className="border-b p-4 bg-muted/50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
-            <Store className="h-5 w-5 text-primary flex-shrink-0" />
-            <h2 className="text-lg font-semibold truncate">Admin</h2>
+            <img src={barber360Logo} alt="Barber360" className="h-8 w-8 flex-shrink-0" />
+            <h2 className="text-lg font-semibold truncate">Barber360</h2>
           </div>
           <Button 
             variant="ghost" 

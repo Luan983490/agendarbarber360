@@ -37,7 +37,7 @@ export const HowItWorks = ({ children }: HowItWorksProps) => {
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Como funciona o BarberBook</DialogTitle>
+          <DialogTitle>Como funciona o Barber360</DialogTitle>
         </DialogHeader>
         <div className="space-y-6 py-4">
           {steps.map((step, index) => {

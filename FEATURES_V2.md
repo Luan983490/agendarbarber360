@@ -1,4 +1,4 @@
-# 🚀 BarberBook - Features v2.0 (Pós-Validação MVP)
+# 🚀 Barber360 - Features v2.0 (Pós-Validação MVP)
 
 **Data de Desativação:** 15/12/2024  
 **Critério de Reativação:** 10+ barbearias ativas usando o MVP
