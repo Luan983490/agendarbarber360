@@ -8,7 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Scissors, User, Store } from 'lucide-react';
+import { User, Store } from 'lucide-react';
+import barber360Logo from '@/assets/barber360-logo.png';
 
 const Auth = () => {
   const { user, signIn, signUp } = useAuth();
@@ -80,8 +81,8 @@ const Auth = () => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <Scissors className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl font-bold">BarberBook</h1>
+            <img src={barber360Logo} alt="Barber360" className="h-12 w-12" />
+            <h1 className="text-2xl font-bold">Barber360</h1>
           </div>
           <p className="text-muted-foreground">Acesse sua conta ou cadastre-se</p>
         </div>

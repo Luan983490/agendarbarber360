@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Menu, Scissors, User, Settings, LogOut, Calendar, Store, History, Package, CreditCard, Heart } from "lucide-react";
+import { Menu, User, Settings, LogOut, Calendar, Store, History, Package, CreditCard, Heart } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import barber360Logo from "@/assets/barber360-logo.png";
 
 export const Header = () => {
   const { user, signOut } = useAuth();
@@ -50,8 +51,8 @@ export const Header = () => {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2">
-              <Scissors className="h-6 w-6 text-primary" />
-              <span className="text-xl font-bold">BarberBook</span>
+              <img src={barber360Logo} alt="Barber360" className="h-10 w-10" />
+              <span className="text-xl font-bold">Barber360</span>
             </Link>
 
             {/* Desktop Navigation */}

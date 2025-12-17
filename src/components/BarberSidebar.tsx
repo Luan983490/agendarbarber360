@@ -1,4 +1,5 @@
-import { Calendar, CalendarDays, X, Scissors } from 'lucide-react';
+import { Calendar, CalendarDays, X } from 'lucide-react';
+import barber360Logo from '@/assets/barber360-logo.png';
 import { useEffect } from 'react';
 import {
   Sidebar,
@@ -42,8 +43,8 @@ export function BarberSidebar({ currentTab, onTabChange }: BarberSidebarProps) {
       <SidebarHeader className="border-b p-4 bg-muted/50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
-            <Scissors className="h-5 w-5 text-primary flex-shrink-0" />
-            <h2 className="text-lg font-semibold truncate">Meu Painel</h2>
+            <img src={barber360Logo} alt="Barber360" className="h-8 w-8 flex-shrink-0" />
+            <h2 className="text-lg font-semibold truncate">Barber360</h2>
           </div>
           <Button 
             variant="ghost" 
