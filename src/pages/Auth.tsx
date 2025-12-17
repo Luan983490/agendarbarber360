@@ -39,6 +39,8 @@ const Auth = () => {
 
       if (profile?.user_type === 'barbershop_owner') {
         navigate('/dashboard', { replace: true });
+      } else if (profile?.user_type === 'barber') {
+        navigate('/barber/hoje', { replace: true });
       } else {
         navigate('/', { replace: true });
       }

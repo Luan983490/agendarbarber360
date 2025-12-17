@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Edit2, Plus, User, Key, KeyRound } from 'lucide-react';
+import { Trash2, Edit2, Plus, User, Key, KeyRound, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import ImageUpload from './ImageUpload';
@@ -205,6 +205,44 @@ const BarberForm = ({ barbershopId, barbers, onBarbersChange }: BarberFormProps)
     }
   };
 
+  const handleConfirmEmail = async (barberId: string) => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      const response = await fetch(
+        `https://ppmiandwpebzsfqqhhws.supabase.co/functions/v1/confirm-barber-email`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${sessionData.session?.access_token}`,
+          },
+          body: JSON.stringify({
+            barberId,
+            barbershopId,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Erro ao confirmar email');
+      }
+
+      toast({
+        title: "Email confirmado!",
+        description: "O barbeiro agora pode fazer login."
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao confirmar email",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
   const cancelEdit = () => {
     setFormData({ name: '', specialty: '', phone: '', image_url: '' });
     setEditingId(null);
@@ -347,15 +385,26 @@ const BarberForm = ({ barbershopId, barbers, onBarbersChange }: BarberFormProps)
                         Criar Acesso
                       </Button>
                     ) : (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleRemoveAccess(barber.id)}
-                        className="gap-1 text-destructive hover:text-destructive"
-                      >
-                        <Key className="h-4 w-4" />
-                        Remover Acesso
-                      </Button>
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleConfirmEmail(barber.id)}
+                          className="gap-1 text-green-600 hover:text-green-700"
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                          Confirmar Email
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRemoveAccess(barber.id)}
+                          className="gap-1 text-destructive hover:text-destructive"
+                        >
+                          <Key className="h-4 w-4" />
+                          Remover Acesso
+                        </Button>
+                      </>
                     )}
                     <Switch
                       checked={barber.is_active}
