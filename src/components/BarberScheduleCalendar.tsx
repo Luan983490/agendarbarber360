@@ -49,6 +49,7 @@ interface Barber {
 interface BarberScheduleCalendarProps {
   barbershopId: string;
   barberIdFilter?: string; // If provided, only show this barber's schedule
+  readOnly?: boolean; // If true, disable creating/editing bookings (for barbers)
 }
 
 const WORK_HOURS = [
@@ -58,7 +59,7 @@ const WORK_HOURS = [
   '17:00', '17:30', '18:00', '18:30', '19:00', '19:30'
 ];
 
-export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter }: BarberScheduleCalendarProps) => {
+export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly = false }: BarberScheduleCalendarProps) => {
   const { role, barberId: currentBarberId } = useUserAccess();
   const [barbers, setBarbers] = useState<Barber[]>([]);
   const [selectedBarber, setSelectedBarber] = useState<string>(barberIdFilter || '');
@@ -87,6 +88,9 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter }: BarberS
 
   // Flag to hide barber selector when filtering by specific barber
   const isBarberView = !!barberIdFilter;
+  
+  // Determine if user can edit (not read-only and is owner)
+  const canEdit = !readOnly && role === 'owner';
 
   const { toast } = useToast();
 
@@ -340,7 +344,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter }: BarberS
     const timeStr = time.substring(0, 5);
     const slotInfo = getSlotType(date, time);
 
-    // Se for agendado, abrir detalhes
+    // Se for agendado, abrir detalhes (sempre permitido, mesmo em readOnly)
     if (slotInfo.type === 'booked' || slotInfo.type === 'booked-external') {
       const booking = bookings.find((b: any) => {
         const bookingTime = b.booking_time.substring(0, 5);
@@ -355,6 +359,11 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter }: BarberS
         });
         setBookingDetailsOpen(true);
       }
+      return;
+    }
+
+    // Se estiver em modo readOnly, não permitir outras ações
+    if (!canEdit) {
       return;
     }
 
@@ -959,6 +968,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter }: BarberS
         open={bookingDetailsOpen}
         onOpenChange={setBookingDetailsOpen}
         booking={selectedBooking}
+        simpleMode={!canEdit}
         onUpdateStatus={async (bookingId, status) => {
           try {
             const { error } = await supabase
