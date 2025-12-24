@@ -89,10 +89,20 @@ const AppContent = () => {
             element={<Navigate to="/barber/hoje" replace />} 
           />
           
-          {/* Legacy attendant route - redirect to home for now */}
+          {/* Attendant Routes */}
+          <Route 
+            path="/attendant/dashboard" 
+            element={
+              <ProtectedRoute allowedRoles={['attendant']}>
+                <AttendantDashboard />
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* Legacy attendant route - redirect to new */}
           <Route 
             path="/attendant-dashboard" 
-            element={<Navigate to="/" replace />} 
+            element={<Navigate to="/attendant/dashboard" replace />} 
           />
           
           {/* Client Routes (client only) */}

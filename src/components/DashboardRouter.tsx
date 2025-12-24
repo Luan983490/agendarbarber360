@@ -17,11 +17,11 @@ export const DashboardRouter = () => {
   }
 
   if (role === 'barber') {
-    return <Navigate to="/barber-dashboard" replace />;
+    return <Navigate to="/barber/hoje" replace />;
   }
 
   if (role === 'attendant') {
-    return <Navigate to="/attendant-dashboard" replace />;
+    return <Navigate to="/attendant/dashboard" replace />;
   }
 
   if (role === 'owner') {

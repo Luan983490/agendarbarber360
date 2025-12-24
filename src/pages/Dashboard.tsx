@@ -264,14 +264,8 @@ const Dashboard = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  // Redirecionar barbeiros para seu próprio painel
-  if (userType === 'barber') {
-    return <Navigate to="/barber-dashboard" replace />;
-  }
-
-  if (profile?.user_type !== 'barbershop_owner') {
-    return <Navigate to="/" replace />;
-  }
+  // Acesso ao Dashboard já é garantido pelo <ProtectedRoute allowedRoles={['owner']}> em App.tsx.
+  // Evitamos redirecionamentos extras aqui para não criar loops/travamentos em produção.
 
   const renderContent = () => {
     switch (currentTab) {
