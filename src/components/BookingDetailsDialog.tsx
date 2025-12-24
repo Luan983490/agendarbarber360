@@ -36,6 +36,7 @@ interface BookingDetailsDialogProps {
   onUpdateStatus: (bookingId: string, status: string) => void;
   onUpdateNotes: (bookingId: string, notes: string) => void;
   onCancel: (bookingId: string) => void;
+  simpleMode?: boolean; // For barbers - only show complete button
 }
 
 export const BookingDetailsDialog = ({
@@ -45,6 +46,7 @@ export const BookingDetailsDialog = ({
   onUpdateStatus,
   onUpdateNotes,
   onCancel,
+  simpleMode = false,
 }: BookingDetailsDialogProps) => {
   const [showObservationsDialog, setShowObservationsDialog] = useState(false);
   const [showClientInfoDialog, setShowClientInfoDialog] = useState(false);
@@ -308,45 +310,67 @@ export const BookingDetailsDialog = ({
 
           {/* Footer com botões de ação */}
           <DialogFooter className="flex flex-col gap-2 mt-4">
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 w-full">
-              <Button 
-                className="bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm"
-                onClick={handleComplete}
-              >
-                Realizado
-              </Button>
-              <Button 
-                className="bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm"
-                onClick={handleAbsence}
-              >
-                Ausência
-              </Button>
-              <Button 
-                variant="outline"
-                className="text-xs sm:text-sm"
-                onClick={handleCancelBooking}
-              >
-                Cancelar
-              </Button>
-              <Button 
-                className="bg-purple-600 hover:bg-purple-700 text-white text-xs sm:text-sm"
-                onClick={handleAddService}
-              >
-                + Serviço
-              </Button>
-              <Button 
-                className="bg-amber-700 hover:bg-amber-800 text-white text-xs sm:text-sm"
-                onClick={handleAddProduct}
-              >
-                + Produto
-              </Button>
-              <Button 
-                className="text-xs sm:text-sm"
-                onClick={() => onOpenChange(false)}
-              >
-                Fechar
-              </Button>
-            </div>
+            {simpleMode ? (
+              /* Modo simples para barbeiros - apenas Concluir e Fechar */
+              <div className="flex gap-2 w-full">
+                {booking.status !== 'completed' && booking.status !== 'cancelled' && (
+                  <Button 
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                    onClick={handleComplete}
+                  >
+                    Marcar como Concluído
+                  </Button>
+                )}
+                <Button 
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => onOpenChange(false)}
+                >
+                  Fechar
+                </Button>
+              </div>
+            ) : (
+              /* Modo completo para admins */
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 w-full">
+                <Button 
+                  className="bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm"
+                  onClick={handleComplete}
+                >
+                  Realizado
+                </Button>
+                <Button 
+                  className="bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm"
+                  onClick={handleAbsence}
+                >
+                  Ausência
+                </Button>
+                <Button 
+                  variant="outline"
+                  className="text-xs sm:text-sm"
+                  onClick={handleCancelBooking}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  className="bg-purple-600 hover:bg-purple-700 text-white text-xs sm:text-sm"
+                  onClick={handleAddService}
+                >
+                  + Serviço
+                </Button>
+                <Button 
+                  className="bg-amber-700 hover:bg-amber-800 text-white text-xs sm:text-sm"
+                  onClick={handleAddProduct}
+                >
+                  + Produto
+                </Button>
+                <Button 
+                  className="text-xs sm:text-sm"
+                  onClick={() => onOpenChange(false)}
+                >
+                  Fechar
+                </Button>
+              </div>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

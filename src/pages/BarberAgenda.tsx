@@ -42,6 +42,7 @@ export default function BarberAgenda() {
             <BarberScheduleCalendar 
               barbershopId={barbershopId} 
               barberIdFilter={barberId}
+              readOnly={true}
             />
           </div>
         )}
