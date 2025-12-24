@@ -60,13 +60,19 @@ export const TimeSlot = ({ time, type, booking, block, onClick }: TimeSlotProps)
     );
   };
 
+  const handleClick = (event: React.MouseEvent) => {
+    // Previne propagação dupla de eventos
+    event.stopPropagation();
+    onClick?.(event);
+  };
+
   const slotContent = (
     <div
       className={cn(
         'p-2 rounded-md border-2 transition-all min-h-[60px] flex flex-col justify-between hover:scale-105',
         getSlotStyles()
       )}
-      onClick={onClick}
+      onClick={handleClick}
     >
       <div className="flex items-center justify-between gap-1">
         {getIcon()}
