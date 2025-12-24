@@ -86,21 +86,27 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
   const [multiBlockOpen, setMultiBlockOpen] = useState(false);
   const [selectedSlots, setSelectedSlots] = useState<Array<{ date: Date; time: string }>>([]);
 
-  // Flag to hide barber selector when filtering by specific barber
+  // When barberIdFilter is provided, we are in "barber view" (single barber schedule)
   const isBarberView = !!barberIdFilter;
-  
-  // Determine if user can edit (not read-only and is owner)
-  const canEdit = !readOnly && role === 'owner';
+
+  // Allow edits for owners and for barbers editing ONLY their own agenda
+  const isBarberEditingOwnAgenda =
+    role === 'barber' && !!currentBarberId && selectedBarber === currentBarberId;
+
+  const canEdit = !readOnly && (role === 'owner' || isBarberEditingOwnAgenda);
 
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!isBarberView) {
-      fetchBarbers();
-    } else if (barberIdFilter) {
+    // If a specific barber is enforced by prop, lock selection to it
+    if (barberIdFilter) {
       setSelectedBarber(barberIdFilter);
+      return;
     }
-  }, [barbershopId, barberIdFilter]);
+
+    // Otherwise, load barbers list / determine the correct barber based on role
+    fetchBarbers();
+  }, [barbershopId, barberIdFilter, role, currentBarberId]);
 
   useEffect(() => {
     if (selectedBarber) {

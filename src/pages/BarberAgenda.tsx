@@ -36,17 +36,16 @@ export default function BarberAgenda() {
         </p>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 lg:p-6 h-full">
-        {barbershopId && (
-          <div className="h-full">
-            <BarberScheduleCalendar 
-              barbershopId={barbershopId} 
-              barberIdFilter={barberId}
-              readOnly={true}
-            />
-          </div>
-        )}
-      </div>
+        <div className="flex-1 overflow-y-auto p-4 lg:p-6 h-full">
+          {barbershopId && (
+            <div className="h-full">
+              <BarberScheduleCalendar 
+                barbershopId={barbershopId} 
+                barberIdFilter={barberId}
+              />
+            </div>
+          )}
+        </div>
     </BarberLayout>
   );
 }

@@ -95,16 +95,65 @@ const AppContent = () => {
             element={<Navigate to="/" replace />} 
           />
           
-          {/* Client Routes */}
-          <Route path="/my-bookings" element={<MyBookings />} />
-          <Route path="/historico" element={<BookingsHistory />} />
-          <Route path="/favoritos" element={<Favorites />} />
-          <Route path="/perfil" element={<Profile />} />
+          {/* Client Routes (client only) */}
+          <Route 
+            path="/my-bookings" 
+            element={
+              <ProtectedRoute allowedRoles={['client']}>
+                <MyBookings />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/historico" 
+            element={
+              <ProtectedRoute allowedRoles={['client']}>
+                <BookingsHistory />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/favoritos" 
+            element={
+              <ProtectedRoute allowedRoles={['client']}>
+                <Favorites />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/perfil" 
+            element={
+              <ProtectedRoute allowedRoles={['client']}>
+                <Profile />
+              </ProtectedRoute>
+            } 
+          />
           
-          {/* Legacy routes - kept for backwards compatibility */}
-          <Route path="/pacotes" element={<Packages />} />
-          <Route path="/assinaturas" element={<Subscriptions />} />
-          <Route path="/cartoes" element={<Cards />} />
+          {/* Legacy client routes - kept for backwards compatibility */}
+          <Route 
+            path="/pacotes" 
+            element={
+              <ProtectedRoute allowedRoles={['client']}>
+                <Packages />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/assinaturas" 
+            element={
+              <ProtectedRoute allowedRoles={['client']}>
+                <Subscriptions />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/cartoes" 
+            element={
+              <ProtectedRoute allowedRoles={['client']}>
+                <Cards />
+              </ProtectedRoute>
+            } 
+          />
           
           {/* Catch-all */}
           <Route path="*" element={<NotFound />} />
