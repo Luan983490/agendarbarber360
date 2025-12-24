@@ -19,7 +19,7 @@ export const Header = () => {
     } else if (role === 'barber') {
       navigate('/barber/hoje');
     } else if (role === 'attendant') {
-      navigate('/attendant-dashboard');
+      navigate('/attendant/dashboard');
     } else {
       navigate('/my-bookings');
     }

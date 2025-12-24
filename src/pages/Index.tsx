@@ -19,15 +19,15 @@ const Index = () => {
   const { role, loading } = useUserAccess();
   const navigate = useNavigate();
 
-  // Redirect barbershop owners to dashboard
+  // Redirect users with internal roles to their dashboards
   useEffect(() => {
     if (!loading && user && (role === 'owner' || role === 'barber' || role === 'attendant')) {
       if (role === 'owner') {
         navigate('/dashboard', { replace: true });
       } else if (role === 'barber') {
-        navigate('/barber-dashboard', { replace: true });
+        navigate('/barber/hoje', { replace: true });
       } else if (role === 'attendant') {
-        navigate('/attendant-dashboard', { replace: true });
+        navigate('/attendant/dashboard', { replace: true });
       }
     }
   }, [user, role, loading, navigate]);
