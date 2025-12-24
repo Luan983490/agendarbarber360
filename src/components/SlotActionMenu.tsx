@@ -21,8 +21,13 @@ export const SlotActionMenu = ({
   onCreateBooking,
   onBlockTime,
 }: SlotActionMenuProps) => {
+  // Previne que cliques múltiplos abram vários menus
+  const handleOpenChange = (newOpen: boolean) => {
+    onOpenChange(newOpen);
+  };
+
   return (
-    <DropdownMenu open={open} onOpenChange={onOpenChange}>
+    <DropdownMenu open={open} onOpenChange={handleOpenChange} modal={false}>
       <DropdownMenuTrigger asChild>
         <div
           style={{
@@ -33,9 +38,10 @@ export const SlotActionMenu = ({
             height: 1,
             pointerEvents: 'none',
           }}
+          aria-hidden="true"
         />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
+      <DropdownMenuContent align="start" sideOffset={5}>
         <DropdownMenuItem onClick={onCreateBooking}>
           <Calendar className="mr-2 h-4 w-4" />
           Criar Agendamento

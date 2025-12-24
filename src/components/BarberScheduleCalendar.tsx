@@ -86,6 +86,9 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
   const [multiBlockOpen, setMultiBlockOpen] = useState(false);
   const [selectedSlots, setSelectedSlots] = useState<Array<{ date: Date; time: string }>>([]);
 
+  // Helper para verificar se algum dialog está aberto (previne cliques múltiplos)
+  const isAnyDialogOpen = dialogOpen || bookingDetailsOpen || createBookingOpen || blockOptionsOpen || actionMenuOpen || multiBlockOpen;
+
   // When barberIdFilter is provided, we are in "barber view" (single barber schedule)
   const isBarberView = !!barberIdFilter;
 
@@ -346,6 +349,11 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
   };
 
   const handleSlotClick = (date: Date, time: string, event: React.MouseEvent) => {
+    // Prevenir cliques múltiplos - se algum dialog já está aberto, ignorar
+    if (isAnyDialogOpen) {
+      return;
+    }
+
     const dateStr = format(date, 'yyyy-MM-dd');
     const timeStr = time.substring(0, 5);
     const slotInfo = getSlotType(date, time);
@@ -782,7 +790,10 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setMultiBlockOpen(true)}
+              onClick={() => {
+                if (!isAnyDialogOpen) setMultiBlockOpen(true);
+              }}
+              disabled={isAnyDialogOpen}
               className="w-full sm:w-auto"
             >
               <Ban className="mr-2 h-4 w-4" />

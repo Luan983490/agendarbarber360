@@ -176,7 +176,7 @@ const AppContent = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <TooltipProvider>
+      <TooltipProvider delayDuration={300} skipDelayDuration={100} disableHoverableContent>
         <AppContent />
       </TooltipProvider>
     </AuthProvider>
