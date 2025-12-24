@@ -39,25 +39,55 @@ export default function BarberHoje() {
   }, [barberId]);
 
   const fetchTodayBookings = async () => {
+    if (!barberId) {
+      setLoading(false);
+      return;
+    }
+    
     try {
       const today = new Date().toISOString().split('T')[0];
       
-      const { data, error } = await supabase
+      // Buscar bookings
+      const { data: bookingsData, error: bookingsError } = await supabase
         .from('bookings')
-        .select(`
-          id,
-          booking_time,
-          client_name,
-          status,
-          service:services(name, duration),
-          client:profiles!bookings_client_id_fkey(display_name)
-        `)
+        .select('id, booking_time, client_name, status, client_id, service_id')
         .eq('barber_id', barberId)
         .eq('booking_date', today)
+        .neq('status', 'cancelled')
         .order('booking_time', { ascending: true });
 
-      if (error) throw error;
-      setBookings(data || []);
+      if (bookingsError) throw bookingsError;
+
+      // Buscar serviços e perfis separadamente
+      const serviceIds = [...new Set(bookingsData?.map(b => b.service_id) || [])];
+      const clientIds = [...new Set(bookingsData?.filter(b => b.client_id).map(b => b.client_id) || [])] as string[];
+
+      const [servicesResult, profilesResult] = await Promise.all([
+        serviceIds.length > 0 
+          ? supabase.from('services').select('id, name, duration').in('id', serviceIds)
+          : Promise.resolve({ data: [], error: null }),
+        clientIds.length > 0 
+          ? supabase.from('profiles').select('user_id, display_name').in('user_id', clientIds)
+          : Promise.resolve({ data: [], error: null })
+      ]);
+
+      const servicesMap = new Map<string, { name: string; duration: number }>();
+      servicesResult.data?.forEach(s => servicesMap.set(s.id, { name: s.name, duration: s.duration }));
+
+      const profilesMap = new Map<string, string>();
+      profilesResult.data?.forEach(p => profilesMap.set(p.user_id, p.display_name));
+
+      // Mapear os dados
+      const mappedBookings: TodayBooking[] = bookingsData?.map(b => ({
+        id: b.id,
+        booking_time: b.booking_time,
+        client_name: b.client_name,
+        status: b.status || 'pending',
+        service: servicesMap.get(b.service_id) || { name: 'Serviço', duration: 30 },
+        client: b.client_id ? { display_name: profilesMap.get(b.client_id) || null } : undefined
+      })) || [];
+
+      setBookings(mappedBookings);
     } catch (error: any) {
       toast.error('Erro ao carregar agendamentos');
       console.error(error);

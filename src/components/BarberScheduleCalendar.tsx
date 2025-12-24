@@ -12,7 +12,7 @@ import { CreateBookingDialog } from './CreateBookingDialog';
 import { BlockOptionsDialog } from './BlockOptionsDialog';
 import { SlotActionMenu } from './SlotActionMenu';
 import { MultiBlockDialog } from './MultiBlockDialog';
-import { useUserRole } from '@/hooks/useUserRole';
+import { useUserAccess } from '@/hooks/useUserAccess';
 import { Calendar, ChevronLeft, ChevronRight, Loader2, Ban } from 'lucide-react';
 import { format, addDays, startOfWeek, addWeeks, subWeeks, endOfWeek, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -59,7 +59,7 @@ const WORK_HOURS = [
 ];
 
 export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter }: BarberScheduleCalendarProps) => {
-  const { userType, barberId: currentBarberId } = useUserRole();
+  const { role, barberId: currentBarberId } = useUserAccess();
   const [barbers, setBarbers] = useState<Barber[]>([]);
   const [selectedBarber, setSelectedBarber] = useState<string>(barberIdFilter || '');
   const [viewMode, setViewMode] = useState<ViewMode>('week');
@@ -139,8 +139,19 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter }: BarberS
 
   const fetchBarbers = async () => {
     try {
-      // Se for barbeiro, apenas buscar seus próprios dados
-      if (userType === 'barber' && currentBarberId) {
+      // Se for barbeiro com filtro específico, apenas buscar seus próprios dados
+      if (isBarberView && barberIdFilter) {
+        const { data, error } = await supabase
+          .from('barbers')
+          .select('id, name')
+          .eq('id', barberIdFilter)
+          .single();
+
+        if (error) throw error;
+        setBarbers([data]);
+        setSelectedBarber(data.id);
+      } else if (role === 'barber' && currentBarberId) {
+        // Se for barbeiro logado sem filtro, buscar só seus dados
         const { data, error } = await supabase
           .from('barbers')
           .select('id, name')
@@ -654,9 +665,10 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter }: BarberS
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col flex-1 space-y-4 overflow-hidden">
-          {/* Seletor de Barbeiro - apenas para donos e quando não estiver em modo barbeiro */}
-          {!isBarberView && userType !== 'barber' && barbers.length > 1 && (
+          {/* Seletor de Barbeiro - apenas para donos/admins que não estão em modo barbeiro */}
+          {!isBarberView && role === 'owner' && barbers.length > 0 && (
             <div className="flex items-center gap-4 flex-shrink-0">
+              <span className="text-sm font-medium text-muted-foreground">Barbeiro:</span>
               <Select value={selectedBarber} onValueChange={setSelectedBarber}>
                 <SelectTrigger className="w-[280px]">
                   <SelectValue placeholder="Selecione o barbeiro" />
