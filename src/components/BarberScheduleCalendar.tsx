@@ -803,7 +803,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
           </div>
 
           {/* Grade de Horários ou Calendário Mensal - COM SCROLL */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-hidden flex flex-col">
             {loading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-8 w-8 animate-spin" />
