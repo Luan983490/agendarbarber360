@@ -369,7 +369,8 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
         setSelectedBooking({
           ...booking,
           client_name: booking.client_display_name || 'Cliente',
-          service_name: booking.service_display_name || 'Serviço'
+          service_name: booking.service_display_name || 'Serviço',
+          barbershop_id: barbershopId,
         });
         setBookingDetailsOpen(true);
       }
@@ -1010,6 +1011,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
         onOpenChange={setBookingDetailsOpen}
         booking={selectedBooking}
         simpleMode={!canEdit}
+        onRefresh={fetchScheduleData}
         onUpdateStatus={async (bookingId, status) => {
           try {
             const { error } = await supabase

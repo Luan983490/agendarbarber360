@@ -32,10 +32,13 @@ interface BookingDetailsDialogProps {
     notes?: string;
     total_price?: number;
     barbershop_id?: string;
+    barber_id?: string;
+    service_id?: string;
   } | null;
   onUpdateStatus: (bookingId: string, status: string) => void;
   onUpdateNotes: (bookingId: string, notes: string) => void;
   onCancel: (bookingId: string) => void;
+  onRefresh?: () => void;
   simpleMode?: boolean; // For barbers - only show complete button
 }
 
@@ -46,6 +49,7 @@ export const BookingDetailsDialog = ({
   onUpdateStatus,
   onUpdateNotes,
   onCancel,
+  onRefresh,
   simpleMode = false,
 }: BookingDetailsDialogProps) => {
   const [showObservationsDialog, setShowObservationsDialog] = useState(false);
@@ -113,8 +117,9 @@ export const BookingDetailsDialog = ({
   const handleSaveEditedBooking = (data: { tipo: string }) => {
     toast({
       title: "Agendamento atualizado",
-      description: `Tipo de edição: ${data.tipo}`,
+      description: `Alterações salvas com sucesso.`,
     });
+    onRefresh?.();
   };
 
   const handleChangeClient = () => {
@@ -410,6 +415,7 @@ export const BookingDetailsDialog = ({
             onOpenChange={setShowAddServiceDialog}
             bookingId={booking.id}
             barbershopId={booking.barbershop_id || ''}
+            onSuccess={onRefresh}
           />
 
           <AddProductToBookingDialog
@@ -417,6 +423,7 @@ export const BookingDetailsDialog = ({
             onOpenChange={setShowAddProductDialog}
             bookingId={booking.id}
             barbershopId={booking.barbershop_id || ''}
+            onSuccess={onRefresh}
           />
 
           <ViewComandaDialog

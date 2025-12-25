@@ -19,6 +19,7 @@ interface AddProductToBookingDialogProps {
   onOpenChange: (open: boolean) => void;
   bookingId: string;
   barbershopId: string;
+  onSuccess?: () => void;
 }
 
 export const AddProductToBookingDialog = ({
@@ -26,6 +27,7 @@ export const AddProductToBookingDialog = ({
   onOpenChange,
   bookingId,
   barbershopId,
+  onSuccess,
 }: AddProductToBookingDialogProps) => {
   const [products, setProducts] = useState<any[]>([]);
   const [selectedProductId, setSelectedProductId] = useState<string>('');
@@ -88,6 +90,21 @@ export const AddProductToBookingDialog = ({
 
       if (error) throw error;
 
+      // Update booking total_price
+      const { data: currentBooking } = await supabase
+        .from('bookings')
+        .select('total_price')
+        .eq('id', bookingId)
+        .single();
+
+      if (currentBooking) {
+        const newTotal = (currentBooking.total_price || 0) + (selectedProduct.price * quantity);
+        await supabase
+          .from('bookings')
+          .update({ total_price: newTotal })
+          .eq('id', bookingId);
+      }
+
       toast({
         title: "Produto adicionado",
         description: `${selectedProduct.name} (${quantity}x) foi adicionado ao agendamento.`,
@@ -96,6 +113,7 @@ export const AddProductToBookingDialog = ({
       onOpenChange(false);
       setSelectedProductId('');
       setQuantity(1);
+      onSuccess?.();
     } catch (error) {
       console.error('Error adding product:', error);
       toast({

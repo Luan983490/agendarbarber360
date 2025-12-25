@@ -156,7 +156,7 @@ export const CreateBookingDialog = ({
     }, 0);
   };
 
-  const handleCreate = async () => {
+  const handleCreate = async (isRecurring = false) => {
     if (!selectedService && selectedServices.length === 0) {
       toast({
         title: 'Erro',
@@ -189,35 +189,60 @@ export const CreateBookingDialog = ({
       const serviceToUse = selectedService || selectedServices[0];
       const service = services.find(s => s.id === serviceToUse);
       
-      const bookingData: any = {
-        barbershop_id: barbershopId,
-        barber_id: selectedBarber,
-        service_id: serviceToUse,
-        booking_date: format(date, 'yyyy-MM-dd'),
-        booking_time: time,
-        total_price: service?.price || 0,
-        status: 'confirmed',
-        notes: notes || null,
-        is_external_booking: isExternalBooking
-      };
-
-      if (isExternalBooking) {
-        bookingData.client_name = externalClientName;
+      // Determine how many bookings to create and with what interval
+      let bookingsToCreate: { date: Date; time: string }[] = [];
+      
+      if (isRecurring) {
+        const quantity = parseInt(recurringQuantity) || 1;
+        let intervalDays = 7; // weekly default
+        if (recurringPeriodicity === 'biweekly') intervalDays = 14;
+        else if (recurringPeriodicity === 'monthly') intervalDays = 30;
+        
+        for (let i = 0; i < quantity; i++) {
+          bookingsToCreate.push({
+            date: addDays(date, i * intervalDays),
+            time: time
+          });
+        }
       } else {
-        bookingData.client_id = selectedClient;
-        const selectedClientData = clients.find(c => c.user_id === selectedClient);
-        bookingData.client_name = selectedClientData?.display_name || 'Cliente';
+        bookingsToCreate.push({ date, time });
       }
+
+      const bookingsData = bookingsToCreate.map(b => {
+        const bookingData: any = {
+          barbershop_id: barbershopId,
+          barber_id: selectedBarber,
+          service_id: serviceToUse,
+          booking_date: format(b.date, 'yyyy-MM-dd'),
+          booking_time: b.time,
+          total_price: service?.price || 0,
+          status: 'confirmed',
+          notes: notes || null,
+          is_external_booking: isExternalBooking
+        };
+
+        if (isExternalBooking) {
+          bookingData.client_name = externalClientName;
+        } else {
+          bookingData.client_id = selectedClient;
+          const selectedClientData = clients.find(c => c.user_id === selectedClient);
+          bookingData.client_name = selectedClientData?.display_name || 'Cliente';
+        }
+        
+        return bookingData;
+      });
       
       const { error } = await supabase
         .from('bookings')
-        .insert(bookingData);
+        .insert(bookingsData);
 
       if (error) throw error;
 
       toast({
         title: 'Agendamento criado',
-        description: 'Agendamento criado com sucesso'
+        description: isRecurring 
+          ? `${bookingsData.length} agendamento(s) criado(s) com sucesso`
+          : 'Agendamento criado com sucesso'
       });
 
       onSuccess();
@@ -324,24 +349,30 @@ export const CreateBookingDialog = ({
 
     try {
       let currentDate = new Date(unblockStartDate);
+      let deletedCount = 0;
       
       while (currentDate <= unblockEndDate) {
         const dateStr = format(currentDate, 'yyyy-MM-dd');
-        const { error } = await supabase
+        
+        // Delete blocks that overlap with the specified time range
+        // A block overlaps if: block.start_time < unblockEndTime AND block.end_time > unblockStartTime
+        const { data, error } = await supabase
           .from('barber_blocks')
           .delete()
           .eq('barber_id', selectedBarber)
           .eq('block_date', dateStr)
           .gte('start_time', unblockStartTime)
-          .lte('start_time', unblockEndTime);
+          .lt('start_time', unblockEndTime)
+          .select();
 
         if (error) throw error;
+        deletedCount += (data?.length || 0);
         currentDate = addDays(currentDate, 1);
       }
 
       toast({
         title: 'Horário desbloqueado',
-        description: 'Horários desbloqueados com sucesso'
+        description: `${deletedCount} bloqueio(s) removido(s) com sucesso`
       });
 
       onSuccess();
@@ -628,7 +659,7 @@ export const CreateBookingDialog = ({
             </div>
 
             <Button 
-              onClick={handleCreate} 
+              onClick={() => handleCreate(false)} 
               disabled={loading}
               className="w-full h-11 bg-green-600 hover:bg-green-700 text-white font-semibold text-sm mt-2"
             >
@@ -1385,7 +1416,7 @@ export const CreateBookingDialog = ({
                 </div>
 
                 <Button 
-                  onClick={handleCreate}
+                  onClick={() => handleCreate(true)}
                   disabled={loading}
                   className="w-full h-11 bg-green-600 hover:bg-green-700 text-white font-semibold text-sm mt-2"
                 >
