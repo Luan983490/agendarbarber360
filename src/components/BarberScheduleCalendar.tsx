@@ -875,28 +875,38 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
               </div>
             ) : (
               /* Visualização Dia/Semana - Grade de Horários - Mobile First */
-              <div className="overflow-x-auto -mx-2 px-2">
-                <div className={cn(
-                  "min-w-0",
-                  viewMode === 'week' && "min-w-[600px] sm:min-w-0"
-                )}>
-                  {/* Cabeçalho dos dias */}
-                  <div 
-                    className="grid gap-1 sm:gap-2 mb-2 sticky top-0 bg-background z-10 pb-2"
-                    style={{ gridTemplateColumns: `40px repeat(${displayDays.length}, 1fr)` }}
-                  >
-                    <div className="font-semibold text-xs sm:text-sm"></div>
-                    {displayDays.map((day, i) => (
-                      <div key={i} className="text-center min-w-0">
-                        <p className="font-semibold text-xs sm:text-sm truncate">
-                          {format(day, 'EEE', { locale: ptBR })}
-                        </p>
-                        <p className="text-[10px] sm:text-xs text-muted-foreground">
-                          {format(day, 'dd/MM')}
-                        </p>
-                      </div>
-                    ))}
+              <div className="flex flex-col h-full">
+                {/* Cabeçalho dos dias - FIXO */}
+                <div className="overflow-x-auto -mx-2 px-2 flex-shrink-0 bg-background border-b pb-2">
+                  <div className={cn(
+                    "min-w-0",
+                    viewMode === 'week' && "min-w-[600px] sm:min-w-0"
+                  )}>
+                    <div 
+                      className="grid gap-1 sm:gap-2"
+                      style={{ gridTemplateColumns: `40px repeat(${displayDays.length}, 1fr)` }}
+                    >
+                      <div className="font-semibold text-xs sm:text-sm"></div>
+                      {displayDays.map((day, i) => (
+                        <div key={i} className="text-center min-w-0">
+                          <p className="font-semibold text-xs sm:text-sm truncate">
+                            {format(day, 'EEE', { locale: ptBR })}
+                          </p>
+                          <p className="text-[10px] sm:text-xs text-muted-foreground">
+                            {format(day, 'dd/MM')}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
+                </div>
+
+                {/* Horários - COM SCROLL */}
+                <div className="overflow-x-auto overflow-y-auto -mx-2 px-2 flex-1 pt-2">
+                  <div className={cn(
+                    "min-w-0",
+                    viewMode === 'week' && "min-w-[600px] sm:min-w-0"
+                  )}>
 
                   {/* Linhas de horários */}
                   {WORK_HOURS.map((time) => (
@@ -923,6 +933,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                       })}
                     </div>
                   ))}
+                  </div>
                 </div>
               </div>
             )}
