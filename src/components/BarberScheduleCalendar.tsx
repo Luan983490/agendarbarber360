@@ -690,10 +690,10 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
         <CardContent className="flex flex-col flex-1 space-y-4 overflow-hidden">
           {/* Seletor de Barbeiro - apenas para donos/admins que não estão em modo barbeiro */}
           {!isBarberView && role === 'owner' && barbers.length > 0 && (
-            <div className="flex items-center gap-4 flex-shrink-0">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 flex-shrink-0">
               <span className="text-sm font-medium text-muted-foreground">Barbeiro:</span>
               <Select value={selectedBarber} onValueChange={setSelectedBarber}>
-                <SelectTrigger className="w-[280px]">
+                <SelectTrigger className="w-full sm:w-[280px]">
                   <SelectValue placeholder="Selecione o barbeiro" />
                 </SelectTrigger>
                 <SelectContent>
@@ -752,7 +752,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
               >
                 Hoje
               </Button>
-              <span className="font-semibold text-xs sm:text-sm text-center min-w-[200px]">
+              <span className="font-semibold text-xs sm:text-sm text-center min-w-[120px] sm:min-w-[200px]">
                 {getDateRangeLabel()}
               </span>
               <Button
@@ -810,19 +810,20 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
               </div>
             ) : viewMode === 'month' ? (
               /* Visualização Mensal - Calendário */
-              <div className="overflow-x-auto">
-                <div className="min-w-[600px]">
+              <div className="overflow-x-auto -mx-2 px-2">
+                <div className="min-w-[320px]">
                   {/* Cabeçalho dos dias da semana */}
-                  <div className="grid grid-cols-7 gap-2 mb-2">
-                    {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day, i) => (
-                      <div key={i} className="text-center font-semibold text-sm py-2 border-b">
-                        {day}
+                  <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-2">
+                    {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, i) => (
+                      <div key={i} className="text-center font-semibold text-[10px] sm:text-sm py-1 sm:py-2 border-b">
+                        <span className="sm:hidden">{day}</span>
+                        <span className="hidden sm:inline">{['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][i]}</span>
                       </div>
                     ))}
                   </div>
 
                   {/* Grade de dias do mês */}
-                  <div className="grid grid-cols-7 gap-2">
+                  <div className="grid grid-cols-7 gap-1 sm:gap-2">
                     {monthDays.map((day, i) => {
                       const isCurrentMonth = day.getMonth() === currentDate.getMonth();
                       const isToday = format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
@@ -833,7 +834,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                         <div
                           key={i}
                           className={cn(
-                            "min-h-[100px] p-2 border rounded-lg cursor-pointer transition-all hover:shadow-md",
+                            "min-h-[50px] sm:min-h-[100px] p-1 sm:p-2 border rounded-md sm:rounded-lg cursor-pointer transition-all active:scale-95 sm:hover:shadow-md",
                             isCurrentMonth ? "bg-background" : "bg-muted/30",
                             isToday && "ring-2 ring-primary"
                           )}
@@ -842,9 +843,9 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                             setViewMode('day');
                           }}
                         >
-                          <div className="flex justify-between items-start mb-2">
+                          <div className="flex justify-between items-start mb-0.5 sm:mb-2">
                             <span className={cn(
-                              "text-sm font-medium",
+                              "text-xs sm:text-sm font-medium",
                               !isCurrentMonth && "text-muted-foreground",
                               isToday && "text-primary font-bold"
                             )}>
@@ -852,15 +853,17 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                             </span>
                           </div>
                           
-                          <div className="space-y-1">
+                          <div className="space-y-0.5 sm:space-y-1">
                             {bookingsCount > 0 && (
-                              <div className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-                                {bookingsCount} agendamento{bookingsCount > 1 ? 's' : ''}
+                              <div className="text-[8px] sm:text-xs bg-primary/10 text-primary px-1 sm:px-2 py-0.5 sm:py-1 rounded truncate">
+                                <span className="sm:hidden">{bookingsCount}</span>
+                                <span className="hidden sm:inline">{bookingsCount} agend.</span>
                               </div>
                             )}
                             {blocksCount > 0 && (
-                              <div className="text-xs bg-destructive/10 text-destructive px-2 py-1 rounded">
-                                {blocksCount} bloqueio{blocksCount > 1 ? 's' : ''}
+                              <div className="text-[8px] sm:text-xs bg-destructive/10 text-destructive px-1 sm:px-2 py-0.5 sm:py-1 rounded truncate">
+                                <span className="sm:hidden">{blocksCount}</span>
+                                <span className="hidden sm:inline">{blocksCount} bloq.</span>
                               </div>
                             )}
                           </div>
@@ -871,18 +874,24 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                 </div>
               </div>
             ) : (
-              /* Visualização Dia/Semana - Grade de Horários */
-              <div className="overflow-x-auto">
-                <div className="min-w-[800px]">
+              /* Visualização Dia/Semana - Grade de Horários - Mobile First */
+              <div className="overflow-x-auto -mx-2 px-2">
+                <div className={cn(
+                  "min-w-0",
+                  viewMode === 'week' && "min-w-[600px] sm:min-w-0"
+                )}>
                   {/* Cabeçalho dos dias */}
-                  <div className={`grid gap-2 mb-2 sticky top-0 bg-background z-10 pb-2`} style={{ gridTemplateColumns: `80px repeat(${displayDays.length}, 1fr)` }}>
-                    <div className="font-semibold text-sm"></div>
+                  <div 
+                    className="grid gap-1 sm:gap-2 mb-2 sticky top-0 bg-background z-10 pb-2"
+                    style={{ gridTemplateColumns: `40px repeat(${displayDays.length}, 1fr)` }}
+                  >
+                    <div className="font-semibold text-xs sm:text-sm"></div>
                     {displayDays.map((day, i) => (
-                      <div key={i} className="text-center">
-                        <p className="font-semibold text-sm">
+                      <div key={i} className="text-center min-w-0">
+                        <p className="font-semibold text-xs sm:text-sm truncate">
                           {format(day, 'EEE', { locale: ptBR })}
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">
                           {format(day, 'dd/MM')}
                         </p>
                       </div>
@@ -891,9 +900,13 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
 
                   {/* Linhas de horários */}
                   {WORK_HOURS.map((time) => (
-                    <div key={time} className="grid gap-2 mb-2" style={{ gridTemplateColumns: `80px repeat(${displayDays.length}, 1fr)` }}>
-                      <div className="text-xs font-medium text-muted-foreground flex items-center">
-                        {time}
+                    <div 
+                      key={time} 
+                      className="grid gap-1 sm:gap-2 mb-1 sm:mb-2"
+                      style={{ gridTemplateColumns: `40px repeat(${displayDays.length}, 1fr)` }}
+                    >
+                      <div className="text-[10px] sm:text-xs font-medium text-muted-foreground flex items-center">
+                        {time.substring(0, 5)}
                       </div>
                       {displayDays.map((day, i) => {
                         const slotInfo = getSlotType(day, time);

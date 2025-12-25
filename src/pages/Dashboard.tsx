@@ -271,85 +271,85 @@ const Dashboard = () => {
     switch (currentTab) {
       case 'overview':
         return (
-          <div className="space-y-6">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Agendamentos Hoje
+          <div className="space-y-4 sm:space-y-6">
+            <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
+              <Card className="col-span-1">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 p-3 sm:p-6">
+                  <CardTitle className="text-xs sm:text-sm font-medium">
+                    Agend. Hoje
                   </CardTitle>
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.todayBookings}</div>
+                <CardContent className="p-3 sm:p-6 pt-0">
+                  <div className="text-lg sm:text-2xl font-bold">{stats.todayBookings}</div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Receita do Mês
+              <Card className="col-span-1">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 p-3 sm:p-6">
+                  <CardTitle className="text-xs sm:text-sm font-medium">
+                    Receita Mês
                   </CardTitle>
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">R$ {stats.monthlyRevenue.toFixed(2)}</div>
+                <CardContent className="p-3 sm:p-6 pt-0">
+                  <div className="text-sm sm:text-2xl font-bold truncate">R$ {stats.monthlyRevenue.toFixed(0)}</div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Total de Clientes
+              <Card className="col-span-1">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 p-3 sm:p-6">
+                  <CardTitle className="text-xs sm:text-sm font-medium">
+                    Clientes
                   </CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <Users className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.totalClients}</div>
+                <CardContent className="p-3 sm:p-6 pt-0">
+                  <div className="text-lg sm:text-2xl font-bold">{stats.totalClients}</div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Avaliação Média
+              <Card className="col-span-1">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 p-3 sm:p-6">
+                  <CardTitle className="text-xs sm:text-sm font-medium">
+                    Avaliação
                   </CardTitle>
-                  <Star className="h-4 w-4 text-muted-foreground" />
+                  <Star className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{barbershop?.rating?.toFixed(1) || '0.0'}</div>
-                  <p className="text-xs text-muted-foreground">{barbershop?.total_reviews} avaliações</p>
+                <CardContent className="p-3 sm:p-6 pt-0">
+                  <div className="text-lg sm:text-2xl font-bold">{barbershop?.rating?.toFixed(1) || '0.0'}</div>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground hidden sm:block">{barbershop?.total_reviews} avaliações</p>
                 </CardContent>
               </Card>
             </div>
 
             <Card>
-              <CardHeader>
-                <CardTitle>Informações da Barbearia</CardTitle>
+              <CardHeader className="p-3 sm:p-6">
+                <CardTitle className="text-base sm:text-lg">Informações da Barbearia</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3 sm:space-y-4 p-3 sm:p-6 pt-0">
                 {barbershop?.image_url && (
-                  <div className="w-full max-w-md">
+                  <div className="w-full">
                     <img
                       src={barbershop.image_url}
                       alt={barbershop.name}
-                      className="w-full h-48 object-cover rounded-lg border"
+                      className="w-full h-32 sm:h-48 object-cover rounded-lg border"
                     />
                   </div>
                 )}
-                <div className="space-y-2">
-                  <p><strong>Nome:</strong> {barbershop?.name}</p>
-                  <p><strong>Endereço:</strong> {barbershop?.address}</p>
+                <div className="space-y-2 text-sm">
+                  <p className="truncate"><strong>Nome:</strong> {barbershop?.name}</p>
+                  <p className="truncate"><strong>Endereço:</strong> {barbershop?.address}</p>
                   <p><strong>Telefone:</strong> {barbershop?.phone}</p>
-                  <p><strong>Descrição:</strong> {barbershop?.description}</p>
-                  <div className="flex gap-4 mt-4">
-                    <div>
+                  <p className="line-clamp-2"><strong>Descrição:</strong> {barbershop?.description}</p>
+                  <div className="flex flex-wrap gap-2 sm:gap-4 mt-3 sm:mt-4 text-xs sm:text-sm">
+                    <div className="bg-muted px-2 py-1 rounded">
                       <strong>Serviços:</strong> {services.length}
                     </div>
-                    <div>
+                    <div className="bg-muted px-2 py-1 rounded">
                       <strong>Barbeiros:</strong> {barbers.length}
                     </div>
-                    <div>
+                    <div className="bg-muted px-2 py-1 rounded">
                       <strong>Produtos:</strong> {products.length}
                     </div>
                   </div>
@@ -429,24 +429,24 @@ const Dashboard = () => {
           <div className="flex min-h-screen w-full mt-16">
             <DashboardSidebar currentTab={currentTab} onTabChange={setCurrentTab} />
             
-            <main className="flex-1 flex flex-col w-full min-h-screen">
-              <div className="sticky top-0 z-10 bg-background border-b px-4 py-3 lg:px-6">
-                <div className="flex items-center gap-3">
+            <main className="flex-1 flex flex-col w-full min-h-screen min-w-0">
+              <div className="sticky top-0 z-10 bg-background border-b px-3 py-2 sm:px-4 sm:py-3 lg:px-6">
+                <div className="flex items-center gap-2 sm:gap-3">
                   <div className="flex-1 min-w-0">
-                    <h1 className="text-xl lg:text-3xl font-bold truncate">Dashboard da Barbearia</h1>
-                    <p className="text-sm text-muted-foreground hidden sm:block">
-                      Gerencie sua barbearia, agendamentos e produtos
+                    <h1 className="text-lg sm:text-xl lg:text-3xl font-bold truncate">Dashboard</h1>
+                    <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
+                      Gerencie sua barbearia
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4 lg:p-6 h-full">
+              <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 lg:p-6 h-full">
                 {subscription && subscription.plan_type === 'teste_gratis' && subscription.days_remaining <= 2 && (
-                  <Alert variant="destructive" className="mb-6">
+                  <Alert variant="destructive" className="mb-4 sm:mb-6">
                     <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Teste Gratuito Encerrando</AlertTitle>
-                    <AlertDescription>
+                    <AlertTitle className="text-sm">Teste Gratuito Encerrando</AlertTitle>
+                    <AlertDescription className="text-xs sm:text-sm">
                       Seu teste gratuito termina em {subscription.days_remaining} dia(s). 
                       Faça upgrade para continuar usando todas as funcionalidades.
                     </AlertDescription>
