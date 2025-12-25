@@ -9,6 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
@@ -18,6 +19,7 @@ interface AddServiceToBookingDialogProps {
   onOpenChange: (open: boolean) => void;
   bookingId: string;
   barbershopId: string;
+  onSuccess?: () => void;
 }
 
 export const AddServiceToBookingDialog = ({
@@ -25,15 +27,19 @@ export const AddServiceToBookingDialog = ({
   onOpenChange,
   bookingId,
   barbershopId,
+  onSuccess,
 }: AddServiceToBookingDialogProps) => {
   const [services, setServices] = useState<any[]>([]);
   const [selectedServiceId, setSelectedServiceId] = useState<string>('');
+  const [quantity, setQuantity] = useState<number>(1);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     if (open) {
       fetchServices();
+      setSelectedServiceId('');
+      setQuantity(1);
     }
   }, [open, barbershopId]);
 
@@ -75,26 +81,54 @@ export const AddServiceToBookingDialog = ({
 
     setLoading(true);
     try {
-      // Aqui você pode adicionar a lógica para vincular o serviço ao booking
-      // Por exemplo, criar uma entrada em uma tabela de relação booking_services
-      
+      // Insert into booking_services table
+      const { error } = await supabase
+        .from('booking_services')
+        .insert({
+          booking_id: bookingId,
+          service_id: selectedServiceId,
+          quantity: quantity,
+          unit_price: selectedService.price,
+        });
+
+      if (error) throw error;
+
+      // Update booking total_price
+      const { data: currentBooking } = await supabase
+        .from('bookings')
+        .select('total_price')
+        .eq('id', bookingId)
+        .single();
+
+      if (currentBooking) {
+        const newTotal = (currentBooking.total_price || 0) + (selectedService.price * quantity);
+        await supabase
+          .from('bookings')
+          .update({ total_price: newTotal })
+          .eq('id', bookingId);
+      }
+
       toast({
         title: "Serviço adicionado",
-        description: `${selectedService.name} foi adicionado ao agendamento.`,
+        description: `${selectedService.name} (${quantity}x) foi adicionado ao agendamento.`,
       });
       
       onOpenChange(false);
-    } catch (error) {
+      onSuccess?.();
+    } catch (error: any) {
       console.error('Error adding service:', error);
       toast({
         title: "Erro ao adicionar serviço",
-        description: "Não foi possível adicionar o serviço ao agendamento.",
+        description: error.message || "Não foi possível adicionar o serviço ao agendamento.",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
   };
+
+  const selectedService = services.find(s => s.id === selectedServiceId);
+  const totalPrice = selectedService ? selectedService.price * quantity : 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -119,6 +153,26 @@ export const AddServiceToBookingDialog = ({
               </SelectContent>
             </Select>
           </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="quantity">Quantidade</Label>
+            <Input
+              id="quantity"
+              type="number"
+              min="1"
+              value={quantity}
+              onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+            />
+          </div>
+
+          {selectedService && (
+            <div className="p-3 bg-muted rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Total:</span>
+                <span className="text-lg font-bold">R$ {totalPrice.toFixed(2)}</span>
+              </div>
+            </div>
+          )}
         </div>
 
         <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
