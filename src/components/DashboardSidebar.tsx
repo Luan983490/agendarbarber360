@@ -113,7 +113,7 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
 
   return (
     <Sidebar 
-      className="border-r w-64 shrink-0" 
+      className="border-r w-64 shrink-0 h-full" 
       collapsible="offcanvas"
     >
       <SidebarHeader className="border-b p-3 sm:p-4 bg-muted/50">
