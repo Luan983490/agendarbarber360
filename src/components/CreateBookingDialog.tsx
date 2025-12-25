@@ -445,65 +445,69 @@ export const CreateBookingDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-background">
+      <DialogContent className="w-[95vw] max-w-3xl max-h-[90vh] overflow-y-auto bg-background p-4 sm:p-6">
         <DialogHeader className="border-b pb-4">
-          <DialogTitle className="flex items-center gap-2 text-base font-normal text-foreground">
-            <CalendarIcon className="h-5 w-5" />
+          <DialogTitle className="flex items-center gap-2 text-sm sm:text-base font-normal text-foreground">
+            <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5" />
             Agendar novo horário
           </DialogTitle>
         </DialogHeader>
 
         <Tabs defaultValue="schedule" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-transparent border-b rounded-none h-auto p-0 gap-0">
+          <TabsList className="flex flex-wrap sm:grid sm:grid-cols-4 w-full bg-transparent border-b rounded-none h-auto p-0 gap-0">
             <TabsTrigger 
               value="schedule"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none py-3 px-4 text-sm"
+              className="flex-1 sm:flex-none rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm"
             >
-              Agendar Horário
+              <span className="hidden sm:inline">Agendar Horário</span>
+              <span className="sm:hidden">Agendar</span>
             </TabsTrigger>
             <TabsTrigger 
               value="block"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none py-3 px-4 text-sm flex items-center gap-1"
+              className="flex-1 sm:flex-none rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm flex items-center justify-center gap-1"
             >
-              Bloquear Horário
-              <HelpCircle className="h-3 w-3" />
+              <span className="hidden sm:inline">Bloquear Horário</span>
+              <span className="sm:hidden">Bloquear</span>
+              <HelpCircle className="h-3 w-3 hidden sm:inline" />
             </TabsTrigger>
             <TabsTrigger 
               value="unblock"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none py-3 px-4 text-sm"
+              className="flex-1 sm:flex-none rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm"
             >
-              Desbloquear Horário
+              <span className="hidden sm:inline">Desbloquear Horário</span>
+              <span className="sm:hidden">Desbloquear</span>
             </TabsTrigger>
             <TabsTrigger 
               value="recurring"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none py-3 px-4 text-sm"
+              className="flex-1 sm:flex-none rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm"
             >
-              Agenda Recorrente
+              <span className="hidden sm:inline">Agenda Recorrente</span>
+              <span className="sm:hidden">Recorrente</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="schedule" className="space-y-4 mt-6 px-1">
-            <div className="grid grid-cols-3 gap-4">
+          <TabsContent value="schedule" className="space-y-4 mt-4 sm:mt-6 px-1">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
               <div className="space-y-2">
-                <Label className="text-sm text-muted-foreground">Dia:</Label>
-                <Input type="text" value={date ? format(date, 'dd/MM/yyyy') : ''} readOnly className="h-10 bg-muted/30" />
+                <Label className="text-xs sm:text-sm text-muted-foreground">Dia:</Label>
+                <Input type="text" value={date ? format(date, 'dd/MM/yyyy') : ''} readOnly className="h-9 sm:h-10 bg-muted/30 text-sm" />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="time" className="text-sm text-muted-foreground">Hora Início:</Label>
+                <Label htmlFor="time" className="text-xs sm:text-sm text-muted-foreground">Hora Início:</Label>
                 <Input
                   id="time"
                   type="text"
                   value={time}
                   readOnly
-                  className="h-10 bg-muted/30"
+                  className="h-9 sm:h-10 bg-muted/30 text-sm"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="barber" className="text-sm text-muted-foreground">Profissional:</Label>
+              <div className="space-y-2 col-span-2 sm:col-span-1">
+                <Label htmlFor="barber" className="text-xs sm:text-sm text-muted-foreground">Profissional:</Label>
                 <Select value={selectedBarber} onValueChange={setSelectedBarber}>
-                  <SelectTrigger id="barber" className="h-10 bg-muted/30 border-input">
+                  <SelectTrigger id="barber" className="h-9 sm:h-10 bg-muted/30 border-input text-sm">
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-border z-50">
@@ -517,11 +521,11 @@ export const CreateBookingDialog = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div className="space-y-2">
-                <Label htmlFor="service" className="text-sm text-muted-foreground">Serviço:</Label>
+                <Label htmlFor="service" className="text-xs sm:text-sm text-muted-foreground">Serviço:</Label>
                 <Select value={selectedService} onValueChange={setSelectedService}>
-                  <SelectTrigger id="service" className="h-10 bg-muted/30 border-input">
+                  <SelectTrigger id="service" className="h-9 sm:h-10 bg-muted/30 border-input text-sm">
                     <SelectValue placeholder="Selecione um Serviço" />
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-border z-50">
@@ -535,14 +539,14 @@ export const CreateBookingDialog = ({
               </div>
 
               <div className="space-y-2">
-                <Label className="flex items-center gap-1 text-sm text-muted-foreground">
+                <Label className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground">
                   Duração:
                   <HelpCircle className="h-3 w-3" />
                 </Label>
                 <Input 
                   value={services.find(s => s.id === selectedService)?.duration ? `${services.find(s => s.id === selectedService)?.duration} min` : ''} 
                   readOnly 
-                  className="h-10 bg-muted/30" 
+                  className="h-9 sm:h-10 bg-muted/30 text-sm" 
                 />
               </div>
             </div>

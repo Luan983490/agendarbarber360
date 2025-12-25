@@ -113,23 +113,22 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
 
   return (
     <Sidebar 
-      className="border-r w-64" 
-      collapsible="none"
+      className="border-r w-64 shrink-0" 
+      collapsible="offcanvas"
     >
-      <SidebarHeader className="border-b p-4 bg-muted/50">
+      <SidebarHeader className="border-b p-3 sm:p-4 bg-muted/50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
-            <Store className="h-5 w-5 text-primary flex-shrink-0" />
-            <h2 className="text-lg font-semibold truncate">Dashboard</h2>
+            <Store className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
+            <h2 className="text-base sm:text-lg font-semibold truncate">Dashboard</h2>
           </div>
           <Button 
             variant="ghost" 
             size="sm"
-            className="lg:hidden gap-1 flex-shrink-0"
+            className="lg:hidden gap-1 flex-shrink-0 h-8 w-8 p-0"
             onClick={() => setOpenMobile(false)}
           >
             <X className="h-4 w-4" />
-            <span className="text-xs">Fechar</span>
           </Button>
         </div>
       </SidebarHeader>

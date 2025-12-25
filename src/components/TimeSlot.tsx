@@ -69,19 +69,19 @@ export const TimeSlot = ({ time, type, booking, block, onClick }: TimeSlotProps)
   const slotContent = (
     <div
       className={cn(
-        'p-2 rounded-md border-2 transition-all min-h-[60px] flex flex-col justify-between hover:scale-105',
+        'p-1 sm:p-2 rounded-md border sm:border-2 transition-all min-h-[40px] sm:min-h-[60px] flex flex-col justify-between active:scale-95 sm:hover:scale-105',
         getSlotStyles()
       )}
       onClick={handleClick}
     >
-      <div className="flex items-center justify-between gap-1">
+      <div className="flex items-center justify-between gap-0.5 sm:gap-1">
         {getIcon()}
         {getStatusBadge()}
       </div>
       {(type === 'booked' || type === 'booked-external') && booking && (
-        <div className="text-[10px] truncate">
+        <div className="text-[8px] sm:text-[10px] truncate leading-tight">
           <p className="font-semibold truncate">{booking.client_name}</p>
-          <p className="text-muted-foreground truncate">{booking.service_name}</p>
+          <p className="text-muted-foreground truncate hidden sm:block">{booking.service_name}</p>
         </div>
       )}
     </div>

@@ -179,27 +179,27 @@ export default function BarberHoje() {
 
             {bookings.map((booking) => (
               <Card key={booking.id} className="overflow-hidden">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="bg-primary/10 rounded-lg p-3">
-                        <Clock className="h-5 w-5 text-primary" />
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-start sm:items-center gap-3 sm:gap-4">
+                      <div className="bg-primary/10 rounded-lg p-2 sm:p-3 shrink-0">
+                        <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-lg font-bold">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <span className="text-base sm:text-lg font-bold">
                             {booking.booking_time.slice(0, 5)}
                           </span>
                           {getStatusBadge(booking.status)}
                         </div>
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <User className="h-4 w-4" />
-                          <span>{getClientName(booking)}</span>
+                        <div className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground">
+                          <User className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
+                          <span className="truncate">{getClientName(booking)}</span>
                         </div>
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-                          <Scissors className="h-4 w-4" />
-                          <span>{booking.service?.name}</span>
-                          <span className="text-xs">({booking.service?.duration} min)</span>
+                        <div className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">
+                          <Scissors className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
+                          <span className="truncate">{booking.service?.name}</span>
+                          <span className="text-[10px] sm:text-xs shrink-0">({booking.service?.duration} min)</span>
                         </div>
                       </div>
                     </div>
@@ -208,9 +208,9 @@ export default function BarberHoje() {
                       <Button
                         onClick={() => handleComplete(booking.id)}
                         size="sm"
-                        className="gap-2"
+                        className="gap-1 sm:gap-2 w-full sm:w-auto text-xs sm:text-sm"
                       >
-                        <Check className="h-4 w-4" />
+                        <Check className="h-3 w-3 sm:h-4 sm:w-4" />
                         Concluir
                       </Button>
                     )}
