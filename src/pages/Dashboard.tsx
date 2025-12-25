@@ -411,11 +411,11 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="h-screen bg-background flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-background">
       <Header />
       
       {!barbershop ? (
-        <main className="container mx-auto px-4 py-8 mt-16 overflow-y-auto flex-1">
+        <main className="container mx-auto px-4 py-8 mt-16">
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">Dashboard da Barbearia</h1>
             <p className="text-muted-foreground">
@@ -426,11 +426,11 @@ const Dashboard = () => {
         </main>
       ) : (
         <SidebarProvider>
-          <div className="flex flex-1 w-full mt-16 h-[calc(100vh-64px)] overflow-hidden">
+          <div className="flex min-h-screen w-full mt-16">
             <DashboardSidebar currentTab={currentTab} onTabChange={setCurrentTab} />
             
-            <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-              <div className="shrink-0 bg-background border-b px-3 py-2 sm:px-4 sm:py-3 lg:px-6">
+            <main className="flex-1 flex flex-col w-full min-h-screen min-w-0">
+              <div className="sticky top-0 z-10 bg-background border-b px-3 py-2 sm:px-4 sm:py-3 lg:px-6">
                 <div className="flex items-center gap-2 sm:gap-3">
                   <div className="flex-1 min-w-0">
                     <h1 className="text-lg sm:text-xl lg:text-3xl font-bold truncate">Dashboard</h1>
@@ -441,7 +441,7 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 lg:p-6">
+              <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 lg:p-6 h-full">
                 {subscription && subscription.plan_type === 'teste_gratis' && subscription.days_remaining <= 2 && (
                   <Alert variant="destructive" className="mb-4 sm:mb-6">
                     <AlertCircle className="h-4 w-4" />
