@@ -50,6 +50,7 @@ interface BarberScheduleCalendarProps {
   barbershopId: string;
   barberIdFilter?: string; // If provided, only show this barber's schedule
   readOnly?: boolean; // If true, disable creating/editing bookings (for barbers)
+  onRefreshRef?: React.MutableRefObject<(() => void) | null>; // Ref para expor a função de refresh
 }
 
 const WORK_HOURS = [
@@ -59,7 +60,7 @@ const WORK_HOURS = [
   '17:00', '17:30', '18:00', '18:30', '19:00', '19:30'
 ];
 
-export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly = false }: BarberScheduleCalendarProps) => {
+export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly = false, onRefreshRef }: BarberScheduleCalendarProps) => {
   const { role, barberId: currentBarberId } = useUserAccess();
   const [barbers, setBarbers] = useState<Barber[]>([]);
   const [selectedBarber, setSelectedBarber] = useState<string>(barberIdFilter || '');
@@ -116,6 +117,18 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
       fetchScheduleData();
     }
   }, [selectedBarber, currentWeekStart, currentDate, viewMode]);
+
+  // Expor função de refresh via ref
+  useEffect(() => {
+    if (onRefreshRef) {
+      onRefreshRef.current = fetchScheduleData;
+    }
+    return () => {
+      if (onRefreshRef) {
+        onRefreshRef.current = null;
+      }
+    };
+  }, [onRefreshRef, selectedBarber, currentWeekStart, currentDate, viewMode]);
 
   useEffect(() => {
     const channel = supabase

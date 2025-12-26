@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useUserRole } from '@/hooks/useUserRole';
 import { Button } from '@/components/ui/button';
@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Scissors, Calendar, Package, Store, Users, DollarSign, Star, Edit, CalendarDays, AlertCircle } from 'lucide-react';
+import { Scissors, Calendar, Package, Store, Users, DollarSign, Star, Edit, CalendarDays, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { Header } from '@/components/Header';
 import BarbershopSetup from '@/components/BarbershopSetup';
 import BarbershopEdit from '@/components/BarbershopEdit';
@@ -24,6 +24,9 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { DashboardSidebar } from '@/components/DashboardSidebar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { cn } from '@/lib/utils';
 
 interface Profile {
   id: string;
@@ -86,6 +89,7 @@ const Dashboard = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [barbers, setBarbers] = useState<Barber[]>([]);
+  const [selectedBarber, setSelectedBarber] = useState<string>('');
   const [stats, setStats] = useState<DashboardStats>({
     todayBookings: 0,
     monthlyRevenue: 0,
@@ -93,8 +97,12 @@ const Dashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const [currentTab, setCurrentTab] = useState('bookings');
+  const [blockPanelOpen, setBlockPanelOpen] = useState(false);
   const { toast } = useToast();
   const { subscription } = useSubscription(barbershop?.id || null);
+  
+  // Ref para função de refresh do calendário
+  const calendarRefreshRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -172,10 +180,16 @@ const Dashboard = () => {
         .from('barbers')
         .select('*')
         .eq('barbershop_id', barbershop.id)
+        .eq('is_active', true)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       setBarbers(data || []);
+      
+      // Selecionar primeiro barbeiro por padrão
+      if (data && data.length > 0 && !selectedBarber) {
+        setSelectedBarber(data[0].id);
+      }
     } catch (error: any) {
       toast({
         title: "Erro ao carregar barbeiros",
@@ -248,6 +262,13 @@ const Dashboard = () => {
 
   const handleBarbershopCreated = () => {
     fetchUserProfile(); // Refresh to get the new barbershop data
+  };
+
+  const handleBlockSuccess = () => {
+    // Chamar refresh do calendário
+    if (calendarRefreshRef.current) {
+      calendarRefreshRef.current();
+    }
   };
 
   if (authLoading || loading || roleLoading) {
@@ -372,12 +393,51 @@ const Dashboard = () => {
         );
       case 'bookings':
         return (
-          <div className="h-full flex gap-4">
-            <div className="flex-1 min-w-0">
-              <BarberScheduleCalendar barbershopId={barbershop!.id} />
+          <div className="h-full flex flex-col lg:flex-row gap-4">
+            {/* Calendário Principal */}
+            <div className="flex-1 min-w-0 min-h-0 flex flex-col">
+              <BarberScheduleCalendar 
+                barbershopId={barbershop!.id} 
+                barberIdFilter={selectedBarber}
+                onRefreshRef={calendarRefreshRef}
+              />
             </div>
-            <div className="hidden xl:block w-80 flex-shrink-0">
-              <BlockSchedulePanel barbershopId={barbershop!.id} />
+            
+            {/* Painel de Bloqueio - Desktop (fixo na lateral) */}
+            <div className="hidden xl:block w-80 flex-shrink-0 sticky top-0 self-start max-h-[calc(100vh-180px)] overflow-y-auto">
+              <BlockSchedulePanel 
+                barbershopId={barbershop!.id} 
+                selectedBarberId={selectedBarber}
+                onBlockSuccess={handleBlockSuccess}
+              />
+            </div>
+
+            {/* Painel de Bloqueio - Mobile/Tablet (Sheet expandível) */}
+            <div className="xl:hidden">
+              <Sheet open={blockPanelOpen} onOpenChange={setBlockPanelOpen}>
+                <SheetTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="w-full flex items-center justify-between gap-2"
+                  >
+                    <span className="flex items-center gap-2">
+                      <CalendarDays className="h-4 w-4" />
+                      Bloquear Horários
+                    </span>
+                    {blockPanelOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="bottom" className="h-[85vh] overflow-y-auto">
+                  <BlockSchedulePanel 
+                    barbershopId={barbershop!.id} 
+                    selectedBarberId={selectedBarber}
+                    onBlockSuccess={() => {
+                      handleBlockSuccess();
+                      setBlockPanelOpen(false);
+                    }}
+                  />
+                </SheetContent>
+              </Sheet>
             </div>
           </div>
         );
@@ -421,11 +481,51 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Header Fixo - Simplificado com seletor de barbeiro */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+        <div className="container mx-auto px-4 py-2">
+          <div className="flex items-center justify-between gap-4">
+            {/* Logo */}
+            <a href="/" className="flex items-center gap-2 shrink-0">
+              <img src="/placeholder.svg" alt="Logo" className="h-8 w-8" />
+            </a>
+
+            {/* Seletor de Barbeiro no Header (quando na aba de agenda) */}
+            {barbershop && currentTab === 'bookings' && barbers.length > 0 && (
+              <div className="flex-1 max-w-[250px]">
+                <Select value={selectedBarber} onValueChange={setSelectedBarber}>
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder="Selecione o barbeiro" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {barbers.map((barber) => (
+                      <SelectItem key={barber.id} value={barber.id}>
+                        {barber.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Ajuda e Perfil */}
+            <div className="flex items-center gap-2">
+              <a href="#" className="text-sm text-foreground hover:text-primary transition-colors hidden sm:inline">
+                Ajuda
+              </a>
+              {user && (
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Users className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      </header>
       
       {!barbershop ? (
-        <main className="container mx-auto px-4 py-8 mt-16">
+        <main className="container mx-auto px-4 py-8 mt-14">
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">Dashboard da Barbearia</h1>
             <p className="text-muted-foreground">
@@ -436,22 +536,15 @@ const Dashboard = () => {
         </main>
       ) : (
         <SidebarProvider>
-          <div className="flex min-h-screen w-full mt-16">
-            <DashboardSidebar currentTab={currentTab} onTabChange={setCurrentTab} />
+          <div className="flex min-h-screen w-full pt-14">
+            {/* Sidebar Fixo */}
+            <div className="sticky top-14 h-[calc(100vh-56px)] z-40">
+              <DashboardSidebar currentTab={currentTab} onTabChange={setCurrentTab} />
+            </div>
             
-            <main className="flex-1 flex flex-col w-full min-h-screen min-w-0">
-              <div className="sticky top-0 z-10 bg-background border-b px-3 py-2 sm:px-4 sm:py-3 lg:px-6">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="flex-1 min-w-0">
-                    <h1 className="text-lg sm:text-xl lg:text-3xl font-bold truncate">Dashboard</h1>
-                    <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
-                      Gerencie sua barbearia
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 lg:p-6 h-full">
+            <main className="flex-1 flex flex-col w-full min-h-[calc(100vh-56px)] min-w-0">
+              {/* Conteúdo com scroll */}
+              <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 lg:p-6">
                 {subscription && subscription.plan_type === 'teste_gratis' && subscription.days_remaining <= 2 && (
                   <Alert variant="destructive" className="mb-4 sm:mb-6">
                     <AlertCircle className="h-4 w-4" />
