@@ -15,6 +15,7 @@ import ProductForm from '@/components/ProductForm';
 import BarberForm from '@/components/BarberForm';
 import BookingsManagement from '@/components/BookingsManagement';
 import { BarberScheduleCalendar } from '@/components/BarberScheduleCalendar';
+import { BlockSchedulePanel } from '@/components/BlockSchedulePanel';
 import { PackagesManagement } from '@/components/PackagesManagement';
 import { SubscriptionsManagement } from '@/components/SubscriptionsManagement';
 import { LoyaltyManagement } from '@/components/LoyaltyManagement';
@@ -370,7 +371,16 @@ const Dashboard = () => {
           />
         );
       case 'bookings':
-        return <div className="h-full"><BarberScheduleCalendar barbershopId={barbershop!.id} /></div>;
+        return (
+          <div className="h-full flex gap-4">
+            <div className="flex-1 min-w-0">
+              <BarberScheduleCalendar barbershopId={barbershop!.id} />
+            </div>
+            <div className="hidden xl:block w-80 flex-shrink-0">
+              <BlockSchedulePanel barbershopId={barbershop!.id} />
+            </div>
+          </div>
+        );
       case 'schedule':
         return <BookingsManagement barbershopId={barbershop!.id} />;
       case 'services':
