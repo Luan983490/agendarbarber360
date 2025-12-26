@@ -485,7 +485,7 @@ export const CreateBookingDialog = ({
         </DialogHeader>
 
         <Tabs defaultValue="schedule" className="w-full">
-          <TabsList className="flex flex-wrap sm:grid sm:grid-cols-4 w-full bg-transparent border-b rounded-none h-auto p-0 gap-0">
+          <TabsList className="flex flex-wrap sm:grid sm:grid-cols-3 w-full bg-transparent border-b rounded-none h-auto p-0 gap-0">
             <TabsTrigger 
               value="schedule"
               className="flex-1 sm:flex-none rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm"
@@ -499,14 +499,6 @@ export const CreateBookingDialog = ({
             >
               <span className="hidden sm:inline">Bloquear Horário</span>
               <span className="sm:hidden">Bloquear</span>
-              <HelpCircle className="h-3 w-3 hidden sm:inline" />
-            </TabsTrigger>
-            <TabsTrigger 
-              value="unblock"
-              className="flex-1 sm:flex-none rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm"
-            >
-              <span className="hidden sm:inline">Desbloquear Horário</span>
-              <span className="sm:hidden">Desbloquear</span>
             </TabsTrigger>
             <TabsTrigger 
               value="recurring"
@@ -668,48 +660,60 @@ export const CreateBookingDialog = ({
           </TabsContent>
 
           <TabsContent value="block" className="space-y-4 mt-6 px-1">
+            {/* Dica de uso */}
+            <div className="flex items-start gap-2 p-3 bg-muted/50 rounded-lg text-xs">
+              <HelpCircle className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+              <p className="text-muted-foreground">
+                <strong>Período único:</strong> selecione datas e horários para bloquear.
+                <br />
+                <strong>Recorrente:</strong> bloqueia o mesmo horário a cada X dias.
+              </p>
+            </div>
+
             <div className="space-y-2">
-              <Label className="text-sm text-muted-foreground">Tipo:</Label>
-              <Select value={blockType} onValueChange={setBlockType}>
-                <SelectTrigger className="h-10 bg-muted/30 border-input">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="single">Horário único</SelectItem>
-                  <SelectItem value="recurring">Recorrente</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label className="text-sm font-medium">Tipo de Bloqueio:</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant={blockType === 'single' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setBlockType('single')}
+                  className="text-sm"
+                >
+                  Período Único
+                </Button>
+                <Button
+                  type="button"
+                  variant={blockType === 'recurring' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setBlockType('recurring')}
+                  className="text-sm"
+                >
+                  Recorrente
+                </Button>
+              </div>
             </div>
 
             {blockType === 'recurring' ? (
               <>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-sm text-muted-foreground">Quantidade de Dias:</Label>
-                    <Input
-                      type="number"
-                      placeholder="Quantidade de Dias (máximo: 180)"
-                      value={blockRecurringDays}
-                      onChange={(e) => setBlockRecurringDays(e.target.value)}
-                      max={180}
-                      className="h-10 bg-muted/30 border-input"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm text-muted-foreground">Periodicidade</Label>
-                    <Input
-                      type="number"
-                      placeholder="Periodicidade(máximo: 30)"
-                      value={blockRecurringPeriodicity}
-                      onChange={(e) => setBlockRecurringPeriodicity(e.target.value)}
-                      max={30}
-                      className="h-10 bg-muted/30 border-input"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label className="text-sm text-muted-foreground">Profissional:</Label>
+                  <Select value={selectedBarber} onValueChange={setSelectedBarber}>
+                    <SelectTrigger className="h-10 bg-muted/30 border-input">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border-border z-50">
+                      {barbers.map((barber) => (
+                        <SelectItem key={barber.id} value={barber.id}>
+                          {barber.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-sm text-muted-foreground">Dia Início:</Label>
+                  <Label className="text-sm text-muted-foreground">Data de Início:</Label>
                   <Input type="text" value={date ? format(date, 'dd/MM/yyyy') : ''} readOnly className="h-10 bg-muted/30" />
                 </div>
 
@@ -753,43 +757,51 @@ export const CreateBookingDialog = ({
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="text-sm text-muted-foreground">Profissional:</Label>
-                  <Select value={selectedBarber} onValueChange={setSelectedBarber}>
-                    <SelectTrigger className="h-10 bg-muted/30 border-input">
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover border-border z-50">
-                      {barbers.map((barber) => (
-                        <SelectItem key={barber.id} value={barber.id}>
-                          {barber.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">Repetir a cada:</Label>
+                    <Select value={blockRecurringPeriodicity || '1'} onValueChange={setBlockRecurringPeriodicity}>
+                      <SelectTrigger className="h-10 bg-muted/30 border-input">
+                        <SelectValue placeholder="1" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border-border z-50 max-h-60">
+                        {Array.from({ length: 30 }, (_, i) => (i + 1).toString()).map(num => (
+                          <SelectItem key={num} value={num}>{num} dia{num !== '1' ? 's' : ''}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">Qtd. de bloqueios:</Label>
+                    <Select value={blockRecurringDays || '1'} onValueChange={setBlockRecurringDays}>
+                      <SelectTrigger className="h-10 bg-muted/30 border-input">
+                        <SelectValue placeholder="1" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border-border z-50 max-h-60">
+                        {Array.from({ length: 60 }, (_, i) => (i + 1).toString()).map(num => (
+                          <SelectItem key={num} value={num}>{num}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-sm text-muted-foreground">Observações</Label>
+                  <Label className="text-sm text-muted-foreground">Motivo (opcional)</Label>
                   <Textarea
                     value={blockReason}
                     onChange={(e) => setBlockReason(e.target.value)}
-                    placeholder="Digite observações..."
-                    rows={3}
+                    placeholder="Ex: Almoço, folga..."
+                    rows={2}
                     className="resize-none bg-muted/30 border-input"
                   />
                 </div>
 
                 <Button 
                   onClick={async () => {
-                    if (!blockRecurringDays || !blockRecurringPeriodicity) {
-                      toast({
-                        title: 'Erro',
-                        description: 'Preencha quantidade de dias e periodicidade',
-                        variant: 'destructive'
-                      });
-                      return;
-                    }
+                    const days = parseInt(blockRecurringDays || '1');
+                    const periodicity = parseInt(blockRecurringPeriodicity || '1');
                     
                     if (!blockStartTime || !blockEndTime) {
                       toast({
@@ -800,16 +812,23 @@ export const CreateBookingDialog = ({
                       return;
                     }
 
+                    if (blockStartTime >= blockEndTime) {
+                      toast({
+                        title: 'Erro',
+                        description: 'O horário de início deve ser menor que o de fim',
+                        variant: 'destructive'
+                      });
+                      return;
+                    }
+
                     try {
                       const blocks = [];
-                      const days = parseInt(blockRecurringDays);
-                      const periodicity = parseInt(blockRecurringPeriodicity);
                       let currentDate = new Date(date);
                       
-                      for (let i = 0; i < days; i += periodicity) {
+                      for (let i = 0; i < days; i++) {
                         blocks.push({
                           barber_id: selectedBarber,
-                          block_date: format(addDays(currentDate, i), 'yyyy-MM-dd'),
+                          block_date: format(addDays(currentDate, i * periodicity), 'yyyy-MM-dd'),
                           start_time: blockStartTime,
                           end_time: blockEndTime,
                           reason: blockReason || null
@@ -838,17 +857,34 @@ export const CreateBookingDialog = ({
                       });
                     }
                   }}
-                  className="w-full h-11 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm mt-2"
+                  className="w-full h-11 bg-destructive hover:bg-destructive/90 text-white font-semibold text-sm mt-2"
                   disabled={!blockStartTime || !blockEndTime || !selectedBarber}
                 >
-                  BLOQUEAR
+                  <Ban className="mr-2 h-4 w-4" />
+                  BLOQUEAR RECORRENTE
                 </Button>
               </>
             ) : (
               <>
+                <div className="space-y-2">
+                  <Label className="text-sm text-muted-foreground">Profissional:</Label>
+                  <Select value={selectedBarber} onValueChange={setSelectedBarber}>
+                    <SelectTrigger id="block-barber" className="h-10 bg-muted/30 border-input">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border-border z-50">
+                      {barbers.map((barber) => (
+                        <SelectItem key={barber.id} value={barber.id}>
+                          {barber.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-sm text-muted-foreground">Dia Início:</Label>
+                    <Label className="text-sm text-muted-foreground">Data Início:</Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button variant="outline" className="w-full h-10 bg-muted/30 border-input justify-start text-left font-normal">
@@ -869,28 +905,7 @@ export const CreateBookingDialog = ({
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="block-start" className="text-sm text-muted-foreground">Hora Início:</Label>
-                    <Select value={blockStartTime} onValueChange={setBlockStartTime}>
-                      <SelectTrigger className="h-10 bg-muted/30 border-input">
-                        <SelectValue placeholder="Hora" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-popover border-border z-50 max-h-60">
-                        {Array.from({ length: 48 }, (_, i) => {
-                          const hour = Math.floor(i / 2).toString().padStart(2, '0');
-                          const minute = (i % 2) * 30;
-                          const minuteStr = minute.toString().padStart(2, '0');
-                          return `${hour}:${minuteStr}`;
-                        }).map(timeOption => (
-                          <SelectItem key={timeOption} value={timeOption}>{timeOption}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-sm text-muted-foreground">Dia Fim:</Label>
+                    <Label className="text-sm text-muted-foreground">Data Fim:</Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button variant="outline" className="w-full h-10 bg-muted/30 border-input justify-start text-left font-normal">
@@ -908,6 +923,27 @@ export const CreateBookingDialog = ({
                         />
                       </PopoverContent>
                     </Popover>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="block-start" className="text-sm text-muted-foreground">Hora Início:</Label>
+                    <Select value={blockStartTime} onValueChange={setBlockStartTime}>
+                      <SelectTrigger className="h-10 bg-muted/30 border-input">
+                        <SelectValue placeholder="Hora" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border-border z-50 max-h-60">
+                        {Array.from({ length: 48 }, (_, i) => {
+                          const hour = Math.floor(i / 2).toString().padStart(2, '0');
+                          const minute = (i % 2) * 30;
+                          const minuteStr = minute.toString().padStart(2, '0');
+                          return `${hour}:${minuteStr}`;
+                        }).map(timeOption => (
+                          <SelectItem key={timeOption} value={timeOption}>{timeOption}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="space-y-2">
@@ -931,39 +967,24 @@ export const CreateBookingDialog = ({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="block-barber" className="text-sm text-muted-foreground">Profissional:</Label>
-                  <Select value={selectedBarber} onValueChange={setSelectedBarber}>
-                    <SelectTrigger id="block-barber" className="h-10 bg-muted/30 border-input">
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover border-border z-50">
-                      {barbers.map((barber) => (
-                        <SelectItem key={barber.id} value={barber.id}>
-                          {barber.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="block-reason" className="text-sm text-muted-foreground">Observações</Label>
+                  <Label htmlFor="block-reason" className="text-sm text-muted-foreground">Motivo (opcional)</Label>
                   <Textarea
                     id="block-reason"
                     value={blockReason}
                     onChange={(e) => setBlockReason(e.target.value)}
-                    placeholder="Digite observações..."
-                    rows={3}
+                    placeholder="Ex: Férias, consulta médica..."
+                    rows={2}
                     className="resize-none bg-muted/30 border-input"
                   />
                 </div>
 
                 <Button 
                   onClick={handleBlockTime}
-                  className="w-full h-11 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm mt-2"
+                  className="w-full h-11 bg-destructive hover:bg-destructive/90 text-white font-semibold text-sm mt-2"
                   disabled={!blockStartTime || !blockEndTime || !selectedBarber}
                 >
-                  BLOQUEAR
+                  <Ban className="mr-2 h-4 w-4" />
+                  BLOQUEAR PERÍODO
                 </Button>
               </>
             )}

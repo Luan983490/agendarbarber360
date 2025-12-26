@@ -788,19 +788,6 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                 <span>Bloqueado</span>
               </div>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (!isAnyDialogOpen) setMultiBlockOpen(true);
-              }}
-              disabled={isAnyDialogOpen}
-              className="w-full sm:w-auto"
-            >
-              <Ban className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Bloquear Múltiplos Dias</span>
-              <span className="sm:hidden">Bloquear Dias</span>
-            </Button>
           </div>
 
           {/* Grade de Horários ou Calendário Mensal - COM SCROLL */}
