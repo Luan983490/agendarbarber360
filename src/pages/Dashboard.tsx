@@ -1,13 +1,12 @@
 import { useEffect, useState, useRef } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useUserRole } from '@/hooks/useUserRole';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Scissors, Calendar, Package, Store, Users, DollarSign, Star, Edit, CalendarDays, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
-import { Header } from '@/components/Header';
+import { Scissors, Calendar, Package, Store, Users, DollarSign, Star, Edit, CalendarDays, AlertCircle, ChevronDown, ChevronUp, User as UserIcon, Settings as SettingsIcon, LogOut as LogOutIcon } from 'lucide-react';
 import BarbershopSetup from '@/components/BarbershopSetup';
 import BarbershopEdit from '@/components/BarbershopEdit';
 import ServiceForm from '@/components/ServiceForm';
@@ -26,7 +25,10 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { DashboardSidebar } from '@/components/DashboardSidebar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import barber360Logo from '@/assets/barber360-logo.png';
 
 interface Profile {
   id: string;
@@ -82,7 +84,8 @@ interface DashboardStats {
 }
 
 const Dashboard = () => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
+  const navigate = useNavigate();
   const { userType, loading: roleLoading } = useUserRole();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [barbershop, setBarbershop] = useState<Barbershop | null>(null);
@@ -393,41 +396,24 @@ const Dashboard = () => {
         );
       case 'bookings':
         return (
-          <div className="h-full flex flex-col lg:flex-row gap-4">
-            {/* Calendário Principal */}
-            <div className="flex-1 min-w-0 min-h-0 flex flex-col">
-              <BarberScheduleCalendar 
-                barbershopId={barbershop!.id} 
-                barberIdFilter={selectedBarber}
-                onRefreshRef={calendarRefreshRef}
-              />
-            </div>
-            
-            {/* Painel de Bloqueio - Desktop (fixo na lateral) */}
-            <div className="hidden xl:block w-80 flex-shrink-0 sticky top-0 self-start max-h-[calc(100vh-180px)] overflow-y-auto">
-              <BlockSchedulePanel 
-                barbershopId={barbershop!.id} 
-                selectedBarberId={selectedBarber}
-                onBlockSuccess={handleBlockSuccess}
-              />
-            </div>
-
-            {/* Painel de Bloqueio - Mobile/Tablet (Sheet expandível) */}
+          <div className="h-full flex flex-col gap-3 sm:gap-4">
+            {/* Botão Bloquear Horários - Mobile/Tablet (no topo) */}
             <div className="xl:hidden">
               <Sheet open={blockPanelOpen} onOpenChange={setBlockPanelOpen}>
                 <SheetTrigger asChild>
                   <Button 
                     variant="outline" 
+                    size="sm"
                     className="w-full flex items-center justify-between gap-2"
                   >
-                    <span className="flex items-center gap-2">
+                    <span className="flex items-center gap-2 text-xs sm:text-sm">
                       <CalendarDays className="h-4 w-4" />
                       Bloquear Horários
                     </span>
                     {blockPanelOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="bottom" className="h-[85vh] overflow-y-auto">
+                <SheetContent side="bottom" className="h-[90vh] overflow-y-auto p-3 sm:p-6">
                   <BlockSchedulePanel 
                     barbershopId={barbershop!.id} 
                     selectedBarberId={selectedBarber}
@@ -438,6 +424,27 @@ const Dashboard = () => {
                   />
                 </SheetContent>
               </Sheet>
+            </div>
+
+            {/* Layout Desktop com calendário e painel lateral */}
+            <div className="flex-1 flex flex-col xl:flex-row gap-4 min-h-0">
+              {/* Calendário Principal */}
+              <div className="flex-1 min-w-0 min-h-0 flex flex-col">
+                <BarberScheduleCalendar 
+                  barbershopId={barbershop!.id} 
+                  barberIdFilter={selectedBarber}
+                  onRefreshRef={calendarRefreshRef}
+                />
+              </div>
+              
+              {/* Painel de Bloqueio - Desktop (fixo na lateral) */}
+              <div className="hidden xl:block w-72 2xl:w-80 flex-shrink-0 sticky top-0 self-start max-h-[calc(100vh-180px)] overflow-y-auto">
+                <BlockSchedulePanel 
+                  barbershopId={barbershop!.id} 
+                  selectedBarberId={selectedBarber}
+                  onBlockSuccess={handleBlockSuccess}
+                />
+              </div>
             </div>
           </div>
         );
@@ -482,21 +489,22 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header Fixo - Simplificado com seletor de barbeiro */}
+      {/* Header Fixo - Com Logo, Seletor de Barbeiro e Área de Perfil */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-        <div className="container mx-auto px-4 py-2">
-          <div className="flex items-center justify-between gap-4">
+        <div className="w-full px-2 sm:px-4 py-2">
+          <div className="flex items-center justify-between gap-2 sm:gap-4">
             {/* Logo */}
             <a href="/" className="flex items-center gap-2 shrink-0">
-              <img src="/placeholder.svg" alt="Logo" className="h-8 w-8" />
+              <img src={barber360Logo} alt="Barber360" className="h-8 w-8 sm:h-9 sm:w-9" />
+              <span className="font-semibold text-sm sm:text-base hidden sm:inline">Barber360</span>
             </a>
 
             {/* Seletor de Barbeiro no Header (quando na aba de agenda) */}
             {barbershop && currentTab === 'bookings' && barbers.length > 0 && (
-              <div className="flex-1 max-w-[250px]">
+              <div className="flex-1 max-w-[120px] sm:max-w-[200px] lg:max-w-[250px]">
                 <Select value={selectedBarber} onValueChange={setSelectedBarber}>
-                  <SelectTrigger className="h-9 text-sm">
-                    <SelectValue placeholder="Selecione o barbeiro" />
+                  <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm">
+                    <SelectValue placeholder="Barbeiro" />
                   </SelectTrigger>
                   <SelectContent>
                     {barbers.map((barber) => (
@@ -509,15 +517,35 @@ const Dashboard = () => {
               </div>
             )}
 
-            {/* Ajuda e Perfil */}
-            <div className="flex items-center gap-2">
-              <a href="#" className="text-sm text-foreground hover:text-primary transition-colors hidden sm:inline">
-                Ajuda
-              </a>
+            {/* Área de Perfil com Dropdown */}
+            <div className="flex items-center gap-1 sm:gap-2">
               {user && (
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <Users className="h-4 w-4" />
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9 rounded-full">
+                      <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
+                        <AvatarFallback className="text-xs sm:text-sm">
+                          {user.email?.charAt(0).toUpperCase() || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-48 sm:w-56" align="end" forceMount>
+                    <DropdownMenuItem onClick={() => navigate('/perfil')}>
+                      <UserIcon className="mr-2 h-4 w-4" />
+                      <span>Perfil</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <SettingsIcon className="mr-2 h-4 w-4" />
+                      <span>Configurações</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={signOut}>
+                      <LogOutIcon className="mr-2 h-4 w-4" />
+                      <span>Sair</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
             </div>
           </div>
