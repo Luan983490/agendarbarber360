@@ -545,14 +545,14 @@ const Dashboard = () => {
                       className="cursor-pointer"
                       onSelect={(e) => {
                         e.preventDefault();
-                        navigate('/profile');
+                        navigate('/perfil?tab=security');
                       }}
                     >
                       <SettingsIcon className="mr-2 h-4 w-4" />
                       <span>Configurações</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       className="cursor-pointer text-destructive focus:text-destructive"
                       onSelect={(e) => {
                         e.preventDefault();

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -32,6 +32,7 @@ interface Profile {
 
 const Profile = () => {
   const { user, signOut, loading: authLoading } = useAuth();
+  const location = useLocation();
   const [profile, setProfile] = useState<Profile>({
     display_name: '',
     phone: '',
@@ -50,6 +51,13 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const tab = new URLSearchParams(location.search).get('tab');
+    if (tab === 'data' || tab === 'address' || tab === 'security' || tab === 'access') {
+      setActiveTab(tab);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     if (user) {
