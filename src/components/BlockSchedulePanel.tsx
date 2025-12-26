@@ -179,24 +179,24 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
   };
 
   return (
-    <Card className="flex flex-col h-full max-h-full">
-      <CardHeader className="pb-1 p-2 sm:p-3">
-        <CardTitle className="flex items-center gap-2 text-xs sm:text-sm">
-          <Ban className="h-3.5 w-3.5" />
+    <Card className="flex flex-col h-full">
+      <CardHeader className="pb-2 p-3 sm:p-4">
+        <CardTitle className="flex items-center gap-2 text-sm">
+          <Ban className="h-4 w-4" />
           Bloquear Horários
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col space-y-2 overflow-y-auto p-2 sm:p-3 pt-0">
+      <CardContent className="flex-1 flex flex-col space-y-3 overflow-y-auto p-3 sm:p-4 pt-0">
         {/* Seletor de Profissional */}
-        <div className="space-y-1">
-          <Label className="text-[10px] sm:text-xs">Profissional</Label>
+        <div className="space-y-1.5">
+          <Label className="text-xs">Profissional</Label>
           <Select value={barberId} onValueChange={setBarberId}>
-            <SelectTrigger className="h-7 text-[10px] sm:text-xs">
+            <SelectTrigger className="h-9 text-sm">
               <SelectValue placeholder="Selecione" />
             </SelectTrigger>
             <SelectContent>
               {barbers.map((barber) => (
-                <SelectItem key={barber.id} value={barber.id} className="text-xs">
+                <SelectItem key={barber.id} value={barber.id}>
                   {barber.name}
                 </SelectItem>
               ))}
@@ -204,14 +204,14 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
           </Select>
         </div>
 
-        {/* Calendário - Compacto */}
+        {/* Calendário */}
         <div className="flex justify-center">
           <Calendar
             mode="single"
             selected={undefined}
             onSelect={handleDateSelect}
             locale={ptBR}
-            className="rounded-md border pointer-events-auto scale-[0.8] origin-top -my-3"
+            className="rounded-md border pointer-events-auto"
             modifiers={modifiers}
             modifiersStyles={modifiersStyles}
             disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
@@ -220,21 +220,21 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
 
         {/* Dias Selecionados */}
         {selectedDates.length > 0 && (
-          <div className="space-y-1">
-            <Label className="text-[10px] sm:text-xs">Selecionados ({selectedDates.length})</Label>
-            <div className="flex flex-wrap gap-0.5 max-h-12 overflow-y-auto">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Selecionados ({selectedDates.length})</Label>
+            <div className="flex flex-wrap gap-1 max-h-16 overflow-y-auto">
               {selectedDates.sort((a, b) => a.getTime() - b.getTime()).map((date) => (
                 <Badge 
                   key={format(date, 'yyyy-MM-dd')}
                   variant="secondary"
-                  className="flex items-center gap-0.5 text-[9px] py-0 px-1"
+                  className="flex items-center gap-1 text-xs"
                 >
                   {format(date, 'dd/MM', { locale: ptBR })}
                   <button
                     onClick={() => removeDate(date)}
                     className="hover:text-destructive"
                   >
-                    <X className="h-2 w-2" />
+                    <X className="h-3 w-3" />
                   </button>
                 </Badge>
               ))}
@@ -243,18 +243,18 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
         )}
 
         {/* Tipo de Bloqueio */}
-        <div className="space-y-1">
-          <Label className="text-[10px] sm:text-xs flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            Tipo
+        <div className="space-y-1.5">
+          <Label className="text-xs flex items-center gap-1">
+            <Clock className="h-3.5 w-3.5" />
+            Tipo de Bloqueio
           </Label>
-          <div className="grid grid-cols-2 gap-1">
+          <div className="grid grid-cols-2 gap-2">
             <Button
               type="button"
               variant={blockMode === 'full-day' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setBlockMode('full-day')}
-              className="text-[9px] sm:text-[10px] h-6"
+              className="text-xs h-8"
             >
               Dia Inteiro
             </Button>
@@ -263,40 +263,40 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
               variant={blockMode === 'specific-times' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setBlockMode('specific-times')}
-              className="text-[9px] sm:text-[10px] h-6"
+              className="text-xs h-8"
             >
-              Horário
+              Horário Específico
             </Button>
           </div>
         </div>
 
         {/* Horários (se modo específico) */}
         {blockMode === 'specific-times' && (
-          <div className="grid grid-cols-2 gap-1">
-            <div className="space-y-0.5">
-              <Label className="text-[9px] text-muted-foreground">Início</Label>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Início</Label>
               <Select value={startTime} onValueChange={setStartTime}>
-                <SelectTrigger className="h-6 text-[10px]">
+                <SelectTrigger className="h-9 text-sm">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="max-h-40">
+                <SelectContent className="max-h-48">
                   {WORK_HOURS.slice(0, -1).map((time) => (
-                    <SelectItem key={time} value={time} className="text-xs">
+                    <SelectItem key={time} value={time}>
                       {time}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-0.5">
-              <Label className="text-[9px] text-muted-foreground">Fim</Label>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Fim</Label>
               <Select value={endTime} onValueChange={setEndTime}>
-                <SelectTrigger className="h-6 text-[10px]">
+                <SelectTrigger className="h-9 text-sm">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="max-h-40">
+                <SelectContent className="max-h-48">
                   {WORK_HOURS.slice(1).map((time) => (
-                    <SelectItem key={time} value={time} className="text-xs">
+                    <SelectItem key={time} value={time}>
                       {time}
                     </SelectItem>
                   ))}
@@ -307,14 +307,14 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
         )}
 
         {/* Motivo */}
-        <div className="space-y-0.5">
-          <Label className="text-[10px] sm:text-xs">Motivo (opcional)</Label>
+        <div className="space-y-1">
+          <Label className="text-xs">Motivo (opcional)</Label>
           <Textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="Ex: Férias..."
-            rows={1}
-            className="text-[10px] sm:text-xs resize-none min-h-[28px]"
+            placeholder="Ex: Férias, folga, evento..."
+            rows={2}
+            className="text-sm resize-none"
           />
         </div>
 
@@ -322,9 +322,9 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
         <Button
           onClick={handleBlock}
           disabled={loading || selectedDates.length === 0 || !barberId}
-          className="w-full bg-destructive hover:bg-destructive/90 text-[10px] sm:text-xs h-7"
+          className="w-full bg-destructive hover:bg-destructive/90 text-sm h-9"
         >
-          <Ban className="mr-1 h-3 w-3" />
+          <Ban className="mr-2 h-4 w-4" />
           {loading ? 'Bloqueando...' : `Bloquear${selectedDates.length > 0 ? ` (${selectedDates.length})` : ''}`}
         </Button>
       </CardContent>
