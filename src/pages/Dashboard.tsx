@@ -438,7 +438,7 @@ const Dashboard = () => {
               </div>
               
               {/* Painel de Bloqueio - Desktop (fixo na lateral, não rola) */}
-              <div className="hidden xl:flex xl:flex-col w-64 2xl:w-72 flex-shrink-0 h-[calc(100vh-140px)] sticky top-0">
+              <div className="hidden xl:flex xl:flex-col w-72 2xl:w-80 flex-shrink-0 sticky top-0 self-start">
                 <BlockSchedulePanel 
                   barbershopId={barbershop!.id} 
                   selectedBarberId={selectedBarber}
@@ -533,19 +533,31 @@ const Dashboard = () => {
                   <DropdownMenuContent className="w-48 sm:w-56" align="end" sideOffset={8}>
                     <DropdownMenuItem 
                       className="cursor-pointer"
-                      onSelect={() => navigate('/perfil')}
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        navigate('/perfil');
+                      }}
                     >
                       <UserIcon className="mr-2 h-4 w-4" />
                       <span>Perfil</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer">
+                    <DropdownMenuItem 
+                      className="cursor-pointer"
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        navigate('/profile');
+                      }}
+                    >
                       <SettingsIcon className="mr-2 h-4 w-4" />
                       <span>Configurações</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
                       className="cursor-pointer text-destructive focus:text-destructive"
-                      onSelect={() => signOut()}
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        signOut();
+                      }}
                     >
                       <LogOutIcon className="mr-2 h-4 w-4" />
                       <span>Sair</span>
