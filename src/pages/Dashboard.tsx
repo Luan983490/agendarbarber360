@@ -437,8 +437,8 @@ const Dashboard = () => {
                 />
               </div>
               
-              {/* Painel de Bloqueio - Desktop (fixo na lateral) */}
-              <div className="hidden xl:block w-72 2xl:w-80 flex-shrink-0 sticky top-0 self-start max-h-[calc(100vh-180px)] overflow-y-auto">
+              {/* Painel de Bloqueio - Desktop (fixo na lateral, não rola) */}
+              <div className="hidden xl:flex xl:flex-col w-64 2xl:w-72 flex-shrink-0 h-[calc(100vh-140px)] sticky top-0">
                 <BlockSchedulePanel 
                   barbershopId={barbershop!.id} 
                   selectedBarberId={selectedBarber}
@@ -520,27 +520,33 @@ const Dashboard = () => {
             {/* Área de Perfil com Dropdown */}
             <div className="flex items-center gap-1 sm:gap-2">
               {user && (
-                <DropdownMenu>
+                <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9 rounded-full">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                       <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
-                        <AvatarFallback className="text-xs sm:text-sm">
+                        <AvatarFallback className="text-xs sm:text-sm bg-primary text-primary-foreground">
                           {user.email?.charAt(0).toUpperCase() || 'U'}
                         </AvatarFallback>
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-48 sm:w-56" align="end" forceMount>
-                    <DropdownMenuItem onClick={() => navigate('/perfil')}>
+                  <DropdownMenuContent className="w-48 sm:w-56" align="end" sideOffset={8}>
+                    <DropdownMenuItem 
+                      className="cursor-pointer"
+                      onSelect={() => navigate('/perfil')}
+                    >
                       <UserIcon className="mr-2 h-4 w-4" />
                       <span>Perfil</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer">
                       <SettingsIcon className="mr-2 h-4 w-4" />
                       <span>Configurações</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={signOut}>
+                    <DropdownMenuItem 
+                      className="cursor-pointer text-destructive focus:text-destructive"
+                      onSelect={() => signOut()}
+                    >
                       <LogOutIcon className="mr-2 h-4 w-4" />
                       <span>Sair</span>
                     </DropdownMenuItem>

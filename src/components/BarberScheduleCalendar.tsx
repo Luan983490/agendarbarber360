@@ -695,13 +695,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
   return (
     <div className="flex flex-col h-full">
       <Card className="flex flex-col h-full">
-        <CardHeader className="flex-shrink-0">
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Calendário de Agenda
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col flex-1 space-y-4 overflow-hidden">
+        <CardContent className="flex flex-col flex-1 space-y-4 overflow-hidden p-3 sm:p-4 lg:p-6">
           {/* Seletor de Barbeiro - apenas para donos/admins que não estão em modo barbeiro */}
           {!isBarberView && role === 'owner' && barbers.length > 0 && (
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 flex-shrink-0">

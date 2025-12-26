@@ -179,32 +179,24 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
   };
 
   return (
-    <Card className="h-full flex flex-col">
-      <CardHeader className="pb-2 sm:pb-3 p-3 sm:p-6">
-        <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-          <Ban className="h-4 w-4" />
+    <Card className="flex flex-col h-full max-h-full">
+      <CardHeader className="pb-1 p-2 sm:p-3">
+        <CardTitle className="flex items-center gap-2 text-xs sm:text-sm">
+          <Ban className="h-3.5 w-3.5" />
           Bloquear Horários
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col space-y-3 sm:space-y-4 overflow-y-auto p-3 sm:p-6 pt-0">
-        {/* Dica de uso */}
-        <div className="flex items-start gap-2 p-2 sm:p-3 bg-muted/50 rounded-lg text-[10px] sm:text-xs">
-          <Info className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground shrink-0 mt-0.5" />
-          <p className="text-muted-foreground">
-            Clique nos dias do calendário para selecionar. Você pode selecionar vários dias de uma vez.
-          </p>
-        </div>
-
+      <CardContent className="flex-1 flex flex-col space-y-2 overflow-y-auto p-2 sm:p-3 pt-0">
         {/* Seletor de Profissional */}
-        <div className="space-y-1.5 sm:space-y-2">
-          <Label className="text-xs sm:text-sm">Profissional</Label>
+        <div className="space-y-1">
+          <Label className="text-[10px] sm:text-xs">Profissional</Label>
           <Select value={barberId} onValueChange={setBarberId}>
-            <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm">
+            <SelectTrigger className="h-7 text-[10px] sm:text-xs">
               <SelectValue placeholder="Selecione" />
             </SelectTrigger>
             <SelectContent>
               {barbers.map((barber) => (
-                <SelectItem key={barber.id} value={barber.id} className="text-xs sm:text-sm">
+                <SelectItem key={barber.id} value={barber.id} className="text-xs">
                   {barber.name}
                 </SelectItem>
               ))}
@@ -212,43 +204,37 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
           </Select>
         </div>
 
-        {/* Calendário */}
-        <div className="space-y-1.5 sm:space-y-2">
-          <Label className="text-xs sm:text-sm flex items-center gap-2">
-            <CalendarIcon className="h-3 w-3 sm:h-4 sm:w-4" />
-            Selecionar Dias
-          </Label>
-          <div className="flex justify-center">
-            <Calendar
-              mode="single"
-              selected={undefined}
-              onSelect={handleDateSelect}
-              locale={ptBR}
-              className="rounded-md border pointer-events-auto scale-90 sm:scale-100 origin-top"
-              modifiers={modifiers}
-              modifiersStyles={modifiersStyles}
-              disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-            />
-          </div>
+        {/* Calendário - Compacto */}
+        <div className="flex justify-center">
+          <Calendar
+            mode="single"
+            selected={undefined}
+            onSelect={handleDateSelect}
+            locale={ptBR}
+            className="rounded-md border pointer-events-auto scale-[0.8] origin-top -my-3"
+            modifiers={modifiers}
+            modifiersStyles={modifiersStyles}
+            disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+          />
         </div>
 
         {/* Dias Selecionados */}
         {selectedDates.length > 0 && (
-          <div className="space-y-1.5 sm:space-y-2">
-            <Label className="text-xs sm:text-sm">Dias selecionados ({selectedDates.length})</Label>
-            <div className="flex flex-wrap gap-1 max-h-16 sm:max-h-20 overflow-y-auto">
+          <div className="space-y-1">
+            <Label className="text-[10px] sm:text-xs">Selecionados ({selectedDates.length})</Label>
+            <div className="flex flex-wrap gap-0.5 max-h-12 overflow-y-auto">
               {selectedDates.sort((a, b) => a.getTime() - b.getTime()).map((date) => (
                 <Badge 
                   key={format(date, 'yyyy-MM-dd')}
                   variant="secondary"
-                  className="flex items-center gap-1 text-[10px] sm:text-xs py-0.5 px-1.5 sm:py-1 sm:px-2"
+                  className="flex items-center gap-0.5 text-[9px] py-0 px-1"
                 >
                   {format(date, 'dd/MM', { locale: ptBR })}
                   <button
                     onClick={() => removeDate(date)}
-                    className="ml-0.5 hover:text-destructive"
+                    className="hover:text-destructive"
                   >
-                    <X className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                    <X className="h-2 w-2" />
                   </button>
                 </Badge>
               ))}
@@ -257,18 +243,18 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
         )}
 
         {/* Tipo de Bloqueio */}
-        <div className="space-y-2 sm:space-y-3">
-          <Label className="text-xs sm:text-sm flex items-center gap-2">
-            <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
-            Tipo de Bloqueio
+        <div className="space-y-1">
+          <Label className="text-[10px] sm:text-xs flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            Tipo
           </Label>
-          <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
+          <div className="grid grid-cols-2 gap-1">
             <Button
               type="button"
               variant={blockMode === 'full-day' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setBlockMode('full-day')}
-              className="text-[10px] sm:text-xs h-8"
+              className="text-[9px] sm:text-[10px] h-6"
             >
               Dia Inteiro
             </Button>
@@ -277,23 +263,23 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
               variant={blockMode === 'specific-times' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setBlockMode('specific-times')}
-              className="text-[10px] sm:text-xs h-8"
+              className="text-[9px] sm:text-[10px] h-6"
             >
-              Horário Específico
+              Horário
             </Button>
           </div>
         </div>
 
         {/* Horários (se modo específico) */}
         {blockMode === 'specific-times' && (
-          <div className="grid grid-cols-2 gap-2 sm:gap-3">
-            <div className="space-y-1">
-              <Label className="text-[10px] sm:text-xs text-muted-foreground">Início</Label>
+          <div className="grid grid-cols-2 gap-1">
+            <div className="space-y-0.5">
+              <Label className="text-[9px] text-muted-foreground">Início</Label>
               <Select value={startTime} onValueChange={setStartTime}>
-                <SelectTrigger className="h-8 text-xs">
+                <SelectTrigger className="h-6 text-[10px]">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="max-h-48">
+                <SelectContent className="max-h-40">
                   {WORK_HOURS.slice(0, -1).map((time) => (
                     <SelectItem key={time} value={time} className="text-xs">
                       {time}
@@ -302,13 +288,13 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1">
-              <Label className="text-[10px] sm:text-xs text-muted-foreground">Fim</Label>
+            <div className="space-y-0.5">
+              <Label className="text-[9px] text-muted-foreground">Fim</Label>
               <Select value={endTime} onValueChange={setEndTime}>
-                <SelectTrigger className="h-8 text-xs">
+                <SelectTrigger className="h-6 text-[10px]">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="max-h-48">
+                <SelectContent className="max-h-40">
                   {WORK_HOURS.slice(1).map((time) => (
                     <SelectItem key={time} value={time} className="text-xs">
                       {time}
@@ -321,14 +307,14 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
         )}
 
         {/* Motivo */}
-        <div className="space-y-1.5 sm:space-y-2">
-          <Label className="text-xs sm:text-sm">Motivo (opcional)</Label>
+        <div className="space-y-0.5">
+          <Label className="text-[10px] sm:text-xs">Motivo (opcional)</Label>
           <Textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="Ex: Férias, consulta médica..."
-            rows={2}
-            className="text-xs sm:text-sm resize-none"
+            placeholder="Ex: Férias..."
+            rows={1}
+            className="text-[10px] sm:text-xs resize-none min-h-[28px]"
           />
         </div>
 
@@ -336,10 +322,10 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
         <Button
           onClick={handleBlock}
           disabled={loading || selectedDates.length === 0 || !barberId}
-          className="w-full bg-destructive hover:bg-destructive/90 text-xs sm:text-sm h-9 sm:h-10"
+          className="w-full bg-destructive hover:bg-destructive/90 text-[10px] sm:text-xs h-7"
         >
-          <Ban className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
-          {loading ? 'Bloqueando...' : `Bloquear ${selectedDates.length > 0 ? `(${selectedDates.length} dia${selectedDates.length > 1 ? 's' : ''})` : ''}`}
+          <Ban className="mr-1 h-3 w-3" />
+          {loading ? 'Bloqueando...' : `Bloquear${selectedDates.length > 0 ? ` (${selectedDates.length})` : ''}`}
         </Button>
       </CardContent>
     </Card>
