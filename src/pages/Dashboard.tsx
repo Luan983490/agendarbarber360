@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Scissors, Calendar, Package, Store, Users, DollarSign, Star, Edit, CalendarDays, AlertCircle, ChevronDown, ChevronUp, User as UserIcon, Settings as SettingsIcon, LogOut as LogOutIcon } from 'lucide-react';
+import { Scissors, Calendar, Package, Store, Users, DollarSign, Star, Edit, CalendarDays, AlertCircle, ChevronDown, ChevronUp, User as UserIcon, Settings as SettingsIcon, LogOut as LogOutIcon, Menu } from 'lucide-react';
 import BarbershopSetup from '@/components/BarbershopSetup';
 import BarbershopEdit from '@/components/BarbershopEdit';
 import ServiceForm from '@/components/ServiceForm';
@@ -21,7 +21,7 @@ import { LoyaltyManagement } from '@/components/LoyaltyManagement';
 import { StaffManagement } from '@/components/StaffManagement';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { SidebarProvider } from '@/components/ui/sidebar';
+import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 import { DashboardSidebar } from '@/components/DashboardSidebar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -487,24 +487,39 @@ const Dashboard = () => {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header Fixo - Com Logo, Seletor de Barbeiro e Área de Perfil */}
+  // Componente Header que usa useSidebar
+  const DashboardHeader = () => {
+    const { toggleSidebar, open } = useSidebar();
+
+    return (
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
         <div className="w-full px-2 sm:px-4 py-2">
           <div className="flex items-center justify-between gap-2 sm:gap-4">
-            {/* Logo */}
-            <a href="/" className="flex items-center gap-2 shrink-0">
-              <img src={barber360Logo} alt="Barber360" className="h-8 w-8 sm:h-9 sm:w-9" />
-              <span className="font-semibold text-sm sm:text-base hidden sm:inline">Barber360</span>
-            </a>
+            {/* Menu Toggle + Logo */}
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+              {/* Ícone Menu para recolher/abrir sidebar */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 sm:h-9 sm:w-9"
+                onClick={toggleSidebar}
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+
+              <a href="/" className="flex items-center gap-2">
+                <img src={barber360Logo} alt="Barber360" className="h-8 w-8 sm:h-9 sm:w-9" />
+                <span className="font-semibold text-sm sm:text-base hidden sm:inline">Barber360</span>
+              </a>
+            </div>
 
             {/* Seletor de Barbeiro no Header (quando na aba de agenda) */}
             {barbershop && currentTab === 'bookings' && barbers.length > 0 && (
-              <div className="flex-1 max-w-[120px] sm:max-w-[200px] lg:max-w-[250px]">
+              <div className="flex items-center gap-2 flex-1 justify-center max-w-xs sm:max-w-sm">
+                <span className="text-sm font-medium text-muted-foreground hidden sm:inline">Profissionais:</span>
                 <Select value={selectedBarber} onValueChange={setSelectedBarber}>
-                  <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm">
-                    <SelectValue placeholder="Barbeiro" />
+                  <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm w-[120px] sm:w-[160px] bg-background">
+                    <SelectValue placeholder="Selecionar" />
                   </SelectTrigger>
                   <SelectContent>
                     {barbers.map((barber) => (
@@ -530,7 +545,12 @@ const Dashboard = () => {
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-48 sm:w-56" align="end" sideOffset={8}>
+                  <DropdownMenuContent align="end" className="w-56 bg-popover">
+                    <div className="px-2 py-1.5 text-xs sm:text-sm">
+                      <p className="font-medium truncate">{profile?.display_name || 'Usuário'}</p>
+                      <p className="text-muted-foreground truncate text-xs">{user.email}</p>
+                    </div>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem 
                       className="cursor-pointer"
                       onSelect={(e) => {
@@ -569,8 +589,70 @@ const Dashboard = () => {
           </div>
         </div>
       </header>
-      
-      {!barbershop ? (
+    );
+  };
+
+  // Header simples para quando não tem barbearia
+  const SimpleHeader = () => (
+    <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+      <div className="w-full px-2 sm:px-4 py-2">
+        <div className="flex items-center justify-between gap-2 sm:gap-4">
+          <a href="/" className="flex items-center gap-2 shrink-0">
+            <img src={barber360Logo} alt="Barber360" className="h-8 w-8 sm:h-9 sm:w-9" />
+            <span className="font-semibold text-sm sm:text-base hidden sm:inline">Barber360</span>
+          </a>
+          <div className="flex items-center gap-1 sm:gap-2">
+            {user && (
+              <DropdownMenu modal={false}>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                    <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
+                      <AvatarFallback className="text-xs sm:text-sm bg-primary text-primary-foreground">
+                        {user.email?.charAt(0).toUpperCase() || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 bg-popover">
+                  <div className="px-2 py-1.5 text-xs sm:text-sm">
+                    <p className="font-medium truncate">{profile?.display_name || 'Usuário'}</p>
+                    <p className="text-muted-foreground truncate text-xs">{user.email}</p>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    className="cursor-pointer"
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      navigate('/perfil');
+                    }}
+                  >
+                    <UserIcon className="mr-2 h-4 w-4" />
+                    <span>Perfil</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="cursor-pointer text-destructive focus:text-destructive"
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      signOut();
+                    }}
+                  >
+                    <LogOutIcon className="mr-2 h-4 w-4" />
+                    <span>Sair</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+
+  if (!barbershop) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <SimpleHeader />
         <main className="container mx-auto px-4 py-8 mt-14">
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">Dashboard da Barbearia</h1>
@@ -580,37 +662,43 @@ const Dashboard = () => {
           </div>
           <BarbershopSetup onBarbershopCreated={handleBarbershopCreated} />
         </main>
-      ) : (
-        <SidebarProvider>
-          <div className="flex min-h-screen w-full pt-14">
-            {/* Sidebar Fixo */}
-            <div className="sticky top-14 h-[calc(100vh-56px)] z-40">
-              <DashboardSidebar currentTab={currentTab} onTabChange={setCurrentTab} />
-            </div>
-            
-            <main className="flex-1 flex flex-col w-full min-h-[calc(100vh-56px)] min-w-0">
-              {/* Conteúdo com scroll */}
-              <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 lg:p-6">
-                {subscription && subscription.plan_type === 'teste_gratis' && subscription.days_remaining <= 2 && (
-                  <Alert variant="destructive" className="mb-4 sm:mb-6">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle className="text-sm">Teste Gratuito Encerrando</AlertTitle>
-                    <AlertDescription className="text-xs sm:text-sm">
-                      Seu teste gratuito termina em {subscription.days_remaining} dia(s). 
-                      Faça upgrade para continuar usando todas as funcionalidades.
-                    </AlertDescription>
-                  </Alert>
-                )}
+      </div>
+    );
+  }
 
-                <div className="h-full">
-                  {renderContent()}
-                </div>
-              </div>
-            </main>
+  return (
+    <SidebarProvider>
+      <div className="min-h-screen bg-background flex flex-col w-full">
+        <DashboardHeader />
+        
+        <div className="flex min-h-screen w-full pt-14">
+          {/* Sidebar Fixo */}
+          <div className="sticky top-14 h-[calc(100vh-56px)] z-40">
+            <DashboardSidebar currentTab={currentTab} onTabChange={setCurrentTab} />
           </div>
-        </SidebarProvider>
-      )}
-    </div>
+          
+          <main className="flex-1 flex flex-col w-full min-h-[calc(100vh-56px)] min-w-0">
+            {/* Conteúdo com scroll */}
+            <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 lg:p-6">
+              {subscription && subscription.plan_type === 'teste_gratis' && subscription.days_remaining <= 2 && (
+                <Alert variant="destructive" className="mb-4 sm:mb-6">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle className="text-sm">Teste Gratuito Encerrando</AlertTitle>
+                  <AlertDescription className="text-xs sm:text-sm">
+                    Seu teste gratuito termina em {subscription.days_remaining} dia(s). 
+                    Faça upgrade para continuar usando todas as funcionalidades.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <div className="h-full">
+                {renderContent()}
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
   );
 };
 
