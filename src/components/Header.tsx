@@ -3,12 +3,16 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Menu, User, Settings, LogOut, Calendar, Store, History, Package, CreditCard, Heart, CalendarDays } from "lucide-react";
+import { Menu, User, Settings, LogOut, Calendar, Store, History, Package, CreditCard, Heart, CalendarDays, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserAccess } from "@/hooks/useUserAccess";
 import barber360Logo from "@/assets/barber360-logo.png";
 
-export const Header = () => {
+interface HeaderProps {
+  showBackButton?: boolean;
+}
+
+export const Header = ({ showBackButton = false }: HeaderProps) => {
   const { user, signOut } = useAuth();
   const { role } = useUserAccess();
   const navigate = useNavigate();
@@ -24,55 +28,106 @@ export const Header = () => {
       navigate('/my-bookings');
     }
   };
-  return <div className="w-full">
+
+  const handleBack = () => {
+    if (role === 'owner') {
+      navigate('/dashboard');
+    } else if (role === 'barber') {
+      navigate('/barber/hoje');
+    } else {
+      navigate(-1);
+    }
+  };
+
+  return (
+    <div className="w-full">
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            {/* Logo */}
-            <Link to="/" className="flex items-center gap-2">
-              <img src={barber360Logo} alt="Barber360" className="h-10 w-10" />
-              
-            </Link>
+        <div className="w-full px-2 sm:px-4 py-2">
+          <div className="flex items-center justify-between gap-2 sm:gap-4">
+            {/* Left side - Back button or Logo */}
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+              {showBackButton && user && (role === 'owner' || role === 'barber') && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 sm:h-9 sm:w-9"
+                  onClick={handleBack}
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+              )}
 
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-6">
-              <a href="#" className="text-foreground hover:text-primary transition-colors">
-                Encontrar Barbearias
-              </a>
-              <a href="#" className="text-foreground hover:text-primary transition-colors">
-                Para Empresas
-              </a>
-              <a href="#" className="text-foreground hover:text-primary transition-colors">
-                Ajuda
-              </a>
-            </nav>
+              <Link to="/" className="flex items-center gap-2">
+                <img src={barber360Logo} alt="Barber360" className="h-8 w-8 sm:h-9 sm:w-9" />
+                <span className="font-semibold text-sm sm:text-base hidden sm:inline">Barber360</span>
+              </Link>
+            </div>
 
-            {/* Desktop Actions */}
-            <div className="hidden md:flex items-center gap-3">
+            {/* Desktop Navigation - Hidden for logged in owners/barbers */}
+            {(!user || (role !== 'owner' && role !== 'barber')) && (
+              <nav className="hidden md:flex items-center gap-6">
+                <a href="#" className="text-sm text-foreground hover:text-primary transition-colors">
+                  Encontrar Barbearias
+                </a>
+                <a href="#" className="text-sm text-foreground hover:text-primary transition-colors">
+                  Para Empresas
+                </a>
+                <a href="#" className="text-sm text-foreground hover:text-primary transition-colors">
+                  Ajuda
+                </a>
+              </nav>
+            )}
+
+            {/* Right side - User actions */}
+            <div className="flex items-center gap-1 sm:gap-2">
               {user ? (
-                <DropdownMenu>
+                <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                      <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
+                        <AvatarFallback className="text-xs sm:text-sm bg-primary text-primary-foreground">
                           {user.email?.charAt(0).toUpperCase() || 'U'}
                         </AvatarFallback>
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuContent className="w-56 bg-popover" align="end" forceMount>
+                    <div className="px-2 py-1.5 text-xs sm:text-sm">
+                      <p className="font-medium truncate">{user.email?.split('@')[0] || 'Usuário'}</p>
+                      <p className="text-muted-foreground truncate text-xs">{user.email}</p>
+                    </div>
+                    <DropdownMenuSeparator />
+                    
                     {role === 'owner' ? (
-                      <DropdownMenuItem onClick={handleDashboard}>
+                      <DropdownMenuItem 
+                        className="cursor-pointer"
+                        onSelect={(e) => {
+                          e.preventDefault();
+                          handleDashboard();
+                        }}
+                      >
                         <Store className="mr-2 h-4 w-4" />
                         <span>Dashboard</span>
                       </DropdownMenuItem>
                     ) : role === 'barber' ? (
                       <>
-                        <DropdownMenuItem onClick={() => navigate('/barber/hoje')}>
+                        <DropdownMenuItem 
+                          className="cursor-pointer"
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            navigate('/barber/hoje');
+                          }}
+                        >
                           <Calendar className="mr-2 h-4 w-4" />
                           <span>Hoje</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate('/barber/agenda')}>
+                        <DropdownMenuItem 
+                          className="cursor-pointer"
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            navigate('/barber/agenda');
+                          }}
+                        >
                           <CalendarDays className="mr-2 h-4 w-4" />
                           <span>Minha Agenda</span>
                         </DropdownMenuItem>
@@ -80,27 +135,63 @@ export const Header = () => {
                       </>
                     ) : (
                       <>
-                        <DropdownMenuItem onClick={handleDashboard}>
+                        <DropdownMenuItem 
+                          className="cursor-pointer"
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            handleDashboard();
+                          }}
+                        >
                           <Calendar className="mr-2 h-4 w-4" />
                           <span>Meus Agendamentos</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate('/historico')}>
+                        <DropdownMenuItem 
+                          className="cursor-pointer"
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            navigate('/historico');
+                          }}
+                        >
                           <History className="mr-2 h-4 w-4" />
                           <span>Histórico</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate('/pacotes')}>
+                        <DropdownMenuItem 
+                          className="cursor-pointer"
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            navigate('/pacotes');
+                          }}
+                        >
                           <Package className="mr-2 h-4 w-4" />
                           <span>Meus Pacotes</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate('/assinaturas')}>
+                        <DropdownMenuItem 
+                          className="cursor-pointer"
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            navigate('/assinaturas');
+                          }}
+                        >
                           <Calendar className="mr-2 h-4 w-4" />
                           <span>Minhas Assinaturas</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate('/cartoes')}>
+                        <DropdownMenuItem 
+                          className="cursor-pointer"
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            navigate('/cartoes');
+                          }}
+                        >
                           <CreditCard className="mr-2 h-4 w-4" />
                           <span>Meus Cartões</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate('/favoritos')}>
+                        <DropdownMenuItem 
+                          className="cursor-pointer"
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            navigate('/favoritos');
+                          }}
+                        >
                           <Heart className="mr-2 h-4 w-4" />
                           <span>Favoritos</span>
                         </DropdownMenuItem>
@@ -108,18 +199,35 @@ export const Header = () => {
                       </>
                     )}
 
-                    {role !== 'barber' && (
-                      <DropdownMenuItem onClick={() => navigate('/perfil')}>
-                        <User className="mr-2 h-4 w-4" />
-                        <span>Perfil</span>
-                      </DropdownMenuItem>
-                    )}
+                    <DropdownMenuItem 
+                      className="cursor-pointer"
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        navigate('/perfil');
+                      }}
+                    >
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Perfil</span>
+                    </DropdownMenuItem>
 
-                    <DropdownMenuItem>
+                    <DropdownMenuItem 
+                      className="cursor-pointer"
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        navigate('/perfil?tab=security');
+                      }}
+                    >
                       <Settings className="mr-2 h-4 w-4" />
                       <span>Configurações</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={signOut}>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      className="cursor-pointer text-destructive focus:text-destructive"
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        signOut();
+                      }}
+                    >
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Sair</span>
                     </DropdownMenuItem>
@@ -128,75 +236,82 @@ export const Header = () => {
               ) : (
                 <>
                   <Link to="/auth">
-                    <Button variant="outline">Entrar</Button>
+                    <Button variant="outline" size="sm" className="h-8 sm:h-9 text-xs sm:text-sm">
+                      Entrar
+                    </Button>
                   </Link>
-                  <Link to="/auth">
-                    <Button>Cadastrar-se</Button>
+                  <Link to="/auth" className="hidden sm:block">
+                    <Button size="sm" className="h-8 sm:h-9 text-xs sm:text-sm">
+                      Cadastrar-se
+                    </Button>
                   </Link>
                 </>
               )}
-            </div>
 
-            {/* Mobile Menu */}
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="icon" className="md:hidden">
-                  <Menu className="h-4 w-4" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent>
-                <div className="flex flex-col gap-4 mt-8">
-                  <a href="#" className="text-foreground hover:text-primary transition-colors">
-                    Encontrar Barbearias
-                  </a>
-                  <a href="#" className="text-foreground hover:text-primary transition-colors">
-                    Para Empresas
-                  </a>
-                  <a href="#" className="text-foreground hover:text-primary transition-colors">
-                    Ajuda
-                  </a>
-                  <div className="flex flex-col gap-3 mt-6">
-                    {user ? (
-                      <>
-                        {role === 'owner' ? (
-                          <Button variant="outline" onClick={handleDashboard}>
-                            Dashboard
-                          </Button>
-                        ) : role === 'barber' ? (
+              {/* Mobile Menu - Only for non-logged or clients */}
+              {(!user || (role !== 'owner' && role !== 'barber')) && (
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon" className="md:hidden h-8 w-8 sm:h-9 sm:w-9">
+                      <Menu className="h-5 w-5" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent>
+                    <div className="flex flex-col gap-4 mt-8">
+                      <a href="#" className="text-foreground hover:text-primary transition-colors">
+                        Encontrar Barbearias
+                      </a>
+                      <a href="#" className="text-foreground hover:text-primary transition-colors">
+                        Para Empresas
+                      </a>
+                      <a href="#" className="text-foreground hover:text-primary transition-colors">
+                        Ajuda
+                      </a>
+                      <div className="flex flex-col gap-3 mt-6">
+                        {user ? (
                           <>
-                            <Button variant="outline" onClick={() => navigate('/barber/hoje')}>
-                              Hoje
-                            </Button>
-                            <Button variant="outline" onClick={() => navigate('/barber/agenda')}>
-                              Minha Agenda
+                            {role === 'owner' ? (
+                              <Button variant="outline" onClick={handleDashboard}>
+                                Dashboard
+                              </Button>
+                            ) : role === 'barber' ? (
+                              <>
+                                <Button variant="outline" onClick={() => navigate('/barber/hoje')}>
+                                  Hoje
+                                </Button>
+                                <Button variant="outline" onClick={() => navigate('/barber/agenda')}>
+                                  Minha Agenda
+                                </Button>
+                              </>
+                            ) : (
+                              <Button variant="outline" onClick={handleDashboard}>
+                                Meus Agendamentos
+                              </Button>
+                            )}
+
+                            <Button variant="outline" onClick={signOut}>
+                              Sair
                             </Button>
                           </>
                         ) : (
-                          <Button variant="outline" onClick={handleDashboard}>
-                            Meus Agendamentos
-                          </Button>
+                          <>
+                            <Link to="/auth">
+                              <Button variant="outline" className="w-full">Entrar</Button>
+                            </Link>
+                            <Link to="/auth">
+                              <Button className="w-full">Cadastrar-se</Button>
+                            </Link>
+                          </>
                         )}
-
-                        <Button variant="outline" onClick={signOut}>
-                          Sair
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <Link to="/auth">
-                          <Button variant="outline" className="w-full">Entrar</Button>
-                        </Link>
-                        <Link to="/auth">
-                          <Button className="w-full">Cadastrar-se</Button>
-                        </Link>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </SheetContent>
-            </Sheet>
+                      </div>
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              )}
+            </div>
           </div>
         </div>
       </header>
-    </div>;
+    </div>
+  );
 };
