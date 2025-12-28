@@ -35,27 +35,42 @@ export const TimeSlot = ({
   const isContinuation = isBooked && !isBookingStart;
 
   const getSlotStyles = () => {
-    const baseBooked = type === 'booked' 
-      ? 'bg-yellow-400/25 border-yellow-400/60' 
-      : 'bg-orange-500/25 border-orange-500/60';
+    // Cores conforme solicitado:
+    // Branco = disponível
+    // Verde = agendado (com cadastro)
+    // Amarelo = agendado externo (sem cadastro)
+    // Vermelho = bloqueado
+    // Preto = fora de funcionamento/dias de folga
     
     switch (type) {
       case 'available':
-        return 'bg-success/10 hover:bg-success/20 border-success/30 cursor-pointer rounded';
+        return 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-300 dark:border-gray-600 cursor-pointer rounded';
       case 'booked':
-      case 'booked-external':
+        // Verde para agendado com cliente cadastrado
         return cn(
-          baseBooked,
-          'cursor-pointer hover:brightness-95',
+          'bg-green-500/20 border-green-500/60 text-green-900 dark:text-green-100',
+          'cursor-pointer hover:bg-green-500/30',
+          isBookingStart && !isBookingEnd && 'rounded-t border-b-0',
+          isBookingEnd && !isBookingStart && 'rounded-b border-t-0',
+          isBookingStart && isBookingEnd && 'rounded',
+          isBookingMiddle && 'rounded-none border-t-0 border-b-0'
+        );
+      case 'booked-external':
+        // Amarelo para agendado sem cadastro (externo)
+        return cn(
+          'bg-yellow-400/25 border-yellow-500/60 text-yellow-900 dark:text-yellow-100',
+          'cursor-pointer hover:bg-yellow-400/35',
           isBookingStart && !isBookingEnd && 'rounded-t border-b-0',
           isBookingEnd && !isBookingStart && 'rounded-b border-t-0',
           isBookingStart && isBookingEnd && 'rounded',
           isBookingMiddle && 'rounded-none border-t-0 border-b-0'
         );
       case 'blocked':
-        return 'bg-destructive/10 border-destructive/30 cursor-pointer rounded';
+        // Vermelho para bloqueado
+        return 'bg-red-500/20 border-red-500/50 cursor-pointer hover:bg-red-500/30 rounded';
       case 'off-hours':
-        return 'bg-muted/40 border-muted-foreground/10 cursor-not-allowed opacity-40 rounded';
+        // Preto/escuro para fora de funcionamento
+        return 'bg-gray-900 dark:bg-black border-gray-800 dark:border-gray-900 cursor-not-allowed opacity-80 rounded';
       default:
         return 'bg-muted border-border rounded';
     }
@@ -115,7 +130,7 @@ export const TimeSlot = ({
         <div className="w-full flex justify-center">
           <div className={cn(
             "w-0.5 h-2",
-            type === 'booked' ? "bg-yellow-400/50" : "bg-orange-500/50"
+            type === 'booked' ? "bg-green-500/50" : "bg-yellow-500/50"
           )} />
         </div>
       )}
@@ -138,7 +153,7 @@ export const TimeSlot = ({
         <HoverCardContent className="w-56 p-3">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
-              <User className={cn("h-3.5 w-3.5", type === 'booked-external' ? "text-orange-500" : "text-yellow-500")} />
+              <User className={cn("h-3.5 w-3.5", type === 'booked-external' ? "text-yellow-500" : "text-green-500")} />
               <p className="text-sm font-semibold">{booking.client_name}</p>
             </div>
             <p className="text-xs text-muted-foreground">{booking.service_name}</p>
