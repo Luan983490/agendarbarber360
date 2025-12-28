@@ -1125,13 +1125,14 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
               </div>
             ) : (
               /* Visualização Dia/Semana - Grade de Horários - Mobile First */
-              <div className="flex flex-col h-full">
-                {/* Cabeçalho dos dias - FIXO */}
-                <div className="overflow-x-auto -mx-2 px-2 flex-shrink-0 bg-background border-b pb-2">
-                  <div className={cn(
-                    "min-w-0",
-                    viewMode === 'week' && "min-w-[600px] sm:min-w-0"
-                  )}>
+              /* Container único com scroll horizontal para dias + horários sincronizados */
+              <div className="overflow-x-auto overflow-y-auto -mx-2 px-2">
+                <div className={cn(
+                  "min-w-0",
+                  viewMode === 'week' && "min-w-[600px] sm:min-w-0"
+                )}>
+                  {/* Cabeçalho dos dias - Dentro do scroll */}
+                  <div className="sticky top-0 bg-background z-10 pb-2 border-b">
                     <div 
                       className="grid gap-1 sm:gap-2"
                       style={{ gridTemplateColumns: `40px repeat(${displayDays.length}, 1fr)` }}
@@ -1149,43 +1150,36 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                       ))}
                     </div>
                   </div>
-                </div>
-
-                {/* Horários - COM SCROLL */}
-                <div className="overflow-x-auto overflow-y-auto -mx-2 px-2 flex-1 pt-2">
-                  <div className={cn(
-                    "min-w-0",
-                    viewMode === 'week' && "min-w-[600px] sm:min-w-0"
-                  )}>
 
                   {/* Linhas de horários */}
-                  {dynamicTimeSlots.map((time) => (
-                    <div 
-                      key={time} 
-                      className="grid gap-0.5 sm:gap-1"
-                      style={{ gridTemplateColumns: `32px repeat(${displayDays.length}, 1fr)` }}
-                    >
-                      <div className="text-[9px] sm:text-[10px] font-medium text-muted-foreground flex items-center justify-end pr-1">
-                        {time.substring(0, 5)}
+                  <div className="pt-2">
+                    {dynamicTimeSlots.map((time) => (
+                      <div 
+                        key={time} 
+                        className="grid gap-0.5 sm:gap-1"
+                        style={{ gridTemplateColumns: `40px repeat(${displayDays.length}, 1fr)` }}
+                      >
+                        <div className="text-[10px] sm:text-xs font-medium text-muted-foreground flex items-center justify-end pr-1 sticky left-0 bg-background z-5">
+                          {time.substring(0, 5)}
+                        </div>
+                        {displayDays.map((day, i) => {
+                          const slotInfo = getSlotType(day, time);
+                          return (
+                            <TimeSlot
+                              key={i}
+                              time={time}
+                              type={slotInfo.type}
+                              booking={slotInfo.booking}
+                              block={slotInfo.block}
+                              onClick={(e) => handleSlotClick(day, time, e)}
+                              isBookingStart={slotInfo.isBookingStart}
+                              isBookingMiddle={slotInfo.isBookingMiddle}
+                              isBookingEnd={slotInfo.isBookingEnd}
+                            />
+                          );
+                        })}
                       </div>
-                      {displayDays.map((day, i) => {
-                        const slotInfo = getSlotType(day, time);
-                        return (
-                          <TimeSlot
-                            key={i}
-                            time={time}
-                            type={slotInfo.type}
-                            booking={slotInfo.booking}
-                            block={slotInfo.block}
-                            onClick={(e) => handleSlotClick(day, time, e)}
-                            isBookingStart={slotInfo.isBookingStart}
-                            isBookingMiddle={slotInfo.isBookingMiddle}
-                            isBookingEnd={slotInfo.isBookingEnd}
-                          />
-                        );
-                      })}
-                    </div>
-                  ))}
+                    ))}
                   </div>
                 </div>
               </div>
