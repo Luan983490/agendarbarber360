@@ -4,7 +4,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/h
 
 interface TimeSlotProps {
   time: string;
-  type: 'available' | 'booked' | 'booked-external' | 'blocked';
+  type: 'available' | 'booked' | 'booked-external' | 'blocked' | 'off-hours';
   booking?: {
     client_name: string;
     service_name: string;
@@ -27,6 +27,8 @@ export const TimeSlot = ({ time, type, booking, block, onClick }: TimeSlotProps)
         return 'bg-orange-500/10 border-orange-500/30 cursor-pointer hover:bg-orange-500/20';
       case 'blocked':
         return 'bg-destructive/10 border-destructive/30 cursor-pointer';
+      case 'off-hours':
+        return 'bg-muted/50 border-muted-foreground/20 cursor-not-allowed opacity-50';
       default:
         return 'bg-muted border-border';
     }
@@ -42,6 +44,8 @@ export const TimeSlot = ({ time, type, booking, block, onClick }: TimeSlotProps)
         return <User className="h-3 w-3 text-orange-500" />;
       case 'blocked':
         return <Ban className="h-3 w-3 text-destructive" />;
+      case 'off-hours':
+        return <Clock className="h-3 w-3 text-muted-foreground/50" />;
     }
   };
 

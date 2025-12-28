@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 interface WorkingHour {
   id?: string;
@@ -312,95 +313,147 @@ export const BarberWorkingHoursForm = ({ barberId, barberName }: BarberWorkingHo
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {/* Form inputs for selected day */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
-                  <div className="md:col-span-2">
-                    <Label>Dia da Semana</Label>
-                    <Select
-                      value={String(workingHours[0]?.day_of_week ?? 0)}
-                      onValueChange={(v) => {
-                        // This just changes focus, actual edit is inline
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {DAYS_OF_WEEK.map(day => (
-                          <SelectItem key={day.value} value={String(day.value)}>
-                            {day.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* Working hours table */}
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Dia</TableHead>
-                      <TableHead>Entrada 1</TableHead>
-                      <TableHead>Saída 1</TableHead>
-                      <TableHead>Entrada 2</TableHead>
-                      <TableHead>Saída 2</TableHead>
-                      <TableHead className="text-center">Folga</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {workingHours.map((hour) => {
-                      const day = DAYS_OF_WEEK.find(d => d.value === hour.day_of_week);
-                      return (
-                        <TableRow key={hour.day_of_week}>
-                          <TableCell className="font-medium">{day?.label}</TableCell>
-                          <TableCell>
-                            <Input
-                              type="time"
-                              value={hour.period1_start || ''}
-                              onChange={(e) => handleHourChange(hour.day_of_week, 'period1_start', e.target.value)}
-                              disabled={hour.is_day_off}
-                              className="w-24"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="time"
-                              value={hour.period1_end || ''}
-                              onChange={(e) => handleHourChange(hour.day_of_week, 'period1_end', e.target.value)}
-                              disabled={hour.is_day_off}
-                              className="w-24"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="time"
-                              value={hour.period2_start || ''}
-                              onChange={(e) => handleHourChange(hour.day_of_week, 'period2_start', e.target.value)}
-                              disabled={hour.is_day_off}
-                              className="w-24"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="time"
-                              value={hour.period2_end || ''}
-                              onChange={(e) => handleHourChange(hour.day_of_week, 'period2_end', e.target.value)}
-                              disabled={hour.is_day_off}
-                              className="w-24"
-                            />
-                          </TableCell>
-                          <TableCell className="text-center">
+                {/* Mobile: Card layout */}
+                <div className="md:hidden space-y-3">
+                  {workingHours.map((hour) => {
+                    const day = DAYS_OF_WEEK.find(d => d.value === hour.day_of_week);
+                    return (
+                      <div 
+                        key={hour.day_of_week} 
+                        className={cn(
+                          "p-3 rounded-lg border",
+                          hour.is_day_off ? "bg-muted/50" : "bg-background"
+                        )}
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="font-medium text-sm">{day?.label}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">Folga</span>
                             <Switch
                               checked={hour.is_day_off}
                               onCheckedChange={() => handleToggleDayOff(hour.day_of_week)}
                             />
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+                          </div>
+                        </div>
+                        {!hour.is_day_off && (
+                          <div className="space-y-3">
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <Label className="text-xs text-muted-foreground">Entrada 1</Label>
+                                <Input
+                                  type="time"
+                                  value={hour.period1_start || ''}
+                                  onChange={(e) => handleHourChange(hour.day_of_week, 'period1_start', e.target.value)}
+                                  className="h-9"
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-xs text-muted-foreground">Saída 1</Label>
+                                <Input
+                                  type="time"
+                                  value={hour.period1_end || ''}
+                                  onChange={(e) => handleHourChange(hour.day_of_week, 'period1_end', e.target.value)}
+                                  className="h-9"
+                                />
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <Label className="text-xs text-muted-foreground">Entrada 2</Label>
+                                <Input
+                                  type="time"
+                                  value={hour.period2_start || ''}
+                                  onChange={(e) => handleHourChange(hour.day_of_week, 'period2_start', e.target.value)}
+                                  className="h-9"
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-xs text-muted-foreground">Saída 2</Label>
+                                <Input
+                                  type="time"
+                                  value={hour.period2_end || ''}
+                                  onChange={(e) => handleHourChange(hour.day_of_week, 'period2_end', e.target.value)}
+                                  className="h-9"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        {hour.is_day_off && (
+                          <p className="text-sm text-muted-foreground text-center py-2">Dia de folga</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Desktop: Table layout */}
+                <div className="hidden md:block overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[140px]">Dia</TableHead>
+                        <TableHead>Entrada 1</TableHead>
+                        <TableHead>Saída 1</TableHead>
+                        <TableHead>Entrada 2</TableHead>
+                        <TableHead>Saída 2</TableHead>
+                        <TableHead className="text-center w-[80px]">Folga</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {workingHours.map((hour) => {
+                        const day = DAYS_OF_WEEK.find(d => d.value === hour.day_of_week);
+                        return (
+                          <TableRow key={hour.day_of_week}>
+                            <TableCell className="font-medium">{day?.label}</TableCell>
+                            <TableCell>
+                              <Input
+                                type="time"
+                                value={hour.period1_start || ''}
+                                onChange={(e) => handleHourChange(hour.day_of_week, 'period1_start', e.target.value)}
+                                disabled={hour.is_day_off}
+                                className="w-28"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="time"
+                                value={hour.period1_end || ''}
+                                onChange={(e) => handleHourChange(hour.day_of_week, 'period1_end', e.target.value)}
+                                disabled={hour.is_day_off}
+                                className="w-28"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="time"
+                                value={hour.period2_start || ''}
+                                onChange={(e) => handleHourChange(hour.day_of_week, 'period2_start', e.target.value)}
+                                disabled={hour.is_day_off}
+                                className="w-28"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="time"
+                                value={hour.period2_end || ''}
+                                onChange={(e) => handleHourChange(hour.day_of_week, 'period2_end', e.target.value)}
+                                disabled={hour.is_day_off}
+                                className="w-28"
+                              />
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Switch
+                                checked={hour.is_day_off}
+                                onCheckedChange={() => handleToggleDayOff(hour.day_of_week)}
+                              />
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
 
                 <Button onClick={saveWorkingHours} disabled={saving} className="w-full">
                   {saving ? 'Salvando...' : 'Salvar Horários'}
