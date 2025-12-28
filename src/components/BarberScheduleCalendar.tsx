@@ -43,6 +43,7 @@ interface Booking {
   is_external_booking?: boolean;
   client_display_name?: string;
   service_display_name?: string;
+  service_duration?: number; // duração do serviço em minutos
 }
 
 interface BarberBlock {
@@ -370,7 +371,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
         
         supabase
           .from('services')
-          .select('id, name')
+          .select('id, name, duration')
           .eq('barbershop_id', barbershopId),
         
         supabase
@@ -424,15 +425,17 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
       }
 
       // Criar maps
-      const servicesMap = new Map<string, string>();
-      allServices.forEach(s => servicesMap.set(s.id, s.name));
+      const servicesMap = new Map<string, { name: string; duration: number }>();
+      allServices.forEach(s => servicesMap.set(s.id, { name: s.name, duration: s.duration || 30 }));
 
       const profilesMap = new Map<string, string>();
       allProfiles.forEach(p => profilesMap.set(p.user_id, p.display_name));
 
       // Processar bookings
       const processed = rawBookings.map(b => {
-        const serviceName = servicesMap.get(b.service_id) || 'Serviço';
+        const serviceData = servicesMap.get(b.service_id);
+        const serviceName = serviceData?.name || 'Serviço';
+        const serviceDuration = serviceData?.duration || 30;
         
         let clientName = 'Cliente';
         if (b.is_external_booking) {
@@ -444,7 +447,8 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
         return {
           ...b,
           client_display_name: clientName,
-          service_display_name: serviceName
+          service_display_name: serviceName,
+          service_duration: serviceDuration
         };
       });
 
@@ -516,29 +520,56 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
     type: 'available' | 'booked' | 'booked-external' | 'blocked' | 'off-hours';
     booking?: any;
     block?: any;
+    isBookingStart?: boolean;
+    isBookingEnd?: boolean;
+    isBookingMiddle?: boolean;
+    bookingId?: string;
   } => {
     const dateStr = format(date, 'yyyy-MM-dd');
     const timeStr = time.substring(0, 5); // Normalizar para "HH:MM"
+    const slotMinutes = timeToMinutes(timeStr);
 
     // Primeiro verificar se está fora do horário de trabalho
     if (!isWithinWorkingHours(date, time)) {
       return { type: 'off-hours' };
     }
 
-    // Verificar se há agendamento (ignorar cancelados)
-    const booking = bookings.find((b: any) => {
-      const bookingTime = b.booking_time.substring(0, 5); // Normalizar para "HH:MM"
-      return b.booking_date === dateStr && bookingTime === timeStr && b.status !== 'cancelled';
+    // Verificar se há agendamento que cobre este slot (baseado na duração)
+    const matchingBooking = bookings.find((b: Booking) => {
+      if (b.booking_date !== dateStr || b.status === 'cancelled') return false;
+      
+      const bookingStartTime = b.booking_time.substring(0, 5);
+      const bookingStartMinutes = timeToMinutes(bookingStartTime);
+      const bookingDuration = b.service_duration || 30;
+      const bookingEndMinutes = bookingStartMinutes + bookingDuration;
+      
+      // O slot está dentro do período do agendamento
+      return slotMinutes >= bookingStartMinutes && slotMinutes < bookingEndMinutes;
     });
     
-    if (booking) {
+    if (matchingBooking) {
+      const bookingStartTime = matchingBooking.booking_time.substring(0, 5);
+      const bookingStartMinutes = timeToMinutes(bookingStartTime);
+      const bookingDuration = matchingBooking.service_duration || 30;
+      const bookingEndMinutes = bookingStartMinutes + bookingDuration;
+      
+      // Determinar posição do slot no booking (início, meio, fim)
+      const isStart = slotMinutes === bookingStartMinutes;
+      const isEnd = slotMinutes + 15 >= bookingEndMinutes; // próximo slot após este é o fim
+      const isMiddle = !isStart && !isEnd;
+      
       return {
-        type: booking.is_external_booking ? 'booked-external' : 'booked',
+        type: matchingBooking.is_external_booking ? 'booked-external' : 'booked',
         booking: {
-          client_name: booking.client_display_name || 'Cliente',
-          service_name: booking.service_display_name || 'Serviço',
-          status: booking.status
-        }
+          client_name: matchingBooking.client_display_name || 'Cliente',
+          service_name: matchingBooking.service_display_name || 'Serviço',
+          status: matchingBooking.status,
+          duration: bookingDuration
+        },
+        isBookingStart: isStart,
+        isBookingMiddle: isMiddle,
+        isBookingEnd: isEnd,
+        bookingId: matchingBooking.id
       };
     }
 
@@ -547,12 +578,11 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
       if (b.block_date !== dateStr) return false;
       
       // Normalizar os horários removendo segundos para comparação
-      const slotTime = timeStr;
       const blockStart = b.start_time.substring(0, 5);
       const blockEnd = b.end_time.substring(0, 5);
       
       // Verificar se o horário está dentro do intervalo do bloqueio
-      return slotTime >= blockStart && slotTime < blockEnd;
+      return timeStr >= blockStart && timeStr < blockEnd;
     });
     
     if (block) {
@@ -582,10 +612,13 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
 
     // Se for agendado, abrir detalhes (sempre permitido, mesmo em readOnly)
     if (slotInfo.type === 'booked' || slotInfo.type === 'booked-external') {
-      const booking = bookings.find((b: any) => {
-        const bookingTime = b.booking_time.substring(0, 5);
-        return b.booking_date === dateStr && bookingTime === timeStr && b.status !== 'cancelled';
-      });
+      // Usar o bookingId do slotInfo para encontrar o booking correto (funciona para slots de continuação)
+      const booking = slotInfo.bookingId 
+        ? bookings.find((b: Booking) => b.id === slotInfo.bookingId)
+        : bookings.find((b: Booking) => {
+            const bookingTime = b.booking_time.substring(0, 5);
+            return b.booking_date === dateStr && bookingTime === timeStr && b.status !== 'cancelled';
+          });
       
       if (booking) {
         setSelectedBooking({
@@ -1139,6 +1172,9 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                             booking={slotInfo.booking}
                             block={slotInfo.block}
                             onClick={(e) => handleSlotClick(day, time, e)}
+                            isBookingStart={slotInfo.isBookingStart}
+                            isBookingMiddle={slotInfo.isBookingMiddle}
+                            isBookingEnd={slotInfo.isBookingEnd}
                           />
                         );
                       })}
