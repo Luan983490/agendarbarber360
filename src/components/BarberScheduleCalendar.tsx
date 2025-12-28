@@ -101,7 +101,7 @@ const minutesToHHMM = (minutes: number) => {
 };
 
 // Gerar slots de horário para todo o dia (será filtrado dinamicamente)
-const generateAllDaySlots = (start: string = DEFAULT_DAY_START, end: string = DEFAULT_DAY_END, stepMinutes = 30): string[] => {
+const generateAllDaySlots = (start: string = DEFAULT_DAY_START, end: string = DEFAULT_DAY_END, stepMinutes = 15): string[] => {
   const slots: string[] = [];
   let current = timeToMinutes(start);
   const endMinutes = timeToMinutes(end);
@@ -127,7 +127,7 @@ const DEFAULT_WEEKLY_HOURS: BarberWorkingHourRow[] = [
   { day_of_week: 6, period1_start: '09:00', period1_end: '12:00', period2_start: '14:00', period2_end: '19:00', is_day_off: false },
 ];
 
-const buildTimeSlots = (start: string, end: string, stepMinutes = 30): string[] => {
+const buildTimeSlots = (start: string, end: string, stepMinutes = 15): string[] => {
   const slots: string[] = [];
   let current = timeToMinutes(start);
   const endMinutes = timeToMinutes(end);
