@@ -96,12 +96,17 @@ export const TimeSlot = ({
     onClick?.(event);
   };
 
-  // Altura compacta baseada na posição
-  const slotHeight = isBookingStart 
-    ? 'h-[28px] sm:h-[32px]' 
-    : isContinuation 
-      ? 'h-[20px] sm:h-[24px]' 
+  // Altura compacta baseada na posição (mais espaço no mobile para o nome)
+  const slotHeight = isBookingStart
+    ? isBooked
+      ? 'h-[40px] sm:h-[34px]'
+      : 'h-[28px] sm:h-[32px]'
+    : isContinuation
+      ? 'h-[20px] sm:h-[24px]'
       : 'h-[28px] sm:h-[32px]';
+
+  const clientLabel = booking?.client_name?.trim() || 'Cliente';
+  const clientShort = clientLabel.split(' ')[0] || clientLabel;
 
   const slotContent = (
     <div
@@ -113,16 +118,23 @@ export const TimeSlot = ({
       onClick={handleClick}
     >
       {isBookingStart && isBooked && booking && (
-        <div className="flex items-center gap-1 min-w-0 flex-1">
-          {getStatusDot()}
-          <span className="text-[9px] sm:text-[10px] font-medium truncate leading-none">
-            {booking.client_name}
-          </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1 min-w-0">
+            {getStatusDot()}
+            <span
+              className="min-w-0 flex-1 text-[10px] sm:text-[10px] font-semibold leading-none truncate"
+              title={clientLabel}
+            >
+              <span className="sm:hidden">{clientShort}</span>
+              <span className="hidden sm:inline">{clientLabel}</span>
+            </span>
+          </div>
+
           {(booking.duration || booking.end_time) && (
-            <span className="text-[8px] text-muted-foreground/70 flex-shrink-0">
+            <div className="mt-0.5 text-[9px] text-muted-foreground/80 leading-none truncate">
               {booking.duration ? `${booking.duration}min` : ''}
               {booking.end_time ? `${booking.duration ? ' • ' : ''}até ${booking.end_time}` : ''}
-            </span>
+            </div>
           )}
         </div>
       )}

@@ -1028,15 +1028,15 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 flex-shrink-0">
             <div className="flex flex-wrap gap-3 text-xs sm:text-sm">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-success" />
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-foreground border border-border" />
                 <span>Disponível</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-yellow-400" />
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-success" />
                 <span>Agendado</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-orange-500" />
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-primary" />
                 <span className="hidden sm:inline">Agendado sem Cadastro</span>
                 <span className="sm:hidden">Externo</span>
               </div>
@@ -1045,7 +1045,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                 <span>Bloqueado</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-muted border border-muted-foreground/30" />
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-background border border-border/60" />
                 <span className="hidden sm:inline">Fora do Expediente</span>
                 <span className="sm:hidden">Folga</span>
               </div>
@@ -1126,20 +1126,20 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
             ) : (
               /* Visualização Dia/Semana - Grade de Horários - Mobile First */
               /* Container único com scroll horizontal para dias + horários sincronizados */
-              <div className="overflow-x-auto overflow-y-auto -mx-2 px-2">
-                <div className={cn(
-                  "min-w-0",
-                  viewMode === 'week' && "min-w-[600px] sm:min-w-0"
-                )}>
+              <div className="relative overflow-x-auto overflow-y-auto -mx-2 px-2">
+                <div
+                  className="min-w-0"
+                  style={{ minWidth: `${56 + displayDays.length * 112}px` }}
+                >
                   {/* Cabeçalho dos dias - Dentro do scroll */}
-                  <div className="sticky top-0 bg-background z-10 pb-2 border-b">
-                    <div 
+                  <div className="sticky top-0 bg-background z-20 pb-2 border-b">
+                    <div
                       className="grid gap-1 sm:gap-2"
-                      style={{ gridTemplateColumns: `40px repeat(${displayDays.length}, 1fr)` }}
+                      style={{ gridTemplateColumns: `56px repeat(${displayDays.length}, minmax(112px, 1fr))` }}
                     >
-                      <div className="font-semibold text-xs sm:text-sm"></div>
+                      <div className="sticky left-0 z-30 bg-background" />
                       {displayDays.map((day, i) => (
-                        <div key={i} className="text-center min-w-0">
+                        <div key={i} className="text-center min-w-0 px-1">
                           <p className="font-semibold text-xs sm:text-sm truncate">
                             {format(day, 'EEE', { locale: ptBR })}
                           </p>
@@ -1154,12 +1154,12 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                   {/* Linhas de horários */}
                   <div className="pt-2">
                     {dynamicTimeSlots.map((time) => (
-                      <div 
-                        key={time} 
+                      <div
+                        key={time}
                         className="grid gap-0.5 sm:gap-1"
-                        style={{ gridTemplateColumns: `40px repeat(${displayDays.length}, 1fr)` }}
+                        style={{ gridTemplateColumns: `56px repeat(${displayDays.length}, minmax(112px, 1fr))` }}
                       >
-                        <div className="text-[10px] sm:text-xs font-medium text-muted-foreground flex items-center justify-end pr-1 sticky left-0 bg-background z-5">
+                        <div className="text-[10px] sm:text-xs font-medium text-muted-foreground flex items-center justify-end pr-2 sticky left-0 bg-background z-30">
                           {time.substring(0, 5)}
                         </div>
                         {displayDays.map((day, i) => {
