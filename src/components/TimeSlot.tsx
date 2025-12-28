@@ -46,20 +46,20 @@ export const TimeSlot = ({
       case 'available':
         return 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-300 dark:border-gray-600 cursor-pointer rounded';
       case 'booked':
-        // Verde para agendado com cliente cadastrado
+        // Verde para agendado com cliente cadastrado - texto branco para contraste
         return cn(
-          'bg-green-500/20 border-green-500/60 text-green-900 dark:text-green-100',
-          'cursor-pointer hover:bg-green-500/30',
+          'bg-emerald-600 border-emerald-700 text-white',
+          'cursor-pointer hover:bg-emerald-700',
           isBookingStart && !isBookingEnd && 'rounded-t border-b-0',
           isBookingEnd && !isBookingStart && 'rounded-b border-t-0',
           isBookingStart && isBookingEnd && 'rounded',
           isBookingMiddle && 'rounded-none border-t-0 border-b-0'
         );
       case 'booked-external':
-        // Amarelo para agendado sem cadastro (externo)
+        // Amarelo para agendado sem cadastro (externo) - texto escuro para contraste
         return cn(
-          'bg-yellow-400/25 border-yellow-500/60 text-yellow-900 dark:text-yellow-100',
-          'cursor-pointer hover:bg-yellow-400/35',
+          'bg-amber-500 border-amber-600 text-amber-950',
+          'cursor-pointer hover:bg-amber-600',
           isBookingStart && !isBookingEnd && 'rounded-t border-b-0',
           isBookingEnd && !isBookingStart && 'rounded-b border-t-0',
           isBookingStart && isBookingEnd && 'rounded',
@@ -67,7 +67,7 @@ export const TimeSlot = ({
         );
       case 'blocked':
         // Vermelho para bloqueado
-        return 'bg-red-500/20 border-red-500/50 cursor-pointer hover:bg-red-500/30 rounded';
+        return 'bg-red-500 border-red-600 text-white cursor-pointer hover:bg-red-600 rounded';
       case 'off-hours':
         // Preto/escuro para fora de funcionamento
         return 'bg-gray-900 dark:bg-black border-gray-800 dark:border-gray-900 cursor-not-allowed opacity-80 rounded';
@@ -96,13 +96,13 @@ export const TimeSlot = ({
     onClick?.(event);
   };
 
-  // Altura compacta baseada na posição (mais espaço no mobile para o nome)
+  // Altura compacta baseada na posição
   const slotHeight = isBookingStart
     ? isBooked
-      ? 'h-[40px] sm:h-[34px]'
+      ? 'h-[44px] sm:h-[40px]'
       : 'h-[28px] sm:h-[32px]'
     : isContinuation
-      ? 'h-[20px] sm:h-[24px]'
+      ? 'h-[22px] sm:h-[24px]'
       : 'h-[28px] sm:h-[32px]';
 
   const clientLabel = booking?.client_name?.trim() || 'Cliente';
@@ -118,22 +118,24 @@ export const TimeSlot = ({
       onClick={handleClick}
     >
       {isBookingStart && isBooked && booking && (
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1 min-w-0">
+        <div className="min-w-0 flex-1 px-1">
+          <div className="flex items-center gap-1.5 min-w-0">
             {getStatusDot()}
             <span
-              className="min-w-0 flex-1 text-[10px] sm:text-[10px] font-semibold leading-none truncate"
+              className="min-w-0 flex-1 text-[11px] sm:text-xs font-bold leading-tight truncate"
               title={clientLabel}
             >
-              <span className="sm:hidden">{clientShort}</span>
-              <span className="hidden sm:inline">{clientLabel}</span>
+              {clientLabel}
             </span>
           </div>
 
           {(booking.duration || booking.end_time) && (
-            <div className="mt-0.5 text-[9px] text-muted-foreground/80 leading-none truncate">
+            <div className={cn(
+              "mt-1 text-[10px] leading-none truncate font-medium",
+              type === 'booked' ? 'text-white/80' : 'text-amber-950/70'
+            )}>
               {booking.duration ? `${booking.duration}min` : ''}
-              {booking.end_time ? `${booking.duration ? ' • ' : ''}até ${booking.end_time}` : ''}
+              {booking.end_time ? ` • até ${booking.end_time}` : ''}
             </div>
           )}
         </div>
@@ -141,8 +143,8 @@ export const TimeSlot = ({
       {isContinuation && (
         <div className="w-full flex justify-center">
           <div className={cn(
-            "w-0.5 h-2",
-            type === 'booked' ? "bg-green-500/50" : "bg-yellow-500/50"
+            "w-1 h-3 rounded-full",
+            type === 'booked' ? "bg-white/40" : "bg-amber-950/30"
           )} />
         </div>
       )}
