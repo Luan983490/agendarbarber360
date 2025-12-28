@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { Clock, User, Scissors, Ban, Info } from 'lucide-react';
+import { Clock, User, Ban } from 'lucide-react';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 
 interface TimeSlotProps {
@@ -35,51 +35,35 @@ export const TimeSlot = ({
 
   const getSlotStyles = () => {
     const baseBooked = type === 'booked' 
-      ? 'bg-yellow-400/20 border-yellow-400/50' 
-      : 'bg-orange-500/20 border-orange-500/50';
+      ? 'bg-yellow-400/25 border-yellow-400/60' 
+      : 'bg-orange-500/25 border-orange-500/60';
     
     switch (type) {
       case 'available':
-        return 'bg-success/10 hover:bg-success/20 border-success/30 cursor-pointer';
+        return 'bg-success/10 hover:bg-success/20 border-success/30 cursor-pointer rounded';
       case 'booked':
       case 'booked-external':
         return cn(
           baseBooked,
-          'cursor-pointer',
-          isBookingStart && 'rounded-t-md',
-          isBookingEnd && 'rounded-b-md',
-          !isBookingStart && 'border-t-0 rounded-t-none',
-          !isBookingEnd && 'border-b-0 rounded-b-none',
+          'cursor-pointer hover:brightness-95',
+          isBookingStart && !isBookingEnd && 'rounded-t border-b-0',
+          isBookingEnd && !isBookingStart && 'rounded-b border-t-0',
+          isBookingStart && isBookingEnd && 'rounded',
           isBookingMiddle && 'rounded-none border-t-0 border-b-0'
         );
       case 'blocked':
-        return 'bg-destructive/10 border-destructive/30 cursor-pointer';
+        return 'bg-destructive/10 border-destructive/30 cursor-pointer rounded';
       case 'off-hours':
-        return 'bg-muted/50 border-muted-foreground/20 cursor-not-allowed opacity-50';
+        return 'bg-muted/40 border-muted-foreground/10 cursor-not-allowed opacity-40 rounded';
       default:
-        return 'bg-muted border-border';
+        return 'bg-muted border-border rounded';
     }
   };
 
-  const getIcon = () => {
-    switch (type) {
-      case 'available':
-        return <Clock className="h-3 w-3 text-success" />;
-      case 'booked':
-        return <User className="h-3 w-3 text-yellow-500" />;
-      case 'booked-external':
-        return <User className="h-3 w-3 text-orange-500" />;
-      case 'blocked':
-        return <Ban className="h-3 w-3 text-destructive" />;
-      case 'off-hours':
-        return <Clock className="h-3 w-3 text-muted-foreground/50" />;
-    }
-  };
-
-  const getStatusBadge = () => {
+  const getStatusDot = () => {
     if (!isBooked || !booking) return null;
     
-    const statusColors = {
+    const statusColors: Record<string, string> = {
       pending: 'bg-yellow-500',
       confirmed: 'bg-green-500',
       cancelled: 'bg-red-500',
@@ -87,91 +71,74 @@ export const TimeSlot = ({
     };
     
     return (
-      <div className={cn('w-2 h-2 rounded-full', statusColors[booking.status as keyof typeof statusColors] || 'bg-gray-500')} />
+      <div className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', statusColors[booking.status] || 'bg-gray-500')} />
     );
   };
 
   const handleClick = (event: React.MouseEvent) => {
-    // Previne propagação dupla de eventos
     event.stopPropagation();
     onClick?.(event);
   };
 
-  // Para slots de continuação (não início), mostrar visual simplificado
+  // Altura compacta baseada na posição
+  const slotHeight = isBookingStart 
+    ? 'h-[28px] sm:h-[32px]' 
+    : isContinuation 
+      ? 'h-[20px] sm:h-[24px]' 
+      : 'h-[28px] sm:h-[32px]';
+
   const slotContent = (
     <div
       className={cn(
-        'p-1 sm:p-2 border sm:border-2 transition-all flex flex-col justify-between active:scale-[0.98] sm:hover:brightness-95',
+        'px-1 border transition-all flex items-center',
         getSlotStyles(),
-        isBookingStart && 'min-h-[40px] sm:min-h-[60px]',
-        isContinuation && 'min-h-[24px] sm:min-h-[36px]',
-        !isBooked && 'rounded-md min-h-[40px] sm:min-h-[60px] sm:hover:scale-105'
+        slotHeight
       )}
       onClick={handleClick}
     >
-      {isBookingStart && (
-        <>
-          <div className="flex items-center justify-between gap-0.5 sm:gap-1">
-            {getIcon()}
-            {getStatusBadge()}
-          </div>
-          {isBooked && booking && (
-            <div className="text-[8px] sm:text-[10px] truncate leading-tight">
-              <p className="font-semibold truncate">{booking.client_name}</p>
-              <p className="text-muted-foreground truncate hidden sm:block">{booking.service_name}</p>
-              {booking.duration && (
-                <p className="text-muted-foreground/70 text-[7px] sm:text-[9px] hidden sm:block">
-                  {booking.duration} min
-                </p>
-              )}
-            </div>
-          )}
-        </>
+      {isBookingStart && isBooked && booking && (
+        <div className="flex items-center gap-1 min-w-0 flex-1">
+          {getStatusDot()}
+          <span className="text-[9px] sm:text-[10px] font-medium truncate leading-none">
+            {booking.client_name}
+          </span>
+        </div>
       )}
       {isContinuation && (
-        <div className="flex items-center justify-center h-full">
+        <div className="w-full flex justify-center">
           <div className={cn(
-            "w-0.5 h-full min-h-[16px]",
-            type === 'booked' ? "bg-yellow-400/40" : "bg-orange-500/40"
+            "w-0.5 h-2",
+            type === 'booked' ? "bg-yellow-400/50" : "bg-orange-500/50"
           )} />
         </div>
       )}
-      {!isBooked && (
-        <>
-          <div className="flex items-center justify-between gap-0.5 sm:gap-1">
-            {getIcon()}
-          </div>
-        </>
+      {!isBooked && type === 'available' && (
+        <Clock className="h-2.5 w-2.5 text-success/60 mx-auto" />
+      )}
+      {type === 'blocked' && (
+        <Ban className="h-2.5 w-2.5 text-destructive/60 mx-auto" />
       )}
     </div>
   );
 
+  // HoverCard apenas para o slot inicial do booking
   if (isBooked && booking && isBookingStart) {
     return (
       <HoverCard>
         <HoverCardTrigger asChild>
           {slotContent}
         </HoverCardTrigger>
-        <HoverCardContent className="w-64">
-          <div className="space-y-2">
+        <HoverCardContent className="w-56 p-3">
+          <div className="space-y-1.5">
             <div className="flex items-center gap-2">
-              <User className={cn("h-4 w-4", type === 'booked-external' ? "text-orange-500" : "text-yellow-500")} />
+              <User className={cn("h-3.5 w-3.5", type === 'booked-external' ? "text-orange-500" : "text-yellow-500")} />
               <p className="text-sm font-semibold">{booking.client_name}</p>
             </div>
-            <div className="flex items-center gap-2">
-              <Scissors className="h-4 w-4 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">{booking.service_name}</p>
-            </div>
+            <p className="text-xs text-muted-foreground">{booking.service_name}</p>
             {booking.duration && (
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">{booking.duration} minutos</p>
-              </div>
+              <p className="text-xs text-muted-foreground/70">{booking.duration} min</p>
             )}
-            <div className="flex items-center gap-2">
-              <Info className="h-4 w-4 text-muted-foreground" />
-              <p className="text-xs text-muted-foreground capitalize">{booking.status}</p>
-            </div>
+            <p className="text-[10px] text-muted-foreground capitalize">{booking.status}</p>
           </div>
         </HoverCardContent>
       </HoverCard>
@@ -184,14 +151,11 @@ export const TimeSlot = ({
         <HoverCardTrigger asChild>
           {slotContent}
         </HoverCardTrigger>
-        <HoverCardContent className="w-64">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Ban className="h-4 w-4 text-destructive" />
-              <p className="text-sm font-semibold">Horário Bloqueado</p>
-            </div>
+        <HoverCardContent className="w-48 p-3">
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-destructive">Bloqueado</p>
             {block.reason && (
-              <p className="text-sm text-muted-foreground">{block.reason}</p>
+              <p className="text-xs text-muted-foreground">{block.reason}</p>
             )}
           </div>
         </HoverCardContent>
