@@ -6,11 +6,12 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Edit2, Plus, User, Key, KeyRound, CheckCircle } from 'lucide-react';
+import { Trash2, Edit2, Plus, User, Key, KeyRound, CheckCircle, Settings } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import ImageUpload from './ImageUpload';
 import { CreateBarberAccessDialog } from './CreateBarberAccessDialog';
+import { EditBarberDialog } from './EditBarberDialog';
 
 interface Barber {
   id: string;
@@ -20,6 +21,7 @@ interface Barber {
   image_url?: string;
   is_active: boolean;
   user_id?: string | null;
+  barbershop_id: string;
 }
 
 interface BarberFormProps {
@@ -39,6 +41,8 @@ const BarberForm = ({ barbershopId, barbers, onBarbersChange }: BarberFormProps)
   const [loading, setLoading] = useState(false);
   const [accessDialogOpen, setAccessDialogOpen] = useState(false);
   const [selectedBarberForAccess, setSelectedBarberForAccess] = useState<{ id: string; name: string } | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedBarberForEdit, setSelectedBarberForEdit] = useState<Barber | null>(null);
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -413,9 +417,13 @@ const BarberForm = ({ barbershopId, barbers, onBarbersChange }: BarberFormProps)
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => handleEdit(barber)}
+                      onClick={() => {
+                        setSelectedBarberForEdit(barber);
+                        setEditDialogOpen(true);
+                      }}
+                      title="Configurar (Dados, Serviços, Horários)"
                     >
-                      <Edit2 className="h-4 w-4" />
+                      <Settings className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="outline"
@@ -446,6 +454,16 @@ const BarberForm = ({ barbershopId, barbers, onBarbersChange }: BarberFormProps)
           barber={selectedBarberForAccess}
           barbershopId={barbershopId}
           onAccessCreated={onBarbersChange}
+        />
+      )}
+
+      {/* Edit Barber Dialog */}
+      {selectedBarberForEdit && (
+        <EditBarberDialog
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          barber={selectedBarberForEdit}
+          onBarberUpdated={onBarbersChange}
         />
       )}
     </div>

@@ -55,6 +55,142 @@ export type Database = {
           },
         ]
       }
+      barber_schedule_overrides: {
+        Row: {
+          barber_id: string
+          created_at: string
+          day_of_week: number
+          end_date: string
+          id: string
+          is_day_off: boolean
+          period1_end: string | null
+          period1_start: string | null
+          period2_end: string | null
+          period2_start: string | null
+          start_date: string
+          updated_at: string
+        }
+        Insert: {
+          barber_id: string
+          created_at?: string
+          day_of_week: number
+          end_date: string
+          id?: string
+          is_day_off?: boolean
+          period1_end?: string | null
+          period1_start?: string | null
+          period2_end?: string | null
+          period2_start?: string | null
+          start_date: string
+          updated_at?: string
+        }
+        Update: {
+          barber_id?: string
+          created_at?: string
+          day_of_week?: number
+          end_date?: string
+          id?: string
+          is_day_off?: boolean
+          period1_end?: string | null
+          period1_start?: string | null
+          period2_end?: string | null
+          period2_start?: string | null
+          start_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "barber_schedule_overrides_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "barbers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      barber_services: {
+        Row: {
+          barber_id: string
+          created_at: string
+          id: string
+          service_id: string
+        }
+        Insert: {
+          barber_id: string
+          created_at?: string
+          id?: string
+          service_id: string
+        }
+        Update: {
+          barber_id?: string
+          created_at?: string
+          id?: string
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "barber_services_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "barbers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "barber_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      barber_working_hours: {
+        Row: {
+          barber_id: string
+          created_at: string
+          day_of_week: number
+          id: string
+          is_day_off: boolean
+          period1_end: string | null
+          period1_start: string | null
+          period2_end: string | null
+          period2_start: string | null
+          updated_at: string
+        }
+        Insert: {
+          barber_id: string
+          created_at?: string
+          day_of_week: number
+          id?: string
+          is_day_off?: boolean
+          period1_end?: string | null
+          period1_start?: string | null
+          period2_end?: string | null
+          period2_start?: string | null
+          updated_at?: string
+        }
+        Update: {
+          barber_id?: string
+          created_at?: string
+          day_of_week?: number
+          id?: string
+          is_day_off?: boolean
+          period1_end?: string | null
+          period1_start?: string | null
+          period2_end?: string | null
+          period2_start?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "barber_working_hours_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "barbers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       barbers: {
         Row: {
           barbershop_id: string
