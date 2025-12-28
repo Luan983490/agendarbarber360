@@ -30,7 +30,7 @@ import { cn } from '@/lib/utils';
 
 type ViewMode = 'day' | 'week' | 'month';
 
-type SlotType = 'available' | 'booked' | 'booked-external' | 'blocked';
+type SlotType = 'available' | 'booked' | 'booked-external' | 'blocked' | 'off-hours';
 
 interface Booking {
   id: string;
@@ -179,6 +179,10 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
   const [actionMenuPosition, setActionMenuPosition] = useState({ x: 0, y: 0 });
   const [multiBlockOpen, setMultiBlockOpen] = useState(false);
   const [selectedSlots, setSelectedSlots] = useState<Array<{ date: Date; time: string }>>([]);
+  
+  // Estado para horários de trabalho do barbeiro
+  const [barberWorkingHours, setBarberWorkingHours] = useState<BarberWorkingHourRow[]>([]);
+  const [barberScheduleOverrides, setBarberScheduleOverrides] = useState<BarberScheduleOverrideRow[]>([]);
 
   // Helper para verificar se algum dialog está aberto (previne cliques múltiplos)
   const isAnyDialogOpen = dialogOpen || bookingDetailsOpen || createBookingOpen || blockOptionsOpen || actionMenuOpen || multiBlockOpen;
@@ -322,8 +326,8 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
       const startDateStr = format(startDate, 'yyyy-MM-dd');
       const endDateStr = format(endDate, 'yyyy-MM-dd');
 
-      // Buscar tudo em paralelo
-      const [bookingsResult, servicesResult, blocksResult] = await Promise.all([
+      // Buscar tudo em paralelo (incluindo working hours e overrides)
+      const [bookingsResult, servicesResult, blocksResult, workingHoursResult, overridesResult] = await Promise.all([
         supabase
           .from('bookings')
           .select('*')
@@ -341,7 +345,20 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
           .select('*')
           .eq('barber_id', selectedBarber)
           .gte('block_date', startDateStr)
-          .lte('block_date', endDateStr)
+          .lte('block_date', endDateStr),
+        
+        supabase
+          .from('barber_working_hours')
+          .select('*')
+          .eq('barber_id', selectedBarber)
+          .order('day_of_week'),
+        
+        supabase
+          .from('barber_schedule_overrides')
+          .select('*')
+          .eq('barber_id', selectedBarber)
+          .lte('start_date', endDateStr)
+          .gte('end_date', startDateStr)
       ]);
 
       if (bookingsResult.error) throw bookingsResult.error;
@@ -350,6 +367,13 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
       const rawBookings = bookingsResult.data || [];
       const allServices = servicesResult.data || [];
       const blocksData = blocksResult.data || [];
+      
+      // Definir horários de trabalho
+      const workingHours = workingHoursResult.data && workingHoursResult.data.length > 0 
+        ? workingHoursResult.data 
+        : DEFAULT_WEEKLY_HOURS;
+      setBarberWorkingHours(workingHours);
+      setBarberScheduleOverrides(overridesResult.data || []);
 
       // Buscar perfis apenas dos bookings que têm client_id
       const clientIds = rawBookings
@@ -406,13 +430,67 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
     }
   };
 
+  // Função para obter os horários de trabalho de um dia específico
+  const getWorkingHoursForDate = (date: Date): { periods: Array<{ start: string; end: string }>; isDayOff: boolean } => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const dayOfWeek = date.getDay();
+    
+    // Primeiro, verificar se há override para esta data
+    const override = barberScheduleOverrides.find(o => 
+      o.day_of_week === dayOfWeek &&
+      dateStr >= o.start_date &&
+      dateStr <= o.end_date
+    );
+    
+    const schedule = override || barberWorkingHours.find(h => h.day_of_week === dayOfWeek);
+    
+    if (!schedule || schedule.is_day_off) {
+      return { periods: [], isDayOff: true };
+    }
+    
+    const periods: Array<{ start: string; end: string }> = [];
+    
+    if (schedule.period1_start && schedule.period1_end) {
+      periods.push({
+        start: normalizeHHMM(schedule.period1_start) || '',
+        end: normalizeHHMM(schedule.period1_end) || ''
+      });
+    }
+    
+    if (schedule.period2_start && schedule.period2_end) {
+      periods.push({
+        start: normalizeHHMM(schedule.period2_start) || '',
+        end: normalizeHHMM(schedule.period2_end) || ''
+      });
+    }
+    
+    return { periods, isDayOff: false };
+  };
+
+  // Verificar se um horário está dentro do expediente
+  const isWithinWorkingHours = (date: Date, time: string): boolean => {
+    const { periods, isDayOff } = getWorkingHoursForDate(date);
+    
+    if (isDayOff || periods.length === 0) {
+      return false;
+    }
+    
+    const timeStr = normalizeHHMM(time) || time;
+    return isTimeInPeriods(timeStr, periods);
+  };
+
   const getSlotType = (date: Date, time: string): {
-    type: 'available' | 'booked' | 'booked-external' | 'blocked';
+    type: 'available' | 'booked' | 'booked-external' | 'blocked' | 'off-hours';
     booking?: any;
     block?: any;
   } => {
     const dateStr = format(date, 'yyyy-MM-dd');
     const timeStr = time.substring(0, 5); // Normalizar para "HH:MM"
+
+    // Primeiro verificar se está fora do horário de trabalho
+    if (!isWithinWorkingHours(date, time)) {
+      return { type: 'off-hours' };
+    }
 
     // Verificar se há agendamento (ignorar cancelados)
     const booking = bookings.find((b: any) => {
@@ -463,6 +541,11 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
     const dateStr = format(date, 'yyyy-MM-dd');
     const timeStr = time.substring(0, 5);
     const slotInfo = getSlotType(date, time);
+
+    // Se for fora do horário de trabalho, ignorar
+    if (slotInfo.type === 'off-hours') {
+      return;
+    }
 
     // Se for agendado, abrir detalhes (sempre permitido, mesmo em readOnly)
     if (slotInfo.type === 'booked' || slotInfo.type === 'booked-external') {
@@ -882,11 +965,17 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-orange-500" />
-                <span>Agendado sem Cadastro</span>
+                <span className="hidden sm:inline">Agendado sem Cadastro</span>
+                <span className="sm:hidden">Externo</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-destructive" />
                 <span>Bloqueado</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-muted border border-muted-foreground/30" />
+                <span className="hidden sm:inline">Fora do Expediente</span>
+                <span className="sm:hidden">Folga</span>
               </div>
             </div>
           </div>
