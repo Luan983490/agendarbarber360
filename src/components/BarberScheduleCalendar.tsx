@@ -190,55 +190,44 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
 
   // Calcular dinamicamente os slots de horário baseado nos horários de trabalho configurados
   const dynamicTimeSlots = useMemo(() => {
-    if (barberWorkingHours.length === 0) {
+    // Se ainda não carregou, não limitar (evita "travar" em 19:30 por fallback)
+    if (barberWorkingHours.length === 0 && barberScheduleOverrides.length === 0) {
       return DEFAULT_WORK_HOURS;
     }
 
-    // Encontrar o menor horário de início e o maior horário de fim entre todos os dias
-    let earliestStart = '23:59';
-    let latestEnd = '00:00';
+    let earliest = Number.POSITIVE_INFINITY;
+    let latest = Number.NEGATIVE_INFINITY;
 
-    barberWorkingHours.forEach(wh => {
-      if (wh.is_day_off) return;
-      
-      if (wh.period1_start && wh.period1_start < earliestStart) {
-        earliestStart = wh.period1_start.substring(0, 5);
-      }
-      if (wh.period2_start && wh.period2_start < earliestStart) {
-        earliestStart = wh.period2_start.substring(0, 5);
-      }
-      if (wh.period1_end && wh.period1_end > latestEnd) {
-        latestEnd = wh.period1_end.substring(0, 5);
-      }
-      if (wh.period2_end && wh.period2_end > latestEnd) {
-        latestEnd = wh.period2_end.substring(0, 5);
-      }
-    });
+    const updateEarliest = (time: string | null) => {
+      const t = normalizeHHMM(time);
+      if (!t) return;
+      const minutes = timeToMinutes(t);
+      if (minutes < earliest) earliest = minutes;
+    };
 
-    // Também considerar overrides
-    barberScheduleOverrides.forEach(o => {
-      if (o.is_day_off) return;
-      
-      if (o.period1_start && o.period1_start < earliestStart) {
-        earliestStart = o.period1_start.substring(0, 5);
-      }
-      if (o.period2_start && o.period2_start < earliestStart) {
-        earliestStart = o.period2_start.substring(0, 5);
-      }
-      if (o.period1_end && o.period1_end > latestEnd) {
-        latestEnd = o.period1_end.substring(0, 5);
-      }
-      if (o.period2_end && o.period2_end > latestEnd) {
-        latestEnd = o.period2_end.substring(0, 5);
-      }
-    });
+    const updateLatest = (time: string | null) => {
+      const t = normalizeHHMM(time);
+      if (!t) return;
+      const minutes = timeToMinutes(t);
+      if (minutes > latest) latest = minutes;
+    };
 
-    // Se não encontrou horários válidos, usar padrão
-    if (earliestStart === '23:59' || latestEnd === '00:00') {
-      return generateAllDaySlots('08:00', '20:00');
+    const considerRow = (row: BarberWorkingHourRow) => {
+      if (row.is_day_off) return;
+      updateEarliest(row.period1_start);
+      updateEarliest(row.period2_start);
+      updateLatest(row.period1_end);
+      updateLatest(row.period2_end);
+    };
+
+    barberWorkingHours.forEach(considerRow);
+    barberScheduleOverrides.forEach(considerRow);
+
+    if (!Number.isFinite(earliest) || !Number.isFinite(latest) || latest <= earliest) {
+      return DEFAULT_WORK_HOURS;
     }
 
-    return generateAllDaySlots(earliestStart, latestEnd);
+    return generateAllDaySlots(minutesToHHMM(earliest), minutesToHHMM(latest));
   }, [barberWorkingHours, barberScheduleOverrides]);
 
   useEffect(() => {
