@@ -75,6 +75,7 @@ interface Barber {
   image_url?: string;
   is_active: boolean;
   user_id?: string | null;
+  barbershop_id: string;
 }
 
 interface DashboardStats {
