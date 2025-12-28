@@ -102,6 +102,11 @@ export const TimeSlot = ({
           <span className="text-[9px] sm:text-[10px] font-medium truncate leading-none">
             {booking.client_name}
           </span>
+          {booking.duration && (
+            <span className="text-[8px] text-muted-foreground/70 flex-shrink-0">
+              {booking.duration}min
+            </span>
+          )}
         </div>
       )}
       {isContinuation && (
