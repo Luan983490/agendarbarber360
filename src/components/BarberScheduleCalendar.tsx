@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { TimeSlot } from './TimeSlot';
 import { BlockTimeDialog } from './BlockTimeDialog';
 import { BookingDetailsDialog } from './BookingDetailsDialog';
@@ -13,12 +12,25 @@ import { BlockOptionsDialog } from './BlockOptionsDialog';
 import { SlotActionMenu } from './SlotActionMenu';
 import { MultiBlockDialog } from './MultiBlockDialog';
 import { useUserAccess } from '@/hooks/useUserAccess';
-import { Calendar, ChevronLeft, ChevronRight, Loader2, Ban } from 'lucide-react';
-import { format, addDays, startOfWeek, addWeeks, subWeeks, endOfWeek, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns';
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import {
+  format,
+  addDays,
+  startOfWeek,
+  addWeeks,
+  subWeeks,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  addMonths,
+  subMonths,
+} from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
 type ViewMode = 'day' | 'week' | 'month';
+
+type SlotType = 'available' | 'booked' | 'booked-external' | 'blocked';
 
 interface Booking {
   id: string;
@@ -46,6 +58,22 @@ interface Barber {
   name: string;
 }
 
+interface BarberWorkingHourRow {
+  day_of_week: number;
+  period1_start: string | null;
+  period1_end: string | null;
+  period2_start: string | null;
+  period2_end: string | null;
+  is_day_off: boolean;
+}
+
+interface BarberScheduleOverrideRow extends BarberWorkingHourRow {
+  id: string;
+  barber_id: string;
+  start_date: string;
+  end_date: string;
+}
+
 interface BarberScheduleCalendarProps {
   barbershopId: string;
   barberIdFilter?: string; // If provided, only show this barber's schedule
@@ -53,12 +81,77 @@ interface BarberScheduleCalendarProps {
   onRefreshRef?: React.MutableRefObject<(() => void) | null>; // Ref para expor a função de refresh
 }
 
-const WORK_HOURS = [
-  '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
-  '11:00', '11:30', '12:00', '12:30', '13:00', '13:30',
-  '14:00', '14:30', '15:00', '15:30', '16:00', '16:30',
-  '17:00', '17:30', '18:00', '18:30', '19:00', '19:30'
+const DEFAULT_DAY_START = '08:00';
+const DEFAULT_DAY_END = '20:00';
+
+const DEFAULT_WORK_HOURS: string[] = [
+  '08:00',
+  '08:30',
+  '09:00',
+  '09:30',
+  '10:00',
+  '10:30',
+  '11:00',
+  '11:30',
+  '12:00',
+  '12:30',
+  '13:00',
+  '13:30',
+  '14:00',
+  '14:30',
+  '15:00',
+  '15:30',
+  '16:00',
+  '16:30',
+  '17:00',
+  '17:30',
+  '18:00',
+  '18:30',
+  '19:00',
+  '19:30',
 ];
+
+const DEFAULT_WEEKLY_HOURS: BarberWorkingHourRow[] = [
+  { day_of_week: 0, period1_start: null, period1_end: null, period2_start: null, period2_end: null, is_day_off: true },
+  { day_of_week: 1, period1_start: '09:00', period1_end: '12:00', period2_start: '14:00', period2_end: '19:00', is_day_off: false },
+  { day_of_week: 2, period1_start: '09:00', period1_end: '12:00', period2_start: '14:00', period2_end: '19:00', is_day_off: false },
+  { day_of_week: 3, period1_start: '09:00', period1_end: '12:00', period2_start: '14:00', period2_end: '19:00', is_day_off: false },
+  { day_of_week: 4, period1_start: '09:00', period1_end: '12:00', period2_start: '14:00', period2_end: '19:00', is_day_off: false },
+  { day_of_week: 5, period1_start: '09:00', period1_end: '12:00', period2_start: '14:00', period2_end: '19:00', is_day_off: false },
+  { day_of_week: 6, period1_start: '09:00', period1_end: '12:00', period2_start: '14:00', period2_end: '19:00', is_day_off: false },
+];
+
+const normalizeHHMM = (time: string | null | undefined) => {
+  if (!time) return null;
+  return time.substring(0, 5);
+};
+
+const timeToMinutes = (time: string) => {
+  const [h, m] = time.split(':').map(Number);
+  return h * 60 + m;
+};
+
+const minutesToHHMM = (minutes: number) => {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+};
+
+const buildTimeSlots = (start: string, end: string, stepMinutes = 30): string[] => {
+  const slots: string[] = [];
+  let current = timeToMinutes(start);
+  const endMinutes = timeToMinutes(end);
+
+  while (current < endMinutes) {
+    slots.push(minutesToHHMM(current));
+    current += stepMinutes;
+  }
+
+  return slots;
+};
+
+const isTimeInPeriods = (time: string, periods: Array<{ start: string; end: string }>) =>
+  periods.some((p) => time >= p.start && time < p.end);
 
 export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly = false, onRefreshRef }: BarberScheduleCalendarProps) => {
   const { role, barberId: currentBarberId } = useUserAccess();
