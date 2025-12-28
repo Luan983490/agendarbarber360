@@ -84,6 +84,22 @@ interface BarberScheduleCalendarProps {
 const DEFAULT_DAY_START = '06:00';
 const DEFAULT_DAY_END = '23:30';
 
+const normalizeHHMM = (time: string | null | undefined) => {
+  if (!time) return null;
+  return time.substring(0, 5);
+};
+
+const timeToMinutes = (time: string) => {
+  const [h, m] = time.split(':').map(Number);
+  return h * 60 + m;
+};
+
+const minutesToHHMM = (minutes: number) => {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+};
+
 // Gerar slots de horário para todo o dia (será filtrado dinamicamente)
 const generateAllDaySlots = (start: string = DEFAULT_DAY_START, end: string = DEFAULT_DAY_END, stepMinutes = 30): string[] => {
   const slots: string[] = [];
@@ -111,22 +127,6 @@ const DEFAULT_WEEKLY_HOURS: BarberWorkingHourRow[] = [
   { day_of_week: 6, period1_start: '09:00', period1_end: '12:00', period2_start: '14:00', period2_end: '19:00', is_day_off: false },
 ];
 
-const normalizeHHMM = (time: string | null | undefined) => {
-  if (!time) return null;
-  return time.substring(0, 5);
-};
-
-const timeToMinutes = (time: string) => {
-  const [h, m] = time.split(':').map(Number);
-  return h * 60 + m;
-};
-
-const minutesToHHMM = (minutes: number) => {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-};
-
 const buildTimeSlots = (start: string, end: string, stepMinutes = 30): string[] => {
   const slots: string[] = [];
   let current = timeToMinutes(start);
@@ -139,6 +139,7 @@ const buildTimeSlots = (start: string, end: string, stepMinutes = 30): string[] 
 
   return slots;
 };
+
 
 const isTimeInPeriods = (time: string, periods: Array<{ start: string; end: string }>) =>
   periods.some((p) => time >= p.start && time < p.end);
