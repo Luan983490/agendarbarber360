@@ -388,11 +388,11 @@ export const BarberWorkingHoursForm = ({ barberId, barberName }: BarberWorkingHo
                 </div>
 
                 {/* Desktop: Table layout */}
-                <div className="hidden md:block overflow-x-auto">
+                <div className="hidden md:block">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-[140px]">Dia</TableHead>
+                        <TableHead className="w-[120px]">Dia</TableHead>
                         <TableHead>Entrada 1</TableHead>
                         <TableHead>Saída 1</TableHead>
                         <TableHead>Entrada 2</TableHead>
@@ -412,7 +412,7 @@ export const BarberWorkingHoursForm = ({ barberId, barberName }: BarberWorkingHo
                                 value={hour.period1_start || ''}
                                 onChange={(e) => handleHourChange(hour.day_of_week, 'period1_start', e.target.value)}
                                 disabled={hour.is_day_off}
-                                className="w-28"
+                                className="w-[92px]"
                               />
                             </TableCell>
                             <TableCell>
@@ -421,7 +421,7 @@ export const BarberWorkingHoursForm = ({ barberId, barberName }: BarberWorkingHo
                                 value={hour.period1_end || ''}
                                 onChange={(e) => handleHourChange(hour.day_of_week, 'period1_end', e.target.value)}
                                 disabled={hour.is_day_off}
-                                className="w-28"
+                                className="w-[92px]"
                               />
                             </TableCell>
                             <TableCell>
@@ -430,7 +430,7 @@ export const BarberWorkingHoursForm = ({ barberId, barberName }: BarberWorkingHo
                                 value={hour.period2_start || ''}
                                 onChange={(e) => handleHourChange(hour.day_of_week, 'period2_start', e.target.value)}
                                 disabled={hour.is_day_off}
-                                className="w-28"
+                                className="w-[92px]"
                               />
                             </TableCell>
                             <TableCell>
@@ -439,7 +439,7 @@ export const BarberWorkingHoursForm = ({ barberId, barberName }: BarberWorkingHo
                                 value={hour.period2_end || ''}
                                 onChange={(e) => handleHourChange(hour.day_of_week, 'period2_end', e.target.value)}
                                 disabled={hour.is_day_off}
-                                className="w-28"
+                                className="w-[92px]"
                               />
                             </TableCell>
                             <TableCell className="text-center">
