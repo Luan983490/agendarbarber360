@@ -10,6 +10,7 @@ interface TimeSlotProps {
     service_name: string;
     status: string;
     duration?: number;
+    end_time?: string; // HH:MM
   };
   block?: {
     reason: string | null;
@@ -102,9 +103,10 @@ export const TimeSlot = ({
           <span className="text-[9px] sm:text-[10px] font-medium truncate leading-none">
             {booking.client_name}
           </span>
-          {booking.duration && (
+          {(booking.duration || booking.end_time) && (
             <span className="text-[8px] text-muted-foreground/70 flex-shrink-0">
-              {booking.duration}min
+              {booking.duration ? `${booking.duration}min` : ''}
+              {booking.end_time ? `${booking.duration ? ' • ' : ''}até ${booking.end_time}` : ''}
             </span>
           )}
         </div>
@@ -140,6 +142,11 @@ export const TimeSlot = ({
               <p className="text-sm font-semibold">{booking.client_name}</p>
             </div>
             <p className="text-xs text-muted-foreground">{booking.service_name}</p>
+            {booking.end_time && (
+              <p className="text-xs text-muted-foreground/70">
+                {time.substring(0, 5)}–{booking.end_time}
+              </p>
+            )}
             {booking.duration && (
               <p className="text-xs text-muted-foreground/70">{booking.duration} min</p>
             )}
