@@ -553,9 +553,14 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
       const bookingDuration = matchingBooking.service_duration || 30;
       const bookingEndMinutes = bookingStartMinutes + bookingDuration;
       
+      // Calcular quantos slots o booking ocupa (baseado em intervalos de 15 min)
+      const SLOT_STEP = 15;
+      const totalSlots = Math.ceil(bookingDuration / SLOT_STEP);
+      const slotIndex = Math.floor((slotMinutes - bookingStartMinutes) / SLOT_STEP);
+      
       // Determinar posição do slot no booking (início, meio, fim)
-      const isStart = slotMinutes === bookingStartMinutes;
-      const isEnd = slotMinutes + 15 >= bookingEndMinutes; // próximo slot após este é o fim
+      const isStart = slotIndex === 0;
+      const isEnd = slotIndex === totalSlots - 1;
       const isMiddle = !isStart && !isEnd;
       
       return {
@@ -1156,10 +1161,10 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                   {dynamicTimeSlots.map((time) => (
                     <div 
                       key={time} 
-                      className="grid gap-1 sm:gap-2 mb-1 sm:mb-2"
-                      style={{ gridTemplateColumns: `40px repeat(${displayDays.length}, 1fr)` }}
+                      className="grid gap-0.5 sm:gap-1"
+                      style={{ gridTemplateColumns: `32px repeat(${displayDays.length}, 1fr)` }}
                     >
-                      <div className="text-[10px] sm:text-xs font-medium text-muted-foreground flex items-center">
+                      <div className="text-[9px] sm:text-[10px] font-medium text-muted-foreground flex items-center justify-end pr-1">
                         {time.substring(0, 5)}
                       </div>
                       {displayDays.map((day, i) => {
