@@ -96,18 +96,22 @@ export const TimeSlot = ({
     onClick?.(event);
   };
 
-  // Altura fixa e uniforme para TODOS os slots - elimina gaps
+  // Altura fixa e uniforme para TODOS os slots
   const slotHeight = 'h-[28px]';
 
   const clientLabel = booking?.client_name?.trim() || 'Cliente';
   const clientShort = clientLabel.split(' ')[0] || clientLabel;
+
+  // Continuação de booking usa margem negativa para "colar" no slot anterior
+  const continuationStyle = isContinuation ? '-mt-0.5' : '';
 
   const slotContent = (
     <div
       className={cn(
         'px-1 transition-all flex items-center',
         getSlotStyles(),
-        slotHeight
+        slotHeight,
+        continuationStyle
       )}
       onClick={handleClick}
     >
