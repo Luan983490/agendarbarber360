@@ -569,7 +569,8 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
           client_name: matchingBooking.client_display_name || 'Cliente',
           service_name: matchingBooking.service_display_name || 'Serviço',
           status: matchingBooking.status,
-          duration: bookingDuration
+          duration: bookingDuration,
+          end_time: minutesToHHMM(bookingEndMinutes),
         },
         isBookingStart: isStart,
         isBookingMiddle: isMiddle,
