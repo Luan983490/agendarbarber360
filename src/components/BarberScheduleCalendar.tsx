@@ -1156,13 +1156,13 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                     </div>
                   </div>
 
-                  {/* Linhas de horários */}
-                  <div className="pt-2">
+                  {/* Linhas de horários - sem gap para eliminar espaços */}
+                  <div>
                     {dynamicTimeSlots.map((time) => (
                       <div
                         key={time}
                         className="grid"
-                        style={{ gridTemplateColumns: `56px repeat(${displayDays.length}, minmax(112px, 1fr))`, gap: '1px' }}
+                        style={{ gridTemplateColumns: `56px repeat(${displayDays.length}, minmax(112px, 1fr))`, gap: '0px' }}
                       >
                         <div className="text-[10px] sm:text-xs font-medium text-muted-foreground flex items-center justify-end pr-2 sticky left-0 bg-background z-30">
                           {time.substring(0, 5)}

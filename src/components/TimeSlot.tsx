@@ -96,14 +96,8 @@ export const TimeSlot = ({
     onClick?.(event);
   };
 
-  // Altura uniforme para melhor alinhamento no grid
-  const slotHeight = isBookingStart
-    ? isBooked
-      ? 'h-[42px]'
-      : 'h-[28px]'
-    : isContinuation
-      ? 'h-[20px]'
-      : 'h-[28px]';
+  // Altura fixa e uniforme para TODOS os slots - elimina gaps
+  const slotHeight = 'h-[28px]';
 
   const clientLabel = booking?.client_name?.trim() || 'Cliente';
   const clientShort = clientLabel.split(' ')[0] || clientLabel;
@@ -111,7 +105,7 @@ export const TimeSlot = ({
   const slotContent = (
     <div
       className={cn(
-        'px-1 border-x border-b transition-all flex items-center',
+        'px-1 transition-all flex items-center',
         getSlotStyles(),
         slotHeight
       )}
