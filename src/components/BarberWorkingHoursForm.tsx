@@ -561,38 +561,17 @@ export const BarberWorkingHoursForm = ({ barberId, barberName }: BarberWorkingHo
                 </div>
               </div>
 
-              {/* Overrides list */}
+              {/* Overrides list - Mobile Cards */}
               {overrides.length > 0 && (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Dia</TableHead>
-                      <TableHead>Período 1</TableHead>
-                      <TableHead>Período 2</TableHead>
-                      <TableHead>De</TableHead>
-                      <TableHead>Até</TableHead>
-                      <TableHead></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+                <div className="space-y-3">
+                  {/* Mobile: Card layout */}
+                  <div className="md:hidden space-y-3">
                     {overrides.map((override) => {
                       const day = DAYS_OF_WEEK.find(d => d.value === override.day_of_week);
                       return (
-                        <TableRow key={override.id}>
-                          <TableCell className="font-medium">{day?.label}</TableCell>
-                          <TableCell>
-                            {override.is_day_off ? (
-                              <Badge variant="secondary">Folga</Badge>
-                            ) : (
-                              `${formatTime(override.period1_start)} - ${formatTime(override.period1_end)}`
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {override.is_day_off ? '-' : `${formatTime(override.period2_start)} - ${formatTime(override.period2_end)}`}
-                          </TableCell>
-                          <TableCell>{format(new Date(override.start_date + 'T00:00:00'), 'dd/MM/yyyy')}</TableCell>
-                          <TableCell>{format(new Date(override.end_date + 'T00:00:00'), 'dd/MM/yyyy')}</TableCell>
-                          <TableCell>
+                        <div key={override.id} className="p-3 rounded-lg border bg-background">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-medium text-sm">{day?.label}</span>
                             <Button
                               variant="ghost"
                               size="icon"
@@ -600,12 +579,83 @@ export const BarberWorkingHoursForm = ({ barberId, barberName }: BarberWorkingHo
                             >
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
-                          </TableCell>
-                        </TableRow>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                              <span className="text-muted-foreground text-xs">Período 1:</span>
+                              <p>
+                                {override.is_day_off ? (
+                                  <Badge variant="secondary" className="mt-1">Folga</Badge>
+                                ) : (
+                                  `${formatTime(override.period1_start)} - ${formatTime(override.period1_end)}`
+                                )}
+                              </p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground text-xs">Período 2:</span>
+                              <p>{override.is_day_off ? '-' : `${formatTime(override.period2_start)} - ${formatTime(override.period2_end)}`}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground text-xs">De:</span>
+                              <p>{format(new Date(override.start_date + 'T00:00:00'), 'dd/MM/yyyy')}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground text-xs">Até:</span>
+                              <p>{format(new Date(override.end_date + 'T00:00:00'), 'dd/MM/yyyy')}</p>
+                            </div>
+                          </div>
+                        </div>
                       );
                     })}
-                  </TableBody>
-                </Table>
+                  </div>
+
+                  {/* Desktop: Table layout */}
+                  <div className="hidden md:block">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Dia</TableHead>
+                          <TableHead>Período 1</TableHead>
+                          <TableHead>Período 2</TableHead>
+                          <TableHead>De</TableHead>
+                          <TableHead>Até</TableHead>
+                          <TableHead></TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {overrides.map((override) => {
+                          const day = DAYS_OF_WEEK.find(d => d.value === override.day_of_week);
+                          return (
+                            <TableRow key={override.id}>
+                              <TableCell className="font-medium">{day?.label}</TableCell>
+                              <TableCell>
+                                {override.is_day_off ? (
+                                  <Badge variant="secondary">Folga</Badge>
+                                ) : (
+                                  `${formatTime(override.period1_start)} - ${formatTime(override.period1_end)}`
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {override.is_day_off ? '-' : `${formatTime(override.period2_start)} - ${formatTime(override.period2_end)}`}
+                              </TableCell>
+                              <TableCell>{format(new Date(override.start_date + 'T00:00:00'), 'dd/MM/yyyy')}</TableCell>
+                              <TableCell>{format(new Date(override.end_date + 'T00:00:00'), 'dd/MM/yyyy')}</TableCell>
+                              <TableCell>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => deleteOverride(override.id)}
+                                >
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
               )}
 
               {overrides.length === 0 && (

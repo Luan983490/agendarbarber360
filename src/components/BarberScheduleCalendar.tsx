@@ -81,35 +81,25 @@ interface BarberScheduleCalendarProps {
   onRefreshRef?: React.MutableRefObject<(() => void) | null>; // Ref para expor a função de refresh
 }
 
-const DEFAULT_DAY_START = '08:00';
-const DEFAULT_DAY_END = '20:00';
+const DEFAULT_DAY_START = '06:00';
+const DEFAULT_DAY_END = '23:30';
 
-const DEFAULT_WORK_HOURS: string[] = [
-  '08:00',
-  '08:30',
-  '09:00',
-  '09:30',
-  '10:00',
-  '10:30',
-  '11:00',
-  '11:30',
-  '12:00',
-  '12:30',
-  '13:00',
-  '13:30',
-  '14:00',
-  '14:30',
-  '15:00',
-  '15:30',
-  '16:00',
-  '16:30',
-  '17:00',
-  '17:30',
-  '18:00',
-  '18:30',
-  '19:00',
-  '19:30',
-];
+// Gerar slots de horário para todo o dia (será filtrado dinamicamente)
+const generateAllDaySlots = (start: string = DEFAULT_DAY_START, end: string = DEFAULT_DAY_END, stepMinutes = 30): string[] => {
+  const slots: string[] = [];
+  let current = timeToMinutes(start);
+  const endMinutes = timeToMinutes(end);
+
+  while (current < endMinutes) {
+    slots.push(minutesToHHMM(current));
+    current += stepMinutes;
+  }
+
+  return slots;
+};
+
+// Slots default para fallback
+const DEFAULT_WORK_HOURS: string[] = generateAllDaySlots();
 
 const DEFAULT_WEEKLY_HOURS: BarberWorkingHourRow[] = [
   { day_of_week: 0, period1_start: null, period1_end: null, period2_start: null, period2_end: null, is_day_off: true },
@@ -197,6 +187,59 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
   const canEdit = !readOnly && (role === 'owner' || isBarberEditingOwnAgenda);
 
   const { toast } = useToast();
+
+  // Calcular dinamicamente os slots de horário baseado nos horários de trabalho configurados
+  const dynamicTimeSlots = useMemo(() => {
+    if (barberWorkingHours.length === 0) {
+      return DEFAULT_WORK_HOURS;
+    }
+
+    // Encontrar o menor horário de início e o maior horário de fim entre todos os dias
+    let earliestStart = '23:59';
+    let latestEnd = '00:00';
+
+    barberWorkingHours.forEach(wh => {
+      if (wh.is_day_off) return;
+      
+      if (wh.period1_start && wh.period1_start < earliestStart) {
+        earliestStart = wh.period1_start.substring(0, 5);
+      }
+      if (wh.period2_start && wh.period2_start < earliestStart) {
+        earliestStart = wh.period2_start.substring(0, 5);
+      }
+      if (wh.period1_end && wh.period1_end > latestEnd) {
+        latestEnd = wh.period1_end.substring(0, 5);
+      }
+      if (wh.period2_end && wh.period2_end > latestEnd) {
+        latestEnd = wh.period2_end.substring(0, 5);
+      }
+    });
+
+    // Também considerar overrides
+    barberScheduleOverrides.forEach(o => {
+      if (o.is_day_off) return;
+      
+      if (o.period1_start && o.period1_start < earliestStart) {
+        earliestStart = o.period1_start.substring(0, 5);
+      }
+      if (o.period2_start && o.period2_start < earliestStart) {
+        earliestStart = o.period2_start.substring(0, 5);
+      }
+      if (o.period1_end && o.period1_end > latestEnd) {
+        latestEnd = o.period1_end.substring(0, 5);
+      }
+      if (o.period2_end && o.period2_end > latestEnd) {
+        latestEnd = o.period2_end.substring(0, 5);
+      }
+    });
+
+    // Se não encontrou horários válidos, usar padrão
+    if (earliestStart === '23:59' || latestEnd === '00:00') {
+      return generateAllDaySlots('08:00', '20:00');
+    }
+
+    return generateAllDaySlots(earliestStart, latestEnd);
+  }, [barberWorkingHours, barberScheduleOverrides]);
 
   useEffect(() => {
     // If a specific barber is enforced by prop, lock selection to it
@@ -1087,7 +1130,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                   )}>
 
                   {/* Linhas de horários */}
-                  {DEFAULT_WORK_HOURS.map((time) => (
+                  {dynamicTimeSlots.map((time) => (
                     <div 
                       key={time} 
                       className="grid gap-1 sm:gap-2 mb-1 sm:mb-2"
