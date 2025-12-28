@@ -431,7 +431,8 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
       const profilesMap = new Map<string, string>();
       allProfiles.forEach(p => profilesMap.set(p.user_id, p.display_name));
 
-      // Processar bookings
+      // Processar bookings - IMPORTANTE: usar client_name do booking como fallback
+      // pois a RLS pode bloquear acesso aos perfis de outros usuários
       const processed = rawBookings.map(b => {
         const serviceData = servicesMap.get(b.service_id);
         const serviceName = serviceData?.name || 'Serviço';
@@ -441,7 +442,11 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
         if (b.is_external_booking) {
           clientName = b.client_name || 'Cliente Externo';
         } else if (b.client_id) {
-          clientName = profilesMap.get(b.client_id) || 'Cliente';
+          // Tentar buscar do profile, mas usar client_name do booking como fallback
+          // já que a RLS pode bloquear acesso aos perfis
+          clientName = profilesMap.get(b.client_id) || b.client_name || 'Cliente';
+        } else if (b.client_name) {
+          clientName = b.client_name;
         }
 
         return {
@@ -1134,8 +1139,8 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                   {/* Cabeçalho dos dias - Dentro do scroll */}
                   <div className="sticky top-0 bg-background z-20 pb-2 border-b">
                     <div
-                      className="grid gap-1 sm:gap-2"
-                      style={{ gridTemplateColumns: `56px repeat(${displayDays.length}, minmax(112px, 1fr))` }}
+                      className="grid"
+                      style={{ gridTemplateColumns: `56px repeat(${displayDays.length}, minmax(112px, 1fr))`, gap: '4px' }}
                     >
                       <div className="sticky left-0 z-30 bg-background" />
                       {displayDays.map((day, i) => (
@@ -1156,8 +1161,8 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                     {dynamicTimeSlots.map((time) => (
                       <div
                         key={time}
-                        className="grid gap-0.5 sm:gap-1"
-                        style={{ gridTemplateColumns: `56px repeat(${displayDays.length}, minmax(112px, 1fr))` }}
+                        className="grid"
+                        style={{ gridTemplateColumns: `56px repeat(${displayDays.length}, minmax(112px, 1fr))`, gap: '1px' }}
                       >
                         <div className="text-[10px] sm:text-xs font-medium text-muted-foreground flex items-center justify-end pr-2 sticky left-0 bg-background z-30">
                           {time.substring(0, 5)}
