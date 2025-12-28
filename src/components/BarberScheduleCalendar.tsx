@@ -528,7 +528,8 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
       const blocksToInsert = [];
       
       if (type === 'single') {
-        const endTime = WORK_HOURS[WORK_HOURS.indexOf(selectedSlot.time) + 1] || '20:00';
+        const idx = DEFAULT_WORK_HOURS.indexOf(selectedSlot.time);
+        const endTime = DEFAULT_WORK_HOURS[idx + 1] || '20:00';
         blocksToInsert.push({
           barber_id: selectedBarber,
           block_date: format(selectedSlot.date, 'yyyy-MM-dd'),
@@ -537,12 +538,12 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
           reason: reason || null
         });
       } else if (type === 'day') {
-        for (let i = 0; i < WORK_HOURS.length - 1; i++) {
+        for (let i = 0; i < DEFAULT_WORK_HOURS.length - 1; i++) {
           blocksToInsert.push({
             barber_id: selectedBarber,
             block_date: format(selectedSlot.date, 'yyyy-MM-dd'),
-            start_time: WORK_HOURS[i],
-            end_time: WORK_HOURS[i + 1],
+            start_time: DEFAULT_WORK_HOURS[i],
+            end_time: DEFAULT_WORK_HOURS[i + 1],
             reason: reason || null
           });
         }
@@ -550,12 +551,12 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
         const weekStart = startOfWeek(selectedSlot.date, { locale: ptBR });
         for (let day = 0; day < 7; day++) {
           const currentDay = addDays(weekStart, day);
-          for (let i = 0; i < WORK_HOURS.length - 1; i++) {
+          for (let i = 0; i < DEFAULT_WORK_HOURS.length - 1; i++) {
             blocksToInsert.push({
               barber_id: selectedBarber,
               block_date: format(currentDay, 'yyyy-MM-dd'),
-              start_time: WORK_HOURS[i],
-              end_time: WORK_HOURS[i + 1],
+              start_time: DEFAULT_WORK_HOURS[i],
+              end_time: DEFAULT_WORK_HOURS[i + 1],
               reason: reason || null
             });
           }
@@ -594,12 +595,12 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
       const end = new Date(endDate);
 
       while (currentDate <= end) {
-        for (let i = 0; i < WORK_HOURS.length - 1; i++) {
+        for (let i = 0; i < DEFAULT_WORK_HOURS.length - 1; i++) {
           blocksToInsert.push({
             barber_id: selectedBarber,
             block_date: format(currentDate, 'yyyy-MM-dd'),
-            start_time: WORK_HOURS[i],
-            end_time: WORK_HOURS[i + 1],
+            start_time: DEFAULT_WORK_HOURS[i],
+            end_time: DEFAULT_WORK_HOURS[i + 1],
             reason: reason || null
           });
         }
@@ -997,7 +998,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                   )}>
 
                   {/* Linhas de horários */}
-                  {WORK_HOURS.map((time) => (
+                  {DEFAULT_WORK_HOURS.map((time) => (
                     <div 
                       key={time} 
                       className="grid gap-1 sm:gap-2 mb-1 sm:mb-2"
