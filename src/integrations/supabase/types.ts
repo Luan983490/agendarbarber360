@@ -386,6 +386,7 @@ export type Database = {
           barber_id: string | null
           barbershop_id: string
           booking_date: string
+          booking_end_time: string | null
           booking_time: string
           client_id: string | null
           client_name: string | null
@@ -402,6 +403,7 @@ export type Database = {
           barber_id?: string | null
           barbershop_id: string
           booking_date: string
+          booking_end_time?: string | null
           booking_time: string
           client_id?: string | null
           client_name?: string | null
@@ -418,6 +420,7 @@ export type Database = {
           barber_id?: string | null
           barbershop_id?: string
           booking_date?: string
+          booking_end_time?: string | null
           booking_time?: string
           client_id?: string | null
           client_name?: string | null
@@ -1161,6 +1164,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      acquire_booking_slot_lock: {
+        Args: { p_barber_id: string; p_booking_date: string }
+        Returns: undefined
+      }
+      calculate_booking_end_time: {
+        Args: { p_duration_minutes: number; p_start_time: string }
+        Returns: string
+      }
       check_subscription_status: {
         Args: { barbershop_uuid: string }
         Returns: {
