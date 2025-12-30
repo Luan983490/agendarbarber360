@@ -271,7 +271,10 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
       return;
     }
 
-    // Buscar barbeiros primeiro, depois validar o salvo
+    // PASSO 1: Ler localStorage PRIMEIRO (fonte de verdade)
+    const savedBarberId = localStorage.getItem(STORAGE_KEY_SELECTED_BARBER);
+
+    // Buscar barbeiros e validar o salvo
     const loadBarbersAndHydrate = async () => {
       try {
         let barbersData: Barber[] = [];
@@ -300,30 +303,34 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
         
         setBarbers(barbersData);
         
-        // CRÍTICO: Ler do localStorage e validar
-        const savedBarberId = localStorage.getItem(STORAGE_KEY_SELECTED_BARBER);
+        // PASSO 2: Validar e definir barbeiro (prioridade: localStorage > currentBarberId > primeiro)
+        let finalBarberId: string | null = null;
         
+        // Prioridade 1: localStorage (se válido)
         if (savedBarberId && barbersData.some(b => b.id === savedBarberId)) {
-          // Barbeiro salvo existe na lista - usar ele
-          setSelectedBarber(savedBarberId);
-        } else if (role === 'barber' && currentBarberId && barbersData.some(b => b.id === currentBarberId)) {
-          // Barbeiro logado - usar o próprio
-          setSelectedBarber(currentBarberId);
-          localStorage.setItem(STORAGE_KEY_SELECTED_BARBER, currentBarberId);
-        } else if (!savedBarberId && barbersData.length > 0) {
-          // Nada salvo - usar primeiro apenas como fallback inicial
-          setSelectedBarber(barbersData[0].id);
-          localStorage.setItem(STORAGE_KEY_SELECTED_BARBER, barbersData[0].id);
+          finalBarberId = savedBarberId;
         }
-        // Se savedBarberId existe mas não está na lista, limpar
-        else if (savedBarberId && !barbersData.some(b => b.id === savedBarberId)) {
-          localStorage.removeItem(STORAGE_KEY_SELECTED_BARBER);
-          if (barbersData.length > 0) {
-            setSelectedBarber(barbersData[0].id);
-            localStorage.setItem(STORAGE_KEY_SELECTED_BARBER, barbersData[0].id);
+        // Prioridade 2: barbeiro logado (se for role barber)
+        else if (role === 'barber' && currentBarberId && barbersData.some(b => b.id === currentBarberId)) {
+          finalBarberId = currentBarberId;
+        }
+        // Prioridade 3: primeiro da lista (fallback apenas se nada salvo)
+        else if (barbersData.length > 0) {
+          finalBarberId = barbersData[0].id;
+          // Limpar localStorage inválido se existia
+          if (savedBarberId) {
+            localStorage.removeItem(STORAGE_KEY_SELECTED_BARBER);
           }
         }
         
+        // Aplicar barbeiro selecionado
+        if (finalBarberId) {
+          setSelectedBarber(finalBarberId);
+          // Garantir que está salvo no localStorage
+          localStorage.setItem(STORAGE_KEY_SELECTED_BARBER, finalBarberId);
+        }
+        
+        // PASSO 3: Marcar hidratação completa APENAS após tudo definido
         setIsBarberHydrated(true);
       } catch (error) {
         console.error('Erro ao carregar barbeiros:', error);
