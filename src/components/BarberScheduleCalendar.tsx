@@ -271,20 +271,74 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
       return;
     }
 
-    // Reidratar do localStorage
-    const savedBarberId = localStorage.getItem(STORAGE_KEY_SELECTED_BARBER);
-    if (savedBarberId) {
-      setSelectedBarber(savedBarberId);
-    }
-    setIsBarberHydrated(true);
+    // Buscar barbeiros primeiro, depois validar o salvo
+    const loadBarbersAndHydrate = async () => {
+      try {
+        let barbersData: Barber[] = [];
+        
+        if (role === 'barber' && currentBarberId) {
+          const { data, error } = await supabase
+            .from('barbers')
+            .select('id, name')
+            .eq('id', currentBarberId)
+            .single();
+
+          if (!error && data) {
+            barbersData = [data];
+          }
+        } else {
+          const { data, error } = await supabase
+            .from('barbers')
+            .select('id, name')
+            .eq('barbershop_id', barbershopId)
+            .eq('is_active', true);
+
+          if (!error && data) {
+            barbersData = data;
+          }
+        }
+        
+        setBarbers(barbersData);
+        
+        // CRÍTICO: Ler do localStorage e validar
+        const savedBarberId = localStorage.getItem(STORAGE_KEY_SELECTED_BARBER);
+        
+        if (savedBarberId && barbersData.some(b => b.id === savedBarberId)) {
+          // Barbeiro salvo existe na lista - usar ele
+          setSelectedBarber(savedBarberId);
+        } else if (role === 'barber' && currentBarberId && barbersData.some(b => b.id === currentBarberId)) {
+          // Barbeiro logado - usar o próprio
+          setSelectedBarber(currentBarberId);
+          localStorage.setItem(STORAGE_KEY_SELECTED_BARBER, currentBarberId);
+        } else if (!savedBarberId && barbersData.length > 0) {
+          // Nada salvo - usar primeiro apenas como fallback inicial
+          setSelectedBarber(barbersData[0].id);
+          localStorage.setItem(STORAGE_KEY_SELECTED_BARBER, barbersData[0].id);
+        }
+        // Se savedBarberId existe mas não está na lista, limpar
+        else if (savedBarberId && !barbersData.some(b => b.id === savedBarberId)) {
+          localStorage.removeItem(STORAGE_KEY_SELECTED_BARBER);
+          if (barbersData.length > 0) {
+            setSelectedBarber(barbersData[0].id);
+            localStorage.setItem(STORAGE_KEY_SELECTED_BARBER, barbersData[0].id);
+          }
+        }
+        
+        setIsBarberHydrated(true);
+      } catch (error) {
+        console.error('Erro ao carregar barbeiros:', error);
+        setIsBarberHydrated(true);
+      }
+    };
     
-    fetchBarbers();
+    loadBarbersAndHydrate();
   }, [barbershopId, barberIdFilter, role, currentBarberId]);
 
   useEffect(() => {
-    if (selectedBarber) {
-      fetchScheduleData();
-    }
+    // CRÍTICO: Só fazer fetch após hidratação completa
+    if (!isBarberHydrated || !selectedBarber) return;
+    
+    fetchScheduleData();
     
     return () => {
       // Cancelar requisições ao desmontar ou quando dependências mudam
@@ -292,7 +346,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
         abortControllerRef.current.abort();
       }
     };
-  }, [selectedBarber, currentWeekStart, currentDate, viewMode]);
+  }, [isBarberHydrated, selectedBarber, currentWeekStart, currentDate, viewMode]);
 
   // Expor função de refresh via ref
   useEffect(() => {
@@ -307,6 +361,8 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
   }, [onRefreshRef, selectedBarber, currentWeekStart, currentDate, viewMode]);
 
   useEffect(() => {
+    if (!isBarberHydrated) return;
+    
     const channel = supabase
       .channel('schedule-realtime')
       .on(
@@ -337,60 +393,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [barbershopId, selectedBarber, currentWeekStart]);
-
-  const fetchBarbers = async () => {
-    try {
-      if (isBarberView && barberIdFilter) {
-        const { data, error } = await supabase
-          .from('barbers')
-          .select('id, name')
-          .eq('id', barberIdFilter)
-          .single();
-
-        if (error) throw error;
-        setBarbers([data]);
-        if (data.id !== selectedBarber) {
-          clearBarberState();
-          setSelectedBarber(data.id);
-        }
-      } else if (role === 'barber' && currentBarberId) {
-        const { data, error } = await supabase
-          .from('barbers')
-          .select('id, name')
-          .eq('id', currentBarberId)
-          .single();
-
-        if (error) throw error;
-        setBarbers([data]);
-        if (data.id !== selectedBarber) {
-          clearBarberState();
-          setSelectedBarber(data.id);
-        }
-      } else {
-        const { data, error } = await supabase
-          .from('barbers')
-          .select('id, name')
-          .eq('barbershop_id', barbershopId)
-          .eq('is_active', true);
-
-        if (error) throw error;
-        setBarbers(data || []);
-        
-        // Validar se o barbeiro salvo ainda existe na lista
-        const savedBarberId = localStorage.getItem(STORAGE_KEY_SELECTED_BARBER);
-        if (savedBarberId && data?.some(b => b.id === savedBarberId)) {
-          // Barbeiro salvo é válido, manter selecionado
-          if (selectedBarber !== savedBarberId) {
-            setSelectedBarber(savedBarberId);
-          }
-        }
-        // NÃO definir barbeiro default automático - usuário deve selecionar
-      }
-    } catch (error: any) {
-      console.error('Erro ao carregar barbeiros:', error);
-    }
-  };
+  }, [barbershopId, selectedBarber, currentWeekStart, isBarberHydrated]);
 
   const fetchScheduleData = async () => {
     if (!selectedBarber) return;
