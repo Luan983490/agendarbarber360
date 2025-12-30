@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
@@ -43,7 +43,7 @@ interface Booking {
   is_external_booking?: boolean;
   client_display_name?: string;
   service_display_name?: string;
-  service_duration?: number; // duração do serviço em minutos
+  service_duration?: number;
 }
 
 interface BarberBlock {
@@ -77,13 +77,10 @@ interface BarberScheduleOverrideRow extends BarberWorkingHourRow {
 
 interface BarberScheduleCalendarProps {
   barbershopId: string;
-  barberIdFilter?: string; // If provided, only show this barber's schedule
-  readOnly?: boolean; // If true, disable creating/editing bookings (for barbers)
-  onRefreshRef?: React.MutableRefObject<(() => void) | null>; // Ref para expor a função de refresh
+  barberIdFilter?: string;
+  readOnly?: boolean;
+  onRefreshRef?: React.MutableRefObject<(() => void) | null>;
 }
-
-const DEFAULT_DAY_START = '06:00';
-const DEFAULT_DAY_END = '23:30';
 
 const normalizeHHMM = (time: string | null | undefined) => {
   if (!time) return null;
@@ -101,8 +98,8 @@ const minutesToHHMM = (minutes: number) => {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 };
 
-// Gerar slots de horário para todo o dia (será filtrado dinamicamente)
-const generateAllDaySlots = (start: string = DEFAULT_DAY_START, end: string = DEFAULT_DAY_END, stepMinutes = 15): string[] => {
+// Gerar slots de horário para um intervalo específico
+const generateTimeSlots = (start: string, end: string, stepMinutes = 15): string[] => {
   const slots: string[] = [];
   let current = timeToMinutes(start);
   const endMinutes = timeToMinutes(end);
@@ -114,33 +111,6 @@ const generateAllDaySlots = (start: string = DEFAULT_DAY_START, end: string = DE
 
   return slots;
 };
-
-// Slots default para fallback
-const DEFAULT_WORK_HOURS: string[] = generateAllDaySlots();
-
-const DEFAULT_WEEKLY_HOURS: BarberWorkingHourRow[] = [
-  { day_of_week: 0, period1_start: null, period1_end: null, period2_start: null, period2_end: null, is_day_off: true },
-  { day_of_week: 1, period1_start: '09:00', period1_end: '12:00', period2_start: '14:00', period2_end: '19:00', is_day_off: false },
-  { day_of_week: 2, period1_start: '09:00', period1_end: '12:00', period2_start: '14:00', period2_end: '19:00', is_day_off: false },
-  { day_of_week: 3, period1_start: '09:00', period1_end: '12:00', period2_start: '14:00', period2_end: '19:00', is_day_off: false },
-  { day_of_week: 4, period1_start: '09:00', period1_end: '12:00', period2_start: '14:00', period2_end: '19:00', is_day_off: false },
-  { day_of_week: 5, period1_start: '09:00', period1_end: '12:00', period2_start: '14:00', period2_end: '19:00', is_day_off: false },
-  { day_of_week: 6, period1_start: '09:00', period1_end: '12:00', period2_start: '14:00', period2_end: '19:00', is_day_off: false },
-];
-
-const buildTimeSlots = (start: string, end: string, stepMinutes = 15): string[] => {
-  const slots: string[] = [];
-  let current = timeToMinutes(start);
-  const endMinutes = timeToMinutes(end);
-
-  while (current < endMinutes) {
-    slots.push(minutesToHHMM(current));
-    current += stepMinutes;
-  }
-
-  return slots;
-};
-
 
 const isTimeInPeriods = (time: string, periods: Array<{ start: string; end: string }>) =>
   periods.some((p) => time >= p.start && time < p.end);
@@ -155,6 +125,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [blocks, setBlocks] = useState<BarberBlock[]>([]);
   const [loading, setLoading] = useState(true);
+  const [workingHoursLoaded, setWorkingHoursLoaded] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{
     time: string;
@@ -176,13 +147,14 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
   const [barberWorkingHours, setBarberWorkingHours] = useState<BarberWorkingHourRow[]>([]);
   const [barberScheduleOverrides, setBarberScheduleOverrides] = useState<BarberScheduleOverrideRow[]>([]);
 
-  // Helper para verificar se algum dialog está aberto (previne cliques múltiplos)
+  // Ref para controlar AbortController das requisições
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Helper para verificar se algum dialog está aberto
   const isAnyDialogOpen = dialogOpen || bookingDetailsOpen || createBookingOpen || blockOptionsOpen || actionMenuOpen || multiBlockOpen;
 
-  // When barberIdFilter is provided, we are in "barber view" (single barber schedule)
   const isBarberView = !!barberIdFilter;
 
-  // Allow edits for owners and for barbers editing ONLY their own agenda
   const isBarberEditingOwnAgenda =
     role === 'barber' && !!currentBarberId && selectedBarber === currentBarberId;
 
@@ -190,56 +162,106 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
 
   const { toast } = useToast();
 
-  // Calcular dinamicamente os slots de horário baseado nos horários de trabalho configurados
-  const dynamicTimeSlots = useMemo(() => {
-    // Se ainda não carregou, não limitar (evita "travar" em 19:30 por fallback)
-    if (barberWorkingHours.length === 0 && barberScheduleOverrides.length === 0) {
-      return DEFAULT_WORK_HOURS;
+  // Calcular slots de tempo ESPECÍFICOS PARA CADA DIA baseado nos working hours reais
+  const getTimeSlotsForDate = useCallback((date: Date): string[] => {
+    if (!workingHoursLoaded || barberWorkingHours.length === 0) {
+      return [];
     }
 
-    let earliest = Number.POSITIVE_INFINITY;
-    let latest = Number.NEGATIVE_INFINITY;
-
-    const updateEarliest = (time: string | null) => {
-      const t = normalizeHHMM(time);
-      if (!t) return;
-      const minutes = timeToMinutes(t);
-      if (minutes < earliest) earliest = minutes;
-    };
-
-    const updateLatest = (time: string | null) => {
-      const t = normalizeHHMM(time);
-      if (!t) return;
-      const minutes = timeToMinutes(t);
-      if (minutes > latest) latest = minutes;
-    };
-
-    const considerRow = (row: BarberWorkingHourRow) => {
-      if (row.is_day_off) return;
-      updateEarliest(row.period1_start);
-      updateEarliest(row.period2_start);
-      updateLatest(row.period1_end);
-      updateLatest(row.period2_end);
-    };
-
-    barberWorkingHours.forEach(considerRow);
-    barberScheduleOverrides.forEach(considerRow);
-
-    if (!Number.isFinite(earliest) || !Number.isFinite(latest) || latest <= earliest) {
-      return DEFAULT_WORK_HOURS;
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const dayOfWeek = date.getDay();
+    
+    // Verificar se há override para esta data
+    const override = barberScheduleOverrides.find(o => 
+      o.day_of_week === dayOfWeek &&
+      dateStr >= o.start_date &&
+      dateStr <= o.end_date
+    );
+    
+    const schedule = override || barberWorkingHours.find(h => h.day_of_week === dayOfWeek);
+    
+    if (!schedule || schedule.is_day_off) {
+      return [];
     }
 
-    return generateAllDaySlots(minutesToHHMM(earliest), minutesToHHMM(latest));
-  }, [barberWorkingHours, barberScheduleOverrides]);
+    // Coletar todos os horários de início e fim do dia
+    const times: number[] = [];
+    
+    if (schedule.period1_start && schedule.period1_end) {
+      const start = normalizeHHMM(schedule.period1_start);
+      const end = normalizeHHMM(schedule.period1_end);
+      if (start && end) {
+        times.push(timeToMinutes(start), timeToMinutes(end));
+      }
+    }
+    
+    if (schedule.period2_start && schedule.period2_end) {
+      const start = normalizeHHMM(schedule.period2_start);
+      const end = normalizeHHMM(schedule.period2_end);
+      if (start && end) {
+        times.push(timeToMinutes(start), timeToMinutes(end));
+      }
+    }
+
+    if (times.length === 0) return [];
+
+    const earliest = Math.min(...times);
+    const latest = Math.max(...times);
+
+    return generateTimeSlots(minutesToHHMM(earliest), minutesToHHMM(latest));
+  }, [barberWorkingHours, barberScheduleOverrides, workingHoursLoaded]);
+
+  // Obter todos os slots únicos para a visualização atual (união de todos os dias)
+  const allTimeSlotsForView = useMemo(() => {
+    if (!workingHoursLoaded) return [];
+
+    const weekDays = viewMode === 'day' 
+      ? [currentDate]
+      : Array.from({ length: 7 }, (_, i) => addDays(currentWeekStart, i));
+
+    const allSlots = new Set<string>();
+    
+    weekDays.forEach(day => {
+      const slotsForDay = getTimeSlotsForDate(day);
+      slotsForDay.forEach(slot => allSlots.add(slot));
+    });
+
+    return Array.from(allSlots).sort();
+  }, [workingHoursLoaded, viewMode, currentDate, currentWeekStart, getTimeSlotsForDate]);
+
+  // Limpar estado completamente ao trocar barbeiro
+  const clearBarberState = useCallback(() => {
+    setBookings([]);
+    setBlocks([]);
+    setBarberWorkingHours([]);
+    setBarberScheduleOverrides([]);
+    setWorkingHoursLoaded(false);
+    setLoading(true);
+  }, []);
+
+  // Função para trocar barbeiro com limpeza de estado
+  const handleBarberChange = useCallback((newBarberId: string) => {
+    if (newBarberId === selectedBarber) return;
+    
+    // Cancelar requisições pendentes
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    
+    // Limpar estado antes de trocar
+    clearBarberState();
+    setSelectedBarber(newBarberId);
+  }, [selectedBarber, clearBarberState]);
 
   useEffect(() => {
-    // If a specific barber is enforced by prop, lock selection to it
     if (barberIdFilter) {
-      setSelectedBarber(barberIdFilter);
+      if (barberIdFilter !== selectedBarber) {
+        clearBarberState();
+        setSelectedBarber(barberIdFilter);
+      }
       return;
     }
 
-    // Otherwise, load barbers list / determine the correct barber based on role
     fetchBarbers();
   }, [barbershopId, barberIdFilter, role, currentBarberId]);
 
@@ -247,6 +269,13 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
     if (selectedBarber) {
       fetchScheduleData();
     }
+    
+    return () => {
+      // Cancelar requisições ao desmontar ou quando dependências mudam
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [selectedBarber, currentWeekStart, currentDate, viewMode]);
 
   // Expor função de refresh via ref
@@ -296,7 +325,6 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
 
   const fetchBarbers = async () => {
     try {
-      // Se for barbeiro com filtro específico, apenas buscar seus próprios dados
       if (isBarberView && barberIdFilter) {
         const { data, error } = await supabase
           .from('barbers')
@@ -306,9 +334,11 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
 
         if (error) throw error;
         setBarbers([data]);
-        setSelectedBarber(data.id);
+        if (data.id !== selectedBarber) {
+          clearBarberState();
+          setSelectedBarber(data.id);
+        }
       } else if (role === 'barber' && currentBarberId) {
-        // Se for barbeiro logado sem filtro, buscar só seus dados
         const { data, error } = await supabase
           .from('barbers')
           .select('id, name')
@@ -317,9 +347,11 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
 
         if (error) throw error;
         setBarbers([data]);
-        setSelectedBarber(data.id);
+        if (data.id !== selectedBarber) {
+          clearBarberState();
+          setSelectedBarber(data.id);
+        }
       } else {
-        // Se for dono, buscar todos os barbeiros da barbearia
         const { data, error } = await supabase
           .from('barbers')
           .select('id, name')
@@ -328,7 +360,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
 
         if (error) throw error;
         setBarbers(data || []);
-        if (data && data.length > 0) {
+        if (data && data.length > 0 && !selectedBarber) {
           setSelectedBarber(data[0].id);
         }
       }
@@ -339,6 +371,18 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
 
   const fetchScheduleData = async () => {
     if (!selectedBarber) return;
+
+    // Cancelar requisição anterior se existir
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Criar novo AbortController
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
+    // Capturar o barbeiro atual para verificar depois
+    const currentBarberAtStart = selectedBarber;
 
     try {
       setLoading(true);
@@ -360,7 +404,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
       const startDateStr = format(startDate, 'yyyy-MM-dd');
       const endDateStr = format(endDate, 'yyyy-MM-dd');
 
-      // Buscar tudo em paralelo (incluindo working hours e overrides)
+      // Buscar tudo em paralelo
       const [bookingsResult, servicesResult, blocksResult, workingHoursResult, overridesResult] = await Promise.all([
         supabase
           .from('bookings')
@@ -395,19 +439,30 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
           .gte('end_date', startDateStr)
       ]);
 
+      // CRÍTICO: Verificar se a requisição foi abortada OU se o barbeiro mudou
+      if (abortController.signal.aborted || selectedBarber !== currentBarberAtStart) {
+        return; // Descartar resultados de requisição obsoleta
+      }
+
       if (bookingsResult.error) throw bookingsResult.error;
       if (blocksResult.error) throw blocksResult.error;
+      if (workingHoursResult.error) throw workingHoursResult.error;
 
       const rawBookings = bookingsResult.data || [];
       const allServices = servicesResult.data || [];
       const blocksData = blocksResult.data || [];
       
-      // Definir horários de trabalho
-      const workingHours = workingHoursResult.data && workingHoursResult.data.length > 0 
-        ? workingHoursResult.data 
-        : DEFAULT_WEEKLY_HOURS;
+      // Definir horários de trabalho do banco - SEM FALLBACK
+      const workingHours = workingHoursResult.data || [];
+      
+      // Verificar novamente antes de atualizar estado
+      if (abortController.signal.aborted || selectedBarber !== currentBarberAtStart) {
+        return;
+      }
+
       setBarberWorkingHours(workingHours);
       setBarberScheduleOverrides(overridesResult.data || []);
+      setWorkingHoursLoaded(true);
 
       // Buscar perfis apenas dos bookings que têm client_id
       const clientIds = rawBookings
@@ -421,6 +476,11 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
           .select('user_id, display_name')
           .in('user_id', clientIds);
         
+        // Verificar novamente após segunda requisição
+        if (abortController.signal.aborted || selectedBarber !== currentBarberAtStart) {
+          return;
+        }
+        
         allProfiles = profilesResult.data || [];
       }
 
@@ -431,8 +491,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
       const profilesMap = new Map<string, string>();
       allProfiles.forEach(p => profilesMap.set(p.user_id, p.display_name));
 
-      // Processar bookings - IMPORTANTE: usar client_name do booking como fallback
-      // pois a RLS pode bloquear acesso aos perfis de outros usuários
+      // Processar bookings
       const processed = rawBookings.map(b => {
         const serviceData = servicesMap.get(b.service_id);
         const serviceName = serviceData?.name || 'Serviço';
@@ -442,8 +501,6 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
         if (b.is_external_booking) {
           clientName = b.client_name || 'Cliente Externo';
         } else if (b.client_id) {
-          // Tentar buscar do profile, mas usar client_name do booking como fallback
-          // já que a RLS pode bloquear acesso aos perfis
           clientName = profilesMap.get(b.client_id) || b.client_name || 'Cliente';
         } else if (b.client_name) {
           clientName = b.client_name;
@@ -457,10 +514,19 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
         };
       });
 
+      // Verificação final antes de atualizar estado
+      if (abortController.signal.aborted || selectedBarber !== currentBarberAtStart) {
+        return;
+      }
+
       setBookings(processed);
       setBlocks(blocksData);
 
     } catch (error: any) {
+      // Ignorar erros de requisições abortadas
+      if (error.name === 'AbortError' || abortController.signal.aborted) {
+        return;
+      }
       console.error('Erro geral:', error);
       toast({
         title: 'Erro ao carregar agenda',
@@ -468,7 +534,10 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
         variant: 'destructive'
       });
     } finally {
-      setLoading(false);
+      // Só atualizar loading se ainda for o mesmo barbeiro
+      if (!abortController.signal.aborted && selectedBarber === currentBarberAtStart) {
+        setLoading(false);
+      }
     }
   };
 
@@ -531,7 +600,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
     bookingId?: string;
   } => {
     const dateStr = format(date, 'yyyy-MM-dd');
-    const timeStr = time.substring(0, 5); // Normalizar para "HH:MM"
+    const timeStr = time.substring(0, 5);
     const slotMinutes = timeToMinutes(timeStr);
 
     // Primeiro verificar se está fora do horário de trabalho
@@ -539,7 +608,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
       return { type: 'off-hours' };
     }
 
-    // Verificar se há agendamento que cobre este slot (baseado na duração)
+    // Verificar se há agendamento que cobre este slot
     const matchingBooking = bookings.find((b: Booking) => {
       if (b.booking_date !== dateStr || b.status === 'cancelled') return false;
       
@@ -548,7 +617,6 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
       const bookingDuration = b.service_duration || 30;
       const bookingEndMinutes = bookingStartMinutes + bookingDuration;
       
-      // O slot está dentro do período do agendamento
       return slotMinutes >= bookingStartMinutes && slotMinutes < bookingEndMinutes;
     });
     
@@ -558,12 +626,10 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
       const bookingDuration = matchingBooking.service_duration || 30;
       const bookingEndMinutes = bookingStartMinutes + bookingDuration;
       
-      // Calcular quantos slots o booking ocupa (baseado em intervalos de 15 min)
       const SLOT_STEP = 15;
       const totalSlots = Math.ceil(bookingDuration / SLOT_STEP);
       const slotIndex = Math.floor((slotMinutes - bookingStartMinutes) / SLOT_STEP);
       
-      // Determinar posição do slot no booking (início, meio, fim)
       const isStart = slotIndex === 0;
       const isEnd = slotIndex === totalSlots - 1;
       const isMiddle = !isStart && !isEnd;
@@ -588,11 +654,9 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
     const block = blocks.find(b => {
       if (b.block_date !== dateStr) return false;
       
-      // Normalizar os horários removendo segundos para comparação
       const blockStart = b.start_time.substring(0, 5);
       const blockEnd = b.end_time.substring(0, 5);
       
-      // Verificar se o horário está dentro do intervalo do bloqueio
       return timeStr >= blockStart && timeStr < blockEnd;
     });
     
@@ -607,7 +671,6 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
   };
 
   const handleSlotClick = (date: Date, time: string, event: React.MouseEvent) => {
-    // Prevenir cliques múltiplos - se algum dialog já está aberto, ignorar
     if (isAnyDialogOpen) {
       return;
     }
@@ -616,14 +679,11 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
     const timeStr = time.substring(0, 5);
     const slotInfo = getSlotType(date, time);
 
-    // Se for fora do horário de trabalho, ignorar
     if (slotInfo.type === 'off-hours') {
       return;
     }
 
-    // Se for agendado, abrir detalhes (sempre permitido, mesmo em readOnly)
     if (slotInfo.type === 'booked' || slotInfo.type === 'booked-external') {
-      // Usar o bookingId do slotInfo para encontrar o booking correto (funciona para slots de continuação)
       const booking = slotInfo.bookingId 
         ? bookings.find((b: Booking) => b.id === slotInfo.bookingId)
         : bookings.find((b: Booking) => {
@@ -643,12 +703,10 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
       return;
     }
 
-    // Se estiver em modo readOnly, não permitir outras ações
     if (!canEdit) {
       return;
     }
 
-    // Se for bloqueado, encontrar TODOS os blocos que cobrem este horário e perguntar
     if (slotInfo.type === 'blocked') {
       const overlappingBlocks = blocks.filter(b => {
         if (b.block_date !== dateStr) return false;
@@ -659,7 +717,6 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
       });
       
       if (overlappingBlocks.length > 0) {
-        // Abrir dialog de confirmação com todos os blocos sobrepostos
         setSelectedSlot({
           time,
           date,
@@ -672,7 +729,6 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
       return;
     }
 
-    // Se for disponível, abrir dialog de agendamento
     setSelectedSlot({
       time,
       date,
@@ -686,10 +742,11 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
 
     try {
       const blocksToInsert = [];
+      const daySlots = getTimeSlotsForDate(selectedSlot.date);
       
       if (type === 'single') {
-        const idx = DEFAULT_WORK_HOURS.indexOf(selectedSlot.time);
-        const endTime = DEFAULT_WORK_HOURS[idx + 1] || '20:00';
+        const idx = daySlots.indexOf(selectedSlot.time);
+        const endTime = daySlots[idx + 1] || '20:00';
         blocksToInsert.push({
           barber_id: selectedBarber,
           block_date: format(selectedSlot.date, 'yyyy-MM-dd'),
@@ -698,12 +755,12 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
           reason: reason || null
         });
       } else if (type === 'day') {
-        for (let i = 0; i < DEFAULT_WORK_HOURS.length - 1; i++) {
+        for (let i = 0; i < daySlots.length - 1; i++) {
           blocksToInsert.push({
             barber_id: selectedBarber,
             block_date: format(selectedSlot.date, 'yyyy-MM-dd'),
-            start_time: DEFAULT_WORK_HOURS[i],
-            end_time: DEFAULT_WORK_HOURS[i + 1],
+            start_time: daySlots[i],
+            end_time: daySlots[i + 1],
             reason: reason || null
           });
         }
@@ -711,16 +768,26 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
         const weekStart = startOfWeek(selectedSlot.date, { locale: ptBR });
         for (let day = 0; day < 7; day++) {
           const currentDay = addDays(weekStart, day);
-          for (let i = 0; i < DEFAULT_WORK_HOURS.length - 1; i++) {
+          const currentDaySlots = getTimeSlotsForDate(currentDay);
+          for (let i = 0; i < currentDaySlots.length - 1; i++) {
             blocksToInsert.push({
               barber_id: selectedBarber,
               block_date: format(currentDay, 'yyyy-MM-dd'),
-              start_time: DEFAULT_WORK_HOURS[i],
-              end_time: DEFAULT_WORK_HOURS[i + 1],
+              start_time: currentDaySlots[i],
+              end_time: currentDaySlots[i + 1],
               reason: reason || null
             });
           }
         }
+      }
+
+      if (blocksToInsert.length === 0) {
+        toast({
+          title: 'Nenhum horário para bloquear',
+          description: 'Não há horários de trabalho configurados para este período',
+          variant: 'destructive'
+        });
+        return;
       }
 
       const { error } = await supabase
@@ -751,20 +818,30 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
 
     try {
       const blocksToInsert = [];
-      let currentDate = new Date(startDate);
+      let currentDateIter = new Date(startDate);
       const end = new Date(endDate);
 
-      while (currentDate <= end) {
-        for (let i = 0; i < DEFAULT_WORK_HOURS.length - 1; i++) {
+      while (currentDateIter <= end) {
+        const daySlots = getTimeSlotsForDate(currentDateIter);
+        for (let i = 0; i < daySlots.length - 1; i++) {
           blocksToInsert.push({
             barber_id: selectedBarber,
-            block_date: format(currentDate, 'yyyy-MM-dd'),
-            start_time: DEFAULT_WORK_HOURS[i],
-            end_time: DEFAULT_WORK_HOURS[i + 1],
+            block_date: format(currentDateIter, 'yyyy-MM-dd'),
+            start_time: daySlots[i],
+            end_time: daySlots[i + 1],
             reason: reason || null
           });
         }
-        currentDate = addDays(currentDate, 1);
+        currentDateIter = addDays(currentDateIter, 1);
+      }
+
+      if (blocksToInsert.length === 0) {
+        toast({
+          title: 'Nenhum horário para bloquear',
+          description: 'Não há horários de trabalho configurados para este período',
+          variant: 'destructive'
+        });
+        return;
       }
 
       const { error } = await supabase
@@ -792,24 +869,20 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
     if (blocksToRemove.length === 0) return;
 
     try {
-      // Atualização otimista - remove todos os blocos do estado local imediatamente
       const blockIds = blocksToRemove.map(b => b.id);
       setBlocks(prev => prev.filter(b => !blockIds.includes(b.id)));
       
-      // Mostra o toast
       toast({
         title: 'Horário desbloqueado',
         description: 'O horário foi desbloqueado com sucesso'
       });
 
-      // Deleta todos os blocos no banco de dados em segundo plano
       const { error } = await supabase
         .from('barber_blocks')
         .delete()
         .in('id', blockIds);
 
       if (error) {
-        // Se houver erro, reverte e mostra mensagem
         fetchScheduleData();
         throw error;
       }
@@ -823,37 +896,30 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
   };
 
   const handleUnblock = async () => {
-    // Se houver blocos sobrepostos, desbloquear todos
     if (selectedSlot?.overlappingBlocks && selectedSlot.overlappingBlocks.length > 0) {
       await handleUnblockMultiple(selectedSlot.overlappingBlocks);
       setDialogOpen(false);
       return;
     }
 
-    // Caso contrário, desbloquear apenas o bloco único
     if (!selectedSlot?.blockId) return;
 
     try {
-      // Atualização otimista - remove do estado local imediatamente
       setBlocks(prev => prev.filter(b => b.id !== selectedSlot.blockId));
       
-      // Fecha o dialog imediatamente
       setDialogOpen(false);
       
-      // Mostra o toast
       toast({
         title: 'Horário desbloqueado',
         description: 'O horário foi desbloqueado com sucesso'
       });
 
-      // Deleta no banco de dados em segundo plano
       const { error } = await supabase
         .from('barber_blocks')
         .delete()
         .eq('id', selectedSlot.blockId);
 
       if (error) {
-        // Se houver erro, reverte e mostra mensagem
         fetchScheduleData();
         throw error;
       }
@@ -873,7 +939,6 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
     ? weekDays 
     : weekDays;
 
-  // Para visualização mensal, obter todos os dias do mês
   const getMonthDays = () => {
     const start = startOfMonth(currentDate);
     const end = endOfMonth(currentDate);
@@ -938,7 +1003,8 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
     }
   };
 
-  if (loading && !selectedBarber) {
+  // Mostrar loading até que os dados estejam carregados
+  if (loading || !workingHoursLoaded) {
     return (
       <div className="flex items-center justify-center py-8">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -950,11 +1016,11 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
     <div className="flex flex-col h-full">
       <Card className="flex flex-col h-full">
         <CardContent className="flex flex-col flex-1 space-y-4 overflow-hidden p-3 sm:p-4 lg:p-6">
-          {/* Seletor de Barbeiro - apenas para donos/admins que não estão em modo barbeiro */}
+          {/* Seletor de Barbeiro - com função de troca isolada */}
           {!isBarberView && role === 'owner' && barbers.length > 0 && (
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 flex-shrink-0">
               <span className="text-sm font-medium text-muted-foreground">Barbeiro:</span>
-              <Select value={selectedBarber} onValueChange={setSelectedBarber}>
+              <Select value={selectedBarber} onValueChange={handleBarberChange}>
                 <SelectTrigger className="w-full sm:w-[280px]">
                   <SelectValue placeholder="Selecione o barbeiro" />
                 </SelectTrigger>
@@ -1057,13 +1123,9 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
             </div>
           </div>
 
-          {/* Grade de Horários ou Calendário Mensal - COM SCROLL */}
+          {/* Grade de Horários ou Calendário Mensal */}
           <div className="flex-1 overflow-hidden flex flex-col">
-            {loading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin" />
-              </div>
-            ) : viewMode === 'month' ? (
+            {viewMode === 'month' ? (
               /* Visualização Mensal - Calendário */
               <div className="overflow-x-auto -mx-2 px-2">
                 <div className="min-w-[320px]">
@@ -1129,14 +1191,13 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                 </div>
               </div>
             ) : (
-              /* Visualização Dia/Semana - Grade de Horários - Mobile First */
-              /* Container único com scroll horizontal para dias + horários sincronizados */
+              /* Visualização Dia/Semana - Grade de Horários */
               <div className="relative overflow-x-auto overflow-y-auto -mx-2 px-2">
                 <div
                   className="min-w-0"
                   style={{ minWidth: `${56 + displayDays.length * 112}px` }}
                 >
-                  {/* Cabeçalho dos dias - Dentro do scroll */}
+                  {/* Cabeçalho dos dias */}
                   <div className="sticky top-0 bg-background z-20 pb-2 border-b">
                     <div
                       className="grid"
@@ -1156,9 +1217,9 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                     </div>
                   </div>
 
-                  {/* Linhas de horários - pequeno gap uniforme */}
+                  {/* Linhas de horários */}
                   <div className="space-y-0.5">
-                    {dynamicTimeSlots.map((time) => (
+                    {allTimeSlotsForView.map((time) => (
                       <div
                         key={time}
                         className="grid gap-0.5"
