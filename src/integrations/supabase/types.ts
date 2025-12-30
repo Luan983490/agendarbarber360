@@ -1172,6 +1172,10 @@ export type Database = {
         Args: { p_duration_minutes: number; p_start_time: string }
         Returns: string
       }
+      can_manage_booking: {
+        Args: { _booking_id: string; _user_id: string }
+        Returns: boolean
+      }
       check_subscription_status: {
         Args: { barbershop_uuid: string }
         Returns: {
@@ -1179,6 +1183,10 @@ export type Database = {
           is_active: boolean
           plan_type: string
         }[]
+      }
+      client_can_cancel_booking: {
+        Args: { _booking_id: string; _user_id: string }
+        Returns: boolean
       }
       get_user_role: {
         Args: { _barbershop_id: string; _user_id: string }
@@ -1194,6 +1202,10 @@ export type Database = {
       }
       is_barbershop_owner: {
         Args: { _barbershop_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_booking_barber: {
+        Args: { _booking_id: string; _user_id: string }
         Returns: boolean
       }
     }
