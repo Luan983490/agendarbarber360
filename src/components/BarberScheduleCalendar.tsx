@@ -115,10 +115,13 @@ const generateTimeSlots = (start: string, end: string, stepMinutes = 15): string
 const isTimeInPeriods = (time: string, periods: Array<{ start: string; end: string }>) =>
   periods.some((p) => time >= p.start && time < p.end);
 
+const STORAGE_KEY_SELECTED_BARBER = 'barber360_selected_barber_id';
+
 export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly = false, onRefreshRef }: BarberScheduleCalendarProps) => {
   const { role, barberId: currentBarberId } = useUserAccess();
   const [barbers, setBarbers] = useState<Barber[]>([]);
   const [selectedBarber, setSelectedBarber] = useState<string>(barberIdFilter || '');
+  const [isBarberHydrated, setIsBarberHydrated] = useState(!!barberIdFilter);
   const [viewMode, setViewMode] = useState<ViewMode>('week');
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(startOfWeek(new Date(), { locale: ptBR }));
@@ -239,7 +242,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
     setLoading(true);
   }, []);
 
-  // Função para trocar barbeiro com limpeza de estado
+  // Função para trocar barbeiro com limpeza de estado e persistência
   const handleBarberChange = useCallback((newBarberId: string) => {
     if (newBarberId === selectedBarber) return;
     
@@ -248,20 +251,33 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
       abortControllerRef.current.abort();
     }
     
+    // Persistir no localStorage
+    localStorage.setItem(STORAGE_KEY_SELECTED_BARBER, newBarberId);
+    
     // Limpar estado antes de trocar
     clearBarberState();
     setSelectedBarber(newBarberId);
   }, [selectedBarber, clearBarberState]);
 
+  // Reidratar barbeiro do localStorage ANTES de qualquer fetch
   useEffect(() => {
     if (barberIdFilter) {
+      // Se tem filtro fixo (ex: painel do barbeiro), usar ele
       if (barberIdFilter !== selectedBarber) {
         clearBarberState();
         setSelectedBarber(barberIdFilter);
       }
+      setIsBarberHydrated(true);
       return;
     }
 
+    // Reidratar do localStorage
+    const savedBarberId = localStorage.getItem(STORAGE_KEY_SELECTED_BARBER);
+    if (savedBarberId) {
+      setSelectedBarber(savedBarberId);
+    }
+    setIsBarberHydrated(true);
+    
     fetchBarbers();
   }, [barbershopId, barberIdFilter, role, currentBarberId]);
 
@@ -360,9 +376,16 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
 
         if (error) throw error;
         setBarbers(data || []);
-        if (data && data.length > 0 && !selectedBarber) {
-          setSelectedBarber(data[0].id);
+        
+        // Validar se o barbeiro salvo ainda existe na lista
+        const savedBarberId = localStorage.getItem(STORAGE_KEY_SELECTED_BARBER);
+        if (savedBarberId && data?.some(b => b.id === savedBarberId)) {
+          // Barbeiro salvo é válido, manter selecionado
+          if (selectedBarber !== savedBarberId) {
+            setSelectedBarber(savedBarberId);
+          }
         }
+        // NÃO definir barbeiro default automático - usuário deve selecionar
       }
     } catch (error: any) {
       console.error('Erro ao carregar barbeiros:', error);
@@ -1003,7 +1026,49 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
     }
   };
 
-  // Mostrar loading até que os dados estejam carregados
+  // Bloquear renderização enquanto não estiver sincronizado
+  // - Não renderizar até reidratar o barbeiro do localStorage
+  // - Não renderizar até ter um barbeiro selecionado (a menos que seja owner escolhendo)
+  // - Não renderizar até os working hours carregarem
+  if (!isBarberHydrated) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  // Se ainda não selecionou barbeiro (owner sem localStorage salvo), mostrar mensagem
+  if (!selectedBarber && !isBarberView && role === 'owner' && barbers.length > 0) {
+    return (
+      <div className="flex flex-col h-full">
+        <Card className="flex flex-col h-full">
+          <CardContent className="flex flex-col flex-1 space-y-4 p-3 sm:p-4 lg:p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+              <span className="text-sm font-medium text-muted-foreground">Barbeiro:</span>
+              <Select value={selectedBarber} onValueChange={handleBarberChange}>
+                <SelectTrigger className="w-full sm:w-[280px]">
+                  <SelectValue placeholder="Selecione o barbeiro" />
+                </SelectTrigger>
+                <SelectContent>
+                  {barbers.map((barber) => (
+                    <SelectItem key={barber.id} value={barber.id}>
+                      {barber.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center justify-center py-8 text-muted-foreground">
+              Selecione um barbeiro para visualizar a agenda
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Mostrar loading enquanto carrega os dados do barbeiro selecionado
   if (loading || !workingHoursLoaded) {
     return (
       <div className="flex items-center justify-center py-8">
