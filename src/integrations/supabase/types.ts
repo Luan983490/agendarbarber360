@@ -297,6 +297,57 @@ export type Database = {
           },
         ]
       }
+      booking_audit_logs: {
+        Row: {
+          action: string
+          actor_role: string | null
+          actor_user_id: string | null
+          barbershop_id: string
+          booking_id: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          new_data: Json | null
+          new_status: string | null
+          old_data: Json | null
+          old_status: string | null
+          origin: string
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          actor_role?: string | null
+          actor_user_id?: string | null
+          barbershop_id: string
+          booking_id: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_data?: Json | null
+          new_status?: string | null
+          old_data?: Json | null
+          old_status?: string | null
+          origin?: string
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          actor_role?: string | null
+          actor_user_id?: string | null
+          barbershop_id?: string
+          booking_id?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_data?: Json | null
+          new_status?: string | null
+          old_data?: Json | null
+          old_status?: string | null
+          origin?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       booking_products: {
         Row: {
           booking_id: string
