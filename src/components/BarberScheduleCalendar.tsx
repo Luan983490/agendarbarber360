@@ -120,8 +120,14 @@ const STORAGE_KEY_SELECTED_BARBER = 'barber360_selected_barber_id';
 export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly = false, onRefreshRef }: BarberScheduleCalendarProps) => {
   const { role, barberId: currentBarberId } = useUserAccess();
   const [barbers, setBarbers] = useState<Barber[]>([]);
-  const [selectedBarber, setSelectedBarber] = useState<string>(barberIdFilter || '');
-  const [isBarberHydrated, setIsBarberHydrated] = useState(!!barberIdFilter);
+  // CRÍTICO: Inicializar com localStorage para evitar qualquer sobrescrita
+  const [selectedBarber, setSelectedBarber] = useState<string>(() => {
+    if (barberIdFilter) return barberIdFilter;
+    return localStorage.getItem(STORAGE_KEY_SELECTED_BARBER) || '';
+  });
+  const [isBarberHydrated, setIsBarberHydrated] = useState(false);
+  // Flag para garantir que hidratação só ocorra UMA VEZ
+  const hydrationDoneRef = useRef(false);
   const [viewMode, setViewMode] = useState<ViewMode>('week');
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(startOfWeek(new Date(), { locale: ptBR }));
@@ -259,24 +265,26 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
     setSelectedBarber(newBarberId);
   }, [selectedBarber, clearBarberState]);
 
-  // Reidratar barbeiro do localStorage ANTES de qualquer fetch
+  // Reidratar barbeiro do localStorage APENAS UMA VEZ no mount
   useEffect(() => {
+    // CRÍTICO: Só executar hidratação UMA VEZ
+    if (hydrationDoneRef.current) {
+      return;
+    }
+    
     if (barberIdFilter) {
       // Se tem filtro fixo (ex: painel do barbeiro), usar ele
-      if (barberIdFilter !== selectedBarber) {
-        clearBarberState();
-        setSelectedBarber(barberIdFilter);
-      }
+      hydrationDoneRef.current = true;
       setIsBarberHydrated(true);
       return;
     }
 
-    // PASSO 1: Ler localStorage PRIMEIRO (fonte de verdade)
-    const savedBarberId = localStorage.getItem(STORAGE_KEY_SELECTED_BARBER);
-
-    // Buscar barbeiros e validar o salvo
+    // Buscar barbeiros e validar o barbeiro do localStorage
     const loadBarbersAndHydrate = async () => {
       try {
+        // PASSO 1: Ler localStorage (já foi lido na inicialização do state)
+        const savedBarberId = localStorage.getItem(STORAGE_KEY_SELECTED_BARBER);
+        
         let barbersData: Barber[] = [];
         
         if (role === 'barber' && currentBarberId) {
@@ -303,43 +311,34 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
         
         setBarbers(barbersData);
         
-        // PASSO 2: Validar e definir barbeiro (prioridade: localStorage > currentBarberId > primeiro)
-        let finalBarberId: string | null = null;
+        // PASSO 2: Validar barbeiro SOMENTE se não tiver um válido já definido
+        // (selectedBarber já foi inicializado com localStorage no useState)
+        const currentSelection = selectedBarber;
         
-        // Prioridade 1: localStorage (se válido)
-        if (savedBarberId && barbersData.some(b => b.id === savedBarberId)) {
-          finalBarberId = savedBarberId;
+        // Se já tem seleção válida na lista, manter
+        if (currentSelection && barbersData.some(b => b.id === currentSelection)) {
+          // Barbeiro já está correto, não fazer nada
         }
-        // Prioridade 2: barbeiro logado (se for role barber)
-        else if (role === 'barber' && currentBarberId && barbersData.some(b => b.id === currentBarberId)) {
-          finalBarberId = currentBarberId;
-        }
-        // Prioridade 3: primeiro da lista (fallback apenas se nada salvo)
+        // Se seleção atual não existe na lista OU está vazia
         else if (barbersData.length > 0) {
-          finalBarberId = barbersData[0].id;
-          // Limpar localStorage inválido se existia
-          if (savedBarberId) {
-            localStorage.removeItem(STORAGE_KEY_SELECTED_BARBER);
-          }
+          // Fallback: primeiro da lista (APENAS se não tinha nada válido)
+          const firstBarberId = barbersData[0].id;
+          setSelectedBarber(firstBarberId);
+          localStorage.setItem(STORAGE_KEY_SELECTED_BARBER, firstBarberId);
         }
         
-        // Aplicar barbeiro selecionado
-        if (finalBarberId) {
-          setSelectedBarber(finalBarberId);
-          // Garantir que está salvo no localStorage
-          localStorage.setItem(STORAGE_KEY_SELECTED_BARBER, finalBarberId);
-        }
-        
-        // PASSO 3: Marcar hidratação completa APENAS após tudo definido
+        // PASSO 3: Marcar hidratação completa
+        hydrationDoneRef.current = true;
         setIsBarberHydrated(true);
       } catch (error) {
         console.error('Erro ao carregar barbeiros:', error);
+        hydrationDoneRef.current = true;
         setIsBarberHydrated(true);
       }
     };
     
     loadBarbersAndHydrate();
-  }, [barbershopId, barberIdFilter, role, currentBarberId]);
+  }, [barbershopId, barberIdFilter, role, currentBarberId, selectedBarber]);
 
   useEffect(() => {
     // CRÍTICO: Só fazer fetch após hidratação completa
