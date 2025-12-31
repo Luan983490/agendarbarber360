@@ -14,6 +14,8 @@ export default function BarberAgenda() {
     setCurrentTab(tab);
     if (tab === 'hoje') {
       navigate('/barber/hoje');
+    } else if (tab === 'performance') {
+      navigate('/barber/performance');
     }
   };
 

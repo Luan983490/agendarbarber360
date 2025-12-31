@@ -18,6 +18,7 @@ import Dashboard from "./pages/Dashboard";
 // Barber pages
 import BarberHoje from "./pages/BarberHoje";
 import BarberAgenda from "./pages/BarberAgenda";
+import BarberPerformance from "./pages/BarberPerformance";
 
 // Client pages (kept for future use)
 import MyBookings from "./pages/MyBookings";
@@ -79,6 +80,14 @@ const AppContent = () => {
             element={
               <ProtectedRoute allowedRoles={['barber']}>
                 <BarberAgenda />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/barber/performance" 
+            element={
+              <ProtectedRoute allowedRoles={['barber']}>
+                <BarberPerformance />
               </ProtectedRoute>
             } 
           />

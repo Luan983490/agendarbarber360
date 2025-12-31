@@ -117,6 +117,8 @@ export default function BarberHoje() {
     setCurrentTab(tab);
     if (tab === 'agenda') {
       navigate('/barber/agenda');
+    } else if (tab === 'performance') {
+      navigate('/barber/performance');
     }
   };
 
