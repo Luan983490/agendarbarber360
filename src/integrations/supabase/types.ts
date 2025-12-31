@@ -1239,6 +1239,51 @@ export type Database = {
         Args: { _booking_id: string; _user_id: string }
         Returns: boolean
       }
+      get_barber_performance_report: {
+        Args: { p_end_date: string; p_start_date: string }
+        Returns: {
+          barber_id: string
+          barber_name: string
+          total_bookings: number
+          total_revenue: number
+        }[]
+      }
+      get_bookings_report: {
+        Args: {
+          p_barber_filter?: string
+          p_end_date: string
+          p_start_date: string
+        }
+        Returns: {
+          booking_date: string
+          total_bookings: number
+        }[]
+      }
+      get_revenue_report: {
+        Args: {
+          p_barber_filter?: string
+          p_end_date: string
+          p_start_date: string
+        }
+        Returns: {
+          average_ticket: number
+          total_bookings: number
+          total_revenue: number
+        }[]
+      }
+      get_top_services_report: {
+        Args: {
+          p_barber_filter?: string
+          p_end_date: string
+          p_start_date: string
+        }
+        Returns: {
+          service_id: string
+          service_name: string
+          total_bookings: number
+          total_revenue: number
+        }[]
+      }
       get_user_role: {
         Args: { _barbershop_id: string; _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
