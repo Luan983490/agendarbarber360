@@ -12,7 +12,12 @@ import { DateRangeFilter } from './DateRangeFilter';
 import { MonthlyComparisonCard } from './MonthlyComparisonCard';
 import { CancellationRatesCard } from './CancellationRatesCard';
 import { OccupancyTable } from './OccupancyTable';
+import { TopClientsCard } from './TopClientsCard';
+import { AlertsCard } from './AlertsCard';
+import { AuditTimelineCard } from './AuditTimelineCard';
+import { ExportReportsButton } from './ExportReportsButton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart3 } from 'lucide-react';
 
 interface Barber {
@@ -78,6 +83,29 @@ interface OccupancyData {
   occupancy_rate: number;
 }
 
+interface TopClientData {
+  client_id: string;
+  client_name: string;
+  total_bookings: number;
+  total_revenue: number;
+  profitable_weekday: number;
+  profitable_weekday_revenue: number;
+  profitable_time_slot: string;
+  profitable_time_slot_revenue: number;
+}
+
+interface AuditLog {
+  booking_id: string;
+  action: string;
+  old_status: string | null;
+  new_status: string | null;
+  actor_role: string;
+  origin: string;
+  created_at: string;
+  client_name: string;
+  barber_name: string;
+}
+
 export function ReportsPage({ barbershopId }: ReportsPageProps) {
   const { role, barberId } = useUserAccess();
   const { toast } = useToast();
@@ -99,6 +127,8 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
   const [comparisonData, setComparisonData] = useState<ComparisonData | null>(null);
   const [cancellationData, setCancellationData] = useState<CancellationData | null>(null);
   const [occupancyData, setOccupancyData] = useState<OccupancyData[]>([]);
+  const [topClientsData, setTopClientsData] = useState<TopClientData[]>([]);
+  const [auditData, setAuditData] = useState<AuditLog[]>([]);
   
   // Loading states
   const [loadingRevenue, setLoadingRevenue] = useState(true);
@@ -108,6 +138,8 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
   const [loadingComparison, setLoadingComparison] = useState(true);
   const [loadingCancellation, setLoadingCancellation] = useState(true);
   const [loadingOccupancy, setLoadingOccupancy] = useState(true);
+  const [loadingTopClients, setLoadingTopClients] = useState(true);
+  const [loadingAudit, setLoadingAudit] = useState(true);
 
   // Fetch barbers for filter (owner/admin only)
   useEffect(() => {
@@ -158,6 +190,8 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
       fetchComparisonReport(startDateStr, endDateStr, previousStartStr, previousEndStr, barberFilter),
       fetchCancellationReport(startDateStr, endDateStr, barberFilter),
       isOwnerOrAdmin ? fetchOccupancyReport(startDateStr, endDateStr, barberFilter) : Promise.resolve(),
+      fetchTopClientsReport(startDateStr, endDateStr),
+      isOwnerOrAdmin ? fetchAuditTimeline(startDateStr, endDateStr) : Promise.resolve(),
     ]);
   };
 
@@ -325,6 +359,44 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
     }
   };
 
+  const fetchTopClientsReport = async (start: string, end: string) => {
+    setLoadingTopClients(true);
+    try {
+      const { data, error } = await supabase.rpc('get_top_clients_and_profitable_hours', {
+        p_start_date: start,
+        p_end_date: end,
+        p_limit: 10,
+      });
+
+      if (error) throw error;
+      setTopClientsData(data || []);
+    } catch (error: any) {
+      console.error('Erro no relatório de top clientes:', error);
+      setTopClientsData([]);
+    } finally {
+      setLoadingTopClients(false);
+    }
+  };
+
+  const fetchAuditTimeline = async (start: string, end: string) => {
+    setLoadingAudit(true);
+    try {
+      const { data, error } = await supabase.rpc('get_audit_timeline', {
+        p_start_date: start,
+        p_end_date: end,
+        p_booking_id: null,
+      });
+
+      if (error) throw error;
+      setAuditData(data || []);
+    } catch (error: any) {
+      console.error('Erro no relatório de auditoria:', error);
+      setAuditData([]);
+    } finally {
+      setLoadingAudit(false);
+    }
+  };
+
   const handleDateChange = (start: Date, end: Date) => {
     setStartDate(start);
     setEndDate(end);
@@ -341,6 +413,9 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
           <BarChart3 className="h-6 w-6 text-primary" />
           <h1 className="text-xl sm:text-2xl font-bold">Relatórios</h1>
         </div>
+        {isOwnerOrAdmin && (
+          <ExportReportsButton startDate={startDate} endDate={endDate} />
+        )}
       </div>
 
       {/* Filters */}
@@ -369,34 +444,82 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
         )}
       </div>
 
-      {/* Revenue Cards */}
-      <RevenueCard data={revenueData} loading={loadingRevenue} />
+      {/* Tabs for Owner/Admin */}
+      {isOwnerOrAdmin ? (
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+            <TabsTrigger value="clients">Clientes</TabsTrigger>
+            <TabsTrigger value="audit">Auditoria</TabsTrigger>
+            <TabsTrigger value="alerts">Alertas</TabsTrigger>
+          </TabsList>
 
-      {/* Monthly Comparison */}
-      <MonthlyComparisonCard 
-        data={comparisonData} 
-        loading={loadingComparison}
-        currentPeriod={currentPeriodLabel}
-        previousPeriod={previousPeriodLabel}
-      />
+          <TabsContent value="overview" className="space-y-6">
+            {/* Revenue Cards */}
+            <RevenueCard data={revenueData} loading={loadingRevenue} />
 
-      {/* Cancellation & No-Show Rates */}
-      <CancellationRatesCard data={cancellationData} loading={loadingCancellation} />
+            {/* Monthly Comparison */}
+            <MonthlyComparisonCard 
+              data={comparisonData} 
+              loading={loadingComparison}
+              currentPeriod={currentPeriodLabel}
+              previousPeriod={previousPeriodLabel}
+            />
 
-      {/* Charts and Tables */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <BookingsChart data={bookingsData} loading={loadingBookings} />
-        <TopServicesTable data={servicesData} loading={loadingServices} />
-      </div>
+            {/* Cancellation & No-Show Rates */}
+            <CancellationRatesCard data={cancellationData} loading={loadingCancellation} />
 
-      {/* Occupancy - only for owner/admin */}
-      {isOwnerOrAdmin && (
-        <OccupancyTable data={occupancyData} loading={loadingOccupancy} />
-      )}
+            {/* Charts and Tables */}
+            <div className="grid gap-6 lg:grid-cols-2">
+              <BookingsChart data={bookingsData} loading={loadingBookings} />
+              <TopServicesTable data={servicesData} loading={loadingServices} />
+            </div>
 
-      {/* Barber Performance - only for owner/admin */}
-      {isOwnerOrAdmin && (
-        <BarberPerformanceTable data={performanceData} loading={loadingPerformance} />
+            {/* Occupancy */}
+            <OccupancyTable data={occupancyData} loading={loadingOccupancy} />
+
+            {/* Barber Performance */}
+            <BarberPerformanceTable data={performanceData} loading={loadingPerformance} />
+          </TabsContent>
+
+          <TabsContent value="clients" className="space-y-6">
+            <TopClientsCard data={topClientsData} loading={loadingTopClients} />
+          </TabsContent>
+
+          <TabsContent value="audit" className="space-y-6">
+            <AuditTimelineCard data={auditData} loading={loadingAudit} />
+          </TabsContent>
+
+          <TabsContent value="alerts" className="space-y-6">
+            <AlertsCard />
+          </TabsContent>
+        </Tabs>
+      ) : (
+        // Barber view - simplified
+        <div className="space-y-6">
+          {/* Revenue Cards */}
+          <RevenueCard data={revenueData} loading={loadingRevenue} />
+
+          {/* Monthly Comparison */}
+          <MonthlyComparisonCard 
+            data={comparisonData} 
+            loading={loadingComparison}
+            currentPeriod={currentPeriodLabel}
+            previousPeriod={previousPeriodLabel}
+          />
+
+          {/* Cancellation & No-Show Rates */}
+          <CancellationRatesCard data={cancellationData} loading={loadingCancellation} />
+
+          {/* Charts and Tables */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            <BookingsChart data={bookingsData} loading={loadingBookings} />
+            <TopServicesTable data={servicesData} loading={loadingServices} />
+          </div>
+
+          {/* Top Clients for barber */}
+          <TopClientsCard data={topClientsData} loading={loadingTopClients} />
+        </div>
       )}
     </div>
   );
