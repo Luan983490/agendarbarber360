@@ -1,4 +1,4 @@
-import { Calendar, CalendarDays, X } from 'lucide-react';
+import { Calendar, CalendarDays, BarChart3, X } from 'lucide-react';
 import barber360Logo from '@/assets/barber360-logo.png';
 import { useEffect } from 'react';
 import {
@@ -27,6 +27,7 @@ interface MenuItem {
 const menuStructure: MenuItem[] = [
   { id: 'hoje', title: 'Hoje', icon: Calendar },
   { id: 'agenda', title: 'Minha Agenda', icon: CalendarDays },
+  { id: 'performance', title: 'Meu Desempenho', icon: BarChart3 },
 ];
 
 export function BarberSidebar({ currentTab, onTabChange }: BarberSidebarProps) {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { format, startOfMonth, endOfMonth } from 'date-fns';
+import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserAccess } from '@/hooks/useUserAccess';
 import { useToast } from '@/hooks/use-toast';
@@ -8,6 +9,9 @@ import { TopServicesTable } from './TopServicesTable';
 import { BarberPerformanceTable } from './BarberPerformanceTable';
 import { BookingsChart } from './BookingsChart';
 import { DateRangeFilter } from './DateRangeFilter';
+import { MonthlyComparisonCard } from './MonthlyComparisonCard';
+import { CancellationRatesCard } from './CancellationRatesCard';
+import { OccupancyTable } from './OccupancyTable';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BarChart3 } from 'lucide-react';
 
@@ -45,6 +49,35 @@ interface BarberPerformance {
   total_revenue: number;
 }
 
+interface ComparisonData {
+  current_revenue: number;
+  current_bookings: number;
+  current_avg_ticket: number;
+  previous_revenue: number;
+  previous_bookings: number;
+  previous_avg_ticket: number;
+  revenue_variation: number;
+  bookings_variation: number;
+  avg_ticket_variation: number;
+}
+
+interface CancellationData {
+  total_bookings: number;
+  completed_bookings: number;
+  cancelled_bookings: number;
+  noshow_bookings: number;
+  cancellation_rate: number;
+  noshow_rate: number;
+}
+
+interface OccupancyData {
+  barber_id: string;
+  barber_name: string;
+  available_hours: number;
+  occupied_hours: number;
+  occupancy_rate: number;
+}
+
 export function ReportsPage({ barbershopId }: ReportsPageProps) {
   const { role, barberId } = useUserAccess();
   const { toast } = useToast();
@@ -63,12 +96,18 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
   const [bookingsData, setBookingsData] = useState<BookingData[]>([]);
   const [servicesData, setServicesData] = useState<ServiceData[]>([]);
   const [performanceData, setPerformanceData] = useState<BarberPerformance[]>([]);
+  const [comparisonData, setComparisonData] = useState<ComparisonData | null>(null);
+  const [cancellationData, setCancellationData] = useState<CancellationData | null>(null);
+  const [occupancyData, setOccupancyData] = useState<OccupancyData[]>([]);
   
   // Loading states
   const [loadingRevenue, setLoadingRevenue] = useState(true);
   const [loadingBookings, setLoadingBookings] = useState(true);
   const [loadingServices, setLoadingServices] = useState(true);
   const [loadingPerformance, setLoadingPerformance] = useState(true);
+  const [loadingComparison, setLoadingComparison] = useState(true);
+  const [loadingCancellation, setLoadingCancellation] = useState(true);
+  const [loadingOccupancy, setLoadingOccupancy] = useState(true);
 
   // Fetch barbers for filter (owner/admin only)
   useEffect(() => {
@@ -102,6 +141,13 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
     const startDateStr = format(startDate, 'yyyy-MM-dd');
     const endDateStr = format(endDate, 'yyyy-MM-dd');
     const barberFilter = selectedBarberId === 'all' ? null : selectedBarberId;
+    
+    // Calculate previous period for comparison
+    const monthsDiff = Math.max(1, Math.round((endDate.getTime() - startDate.getTime()) / (30 * 24 * 60 * 60 * 1000)));
+    const previousStart = subMonths(startDate, monthsDiff);
+    const previousEnd = subMonths(endDate, monthsDiff);
+    const previousStartStr = format(previousStart, 'yyyy-MM-dd');
+    const previousEndStr = format(previousEnd, 'yyyy-MM-dd');
 
     // Fetch all reports in parallel
     Promise.all([
@@ -109,6 +155,9 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
       fetchBookingsReport(startDateStr, endDateStr, barberFilter),
       fetchServicesReport(startDateStr, endDateStr, barberFilter),
       isOwnerOrAdmin ? fetchPerformanceReport(startDateStr, endDateStr) : Promise.resolve(),
+      fetchComparisonReport(startDateStr, endDateStr, previousStartStr, previousEndStr, barberFilter),
+      fetchCancellationReport(startDateStr, endDateStr, barberFilter),
+      isOwnerOrAdmin ? fetchOccupancyReport(startDateStr, endDateStr, barberFilter) : Promise.resolve(),
     ]);
   };
 
@@ -201,10 +250,88 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
     }
   };
 
+  const fetchComparisonReport = async (
+    currentStart: string, 
+    currentEnd: string, 
+    previousStart: string, 
+    previousEnd: string,
+    barberFilter: string | null
+  ) => {
+    setLoadingComparison(true);
+    try {
+      const { data, error } = await supabase.rpc('get_monthly_comparison_report', {
+        p_current_start_date: currentStart,
+        p_current_end_date: currentEnd,
+        p_previous_start_date: previousStart,
+        p_previous_end_date: previousEnd,
+        p_barber_filter: barberFilter,
+      });
+
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        setComparisonData(data[0]);
+      } else {
+        setComparisonData(null);
+      }
+    } catch (error: any) {
+      console.error('Erro no relatório comparativo:', error);
+      setComparisonData(null);
+    } finally {
+      setLoadingComparison(false);
+    }
+  };
+
+  const fetchCancellationReport = async (start: string, end: string, barberFilter: string | null) => {
+    setLoadingCancellation(true);
+    try {
+      const { data, error } = await supabase.rpc('get_cancellation_noshow_report', {
+        p_start_date: start,
+        p_end_date: end,
+        p_barber_filter: barberFilter,
+      });
+
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        setCancellationData(data[0]);
+      } else {
+        setCancellationData(null);
+      }
+    } catch (error: any) {
+      console.error('Erro no relatório de cancelamentos:', error);
+      setCancellationData(null);
+    } finally {
+      setLoadingCancellation(false);
+    }
+  };
+
+  const fetchOccupancyReport = async (start: string, end: string, barberFilter: string | null) => {
+    setLoadingOccupancy(true);
+    try {
+      const { data, error } = await supabase.rpc('get_schedule_occupancy_report', {
+        p_start_date: start,
+        p_end_date: end,
+        p_barber_filter: barberFilter,
+      });
+
+      if (error) throw error;
+      setOccupancyData(data || []);
+    } catch (error: any) {
+      console.error('Erro no relatório de ocupação:', error);
+      setOccupancyData([]);
+    } finally {
+      setLoadingOccupancy(false);
+    }
+  };
+
   const handleDateChange = (start: Date, end: Date) => {
     setStartDate(start);
     setEndDate(end);
   };
+
+  const currentPeriodLabel = format(startDate, 'MMM', { locale: ptBR });
+  const previousPeriodLabel = format(subMonths(startDate, 1), 'MMM', { locale: ptBR });
 
   return (
     <div className="space-y-6">
@@ -245,11 +372,27 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
       {/* Revenue Cards */}
       <RevenueCard data={revenueData} loading={loadingRevenue} />
 
+      {/* Monthly Comparison */}
+      <MonthlyComparisonCard 
+        data={comparisonData} 
+        loading={loadingComparison}
+        currentPeriod={currentPeriodLabel}
+        previousPeriod={previousPeriodLabel}
+      />
+
+      {/* Cancellation & No-Show Rates */}
+      <CancellationRatesCard data={cancellationData} loading={loadingCancellation} />
+
       {/* Charts and Tables */}
       <div className="grid gap-6 lg:grid-cols-2">
         <BookingsChart data={bookingsData} loading={loadingBookings} />
         <TopServicesTable data={servicesData} loading={loadingServices} />
       </div>
+
+      {/* Occupancy - only for owner/admin */}
+      {isOwnerOrAdmin && (
+        <OccupancyTable data={occupancyData} loading={loadingOccupancy} />
+      )}
 
       {/* Barber Performance - only for owner/admin */}
       {isOwnerOrAdmin && (

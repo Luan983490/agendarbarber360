@@ -1259,6 +1259,41 @@ export type Database = {
           total_bookings: number
         }[]
       }
+      get_cancellation_noshow_report: {
+        Args: {
+          p_barber_filter?: string
+          p_end_date: string
+          p_start_date: string
+        }
+        Returns: {
+          cancellation_rate: number
+          cancelled_bookings: number
+          completed_bookings: number
+          noshow_bookings: number
+          noshow_rate: number
+          total_bookings: number
+        }[]
+      }
+      get_monthly_comparison_report: {
+        Args: {
+          p_barber_filter?: string
+          p_current_end_date: string
+          p_current_start_date: string
+          p_previous_end_date: string
+          p_previous_start_date: string
+        }
+        Returns: {
+          avg_ticket_variation: number
+          bookings_variation: number
+          current_avg_ticket: number
+          current_bookings: number
+          current_revenue: number
+          previous_avg_ticket: number
+          previous_bookings: number
+          previous_revenue: number
+          revenue_variation: number
+        }[]
+      }
       get_revenue_report: {
         Args: {
           p_barber_filter?: string
@@ -1269,6 +1304,20 @@ export type Database = {
           average_ticket: number
           total_bookings: number
           total_revenue: number
+        }[]
+      }
+      get_schedule_occupancy_report: {
+        Args: {
+          p_barber_filter?: string
+          p_end_date: string
+          p_start_date: string
+        }
+        Returns: {
+          available_hours: number
+          barber_id: string
+          barber_name: string
+          occupancy_rate: number
+          occupied_hours: number
         }[]
       }
       get_top_services_report: {
