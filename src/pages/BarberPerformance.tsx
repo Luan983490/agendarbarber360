@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { BarberLayout } from '@/components/layouts/BarberLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { BarberAdvancedMetricsCard } from '@/components/reports/BarberAdvancedMetricsCard';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -42,10 +43,22 @@ interface ComparisonData {
   avg_ticket_variation: number;
 }
 
-interface CancellationData {
-  total_bookings: number;
-  noshow_bookings: number;
-  noshow_rate: number;
+interface AdvancedMetrics {
+  total_bookings_completed: number;
+  total_revenue: number;
+  average_ticket: number;
+  total_cancelled: number;
+  total_no_show: number;
+  cancellation_rate_percent: number;
+  no_show_rate_percent: number;
+  most_used_service_id: string | null;
+  most_used_service_name: string;
+  most_used_service_count: number;
+  busiest_weekday: number;
+  busiest_weekday_count: number;
+  busiest_time_slot: string;
+  busiest_time_slot_count: number;
+  average_service_duration_minutes: number;
 }
 
 export default function BarberPerformance() {
@@ -56,9 +69,10 @@ export default function BarberPerformance() {
   const [revenueData, setRevenueData] = useState<RevenueData | null>(null);
   const [servicesData, setServicesData] = useState<ServiceData[]>([]);
   const [comparisonData, setComparisonData] = useState<ComparisonData | null>(null);
-  const [cancellationData, setCancellationData] = useState<CancellationData | null>(null);
+  const [advancedMetrics, setAdvancedMetrics] = useState<AdvancedMetrics | null>(null);
   
   const [loading, setLoading] = useState(true);
+  const [loadingAdvanced, setLoadingAdvanced] = useState(true);
 
   const currentMonth = new Date();
   const previousMonth = subMonths(currentMonth, 1);
@@ -80,7 +94,7 @@ export default function BarberPerformance() {
       fetchRevenueReport(currentStart, currentEnd),
       fetchServicesReport(currentStart, currentEnd),
       fetchComparisonReport(currentStart, currentEnd, previousStart, previousEnd),
-      fetchCancellationReport(currentStart, currentEnd),
+      fetchAdvancedMetrics(currentStart, currentEnd),
     ]);
     
     setLoading(false);
@@ -91,7 +105,7 @@ export default function BarberPerformance() {
       const { data, error } = await supabase.rpc('get_revenue_report', {
         p_start_date: start,
         p_end_date: end,
-        p_barber_filter: null, // O banco ignora isso para barbeiros
+        p_barber_filter: null,
       });
 
       if (error) throw error;
@@ -143,25 +157,23 @@ export default function BarberPerformance() {
     }
   };
 
-  const fetchCancellationReport = async (start: string, end: string) => {
+  const fetchAdvancedMetrics = async (start: string, end: string) => {
+    setLoadingAdvanced(true);
     try {
-      const { data, error } = await supabase.rpc('get_cancellation_noshow_report', {
+      const { data, error } = await supabase.rpc('get_barber_advanced_metrics', {
         p_start_date: start,
         p_end_date: end,
-        p_barber_filter: null,
       });
 
       if (error) throw error;
       
       if (data && data.length > 0) {
-        setCancellationData({
-          total_bookings: data[0].total_bookings,
-          noshow_bookings: data[0].noshow_bookings,
-          noshow_rate: Number(data[0].noshow_rate) || 0,
-        });
+        setAdvancedMetrics(data[0]);
       }
     } catch (error) {
-      console.error('Erro no relatório de cancelamentos:', error);
+      console.error('Erro nas métricas avançadas:', error);
+    } finally {
+      setLoadingAdvanced(false);
     }
   };
 
@@ -277,25 +289,8 @@ export default function BarberPerformance() {
           </Card>
         </div>
 
-        {/* Taxa de No-Show */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <UserX className="h-4 w-4" />
-              Taxa de No-Show
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold">
-                {cancellationData?.noshow_rate?.toFixed(1) || 0}%
-              </span>
-              <span className="text-sm text-muted-foreground">
-                ({cancellationData?.noshow_bookings || 0} de {cancellationData?.total_bookings || 0} agendamentos)
-              </span>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Advanced Metrics - NEW */}
+        <BarberAdvancedMetricsCard data={advancedMetrics} loading={loadingAdvanced} />
 
         {/* Serviços mais realizados */}
         <Card>

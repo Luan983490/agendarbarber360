@@ -1008,6 +1008,60 @@ export type Database = {
         }
         Relationships: []
       }
+      report_alerts: {
+        Row: {
+          alert_type: string
+          barber_id: string | null
+          barbershop_id: string
+          created_at: string
+          current_value: number | null
+          id: string
+          is_read: boolean
+          last_triggered_at: string
+          message: string | null
+          threshold: number
+        }
+        Insert: {
+          alert_type: string
+          barber_id?: string | null
+          barbershop_id: string
+          created_at?: string
+          current_value?: number | null
+          id?: string
+          is_read?: boolean
+          last_triggered_at?: string
+          message?: string | null
+          threshold?: number
+        }
+        Update: {
+          alert_type?: string
+          barber_id?: string | null
+          barbershop_id?: string
+          created_at?: string
+          current_value?: number | null
+          id?: string
+          is_read?: boolean
+          last_triggered_at?: string
+          message?: string | null
+          threshold?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_alerts_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "barbers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_alerts_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           barbershop_id: string
@@ -1227,6 +1281,7 @@ export type Database = {
         Args: { _booking_id: string; _user_id: string }
         Returns: boolean
       }
+      check_and_trigger_alerts: { Args: never; Returns: number }
       check_subscription_status: {
         Args: { barbershop_uuid: string }
         Returns: {
@@ -1238,6 +1293,56 @@ export type Database = {
       client_can_cancel_booking: {
         Args: { _booking_id: string; _user_id: string }
         Returns: boolean
+      }
+      get_active_alerts: {
+        Args: never
+        Returns: {
+          alert_type: string
+          created_at: string
+          current_value: number
+          id: string
+          is_read: boolean
+          message: string
+          threshold: number
+        }[]
+      }
+      get_audit_timeline: {
+        Args: {
+          p_booking_id?: string
+          p_end_date: string
+          p_start_date: string
+        }
+        Returns: {
+          action: string
+          actor_role: string
+          barber_name: string
+          booking_id: string
+          client_name: string
+          created_at: string
+          new_status: string
+          old_status: string
+          origin: string
+        }[]
+      }
+      get_barber_advanced_metrics: {
+        Args: { p_end_date: string; p_start_date: string }
+        Returns: {
+          average_service_duration_minutes: number
+          average_ticket: number
+          busiest_time_slot: string
+          busiest_time_slot_count: number
+          busiest_weekday: number
+          busiest_weekday_count: number
+          cancellation_rate_percent: number
+          most_used_service_count: number
+          most_used_service_id: string
+          most_used_service_name: string
+          no_show_rate_percent: number
+          total_bookings_completed: number
+          total_cancelled: number
+          total_no_show: number
+          total_revenue: number
+        }[]
       }
       get_barber_performance_report: {
         Args: { p_end_date: string; p_start_date: string }
@@ -1273,6 +1378,14 @@ export type Database = {
           noshow_rate: number
           total_bookings: number
         }[]
+      }
+      get_exportable_report_data: {
+        Args: {
+          p_end_date: string
+          p_report_type: string
+          p_start_date: string
+        }
+        Returns: Json
       }
       get_monthly_comparison_report: {
         Args: {
@@ -1318,6 +1431,19 @@ export type Database = {
           barber_name: string
           occupancy_rate: number
           occupied_hours: number
+        }[]
+      }
+      get_top_clients_and_profitable_hours: {
+        Args: { p_end_date: string; p_limit?: number; p_start_date: string }
+        Returns: {
+          client_id: string
+          client_name: string
+          profitable_time_slot: string
+          profitable_time_slot_revenue: number
+          profitable_weekday: number
+          profitable_weekday_revenue: number
+          total_bookings: number
+          total_revenue: number
         }[]
       }
       get_top_services_report: {
