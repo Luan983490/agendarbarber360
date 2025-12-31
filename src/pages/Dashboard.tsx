@@ -19,6 +19,7 @@ import { PackagesManagement } from '@/components/PackagesManagement';
 import { SubscriptionsManagement } from '@/components/SubscriptionsManagement';
 import { LoyaltyManagement } from '@/components/LoyaltyManagement';
 import { StaffManagement } from '@/components/StaffManagement';
+import { ReportsPage } from '@/components/reports/ReportsPage';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
@@ -509,6 +510,8 @@ const Dashboard = () => {
         return <LoyaltyManagement />;
       case 'staff':
         return <StaffManagement barbershopId={barbershop!.id} />;
+      case 'reports':
+        return <ReportsPage barbershopId={barbershop!.id} />;
       default:
         return null;
     }
