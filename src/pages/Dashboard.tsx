@@ -93,7 +93,15 @@ const Dashboard = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [barbers, setBarbers] = useState<Barber[]>([]);
-  const [selectedBarber, setSelectedBarber] = useState<string>('');
+  
+  // FONTE ÚNICA DE VERDADE: selectedBarberId gerenciado EXCLUSIVAMENTE no Dashboard
+  const STORAGE_KEY_SELECTED_BARBER = 'barber360_selected_barber_id';
+  const [selectedBarber, setSelectedBarber] = useState<string>(() => {
+    // Reidratar do localStorage no mount
+    return localStorage.getItem(STORAGE_KEY_SELECTED_BARBER) || '';
+  });
+  const [isBarberHydrated, setIsBarberHydrated] = useState(false);
+  
   const [stats, setStats] = useState<DashboardStats>({
     todayBookings: 0,
     monthlyRevenue: 0,
@@ -188,11 +196,25 @@ const Dashboard = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setBarbers(data || []);
+      const barbersData = data || [];
+      setBarbers(barbersData);
       
-      // Selecionar primeiro barbeiro por padrão
-      if (data && data.length > 0 && !selectedBarber) {
-        setSelectedBarber(data[0].id);
+      // HIDRATAÇÃO: executar somente uma vez
+      if (!isBarberHydrated) {
+        const savedBarberId = selectedBarber; // Já reidratado do localStorage no useState
+        
+        // Se barbeiro salvo existe e está na lista, manter
+        if (savedBarberId && barbersData.some(b => b.id === savedBarberId)) {
+          // Já está correto, não fazer nada
+        }
+        // Se não existe ou não está na lista, usar o primeiro (fallback ÚNICO)
+        else if (barbersData.length > 0) {
+          const firstBarberId = barbersData[0].id;
+          setSelectedBarber(firstBarberId);
+          localStorage.setItem(STORAGE_KEY_SELECTED_BARBER, firstBarberId);
+        }
+        
+        setIsBarberHydrated(true);
       }
     } catch (error: any) {
       toast({
@@ -200,6 +222,10 @@ const Dashboard = () => {
         description: error.message,
         variant: "destructive"
       });
+      // Mesmo com erro, marcar como hidratado para não travar
+      if (!isBarberHydrated) {
+        setIsBarberHydrated(true);
+      }
     }
   };
 
@@ -518,7 +544,14 @@ const Dashboard = () => {
             {barbershop && currentTab === 'bookings' && barbers.length > 0 && (
               <div className="flex items-center gap-2 flex-1 justify-center max-w-xs sm:max-w-sm">
                 <span className="text-sm font-medium text-muted-foreground hidden sm:inline">Profissionais:</span>
-                <Select value={selectedBarber} onValueChange={setSelectedBarber}>
+                <Select 
+                  value={selectedBarber} 
+                  onValueChange={(newBarberId) => {
+                    // Persistir no localStorage e atualizar estado
+                    localStorage.setItem(STORAGE_KEY_SELECTED_BARBER, newBarberId);
+                    setSelectedBarber(newBarberId);
+                  }}
+                >
                   <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm w-[120px] sm:w-[160px] bg-background">
                     <SelectValue placeholder="Selecionar" />
                   </SelectTrigger>
