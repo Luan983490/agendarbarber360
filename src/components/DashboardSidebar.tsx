@@ -1,4 +1,4 @@
-import { Store, Edit, CalendarDays, Calendar, Scissors, Users, Package, X, CreditCard, Gift, ShoppingBag, ChevronRight, DollarSign, BarChart3, Settings, ClipboardList } from 'lucide-react';
+import { Store, Edit, CalendarDays, Scissors, Users, X, ChevronRight, BarChart3, Settings, ClipboardList } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   Sidebar,
@@ -35,6 +35,7 @@ interface MenuItem {
 // ============================================
 const menuStructure: MenuItem[] = [
   { id: 'bookings', title: 'Agenda', icon: CalendarDays },
+  { id: 'reports', title: 'Relatórios', icon: BarChart3 },
   {
     id: 'cadastros',
     title: 'Cadastros',
