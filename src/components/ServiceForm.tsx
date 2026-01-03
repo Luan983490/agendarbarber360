@@ -5,9 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Scissors, Edit, Trash2 } from 'lucide-react';
+
+// Opções de duração em intervalos de 15 minutos (15 a 360)
+const DURATION_OPTIONS = Array.from({ length: 24 }, (_, i) => (i + 1) * 15);
 
 interface Service {
   id: string;
@@ -203,15 +207,22 @@ const ServiceForm = ({ barbershopId, services, onServicesChange }: ServiceFormPr
 
                 <div className="space-y-2">
                   <Label htmlFor="duration">Duração (min)</Label>
-                  <Input
-                    id="duration"
-                    type="number"
-                    min="1"
+                  <Select
                     value={formData.duration}
-                    onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))}
-                    placeholder="30"
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, duration: value }))}
                     required
-                  />
+                  >
+                    <SelectTrigger id="duration">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DURATION_OPTIONS.map((duration) => (
+                        <SelectItem key={duration} value={duration.toString()}>
+                          {duration} min ({Math.floor(duration / 60)}h{duration % 60 > 0 ? ` ${duration % 60}min` : ''})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
