@@ -73,8 +73,9 @@ export function renderWithProviders(
 
 /**
  * Aguarda um tempo específico (útil para animações)
+ * Renomeado para não conflitar com waitFor do testing-library
  */
-export const waitFor = (ms: number) =>
+export const delay = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
