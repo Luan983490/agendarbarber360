@@ -1,9 +1,13 @@
-# Welcome to your Lovable project
+# Barber360 - Sistema de Gestão para Barbearias
+
+![Tests](https://github.com/YOUR_USERNAME/YOUR_REPO/actions/workflows/tests.yml/badge.svg)
+[![codecov](https://codecov.io/gh/YOUR_USERNAME/YOUR_REPO/graph/badge.svg)](https://codecov.io/gh/YOUR_USERNAME/YOUR_REPO)
+
+> Sistema completo de gestão para barbearias com agendamento online, gestão de barbeiros, relatórios e muito mais.
 
 ## Project info
 
 **URL**: https://lovable.dev/projects/c1f3de75-f50e-4d34-acab-e8d5f94e1bd1
-
 ## How can I edit this code?
 
 There are several ways of editing your application.
@@ -59,7 +63,26 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
+- Supabase (Backend)
+- Vitest (Testing)
 
+## 🧪 Running Tests
+
+```sh
+# Run all tests
+npm run test
+
+# Run tests with UI
+npm run test:ui
+
+# Run tests with coverage
+npm run test:coverage
+
+# Run specific test file
+npx vitest __tests__/hooks/useAuth.test.tsx
+```
+
+See [TESTING.md](./TESTING.md) for more details.
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/c1f3de75-f50e-4d34-acab-e8d5f94e1bd1) and click on Share -> Publish.
