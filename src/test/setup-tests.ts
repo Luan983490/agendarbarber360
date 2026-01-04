@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import { cleanup } from '@testing-library/react';
 import { afterEach, beforeAll, afterAll, vi } from 'vitest';
-import { setupServer } from 'msw/node';
+// MSW server import removed - not currently used
 
 // ============================================
 // SETUP GLOBAL PARA TESTES
