@@ -64,6 +64,17 @@ export interface CreateBlockDTO {
   reason?: string;
 }
 
+export interface DeleteBlocksDTO {
+  blockIds: string[];
+}
+
+export interface DeleteBlocksByDateDTO {
+  barberId: string;
+  blockDate: string;
+  startTime?: string;
+  endTime?: string;
+}
+
 // ============================================================================
 // VALIDATION SCHEMAS
 // ============================================================================
@@ -295,7 +306,7 @@ export class BarberService {
   }
 
   /**
-   * Delete a time block
+   * Delete a single time block by ID
    */
   async deleteBlock(blockId: string): Promise<ServiceResponse<void>> {
     logger.info('deleteBlock', 'Deleting barber block', { blockId });
@@ -315,6 +326,141 @@ export class BarberService {
     } catch (err) {
       logger.error('deleteBlock', 'Unexpected error', err);
       return failure(ErrorCodes.UNKNOWN_ERROR, 'Erro inesperado ao remover bloqueio');
+    }
+  }
+
+  /**
+   * Delete multiple blocks by their IDs
+   */
+  async deleteBlocks(blockIds: string[]): Promise<ServiceResponse<{ deletedCount: number }>> {
+    logger.info('deleteBlocks', 'Deleting multiple barber blocks', { count: blockIds.length });
+
+    if (blockIds.length === 0) {
+      return success({ deletedCount: 0 });
+    }
+
+    try {
+      const { error, count } = await supabase
+        .from('barber_blocks')
+        .delete()
+        .in('id', blockIds);
+
+      if (error) {
+        logger.error('deleteBlocks', 'Database error', error);
+        return failure(ErrorCodes.DATABASE_ERROR, 'Erro ao remover bloqueios');
+      }
+
+      logger.info('deleteBlocks', 'Blocks deleted successfully', { deletedCount: count || blockIds.length });
+      return success({ deletedCount: count || blockIds.length });
+    } catch (err) {
+      logger.error('deleteBlocks', 'Unexpected error', err);
+      return failure(ErrorCodes.UNKNOWN_ERROR, 'Erro inesperado ao remover bloqueios');
+    }
+  }
+
+  /**
+   * Delete all blocks for a barber on a specific date, optionally within a time range
+   */
+  async deleteBlocksByDate(data: DeleteBlocksByDateDTO): Promise<ServiceResponse<{ deletedCount: number }>> {
+    logger.info('deleteBlocksByDate', 'Deleting blocks by date', { barberId: data.barberId, blockDate: data.blockDate });
+
+    try {
+      let query = supabase
+        .from('barber_blocks')
+        .delete()
+        .eq('barber_id', data.barberId)
+        .eq('block_date', data.blockDate);
+
+      // If time range specified, filter by overlapping blocks
+      if (data.startTime && data.endTime) {
+        query = query
+          .lt('start_time', data.endTime)
+          .gt('end_time', data.startTime);
+      }
+
+      const { error, count } = await query;
+
+      if (error) {
+        logger.error('deleteBlocksByDate', 'Database error', error);
+        return failure(ErrorCodes.DATABASE_ERROR, 'Erro ao remover bloqueios');
+      }
+
+      logger.info('deleteBlocksByDate', 'Blocks deleted successfully', { deletedCount: count });
+      return success({ deletedCount: count || 0 });
+    } catch (err) {
+      logger.error('deleteBlocksByDate', 'Unexpected error', err);
+      return failure(ErrorCodes.UNKNOWN_ERROR, 'Erro inesperado ao remover bloqueios');
+    }
+  }
+
+  /**
+   * Create a full-day block (single block entry from first to last working hour)
+   */
+  async createFullDayBlock(data: { barberId: string; blockDate: string; reason?: string }): Promise<ServiceResponse<void>> {
+    logger.info('createFullDayBlock', 'Creating full-day block', { barberId: data.barberId, blockDate: data.blockDate });
+
+    try {
+      // First, get the working hours for this barber on this day
+      const dayOfWeek = new Date(data.blockDate).getDay();
+      
+      const { data: workingHours, error: whError } = await supabase
+        .from('barber_working_hours')
+        .select('*')
+        .eq('barber_id', data.barberId)
+        .eq('day_of_week', dayOfWeek)
+        .single();
+
+      if (whError || !workingHours) {
+        logger.warn('createFullDayBlock', 'No working hours found', undefined, { dayOfWeek });
+        return failure(ErrorCodes.VALIDATION_ERROR, 'Horários de trabalho não configurados para este dia');
+      }
+
+      if (workingHours.is_day_off) {
+        return failure(ErrorCodes.VALIDATION_ERROR, 'Este dia já está configurado como folga');
+      }
+
+      // Determine the earliest start and latest end time
+      const times: string[] = [];
+      if (workingHours.period1_start) times.push(workingHours.period1_start);
+      if (workingHours.period1_end) times.push(workingHours.period1_end);
+      if (workingHours.period2_start) times.push(workingHours.period2_start);
+      if (workingHours.period2_end) times.push(workingHours.period2_end);
+
+      if (times.length < 2) {
+        return failure(ErrorCodes.VALIDATION_ERROR, 'Horários de trabalho inválidos');
+      }
+
+      times.sort();
+      const startTime = times[0].substring(0, 5);
+      const endTime = times[times.length - 1].substring(0, 5);
+
+      // Delete any existing blocks for this day first to avoid duplicates
+      await supabase
+        .from('barber_blocks')
+        .delete()
+        .eq('barber_id', data.barberId)
+        .eq('block_date', data.blockDate);
+
+      // Create a single block covering the entire day
+      const { error } = await supabase
+        .from('barber_blocks')
+        .insert({
+          barber_id: data.barberId,
+          block_date: data.blockDate,
+          start_time: startTime,
+          end_time: endTime,
+          reason: data.reason || 'Dia bloqueado',
+        });
+
+      if (error) {
+        logger.error('createFullDayBlock', 'Database error', error);
+        return failure(ErrorCodes.DATABASE_ERROR, 'Erro ao criar bloqueio');
+      }
+
+      return success(undefined);
+    } catch (err) {
+      logger.error('createFullDayBlock', 'Unexpected error', err);
+      return failure(ErrorCodes.UNKNOWN_ERROR, 'Erro inesperado ao criar bloqueio');
     }
   }
 
