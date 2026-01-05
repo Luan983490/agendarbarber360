@@ -114,16 +114,55 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
 
       for (const date of selectedDates) {
         const dateStr = format(date, 'yyyy-MM-dd');
+        const dayOfWeek = date.getDay();
         
         if (blockMode === 'full-day') {
-          // Bloquear o dia inteiro com um único registro
-          blocksToInsert.push({
-            barber_id: barberId,
-            block_date: dateStr,
-            start_time: '08:00',
-            end_time: '20:00',
-            reason: reason || null
-          });
+          // Fetch actual working hours for this barber and day
+          const { data: workingHours } = await supabase
+            .from('barber_working_hours')
+            .select('*')
+            .eq('barber_id', barberId)
+            .eq('day_of_week', dayOfWeek)
+            .single();
+
+          // Check for schedule overrides
+          const { data: overrides } = await supabase
+            .from('barber_schedule_overrides')
+            .select('*')
+            .eq('barber_id', barberId)
+            .eq('day_of_week', dayOfWeek)
+            .lte('start_date', dateStr)
+            .gte('end_date', dateStr)
+            .limit(1);
+
+          const schedule = overrides?.[0] || workingHours;
+
+          if (!schedule || schedule.is_day_off) {
+            // Skip days off - no need to block
+            continue;
+          }
+
+          // Find the earliest start and latest end from all periods
+          const times: string[] = [];
+          if (schedule.period1_start) times.push(schedule.period1_start.substring(0, 5));
+          if (schedule.period1_end) times.push(schedule.period1_end.substring(0, 5));
+          if (schedule.period2_start) times.push(schedule.period2_start.substring(0, 5));
+          if (schedule.period2_end) times.push(schedule.period2_end.substring(0, 5));
+
+          if (times.length >= 2) {
+            times.sort();
+            const earliestTime = times[0];
+            const latestTime = times[times.length - 1];
+
+            // Create a single block covering the entire working day
+            blocksToInsert.push({
+              barber_id: barberId,
+              block_date: dateStr,
+              start_time: earliestTime,
+              end_time: latestTime,
+              reason: reason || null
+            });
+          }
         } else {
           // Bloquear apenas o intervalo selecionado
           blocksToInsert.push({
@@ -136,16 +175,26 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
         }
       }
 
+      if (blocksToInsert.length === 0) {
+        toast({
+          title: 'Nenhum horário para bloquear',
+          description: 'Os dias selecionados são folga ou não têm horários configurados',
+          variant: 'destructive'
+        });
+        setLoading(false);
+        return;
+      }
+
       const { error } = await supabase
         .from('barber_blocks')
         .insert(blocksToInsert);
 
       if (error) throw error;
 
-      const daysText = selectedDates.length === 1 ? 'dia' : 'dias';
+      const daysText = blocksToInsert.length === 1 ? 'dia' : 'dias';
       toast({
         title: 'Bloqueio criado',
-        description: `${selectedDates.length} ${daysText} bloqueado(s) com sucesso`
+        description: `${blocksToInsert.length} ${daysText} bloqueado(s) com sucesso`
       });
 
       // Reset form

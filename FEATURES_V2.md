@@ -187,6 +187,57 @@ As seguintes tabelas NÃO foram removidas e estão prontas para uso na v2.0:
 
 ---
 
+## 🔧 Funcionalidades de Bloqueio/Desbloqueio de Horários
+
+### Bloqueio de Horários
+O sistema suporta múltiplas formas de bloquear horários de barbeiros:
+
+| Tipo | Descrição | Localização |
+|------|-----------|-------------|
+| **Horário específico** | Bloqueia um único slot de 15 minutos | Clique no horário → Menu → Bloquear |
+| **Dia inteiro** | Bloqueia todos os horários do dia usando os horários de trabalho reais do barbeiro | Clique no horário → Menu → Bloquear Dia Inteiro |
+| **Semana inteira** | Bloqueia todos os horários da semana | Clique no horário → Menu → Bloquear Semana |
+| **Múltiplos dias** | Seleção de múltiplas datas no calendário | Painel lateral → Bloquear Horários |
+| **Faixa horária** | Intervalo específico de horários | Painel lateral → Horário Específico |
+
+### Desbloqueio de Horários
+O sistema também suporta múltiplas formas de desbloquear:
+
+| Tipo | Descrição | Localização |
+|------|-----------|-------------|
+| **Este horário** | Desbloqueia apenas o slot clicado | Clique no horário bloqueado → Desbloquear → Este Horário |
+| **Faixa selecionada** | Desbloqueia todos os bloqueios contínuos | Clique no horário bloqueado → Desbloquear → Faixa Selecionada |
+| **Dia inteiro** | Remove todos os bloqueios do dia | Clique no horário bloqueado → Desbloquear → Dia Inteiro |
+
+### Comportamento Técnico
+- **Bloqueio de dia inteiro**: Utiliza os horários de trabalho reais do barbeiro (busca na tabela `barber_working_hours` e `barber_schedule_overrides`)
+- **Verificação de folgas**: Dias marcados como folga não são bloqueados
+- **Cache**: Após qualquer operação de bloqueio/desbloqueio, o cache é invalidado automaticamente
+- **Validação**: Todos os inputs são validados com Zod antes de serem enviados ao banco
+
+### Métodos do BarberService
+```typescript
+// Criar bloqueio
+barberService.createBlock(data: CreateBlockDTO)
+
+// Criar bloqueio de dia inteiro (usa horários reais)
+barberService.createFullDayBlock(barberId, blockDate, reason?)
+
+// Deletar bloqueio individual
+barberService.deleteBlock(blockId)
+
+// Deletar múltiplos bloqueios por IDs
+barberService.deleteBlocksByIds(blockIds[])
+
+// Deletar todos os bloqueios de uma data (dia inteiro)
+barberService.deleteBlocksByDate(barberId, blockDate)
+
+// Deletar bloqueios em faixa de horário
+barberService.deleteBlocksByTimeRange(barberId, blockDate, startTime, endTime)
+```
+
+---
+
 ## 📝 Notas
 
 - **NÃO DELETE** nenhum arquivo ou tabela listados aqui
@@ -196,4 +247,4 @@ As seguintes tabelas NÃO foram removidas e estão prontas para uso na v2.0:
 
 ---
 
-**Última atualização:** 15/12/2024
+**Última atualização:** 05/01/2026

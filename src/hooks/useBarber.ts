@@ -164,3 +164,104 @@ export function useDeleteBarberBlock() {
     },
   });
 }
+
+/**
+ * Hook to delete multiple blocks by IDs
+ */
+export function useDeleteBarberBlocksByIds() {
+  const queryClient = useQueryClient();
+  const { showErrorWithTitle } = useErrorHandler({ context: 'useDeleteBarberBlocksByIds' });
+
+  return useMutation({
+    mutationFn: (blockIds: string[]) => barberService.deleteBlocksByIds(blockIds),
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: barberKeys.all });
+      } else if (result.error) {
+        showErrorWithTitle('Erro ao remover bloqueios', result.error);
+      }
+    },
+    onError: (error) => {
+      showErrorWithTitle('Erro ao remover bloqueios', error);
+    },
+  });
+}
+
+/**
+ * Hook to delete all blocks for a specific date (full day unblock)
+ */
+export function useDeleteBarberBlocksByDate() {
+  const queryClient = useQueryClient();
+  const { showErrorWithTitle } = useErrorHandler({ context: 'useDeleteBarberBlocksByDate' });
+
+  return useMutation({
+    mutationFn: ({ barberId, blockDate }: { barberId: string; blockDate: string }) => 
+      barberService.deleteBlocksByDate(barberId, blockDate),
+    onSuccess: (result, variables) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: barberKeys.blocks(variables.barberId) });
+        queryClient.invalidateQueries({ queryKey: barberKeys.all });
+      } else if (result.error) {
+        showErrorWithTitle('Erro ao desbloquear dia', result.error);
+      }
+    },
+    onError: (error) => {
+      showErrorWithTitle('Erro ao desbloquear dia', error);
+    },
+  });
+}
+
+/**
+ * Hook to delete blocks in a time range
+ */
+export function useDeleteBarberBlocksByTimeRange() {
+  const queryClient = useQueryClient();
+  const { showErrorWithTitle } = useErrorHandler({ context: 'useDeleteBarberBlocksByTimeRange' });
+
+  return useMutation({
+    mutationFn: ({ barberId, blockDate, startTime, endTime }: { 
+      barberId: string; 
+      blockDate: string;
+      startTime: string;
+      endTime: string;
+    }) => barberService.deleteBlocksByTimeRange(barberId, blockDate, startTime, endTime),
+    onSuccess: (result, variables) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: barberKeys.blocks(variables.barberId) });
+        queryClient.invalidateQueries({ queryKey: barberKeys.all });
+      } else if (result.error) {
+        showErrorWithTitle('Erro ao desbloquear faixa', result.error);
+      }
+    },
+    onError: (error) => {
+      showErrorWithTitle('Erro ao desbloquear faixa', error);
+    },
+  });
+}
+
+/**
+ * Hook to create a full-day block using actual working hours
+ */
+export function useCreateFullDayBlock() {
+  const queryClient = useQueryClient();
+  const { showErrorWithTitle } = useErrorHandler({ context: 'useCreateFullDayBlock' });
+
+  return useMutation({
+    mutationFn: ({ barberId, blockDate, reason }: { 
+      barberId: string; 
+      blockDate: string;
+      reason?: string;
+    }) => barberService.createFullDayBlock(barberId, blockDate, reason),
+    onSuccess: (result, variables) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: barberKeys.blocks(variables.barberId) });
+        queryClient.invalidateQueries({ queryKey: barberKeys.all });
+      } else if (result.error) {
+        showErrorWithTitle('Erro ao bloquear dia', result.error);
+      }
+    },
+    onError: (error) => {
+      showErrorWithTitle('Erro ao bloquear dia', error);
+    },
+  });
+}
