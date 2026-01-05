@@ -28,20 +28,28 @@ O sistema de bloqueios permite gerenciar a disponibilidade dos barbeiros:
 
 #### Funcionalidades de Bloqueio
 - **Horário específico**: Bloqueia um único slot de 15 minutos
-- **Dia inteiro**: Bloqueia todos os horários de trabalho de um dia (criado como um único bloco contínuo)
-- **Semana inteira**: Bloqueia todos os dias da semana
+- **Dia inteiro**: Bloqueia todos os horários de trabalho de um dia (do horário de início ao fim do expediente)
+- **Semana inteira**: Bloqueia todos os dias úteis da semana usando bloqueio de dia inteiro para cada dia
 - **Período personalizado**: Bloqueia um intervalo de datas selecionado
 
-#### Funcionalidades de Desbloqueio
-- **Horário específico**: Desbloqueia apenas o slot selecionado
+#### Funcionalidades de Desbloqueio (v2.1)
+- **Horário específico**: Desbloqueia apenas o slot selecionado (remove o bloco que cobre aquele horário)
 - **Dia inteiro**: Desbloqueia todos os bloqueios do dia de uma vez
-- Interface intuitiva: ao clicar em um horário bloqueado, o usuário escolhe se quer desbloquear apenas aquele slot ou o dia todo
+- **Faixa de horários**: (Em desenvolvimento) Desbloqueia uma faixa contínua de horários selecionada
+- Interface intuitiva com dialog de opções ao clicar em horário bloqueado
 
 #### Implementação Técnica
-- **Service Layer**: `barberService.createBlock()`, `barberService.createFullDayBlock()`, `barberService.deleteBlock()`, `barberService.deleteBlocks()`, `barberService.deleteBlocksByDate()`
-- **Hooks**: `useCreateBarberBlock`, `useCreateFullDayBlock`, `useDeleteBarberBlock`, `useDeleteBarberBlocks`, `useDeleteBlocksByDate`
+- **Service Layer**: 
+  - `barberService.createBlock()` - Cria bloqueio único
+  - `barberService.createFullDayBlock()` - Cria bloqueio de dia inteiro (usa horários reais do período de trabalho)
+  - `barberService.deleteBlock()` - Remove bloqueio por ID
+  - `barberService.deleteBlockBySlot()` - Remove bloqueio que cobre um slot específico
+  - `barberService.deleteBlocksInRange()` - Remove bloqueios em uma faixa de horários
+  - `barberService.deleteAllBlocksForDay()` - Remove todos os bloqueios do dia
+- **Hooks**: `useCreateBarberBlock`, `useCreateFullDayBlock`, `useDeleteBarberBlock`, `useDeleteBlockBySlot`, `useDeleteBlocksInRange`, `useDeleteAllBlocksForDay`
 - **Tabela**: `barber_blocks` (barber_id, block_date, start_time, end_time, reason)
 - **Índices**: `idx_barber_blocks_barber_date_time` para performance
+- **Componentes UI**: `UnblockOptionsDialog.tsx` para seleção de tipo de desbloqueio
 
 ---
 

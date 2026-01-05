@@ -395,13 +395,14 @@ export class BarberService {
 
   /**
    * Create a full-day block (single block entry from first to last working hour)
+   * FIXED: Ensures the end_time covers the ENTIRE last slot, not just its start
    */
   async createFullDayBlock(data: { barberId: string; blockDate: string; reason?: string }): Promise<ServiceResponse<void>> {
     logger.info('createFullDayBlock', 'Creating full-day block', { barberId: data.barberId, blockDate: data.blockDate });
 
     try {
       // First, get the working hours for this barber on this day
-      const dayOfWeek = new Date(data.blockDate).getDay();
+      const dayOfWeek = new Date(data.blockDate + 'T12:00:00').getDay();
       
       const { data: workingHours, error: whError } = await supabase
         .from('barber_working_hours')
@@ -419,20 +420,28 @@ export class BarberService {
         return failure(ErrorCodes.VALIDATION_ERROR, 'Este dia já está configurado como folga');
       }
 
-      // Determine the earliest start and latest end time
-      const times: string[] = [];
-      if (workingHours.period1_start) times.push(workingHours.period1_start);
-      if (workingHours.period1_end) times.push(workingHours.period1_end);
-      if (workingHours.period2_start) times.push(workingHours.period2_start);
-      if (workingHours.period2_end) times.push(workingHours.period2_end);
+      // Collect all period times
+      const startTimes: string[] = [];
+      const endTimes: string[] = [];
+      
+      if (workingHours.period1_start && workingHours.period1_end) {
+        startTimes.push(workingHours.period1_start.substring(0, 5));
+        endTimes.push(workingHours.period1_end.substring(0, 5));
+      }
+      if (workingHours.period2_start && workingHours.period2_end) {
+        startTimes.push(workingHours.period2_start.substring(0, 5));
+        endTimes.push(workingHours.period2_end.substring(0, 5));
+      }
 
-      if (times.length < 2) {
+      if (startTimes.length === 0 || endTimes.length === 0) {
         return failure(ErrorCodes.VALIDATION_ERROR, 'Horários de trabalho inválidos');
       }
 
-      times.sort();
-      const startTime = times[0].substring(0, 5);
-      const endTime = times[times.length - 1].substring(0, 5);
+      // Get earliest start and latest end
+      startTimes.sort();
+      endTimes.sort();
+      const earliestStart = startTimes[0];
+      const latestEnd = endTimes[endTimes.length - 1];
 
       // Delete any existing blocks for this day first to avoid duplicates
       await supabase
@@ -441,14 +450,14 @@ export class BarberService {
         .eq('barber_id', data.barberId)
         .eq('block_date', data.blockDate);
 
-      // Create a single block covering the entire day
+      // Create a single block covering the entire day (from earliest start to latest end)
       const { error } = await supabase
         .from('barber_blocks')
         .insert({
           barber_id: data.barberId,
           block_date: data.blockDate,
-          start_time: startTime,
-          end_time: endTime,
+          start_time: earliestStart,
+          end_time: latestEnd,
           reason: data.reason || 'Dia bloqueado',
         });
 
@@ -457,10 +466,128 @@ export class BarberService {
         return failure(ErrorCodes.DATABASE_ERROR, 'Erro ao criar bloqueio');
       }
 
+      logger.info('createFullDayBlock', 'Full-day block created', { 
+        startTime: earliestStart, 
+        endTime: latestEnd 
+      });
       return success(undefined);
     } catch (err) {
       logger.error('createFullDayBlock', 'Unexpected error', err);
       return failure(ErrorCodes.UNKNOWN_ERROR, 'Erro inesperado ao criar bloqueio');
+    }
+  }
+
+  /**
+   * Delete a single block by slot time - finds and removes the block covering this specific time
+   */
+  async deleteBlockBySlot(data: { barberId: string; blockDate: string; slotTime: string }): Promise<ServiceResponse<{ deletedCount: number }>> {
+    logger.info('deleteBlockBySlot', 'Deleting block for specific slot', data);
+
+    try {
+      // Find blocks that cover this specific time
+      const { data: blocks, error: fetchError } = await supabase
+        .from('barber_blocks')
+        .select('*')
+        .eq('barber_id', data.barberId)
+        .eq('block_date', data.blockDate)
+        .lte('start_time', data.slotTime)
+        .gt('end_time', data.slotTime);
+
+      if (fetchError) {
+        logger.error('deleteBlockBySlot', 'Fetch error', fetchError);
+        return failure(ErrorCodes.DATABASE_ERROR, 'Erro ao buscar bloqueio');
+      }
+
+      if (!blocks || blocks.length === 0) {
+        return failure(ErrorCodes.VALIDATION_ERROR, 'Este horário não está bloqueado');
+      }
+
+      const blockIds = blocks.map(b => b.id);
+      const { error } = await supabase
+        .from('barber_blocks')
+        .delete()
+        .in('id', blockIds);
+
+      if (error) {
+        logger.error('deleteBlockBySlot', 'Delete error', error);
+        return failure(ErrorCodes.DATABASE_ERROR, 'Erro ao remover bloqueio');
+      }
+
+      logger.info('deleteBlockBySlot', 'Block deleted', { deletedCount: blockIds.length });
+      return success({ deletedCount: blockIds.length });
+    } catch (err) {
+      logger.error('deleteBlockBySlot', 'Unexpected error', err);
+      return failure(ErrorCodes.UNKNOWN_ERROR, 'Erro inesperado ao remover bloqueio');
+    }
+  }
+
+  /**
+   * Delete blocks within a time range on a specific date
+   */
+  async deleteBlocksInRange(data: { barberId: string; blockDate: string; startTime: string; endTime: string }): Promise<ServiceResponse<{ deletedCount: number }>> {
+    logger.info('deleteBlocksInRange', 'Deleting blocks in range', data);
+
+    try {
+      // Find blocks that overlap with this time range
+      const { data: blocks, error: fetchError } = await supabase
+        .from('barber_blocks')
+        .select('*')
+        .eq('barber_id', data.barberId)
+        .eq('block_date', data.blockDate)
+        .lt('start_time', data.endTime)
+        .gt('end_time', data.startTime);
+
+      if (fetchError) {
+        logger.error('deleteBlocksInRange', 'Fetch error', fetchError);
+        return failure(ErrorCodes.DATABASE_ERROR, 'Erro ao buscar bloqueios');
+      }
+
+      if (!blocks || blocks.length === 0) {
+        return failure(ErrorCodes.VALIDATION_ERROR, 'Nenhum bloqueio encontrado nesta faixa');
+      }
+
+      const blockIds = blocks.map(b => b.id);
+      const { error } = await supabase
+        .from('barber_blocks')
+        .delete()
+        .in('id', blockIds);
+
+      if (error) {
+        logger.error('deleteBlocksInRange', 'Delete error', error);
+        return failure(ErrorCodes.DATABASE_ERROR, 'Erro ao remover bloqueios');
+      }
+
+      logger.info('deleteBlocksInRange', 'Blocks deleted in range', { deletedCount: blockIds.length });
+      return success({ deletedCount: blockIds.length });
+    } catch (err) {
+      logger.error('deleteBlocksInRange', 'Unexpected error', err);
+      return failure(ErrorCodes.UNKNOWN_ERROR, 'Erro inesperado ao remover bloqueios');
+    }
+  }
+
+  /**
+   * Delete all blocks for a day
+   */
+  async deleteAllBlocksForDay(data: { barberId: string; blockDate: string }): Promise<ServiceResponse<{ deletedCount: number }>> {
+    logger.info('deleteAllBlocksForDay', 'Deleting all blocks for day', data);
+
+    try {
+      const { error, count } = await supabase
+        .from('barber_blocks')
+        .delete()
+        .eq('barber_id', data.barberId)
+        .eq('block_date', data.blockDate);
+
+      if (error) {
+        logger.error('deleteAllBlocksForDay', 'Database error', error);
+        return failure(ErrorCodes.DATABASE_ERROR, 'Erro ao remover bloqueios');
+      }
+
+      logger.info('deleteAllBlocksForDay', 'All blocks deleted for day', { deletedCount: count });
+      return success({ deletedCount: count || 0 });
+    } catch (err) {
+      logger.error('deleteAllBlocksForDay', 'Unexpected error', err);
+      return failure(ErrorCodes.UNKNOWN_ERROR, 'Erro inesperado ao remover bloqueios');
     }
   }
 

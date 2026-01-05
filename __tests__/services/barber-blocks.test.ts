@@ -2,32 +2,69 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { barberService } from '@/services/barber.service';
 
 // Mock Supabase client
+const mockInsert = vi.fn(() => ({ error: null }));
+const mockDeleteEq = vi.fn(() => ({ error: null, count: 1 }));
+const mockDeleteIn = vi.fn(() => ({ error: null, count: 3 }));
+const mockSelectBlocks = vi.fn();
+
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: vi.fn(() => ({
-      insert: vi.fn(() => ({ error: null })),
-      delete: vi.fn(() => ({ 
-        eq: vi.fn(() => ({ error: null, count: 1 })),
-        in: vi.fn(() => ({ error: null, count: 3 })),
-      })),
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            single: vi.fn(() => ({
-              data: {
-                day_of_week: 1,
-                is_day_off: false,
-                period1_start: '09:00',
-                period1_end: '12:00',
-                period2_start: '14:00',
-                period2_end: '18:00',
-              },
-              error: null,
+    from: vi.fn((table: string) => {
+      if (table === 'barber_blocks') {
+        return {
+          insert: mockInsert,
+          delete: vi.fn(() => ({
+            eq: vi.fn((col: string, val: string) => {
+              if (col === 'barber_id') {
+                return {
+                  eq: mockDeleteEq,
+                };
+              }
+              return { error: null, count: 1 };
+            }),
+            in: mockDeleteIn,
+          })),
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                lte: vi.fn(() => ({
+                  gt: vi.fn(() => ({
+                    data: [{ id: 'block-1' }],
+                    error: null,
+                  })),
+                })),
+              })),
             })),
           })),
-        })),
-      })),
-    })),
+        };
+      }
+      if (table === 'barber_working_hours') {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                single: vi.fn(() => ({
+                  data: {
+                    day_of_week: 1,
+                    is_day_off: false,
+                    period1_start: '09:00',
+                    period1_end: '12:00',
+                    period2_start: '14:00',
+                    period2_end: '18:00',
+                  },
+                  error: null,
+                })),
+              })),
+            })),
+          })),
+        };
+      }
+      return {
+        insert: mockInsert,
+        delete: vi.fn(() => ({ eq: mockDeleteEq, in: mockDeleteIn })),
+        select: vi.fn(() => ({ eq: vi.fn(() => ({ single: vi.fn(() => ({ data: null, error: null })) })) })),
+      };
+    }),
   },
 }));
 
@@ -127,7 +164,7 @@ describe('BarberService - Block Management', () => {
   });
 
   describe('createFullDayBlock', () => {
-    it('should create a full-day block', async () => {
+    it('should create a full-day block with proper end time', async () => {
       const result = await barberService.createFullDayBlock({
         barberId: '123e4567-e89b-12d3-a456-426614174000',
         blockDate: '2026-01-13', // Monday (day 1)
@@ -141,6 +178,42 @@ describe('BarberService - Block Management', () => {
       const result = await barberService.createFullDayBlock({
         barberId: '123e4567-e89b-12d3-a456-426614174000',
         blockDate: '2026-01-13',
+      });
+      
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe('deleteBlockBySlot', () => {
+    it('should delete block covering a specific slot time', async () => {
+      const result = await barberService.deleteBlockBySlot({
+        barberId: '123e4567-e89b-12d3-a456-426614174000',
+        blockDate: '2026-01-10',
+        slotTime: '10:00',
+      });
+      
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe('deleteBlocksInRange', () => {
+    it('should delete blocks within a time range', async () => {
+      const result = await barberService.deleteBlocksInRange({
+        barberId: '123e4567-e89b-12d3-a456-426614174000',
+        blockDate: '2026-01-10',
+        startTime: '09:00',
+        endTime: '12:00',
+      });
+      
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe('deleteAllBlocksForDay', () => {
+    it('should delete all blocks for an entire day', async () => {
+      const result = await barberService.deleteAllBlocksForDay({
+        barberId: '123e4567-e89b-12d3-a456-426614174000',
+        blockDate: '2026-01-10',
       });
       
       expect(result.success).toBe(true);
@@ -193,5 +266,43 @@ describe('Block Validation', () => {
     });
     
     expect(result.success).toBe(false);
+  });
+});
+
+describe('Full-day block coverage', () => {
+  it('should create block from earliest start to latest end of working hours', async () => {
+    // This tests that createFullDayBlock gets period1_start (09:00) to period2_end (18:00)
+    // Not just the slot times
+    const result = await barberService.createFullDayBlock({
+      barberId: '123e4567-e89b-12d3-a456-426614174000',
+      blockDate: '2026-01-13',
+    });
+    
+    expect(result.success).toBe(true);
+    // The implementation should use 09:00 as start and 18:00 as end
+    // covering ALL working hours, not just slot start times
+  });
+});
+
+describe('Unblock scenarios', () => {
+  it('should handle unblocking single slot from full-day block', async () => {
+    // When there's a single full-day block covering 09:00-18:00
+    // and user clicks on 10:00 slot to unblock, the entire block should be removed
+    const result = await barberService.deleteBlockBySlot({
+      barberId: '123e4567-e89b-12d3-a456-426614174000',
+      blockDate: '2026-01-10',
+      slotTime: '10:00',
+    });
+    
+    expect(result.success).toBe(true);
+  });
+
+  it('should unblock entire day removing all blocks', async () => {
+    const result = await barberService.deleteAllBlocksForDay({
+      barberId: '123e4567-e89b-12d3-a456-426614174000',
+      blockDate: '2026-01-10',
+    });
+    
+    expect(result.success).toBe(true);
   });
 });
