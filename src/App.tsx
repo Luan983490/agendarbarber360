@@ -1,3 +1,4 @@
+import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,32 +9,44 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { useSupabasePing } from "@/hooks/use-supabase-ping";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { Skeleton } from "@/components/ui/skeleton";
 
-// Public pages
+// Loading fallback component
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-screen bg-background">
+    <div className="space-y-4 w-full max-w-md p-8">
+      <Skeleton className="h-8 w-3/4 mx-auto" />
+      <Skeleton className="h-4 w-1/2 mx-auto" />
+      <Skeleton className="h-64 w-full" />
+    </div>
+  </div>
+);
+
+// Public pages (eager load - critical path)
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
-// Admin pages
-import Dashboard from "./pages/Dashboard";
+// Admin pages (lazy load - heavy components)
+const Dashboard = lazy(() => import("./pages/Dashboard"));
 
-// Barber pages
-import BarberHoje from "./pages/BarberHoje";
-import BarberAgenda from "./pages/BarberAgenda";
-import BarberPerformance from "./pages/BarberPerformance";
+// Barber pages (lazy load)
+const BarberHoje = lazy(() => import("./pages/BarberHoje"));
+const BarberAgenda = lazy(() => import("./pages/BarberAgenda"));
+const BarberPerformance = lazy(() => import("./pages/BarberPerformance"));
 
-// Client pages (kept for future use)
-import MyBookings from "./pages/MyBookings";
-import BookingsHistory from "./pages/BookingsHistory";
-import Favorites from "./pages/Favorites";
-import Profile from "./pages/Profile";
+// Client pages (lazy load)
+const MyBookings = lazy(() => import("./pages/MyBookings"));
+const BookingsHistory = lazy(() => import("./pages/BookingsHistory"));
+const Favorites = lazy(() => import("./pages/Favorites"));
+const Profile = lazy(() => import("./pages/Profile"));
 
-// Legacy routes - to be removed
-import BarberDashboard from "./pages/BarberDashboard";
-import AttendantDashboard from "./pages/AttendantDashboard";
-import Packages from "./pages/Packages";
-import Subscriptions from "./pages/Subscriptions";
-import Cards from "./pages/Cards";
+// Legacy routes (lazy load)
+const BarberDashboard = lazy(() => import("./pages/BarberDashboard"));
+const AttendantDashboard = lazy(() => import("./pages/AttendantDashboard"));
+const Packages = lazy(() => import("./pages/Packages"));
+const Subscriptions = lazy(() => import("./pages/Subscriptions"));
+const Cards = lazy(() => import("./pages/Cards"));
 
 const queryClient = new QueryClient(defaultQueryClientConfig);
 
@@ -45,140 +58,142 @@ const AppContent = () => {
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Index />} />
-          <Route path="/auth" element={<Auth />} />
-          
-          {/* Admin Routes (Owner only) */}
-          <Route 
-            path="/admin/dashboard" 
-            element={
-              <ProtectedRoute allowedRoles={['owner']}>
-                <Dashboard />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/dashboard" 
-            element={
-              <ProtectedRoute allowedRoles={['owner']}>
-                <Dashboard />
-              </ProtectedRoute>
-            } 
-          />
-          
-          {/* Barber Routes */}
-          <Route 
-            path="/barber/hoje" 
-            element={
-              <ProtectedRoute allowedRoles={['barber']}>
-                <BarberHoje />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/barber/agenda" 
-            element={
-              <ProtectedRoute allowedRoles={['barber']}>
-                <BarberAgenda />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/barber/performance" 
-            element={
-              <ProtectedRoute allowedRoles={['barber']}>
-                <BarberPerformance />
-              </ProtectedRoute>
-            } 
-          />
-          
-          {/* Legacy barber route - redirect to new */}
-          <Route 
-            path="/barber-dashboard" 
-            element={<Navigate to="/barber/hoje" replace />} 
-          />
-          
-          {/* Attendant Routes */}
-          <Route 
-            path="/attendant/dashboard" 
-            element={
-              <ProtectedRoute allowedRoles={['attendant']}>
-                <AttendantDashboard />
-              </ProtectedRoute>
-            } 
-          />
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            
+            {/* Admin Routes (Owner only) */}
+            <Route 
+              path="/admin/dashboard" 
+              element={
+                <ProtectedRoute allowedRoles={['owner']}>
+                  <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard" 
+              element={
+                <ProtectedRoute allowedRoles={['owner']}>
+                  <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Barber Routes */}
+            <Route 
+              path="/barber/hoje" 
+              element={
+                <ProtectedRoute allowedRoles={['barber']}>
+                  <BarberHoje />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/barber/agenda" 
+              element={
+                <ProtectedRoute allowedRoles={['barber']}>
+                  <BarberAgenda />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/barber/performance" 
+              element={
+                <ProtectedRoute allowedRoles={['barber']}>
+                  <BarberPerformance />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Legacy barber route - redirect to new */}
+            <Route 
+              path="/barber-dashboard" 
+              element={<Navigate to="/barber/hoje" replace />} 
+            />
+            
+            {/* Attendant Routes */}
+            <Route 
+              path="/attendant/dashboard" 
+              element={
+                <ProtectedRoute allowedRoles={['attendant']}>
+                  <AttendantDashboard />
+                </ProtectedRoute>
+              } 
+            />
 
-          {/* Legacy attendant route - redirect to new */}
-          <Route 
-            path="/attendant-dashboard" 
-            element={<Navigate to="/attendant/dashboard" replace />} 
-          />
-          
-          {/* Client Routes (client only) */}
-          <Route 
-            path="/my-bookings" 
-            element={
-              <ProtectedRoute allowedRoles={['client']}>
-                <MyBookings />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/historico" 
-            element={
-              <ProtectedRoute allowedRoles={['client']}>
-                <BookingsHistory />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/favoritos" 
-            element={
-              <ProtectedRoute allowedRoles={['client']}>
-                <Favorites />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/perfil" 
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            } 
-          />
-          
-          {/* Legacy client routes - kept for backwards compatibility */}
-          <Route 
-            path="/pacotes" 
-            element={
-              <ProtectedRoute allowedRoles={['client']}>
-                <Packages />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/assinaturas" 
-            element={
-              <ProtectedRoute allowedRoles={['client']}>
-                <Subscriptions />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/cartoes" 
-            element={
-              <ProtectedRoute allowedRoles={['client']}>
-                <Cards />
-              </ProtectedRoute>
-            } 
-          />
-          
-          {/* Catch-all */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+            {/* Legacy attendant route - redirect to new */}
+            <Route 
+              path="/attendant-dashboard" 
+              element={<Navigate to="/attendant/dashboard" replace />} 
+            />
+            
+            {/* Client Routes (client only) */}
+            <Route 
+              path="/my-bookings" 
+              element={
+                <ProtectedRoute allowedRoles={['client']}>
+                  <MyBookings />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/historico" 
+              element={
+                <ProtectedRoute allowedRoles={['client']}>
+                  <BookingsHistory />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/favoritos" 
+              element={
+                <ProtectedRoute allowedRoles={['client']}>
+                  <Favorites />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/perfil" 
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Legacy client routes - kept for backwards compatibility */}
+            <Route 
+              path="/pacotes" 
+              element={
+                <ProtectedRoute allowedRoles={['client']}>
+                  <Packages />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/assinaturas" 
+              element={
+                <ProtectedRoute allowedRoles={['client']}>
+                  <Subscriptions />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/cartoes" 
+              element={
+                <ProtectedRoute allowedRoles={['client']}>
+                  <Cards />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Catch-all */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </>
   );
