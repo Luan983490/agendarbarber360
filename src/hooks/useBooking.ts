@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { bookingService, CreateBookingDTO, CancelBookingDTO, AvailableSlotsDTO } from '@/services';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { getErrorMessage } from '@/lib/error-handler';
+import { specificQueryConfig } from '@/lib/query-config';
 
 // Query keys
 export const bookingKeys = {
@@ -10,7 +11,7 @@ export const bookingKeys = {
   list: (filters: Record<string, unknown>) => [...bookingKeys.lists(), filters] as const,
   details: () => [...bookingKeys.all, 'detail'] as const,
   detail: (id: string) => [...bookingKeys.details(), id] as const,
-  availableSlots: (params: AvailableSlotsDTO) => ['availableSlots', params] as const,
+  availableSlots: (params: AvailableSlotsDTO) => ['availableSlots', params.barbershopId, params.barberId, params.date] as const,
 };
 
 /**
@@ -95,11 +96,13 @@ export function useBooking(bookingId: string | undefined) {
       return result.data;
     },
     enabled: !!bookingId,
+    ...specificQueryConfig.bookings,
   });
 }
 
 /**
  * Hook to get available time slots
+ * Optimized with 5-minute cache per barber+date combination
  */
 export function useAvailableSlots(params: AvailableSlotsDTO | null) {
   return useQuery({
@@ -113,5 +116,6 @@ export function useAvailableSlots(params: AvailableSlotsDTO | null) {
       return result.data;
     },
     enabled: !!params?.barbershopId && !!params?.barberId && !!params?.date,
+    ...specificQueryConfig.availableSlots,
   });
 }

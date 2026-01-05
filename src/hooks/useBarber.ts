@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { barberService, CreateBarberDTO, UpdateBarberDTO, CreateBlockDTO } from '@/services';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { getErrorMessage } from '@/lib/error-handler';
+import { specificQueryConfig } from '@/lib/query-config';
 
 // Query keys
 export const barberKeys = {
@@ -62,6 +63,7 @@ export function useUpdateBarber() {
 
 /**
  * Hook to get a barber by ID
+ * Optimized: 30-minute cache, barber data rarely changes
  */
 export function useBarber(barberId: string | undefined) {
   return useQuery({
@@ -75,11 +77,13 @@ export function useBarber(barberId: string | undefined) {
       return result.data;
     },
     enabled: !!barberId,
+    ...specificQueryConfig.barbers,
   });
 }
 
 /**
  * Hook to get barbers by barbershop
+ * Optimized: 30-minute cache, barbers list rarely changes
  */
 export function useBarbersByBarbershop(barbershopId: string | undefined, activeOnly = true) {
   return useQuery({
@@ -93,11 +97,13 @@ export function useBarbersByBarbershop(barbershopId: string | undefined, activeO
       return result.data;
     },
     enabled: !!barbershopId,
+    ...specificQueryConfig.barbers,
   });
 }
 
 /**
  * Hook to get barber working hours
+ * Optimized: 30-minute cache, working hours almost never change
  */
 export function useBarberWorkingHours(barberId: string | undefined) {
   return useQuery({
@@ -111,6 +117,7 @@ export function useBarberWorkingHours(barberId: string | undefined) {
       return result.data;
     },
     enabled: !!barberId,
+    ...specificQueryConfig.workingHours,
   });
 }
 
