@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Store } from 'lucide-react';
 import ImageUpload from './ImageUpload';
+import { barbershopCreateSchema, validateWithSchema, formatValidationErrors, sanitizeString } from '@/lib/validation-schemas';
 
 interface BarbershopSetupProps {
   onBarbershopCreated: () => void;
@@ -53,19 +54,41 @@ const BarbershopSetup = ({ onBarbershopCreated }: BarbershopSetupProps) => {
     e.preventDefault();
     if (!user) return;
 
+    // Sanitizar dados
+    const sanitizedData = {
+      name: sanitizeString(formData.name),
+      description: sanitizeString(formData.description),
+      address: sanitizeString(formData.address),
+      phone: sanitizeString(formData.phone),
+      email: formData.email.trim().toLowerCase(),
+      image_url: formData.image_url || null,
+      amenities: formData.amenities.map(a => sanitizeString(a)),
+    };
+
+    // Validação com Zod
+    const validation = validateWithSchema(barbershopCreateSchema, sanitizedData);
+    if (!validation.success) {
+      toast({
+        title: 'Erro de validação',
+        description: formatValidationErrors(validation.errors),
+        variant: 'destructive'
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       const { error } = await supabase
         .from('barbershops')
         .insert([{
           owner_id: user.id,
-          name: formData.name,
-          description: formData.description,
-          address: formData.address,
-          phone: formData.phone,
-          email: formData.email,
-          image_url: formData.image_url,
-          amenities: formData.amenities,
+          name: validation.data.name,
+          description: validation.data.description,
+          address: validation.data.address,
+          phone: validation.data.phone,
+          email: validation.data.email,
+          image_url: validation.data.image_url,
+          amenities: validation.data.amenities,
           opening_hours: {
             monday: { open: '09:00', close: '18:00' },
             tuesday: { open: '09:00', close: '18:00' },
@@ -95,7 +118,6 @@ const BarbershopSetup = ({ onBarbershopCreated }: BarbershopSetupProps) => {
       setLoading(false);
     }
   };
-
   return (
     <Card>
       <CardHeader>

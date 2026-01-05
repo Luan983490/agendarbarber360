@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Package, Edit, Trash2 } from 'lucide-react';
+import { productFormSchema, validateWithSchema, formatValidationErrors, sanitizeString, VALIDATION_CONSTANTS } from '@/lib/validation-schemas';
 
 interface Product {
   id: string;
@@ -59,15 +60,49 @@ const ProductForm = ({ barbershopId, products, onProductsChange }: ProductFormPr
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validação com Zod
+    const validation = validateWithSchema(productFormSchema, formData);
+    if (!validation.success) {
+      toast({
+        title: 'Erro de validação',
+        description: formatValidationErrors(validation.errors),
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // Validar preço e estoque
+    const price = parseFloat(formData.price);
+    const stock = parseInt(formData.stock_quantity);
+    
+    if (isNaN(price) || price < VALIDATION_CONSTANTS.PRICE_MIN || price > VALIDATION_CONSTANTS.PRICE_MAX) {
+      toast({
+        title: 'Erro de validação',
+        description: `Preço deve estar entre R$ ${VALIDATION_CONSTANTS.PRICE_MIN} e R$ ${VALIDATION_CONSTANTS.PRICE_MAX.toLocaleString('pt-BR')}`,
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    if (isNaN(stock) || stock < VALIDATION_CONSTANTS.STOCK_MIN || stock > VALIDATION_CONSTANTS.STOCK_MAX) {
+      toast({
+        title: 'Erro de validação',
+        description: `Estoque deve estar entre ${VALIDATION_CONSTANTS.STOCK_MIN} e ${VALIDATION_CONSTANTS.STOCK_MAX}`,
+        variant: 'destructive'
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
       const productData = {
         barbershop_id: barbershopId,
-        name: formData.name,
-        description: formData.description,
-        price: parseFloat(formData.price),
-        stock_quantity: parseInt(formData.stock_quantity),
+        name: sanitizeString(formData.name),
+        description: sanitizeString(formData.description),
+        price: price,
+        stock_quantity: stock,
         is_active: true
       };
 

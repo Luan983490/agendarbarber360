@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Edit } from 'lucide-react';
 import ImageUpload from './ImageUpload';
+import { barbershopCreateSchema, validateWithSchema, formatValidationErrors, sanitizeString } from '@/lib/validation-schemas';
 
 interface BarbershopData {
   id: string;
@@ -61,19 +62,42 @@ const BarbershopEdit = ({ barbershop, onBarbershopUpdated }: BarbershopEditProps
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Sanitizar dados
+    const sanitizedData = {
+      name: sanitizeString(formData.name),
+      description: sanitizeString(formData.description),
+      address: sanitizeString(formData.address),
+      phone: sanitizeString(formData.phone),
+      email: formData.email.trim().toLowerCase(),
+      image_url: formData.image_url || null,
+      amenities: formData.amenities.map(a => sanitizeString(a)),
+    };
+
+    // Validação com Zod
+    const validation = validateWithSchema(barbershopCreateSchema, sanitizedData);
+    if (!validation.success) {
+      toast({
+        title: 'Erro de validação',
+        description: formatValidationErrors(validation.errors),
+        variant: 'destructive'
+      });
+      return;
+    }
+
     setLoading(true);
     
     try {
       const { error } = await supabase
         .from('barbershops')
         .update({
-          name: formData.name,
-          description: formData.description,
-          address: formData.address,
-          phone: formData.phone,
-          email: formData.email,
-          image_url: formData.image_url,
-          amenities: formData.amenities
+          name: validation.data.name,
+          description: validation.data.description,
+          address: validation.data.address,
+          phone: validation.data.phone,
+          email: validation.data.email,
+          image_url: validation.data.image_url,
+          amenities: validation.data.amenities
         })
         .eq('id', barbershop.id);
 
@@ -95,7 +119,6 @@ const BarbershopEdit = ({ barbershop, onBarbershopUpdated }: BarbershopEditProps
       setLoading(false);
     }
   };
-
   return (
     <Card>
       <CardHeader>

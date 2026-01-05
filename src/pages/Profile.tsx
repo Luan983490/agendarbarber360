@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/Header';
 import { User, MapPin, Lock, Key } from 'lucide-react';
+import { profileUpdateSchema, validateWithSchema, formatValidationErrors, sanitizeString } from '@/lib/validation-schemas';
 
 interface Profile {
   display_name: string;
@@ -97,15 +98,44 @@ const Profile = () => {
   };
 
   const handleSave = async () => {
+    // Sanitizar e preparar dados
+    const dataToValidate = {
+      display_name: profile.display_name ? sanitizeString(profile.display_name) : undefined,
+      phone: profile.phone ? sanitizeString(profile.phone) : null,
+      birth_date: profile.birth_date || null,
+      gender: profile.gender as 'male' | 'female' | 'other' | undefined,
+      address: profile.address ? {
+        country: sanitizeString(profile.address.country || 'Brasil'),
+        postal_code: sanitizeString(profile.address.postal_code || ''),
+        street: sanitizeString(profile.address.street || ''),
+        neighborhood: sanitizeString(profile.address.neighborhood || ''),
+        number: sanitizeString(profile.address.number || ''),
+        complement: sanitizeString(profile.address.complement || ''),
+        state: sanitizeString(profile.address.state || ''),
+        city: sanitizeString(profile.address.city || ''),
+      } : null,
+    };
+
+    // Validação com Zod
+    const validation = validateWithSchema(profileUpdateSchema, dataToValidate);
+    if (!validation.success) {
+      toast({
+        title: 'Erro de validação',
+        description: formatValidationErrors(validation.errors),
+        variant: 'destructive'
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('profiles')
         .update({
-          display_name: profile.display_name,
-          phone: profile.phone,
-          birth_date: profile.birth_date,
-          gender: profile.gender,
-          address: profile.address
+          display_name: validation.data.display_name,
+          phone: validation.data.phone,
+          birth_date: validation.data.birth_date,
+          gender: validation.data.gender,
+          address: validation.data.address
         })
         .eq('user_id', user?.id);
 
