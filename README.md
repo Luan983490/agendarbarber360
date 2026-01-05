@@ -85,21 +85,6 @@ Veja [SECURITY.md](./SECURITY.md) e [MONITORING.md](./MONITORING.md) para detalh
 
 Veja [PERFORMANCE.md](./PERFORMANCE.md) para detalhes.
 
-## 📅 Sistema de Agendamento
-
-### Bloqueios de Horários
-O sistema permite bloquear horários de barbeiros de forma flexível:
-
-- **Horário específico**: Bloqueio de slot individual
-- **Dia inteiro**: Bloqueia todos os horários de trabalho (otimizado como bloco único)
-- **Semana inteira**: Bloqueia todos os dias da semana
-- **Período personalizado**: Seleção de intervalo de datas
-
-### Desbloqueio
-- Clique em qualquer horário bloqueado para desbloquear
-- Opção de desbloquear apenas o slot ou o dia inteiro
-- Operações em lote para múltiplos bloqueios
-
 ## 🧪 Running Tests
 
 ```sh

@@ -28,9 +28,7 @@ export type {
   UpdateBarberDTO, 
   Barber, 
   BarberWorkingHours, 
-  CreateBlockDTO,
-  DeleteBlocksDTO,
-  DeleteBlocksByDateDTO
+  CreateBlockDTO 
 } from './barber.service';
 
 export { barbershopService, BarbershopService } from './barbershop.service';

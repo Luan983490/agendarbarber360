@@ -1,17 +1,16 @@
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { barberService } from '@/services';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { TimeSlot } from './TimeSlot';
+import { BlockTimeDialog } from './BlockTimeDialog';
 import { BookingDetailsDialog } from './BookingDetailsDialog';
 import { CreateBookingDialog } from './CreateBookingDialog';
 import { BlockOptionsDialog } from './BlockOptionsDialog';
 import { SlotActionMenu } from './SlotActionMenu';
 import { MultiBlockDialog } from './MultiBlockDialog';
-import { UnblockOptionsDialog, type UnblockType } from './UnblockOptionsDialog';
 import { useUserAccess } from '@/hooks/useUserAccess';
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import {
@@ -140,15 +139,12 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
     date: Date;
     isBlocked: boolean;
     blockId?: string;
-    blockReason?: string;
     overlappingBlocks?: BarberBlock[];
-    allDayBlocks?: BarberBlock[];
   } | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [bookingDetailsOpen, setBookingDetailsOpen] = useState(false);
   const [createBookingOpen, setCreateBookingOpen] = useState(false);
   const [blockOptionsOpen, setBlockOptionsOpen] = useState(false);
-  const [unblockOptionsOpen, setUnblockOptionsOpen] = useState(false);
   const [actionMenuOpen, setActionMenuOpen] = useState(false);
   const [actionMenuPosition, setActionMenuPosition] = useState({ x: 0, y: 0 });
   const [multiBlockOpen, setMultiBlockOpen] = useState(false);
@@ -165,7 +161,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
   const lastFetchedBarberRef = useRef<string | null>(null);
 
   // Helper para verificar se algum dialog está aberto
-  const isAnyDialogOpen = dialogOpen || bookingDetailsOpen || createBookingOpen || blockOptionsOpen || unblockOptionsOpen || actionMenuOpen || multiBlockOpen;
+  const isAnyDialogOpen = dialogOpen || bookingDetailsOpen || createBookingOpen || blockOptionsOpen || actionMenuOpen || multiBlockOpen;
 
   const isBarberView = !!barberIdFilter;
 
@@ -713,18 +709,13 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
         return slotTime >= blockStart && slotTime < blockEnd;
       });
       
-      // Get all blocks for this day (for "unblock day" feature)
-      const allDayBlocks = blocks.filter(b => b.block_date === dateStr);
-      
       if (overlappingBlocks.length > 0) {
         setSelectedSlot({
           time,
           date,
           isBlocked: true,
           blockId: overlappingBlocks[0].id,
-          blockReason: overlappingBlocks[0].reason || undefined,
-          overlappingBlocks,
-          allDayBlocks
+          overlappingBlocks
         });
         setDialogOpen(true);
       }
@@ -743,94 +734,67 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
     if (!selectedSlot || !selectedBarber) return;
 
     try {
-      const dateStr = format(selectedSlot.date, 'yyyy-MM-dd');
-
-      if (type === 'day') {
-        // Use the service layer for full-day block - single block covering entire day
-        const result = await barberService.createFullDayBlock({
-          barberId: selectedBarber,
-          blockDate: dateStr,
-          reason: reason || undefined
+      const blocksToInsert = [];
+      const daySlots = getTimeSlotsForDate(selectedSlot.date);
+      
+      if (type === 'single') {
+        const idx = daySlots.indexOf(selectedSlot.time);
+        const endTime = daySlots[idx + 1] || '20:00';
+        blocksToInsert.push({
+          barber_id: selectedBarber,
+          block_date: format(selectedSlot.date, 'yyyy-MM-dd'),
+          start_time: selectedSlot.time,
+          end_time: endTime,
+          reason: reason || null
         });
-
-        if (!result.success) {
-          throw new Error(result.error?.message || 'Erro ao bloquear dia');
-        }
-
-        toast({
-          title: 'Dia bloqueado',
-          description: 'Todos os horários do dia foram bloqueados'
-        });
-      } else {
-        // For single slot or week, use the existing approach
-        const blocksToInsert = [];
-        const daySlots = getTimeSlotsForDate(selectedSlot.date);
-        
-        if (type === 'single') {
-          const idx = daySlots.indexOf(selectedSlot.time);
-          const endTime = daySlots[idx + 1] || '20:00';
+      } else if (type === 'day') {
+        for (let i = 0; i < daySlots.length - 1; i++) {
           blocksToInsert.push({
             barber_id: selectedBarber,
-            block_date: dateStr,
-            start_time: selectedSlot.time,
-            end_time: endTime,
+            block_date: format(selectedSlot.date, 'yyyy-MM-dd'),
+            start_time: daySlots[i],
+            end_time: daySlots[i + 1],
             reason: reason || null
           });
-        } else if (type === 'week') {
-          const weekStart = startOfWeek(selectedSlot.date, { locale: ptBR });
-          for (let day = 0; day < 7; day++) {
-            const currentDay = addDays(weekStart, day);
-            const currentDayStr = format(currentDay, 'yyyy-MM-dd');
-            
-            // Use the service for each day to get proper end time
-            const result = await barberService.createFullDayBlock({
-              barberId: selectedBarber,
-              blockDate: currentDayStr,
-              reason: reason || undefined
-            });
-            
-            // Continue even if one day fails (might be a day off)
-            if (result.success) {
-              blocksToInsert.push({ date: currentDayStr }); // Just for count
-            }
-          }
-          
-          if (blocksToInsert.length > 0) {
-            toast({
-              title: 'Semana bloqueada',
-              description: `${blocksToInsert.length} dia(s) bloqueado(s)`
-            });
-          } else {
-            toast({
-              title: 'Nenhum dia bloqueado',
-              description: 'Não há horários de trabalho configurados para esta semana',
-              variant: 'destructive'
+        }
+      } else if (type === 'week') {
+        const weekStart = startOfWeek(selectedSlot.date, { locale: ptBR });
+        for (let day = 0; day < 7; day++) {
+          const currentDay = addDays(weekStart, day);
+          const currentDaySlots = getTimeSlotsForDate(currentDay);
+          for (let i = 0; i < currentDaySlots.length - 1; i++) {
+            blocksToInsert.push({
+              barber_id: selectedBarber,
+              block_date: format(currentDay, 'yyyy-MM-dd'),
+              start_time: currentDaySlots[i],
+              end_time: currentDaySlots[i + 1],
+              reason: reason || null
             });
           }
-          fetchScheduleData();
-          return;
         }
-
-        if (blocksToInsert.length === 0) {
-          toast({
-            title: 'Nenhum horário para bloquear',
-            description: 'Não há horários de trabalho configurados para este período',
-            variant: 'destructive'
-          });
-          return;
-        }
-
-        const { error } = await supabase
-          .from('barber_blocks')
-          .insert(blocksToInsert);
-
-        if (error) throw error;
-
-        toast({
-          title: 'Horário bloqueado',
-          description: type === 'single' ? 'O horário foi bloqueado' : 'A semana foi bloqueada'
-        });
       }
+
+      if (blocksToInsert.length === 0) {
+        toast({
+          title: 'Nenhum horário para bloquear',
+          description: 'Não há horários de trabalho configurados para este período',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      const { error } = await supabase
+        .from('barber_blocks')
+        .insert(blocksToInsert);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Horário bloqueado',
+        description: type === 'single' ? 'O horário foi bloqueado' : 
+                     type === 'day' ? 'O dia foi bloqueado' : 
+                     'A semana foi bloqueada'
+      });
 
       fetchScheduleData();
     } catch (error: any) {
@@ -851,20 +815,15 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
       const end = new Date(endDate);
 
       while (currentDateIter <= end) {
-        const currentDateStr = format(currentDateIter, 'yyyy-MM-dd');
         const daySlots = getTimeSlotsForDate(currentDateIter);
-        
-        if (daySlots.length > 0) {
-          // Use service for proper end time calculation
-          const result = await barberService.createFullDayBlock({
-            barberId: selectedBarber,
-            blockDate: currentDateStr,
-            reason: reason || undefined
+        for (let i = 0; i < daySlots.length - 1; i++) {
+          blocksToInsert.push({
+            barber_id: selectedBarber,
+            block_date: format(currentDateIter, 'yyyy-MM-dd'),
+            start_time: daySlots[i],
+            end_time: daySlots[i + 1],
+            reason: reason || null
           });
-          
-          if (result.success) {
-            blocksToInsert.push({ date: currentDateStr });
-          }
         }
         currentDateIter = addDays(currentDateIter, 1);
       }
@@ -878,9 +837,15 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
         return;
       }
 
+      const { error } = await supabase
+        .from('barber_blocks')
+        .insert(blocksToInsert);
+
+      if (error) throw error;
+
       toast({
         title: 'Período bloqueado',
-        description: `${blocksToInsert.length} dia(s) bloqueado(s)`
+        description: `${blocksToInsert.length} horários foram bloqueados`
       });
 
       fetchScheduleData();
@@ -898,89 +863,65 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
 
     try {
       const blockIds = blocksToRemove.map(b => b.id);
-      
-      // Use the service layer for deletion
-      const result = await barberService.deleteBlocks(blockIds);
-      
-      if (!result.success) {
-        throw new Error(result.error?.message || 'Erro ao desbloquear');
-      }
-
-      // Optimistic update
       setBlocks(prev => prev.filter(b => !blockIds.includes(b.id)));
       
       toast({
         title: 'Horário desbloqueado',
-        description: `${result.data?.deletedCount || blockIds.length} bloqueio(s) removido(s)`
+        description: 'O horário foi desbloqueado com sucesso'
       });
 
-      fetchScheduleData();
+      const { error } = await supabase
+        .from('barber_blocks')
+        .delete()
+        .in('id', blockIds);
+
+      if (error) {
+        fetchScheduleData();
+        throw error;
+      }
     } catch (error: any) {
       toast({
         title: 'Erro ao desbloquear horário',
         description: error.message,
         variant: 'destructive'
       });
-      fetchScheduleData();
     }
   };
 
-  const handleUnblock = async (type?: UnblockType) => {
-    if (!selectedSlot || !selectedBarber) return;
+  const handleUnblock = async () => {
+    if (selectedSlot?.overlappingBlocks && selectedSlot.overlappingBlocks.length > 0) {
+      await handleUnblockMultiple(selectedSlot.overlappingBlocks);
+      setDialogOpen(false);
+      return;
+    }
 
-    const dateStr = format(selectedSlot.date, 'yyyy-MM-dd');
+    if (!selectedSlot?.blockId) return;
 
     try {
+      setBlocks(prev => prev.filter(b => b.id !== selectedSlot.blockId));
+      
       setDialogOpen(false);
+      
+      toast({
+        title: 'Horário desbloqueado',
+        description: 'O horário foi desbloqueado com sucesso'
+      });
 
-      if (type === 'day') {
-        // Use new service method for unblocking entire day
-        const result = await barberService.deleteAllBlocksForDay({
-          barberId: selectedBarber,
-          blockDate: dateStr
-        });
-        
-        if (!result.success) {
-          throw new Error(result.error?.message || 'Erro ao desbloquear dia');
-        }
+      const { error } = await supabase
+        .from('barber_blocks')
+        .delete()
+        .eq('id', selectedSlot.blockId);
 
-        toast({
-          title: 'Dia desbloqueado',
-          description: `${result.data?.deletedCount || 0} bloqueio(s) removido(s)`
-        });
-      } else if (type === 'range') {
-        // TODO: Implement range unblock when range selection is added
-        toast({
-          title: 'Funcionalidade em desenvolvimento',
-          description: 'Desbloqueio de faixa será disponibilizado em breve'
-        });
-        return;
-      } else {
-        // Unblock single slot using the new service method
-        const result = await barberService.deleteBlockBySlot({
-          barberId: selectedBarber,
-          blockDate: dateStr,
-          slotTime: selectedSlot.time.substring(0, 5)
-        });
-        
-        if (!result.success) {
-          throw new Error(result.error?.message || 'Erro ao desbloquear horário');
-        }
-
-        toast({
-          title: 'Horário desbloqueado',
-          description: 'O horário foi desbloqueado com sucesso'
-        });
+      if (error) {
+        fetchScheduleData();
+        throw error;
       }
-
-      fetchScheduleData();
     } catch (error: any) {
       toast({
-        title: 'Erro ao desbloquear',
+        title: 'Erro ao desbloquear horário',
         description: error.message,
         variant: 'destructive'
       });
-      fetchScheduleData();
     }
   };
 
@@ -1297,15 +1238,16 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
         </CardContent>
       </Card>
 
-      {/* Dialog de Desbloqueio com opções */}
+      {/* Dialog de Desbloquear */}
       {selectedSlot && selectedSlot.isBlocked && (
-        <UnblockOptionsDialog
+        <BlockTimeDialog
           open={dialogOpen}
           onOpenChange={setDialogOpen}
-          date={selectedSlot.date}
           time={selectedSlot.time}
-          selectedRange={null}
-          blocksCount={selectedSlot.allDayBlocks?.length || 1}
+          date={selectedSlot.date}
+          isBlocked={selectedSlot.isBlocked}
+          blockId={selectedSlot.blockId}
+          onBlock={() => {}}
           onUnblock={handleUnblock}
         />
       )}
