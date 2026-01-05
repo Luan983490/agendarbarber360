@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { userService } from '@/services';
 
 interface UserRole {
   userType: 'client' | 'barbershop_owner' | 'barber' | null;
@@ -24,29 +24,24 @@ export const useUserRole = (): UserRole => {
       }
 
       try {
-        // Buscar perfil do usuário
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('user_type')
-          .eq('user_id', user.id)
-          .single();
+        // Get user profile using UserService
+        const profileResult = await userService.getProfile(user.id);
 
-        if (profileError) throw profileError;
+        if (!profileResult.success || !profileResult.data) {
+          setRole({ userType: null, loading: false });
+          return;
+        }
 
-        const userType = profileData.user_type as 'client' | 'barbershop_owner' | 'barber';
+        const userType = profileResult.data.userType as 'client' | 'barbershop_owner' | 'barber';
 
-        // Se for barbeiro, buscar o ID do barbeiro e barbearia
+        // If user is a barber, get barber record
         if (userType === 'barber') {
-          const { data: barberData } = await supabase
-            .from('barbers')
-            .select('id, barbershop_id')
-            .eq('user_id', user.id)
-            .single();
+          const barberResult = await userService.getBarberRecord(user.id);
 
           setRole({
             userType,
-            barberId: barberData?.id,
-            barbershopId: barberData?.barbershop_id,
+            barberId: barberResult.data?.barberId,
+            barbershopId: barberResult.data?.barbershopId,
             loading: false
           });
         } else {

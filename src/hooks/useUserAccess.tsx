@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { userService, barbershopService } from '@/services';
 
 type UserRole = 'owner' | 'barber' | 'attendant' | 'client' | null;
 
@@ -56,17 +56,13 @@ export const useUserAccess = (): UserAccess => {
     fetchingRef.current = true;
 
     try {
-      // Check if user is a barbershop owner
-      const { data: barbershopData } = await supabase
-        .from('barbershops')
-        .select('id')
-        .eq('owner_id', userId)
-        .maybeSingle();
+      // Check if user is a barbershop owner using BarbershopService
+      const barbershopResult = await barbershopService.getByOwner(userId);
 
-      if (barbershopData) {
+      if (barbershopResult.success && barbershopResult.data) {
         const ownerAccess: UserAccess = {
           role: 'owner',
-          barbershopId: barbershopData.id,
+          barbershopId: barbershopResult.data.id,
           loading: false,
           canManageBarbershop: true,
           canManageBarbers: true,
@@ -82,30 +78,23 @@ export const useUserAccess = (): UserAccess => {
         return;
       }
 
-      // Check if user has a role in any barbershop
-      const { data: roleData } = await supabase
-        .from('user_roles')
-        .select('role, barbershop_id')
-        .eq('user_id', userId)
-        .maybeSingle();
+      // Check if user has a role in any barbershop using UserService
+      const rolesResult = await userService.getUserRoles(userId);
 
-      if (roleData) {
+      if (rolesResult.success && rolesResult.data && rolesResult.data.length > 0) {
+        const roleData = rolesResult.data[0];
         const isAttendant = roleData.role === 'attendant';
         const isBarber = roleData.role === 'barber';
 
         let barberId: string | undefined;
         if (isBarber) {
-          const { data: barberData } = await supabase
-            .from('barbers')
-            .select('id')
-            .eq('user_id', userId)
-            .maybeSingle();
-          barberId = barberData?.id;
+          const barberResult = await userService.getBarberRecord(userId);
+          barberId = barberResult.data?.barberId;
         }
 
         const roleAccess: UserAccess = {
           role: roleData.role as UserRole,
-          barbershopId: roleData.barbershop_id,
+          barbershopId: roleData.barbershopId,
           barberId,
           loading: false,
           canManageBarbershop: false,
