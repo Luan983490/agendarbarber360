@@ -13,6 +13,7 @@ import {
 import { createLogger } from './logger';
 import { rateLimiterService } from './rate-limiter.service';
 import { isRateLimitError } from '@/lib/errors';
+import { sanitizeEmail, sanitizeString } from '@/lib/sanitizer';
 
 // ============================================================================
 // TYPES
@@ -84,8 +85,14 @@ export class AuthService {
    * Sign up a new user
    */
   async signUp(data: SignUpDTO): Promise<ServiceResponse<AuthUser>> {
+    // Sanitizar dados de entrada
+    const sanitizedData = {
+      ...data,
+      email: sanitizeEmail(data.email),
+    };
+
     const timer = logger.startTimer();
-    logger.info('signUp', 'Starting user registration', { email: data.email, userType: data.userType });
+    logger.info('signUp', 'Starting user registration', { email: sanitizedData.email, userType: sanitizedData.userType });
 
     // Rate limit check
     try {
@@ -100,7 +107,7 @@ export class AuthService {
     }
 
     // Validate input
-    const validation = this.validateSignUp(data);
+    const validation = this.validateSignUp(sanitizedData);
     if (!validation.valid) {
       logger.warn('signUp', 'Validation failed', { errors: validation.errors });
       return failure(
@@ -114,12 +121,12 @@ export class AuthService {
       const redirectUrl = `${window.location.origin}/`;
 
       const { data: authData, error } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
+        email: sanitizedData.email,
+        password: sanitizedData.password,
         options: {
           emailRedirectTo: redirectUrl,
           data: {
-            user_type: data.userType,
+            user_type: sanitizedData.userType,
           },
         },
       });
@@ -143,8 +150,8 @@ export class AuthService {
 
       const user: AuthUser = {
         id: authData.user.id,
-        email: authData.user.email || data.email,
-        userType: data.userType,
+        email: authData.user.email || sanitizedData.email,
+        userType: sanitizedData.userType,
       };
 
       const duration = timer();
@@ -161,8 +168,14 @@ export class AuthService {
    * Sign in an existing user
    */
   async signIn(data: SignInDTO): Promise<ServiceResponse<AuthSession>> {
+    // Sanitizar dados de entrada
+    const sanitizedData = {
+      ...data,
+      email: sanitizeEmail(data.email),
+    };
+
     const timer = logger.startTimer();
-    logger.info('signIn', 'Starting sign in', { email: data.email });
+    logger.info('signIn', 'Starting sign in', { email: sanitizedData.email });
 
     // Rate limit check
     try {
@@ -177,7 +190,7 @@ export class AuthService {
     }
 
     // Validate input
-    const validation = this.validateSignIn(data);
+    const validation = this.validateSignIn(sanitizedData);
     if (!validation.valid) {
       logger.warn('signIn', 'Validation failed', { errors: validation.errors });
       return failure(
@@ -189,8 +202,8 @@ export class AuthService {
 
     try {
       const { data: authData, error } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password,
+        email: sanitizedData.email,
+        password: sanitizedData.password,
       });
 
       if (error) {
@@ -217,7 +230,7 @@ export class AuthService {
       const session: AuthSession = {
         user: {
           id: authData.user.id,
-          email: authData.user.email || data.email,
+          email: authData.user.email || sanitizedData.email,
           userType: authData.user.user_metadata?.user_type,
         },
         accessToken: authData.session.access_token,
