@@ -9,7 +9,7 @@ import FavoritesList from "@/components/FavoritesList";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserAccess } from "@/hooks/useUserAccess";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Scissors } from "lucide-react";
+import b360Logo from '@/assets/b360-logo.png';
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -35,10 +35,10 @@ const Index = () => {
   // Show loading while checking user role
   if (loading && user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <Scissors className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-          <p>Carregando...</p>
+          <img src={b360Logo} alt="B360" className="h-16 mx-auto mb-4 animate-pulse" />
+          <p className="text-muted-foreground">Carregando...</p>
         </div>
       </div>
     );

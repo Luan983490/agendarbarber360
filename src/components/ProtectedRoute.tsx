@@ -1,7 +1,7 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserAccess } from '@/hooks/useUserAccess';
-import { Scissors } from 'lucide-react';
+import b360Logo from '@/assets/b360-logo.png';
 
 type AllowedRole = 'owner' | 'barber' | 'attendant' | 'client';
 
@@ -19,7 +19,7 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <Scissors className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <img src={b360Logo} alt="B360" className="h-16 mx-auto mb-4 animate-pulse" />
           <p className="text-muted-foreground">Verificando acesso...</p>
         </div>
       </div>
