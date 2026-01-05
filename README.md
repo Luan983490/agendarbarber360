@@ -75,6 +75,16 @@ This project is built with:
 
 Veja [SECURITY.md](./SECURITY.md) e [MONITORING.md](./MONITORING.md) para detalhes.
 
+## ⚡ Performance
+
+- **React Query Cache**: Cache inteligente por tipo de dado (5-30 min staleTime)
+- **Database Indexes**: Índices otimizados para todas as queries principais
+- **Code Splitting**: Lazy loading de páginas pesadas (Dashboard, Relatórios)
+- **Image Optimization**: Componente OptimizedImage com lazy loading nativo
+- **Loading States**: Skeletons para feedback visual imediato
+
+Veja [PERFORMANCE.md](./PERFORMANCE.md) para detalhes.
+
 ## 🧪 Running Tests
 
 ```sh
