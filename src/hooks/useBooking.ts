@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useToast } from '@/hooks/use-toast';
 import { bookingService, CreateBookingDTO, CancelBookingDTO, AvailableSlotsDTO } from '@/services';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
+import { getErrorMessage } from '@/lib/error-handler';
 
 // Query keys
 export const bookingKeys = {
@@ -17,31 +18,19 @@ export const bookingKeys = {
  */
 export function useCreateBooking() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
+  const { showErrorWithTitle } = useErrorHandler({ context: 'useCreateBooking' });
 
   return useMutation({
     mutationFn: (data: CreateBookingDTO) => bookingService.create(data),
     onSuccess: (result) => {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: bookingKeys.all });
-        toast({
-          title: 'Agendamento criado',
-          description: 'Seu agendamento foi realizado com sucesso!',
-        });
-      } else {
-        toast({
-          title: 'Erro ao agendar',
-          description: result.error?.message || 'Erro desconhecido',
-          variant: 'destructive',
-        });
+      } else if (result.error) {
+        showErrorWithTitle('Erro ao agendar', result.error);
       }
     },
-    onError: (error: Error) => {
-      toast({
-        title: 'Erro ao agendar',
-        description: error.message,
-        variant: 'destructive',
-      });
+    onError: (error) => {
+      showErrorWithTitle('Erro ao agendar', error);
     },
   });
 }
@@ -51,31 +40,19 @@ export function useCreateBooking() {
  */
 export function useCancelBooking() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
+  const { showErrorWithTitle } = useErrorHandler({ context: 'useCancelBooking' });
 
   return useMutation({
     mutationFn: (data: CancelBookingDTO) => bookingService.cancel(data),
     onSuccess: (result) => {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: bookingKeys.all });
-        toast({
-          title: 'Agendamento cancelado',
-          description: 'O agendamento foi cancelado com sucesso.',
-        });
-      } else {
-        toast({
-          title: 'Erro ao cancelar',
-          description: result.error?.message || 'Erro desconhecido',
-          variant: 'destructive',
-        });
+      } else if (result.error) {
+        showErrorWithTitle('Erro ao cancelar', result.error);
       }
     },
-    onError: (error: Error) => {
-      toast({
-        title: 'Erro ao cancelar',
-        description: error.message,
-        variant: 'destructive',
-      });
+    onError: (error) => {
+      showErrorWithTitle('Erro ao cancelar', error);
     },
   });
 }
@@ -85,7 +62,7 @@ export function useCancelBooking() {
  */
 export function useUpdateBookingStatus() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
+  const { showErrorWithTitle } = useErrorHandler({ context: 'useUpdateBookingStatus' });
 
   return useMutation({
     mutationFn: ({ bookingId, status }: { bookingId: string; status: string }) =>
@@ -93,20 +70,12 @@ export function useUpdateBookingStatus() {
     onSuccess: (result) => {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: bookingKeys.all });
-      } else {
-        toast({
-          title: 'Erro ao atualizar',
-          description: result.error?.message || 'Erro desconhecido',
-          variant: 'destructive',
-        });
+      } else if (result.error) {
+        showErrorWithTitle('Erro ao atualizar', result.error);
       }
     },
-    onError: (error: Error) => {
-      toast({
-        title: 'Erro ao atualizar',
-        description: error.message,
-        variant: 'destructive',
-      });
+    onError: (error) => {
+      showErrorWithTitle('Erro ao atualizar', error);
     },
   });
 }
@@ -121,7 +90,7 @@ export function useBooking(bookingId: string | undefined) {
       if (!bookingId) return null;
       const result = await bookingService.getById(bookingId);
       if (!result.success) {
-        throw new Error(result.error?.message || 'Erro ao buscar agendamento');
+        throw new Error(getErrorMessage(result.error));
       }
       return result.data;
     },
@@ -139,7 +108,7 @@ export function useAvailableSlots(params: AvailableSlotsDTO | null) {
       if (!params) return [];
       const result = await bookingService.getAvailableSlots(params);
       if (!result.success) {
-        throw new Error(result.error?.message || 'Erro ao buscar horários');
+        throw new Error(getErrorMessage(result.error));
       }
       return result.data;
     },
