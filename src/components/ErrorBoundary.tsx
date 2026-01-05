@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { createLogger } from '@/services/logger';
 import { getErrorMessage, logError } from '@/lib/error-handler';
+import { captureException, setContext } from '@/lib/sentry';
 
 const logger = createLogger('ErrorBoundary');
 
@@ -48,6 +49,17 @@ export class ErrorBoundary extends Component<Props, State> {
 
     logger.error('componentDidCatch', 'Erro React não tratado capturado', error, {
       componentStack: errorInfo.componentStack,
+    });
+
+    // Envia erro para o Sentry
+    setContext('react', {
+      componentStack: errorInfo.componentStack,
+      errorId: this.state.errorId,
+    });
+    captureException(error, {
+      componentStack: errorInfo.componentStack,
+      errorId: this.state.errorId,
+      errorBoundary: true,
     });
 
     this.setState({ errorInfo });

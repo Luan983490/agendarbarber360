@@ -1,7 +1,10 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import { initSentry } from "./lib/sentry";
 
+// Inicializa o Sentry antes de renderizar a aplicação
+initSentry();
 /**
  * Em alguns ambientes (preview/produção), scripts externos podem injetar o Tailwind CDN
  * (https://cdn.tailwindcss.com). Isso gera CSS em runtime e pode travar o desktop.
