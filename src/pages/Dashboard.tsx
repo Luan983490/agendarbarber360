@@ -29,7 +29,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
-import barber360Logo from '@/assets/barber360-logo.png';
+import b360Logo from '@/assets/b360-logo.png';
 
 interface Profile {
   id: string;
@@ -537,9 +537,8 @@ const Dashboard = () => {
                 <Menu className="h-5 w-5" />
               </Button>
 
-              <a href="/" className="flex items-center gap-2">
-                <img src={barber360Logo} alt="Barber360" className="h-8 w-8 sm:h-9 sm:w-9" />
-                <span className="font-semibold text-sm sm:text-base hidden sm:inline">Barber360</span>
+              <a href="/" className="flex items-center">
+                <img src={b360Logo} alt="B360" className="h-10 sm:h-12" />
               </a>
             </div>
 
@@ -634,9 +633,8 @@ const Dashboard = () => {
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
       <div className="w-full px-2 sm:px-4 py-2">
         <div className="flex items-center justify-between gap-2 sm:gap-4">
-          <a href="/" className="flex items-center gap-2 shrink-0">
-            <img src={barber360Logo} alt="Barber360" className="h-8 w-8 sm:h-9 sm:w-9" />
-            <span className="font-semibold text-sm sm:text-base hidden sm:inline">Barber360</span>
+          <a href="/" className="flex items-center shrink-0">
+            <img src={b360Logo} alt="B360" className="h-10 sm:h-12" />
           </a>
           <div className="flex items-center gap-1 sm:gap-2">
             {user && (

@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Menu, User, Settings, LogOut, Calendar, Store, History, Package, CreditCard, Heart, CalendarDays, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserAccess } from "@/hooks/useUserAccess";
-import barber360Logo from "@/assets/barber360-logo.png";
+import b360Logo from "@/assets/b360-logo.png";
 
 interface HeaderProps {
   showBackButton?: boolean;
@@ -57,9 +57,8 @@ export const Header = ({ showBackButton = false }: HeaderProps) => {
                 </Button>
               )}
 
-              <Link to="/" className="flex items-center gap-2">
-                <img src={barber360Logo} alt="Barber360" className="h-8 w-8 sm:h-9 sm:w-9" />
-                <span className="font-semibold text-sm sm:text-base hidden sm:inline">Barber360</span>
+              <Link to="/" className="flex items-center">
+                <img src={b360Logo} alt="B360" className="h-10 sm:h-12" />
               </Link>
             </div>
 

@@ -11,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { User, Store } from 'lucide-react';
 import { loginSchema, signUpSchema, validateWithSchema, formatValidationErrors } from '@/lib/validation-schemas';
-import barber360Logo from '@/assets/barber360-logo.png';
+import b360Logo from '@/assets/b360-logo.png';
 
 const Auth = () => {
   const { user, signIn, signUp, loading: authLoading } = useAuth();
@@ -98,9 +98,8 @@ const Auth = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-accent/20 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <img src={barber360Logo} alt="Barber360" className="h-12 w-12" />
-            <h1 className="text-2xl font-bold">Barber360</h1>
+          <div className="flex items-center justify-center mb-4">
+            <img src={b360Logo} alt="B360" className="h-16" />
           </div>
           <p className="text-muted-foreground">Acesse sua conta ou cadastre-se</p>
         </div>
