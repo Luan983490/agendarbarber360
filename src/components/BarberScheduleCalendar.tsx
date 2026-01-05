@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { TimeSlot } from './TimeSlot';
-import { BlockTimeDialog } from './BlockTimeDialog';
+import { UnblockOptionsDialog } from './UnblockOptionsDialog';
 import { BookingDetailsDialog } from './BookingDetailsDialog';
 import { CreateBookingDialog } from './CreateBookingDialog';
 import { BlockOptionsDialog } from './BlockOptionsDialog';
@@ -1238,17 +1238,48 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
         </CardContent>
       </Card>
 
-      {/* Dialog de Desbloquear */}
+      {/* Dialog de Opções de Desbloqueio */}
       {selectedSlot && selectedSlot.isBlocked && (
-        <BlockTimeDialog
+        <UnblockOptionsDialog
           open={dialogOpen}
           onOpenChange={setDialogOpen}
           time={selectedSlot.time}
           date={selectedSlot.date}
-          isBlocked={selectedSlot.isBlocked}
-          blockId={selectedSlot.blockId}
-          onBlock={() => {}}
-          onUnblock={handleUnblock}
+          blockReason={selectedSlot.overlappingBlocks?.[0]?.reason}
+          hasMultipleBlocks={(selectedSlot.overlappingBlocks?.length || 0) > 1}
+          onUnblock={async (type) => {
+            if (!selectedBarber) return;
+            
+            const dateStr = format(selectedSlot.date, 'yyyy-MM-dd');
+            
+            try {
+              if (type === 'single') {
+                // Unblock only the specific slot
+                if (selectedSlot.overlappingBlocks && selectedSlot.overlappingBlocks.length > 0) {
+                  await handleUnblockMultiple(selectedSlot.overlappingBlocks);
+                }
+              } else if (type === 'range') {
+                // Unblock all overlapping blocks
+                if (selectedSlot.overlappingBlocks) {
+                  await handleUnblockMultiple(selectedSlot.overlappingBlocks);
+                }
+              } else if (type === 'day') {
+                // Unblock entire day - delete all blocks for this date
+                const dayBlocks = blocks.filter(b => b.block_date === dateStr);
+                if (dayBlocks.length > 0) {
+                  await handleUnblockMultiple(dayBlocks);
+                }
+              }
+              
+              setDialogOpen(false);
+            } catch (error: any) {
+              toast({
+                title: 'Erro ao desbloquear',
+                description: error.message,
+                variant: 'destructive'
+              });
+            }
+          }}
         />
       )}
 
