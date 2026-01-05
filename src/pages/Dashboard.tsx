@@ -455,9 +455,9 @@ const Dashboard = () => {
             </div>
 
             {/* Layout Desktop com calendário e painel lateral */}
-            <div className="flex-1 flex flex-col xl:flex-row gap-4 min-h-0">
+            <div className="flex-1 flex flex-col xl:flex-row gap-4 min-h-0 relative">
               {/* Calendário Principal */}
-              <div className="flex-1 min-w-0 min-h-0 flex flex-col">
+              <div className="flex-1 min-w-0 min-h-0 flex flex-col xl:mr-[17rem] 2xl:mr-[19rem]">
                 <BarberScheduleCalendar 
                   barbershopId={barbershop!.id} 
                   barberIdFilter={selectedBarber}
@@ -465,8 +465,8 @@ const Dashboard = () => {
                 />
               </div>
               
-              {/* Painel de Bloqueio - Desktop (fixo na lateral, não rola) */}
-              <div className="hidden xl:flex xl:flex-col w-64 2xl:w-72 flex-shrink-0 sticky top-16 self-start max-h-[calc(100vh-5rem)] overflow-hidden">
+              {/* Painel de Bloqueio - Desktop (fixo na lateral direita) */}
+              <div className="hidden xl:flex xl:flex-col w-64 2xl:w-72 fixed right-4 2xl:right-6 top-[8.5rem] bottom-4 z-10">
                 <BlockSchedulePanel 
                   barbershopId={barbershop!.id} 
                   selectedBarberId={selectedBarber}
