@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_logs: {
+        Row: {
+          barbershop_id: string | null
+          context: Json | null
+          created_at: string
+          duration_ms: number | null
+          error_stack: string | null
+          id: string
+          level: string
+          message: string
+          method: string
+          service: string
+          url: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          barbershop_id?: string | null
+          context?: Json | null
+          created_at?: string
+          duration_ms?: number | null
+          error_stack?: string | null
+          id?: string
+          level: string
+          message: string
+          method: string
+          service: string
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          barbershop_id?: string | null
+          context?: Json | null
+          created_at?: string
+          duration_ms?: number | null
+          error_stack?: string | null
+          id?: string
+          level?: string
+          message?: string
+          method?: string
+          service?: string
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       barber_blocks: {
         Row: {
           barber_id: string
@@ -1335,7 +1383,60 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      recent_errors: {
+        Row: {
+          barbershop_id: string | null
+          context: Json | null
+          created_at: string | null
+          error_stack: string | null
+          id: string | null
+          level: string | null
+          message: string | null
+          method: string | null
+          service: string | null
+          url: string | null
+          user_id: string | null
+        }
+        Insert: {
+          barbershop_id?: string | null
+          context?: Json | null
+          created_at?: string | null
+          error_stack?: string | null
+          id?: string | null
+          level?: string | null
+          message?: string | null
+          method?: string | null
+          service?: string | null
+          url?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          barbershop_id?: string | null
+          context?: Json | null
+          created_at?: string | null
+          error_stack?: string | null
+          id?: string | null
+          level?: string | null
+          message?: string | null
+          method?: string | null
+          service?: string | null
+          url?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      slow_operations: {
+        Row: {
+          context: Json | null
+          created_at: string | null
+          duration_ms: number | null
+          id: string | null
+          message: string | null
+          method: string | null
+          service: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       acquire_booking_slot_lock: {
@@ -1569,6 +1670,22 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      insert_app_log: {
+        Args: {
+          p_barbershop_id?: string
+          p_context?: Json
+          p_duration_ms?: number
+          p_error_stack?: string
+          p_level: string
+          p_message: string
+          p_method: string
+          p_service: string
+          p_url?: string
+          p_user_agent?: string
+          p_user_id?: string
+        }
+        Returns: string
       }
       is_barbershop_owner: {
         Args: { _barbershop_id: string; _user_id: string }
