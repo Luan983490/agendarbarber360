@@ -12,12 +12,13 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Loading fallback component
+import b360Logo from '@/assets/b360-logo.png';
+
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-screen bg-background">
-    <div className="space-y-4 w-full max-w-md p-8">
-      <Skeleton className="h-8 w-3/4 mx-auto" />
-      <Skeleton className="h-4 w-1/2 mx-auto" />
-      <Skeleton className="h-64 w-full" />
+    <div className="text-center">
+      <img src={b360Logo} alt="B360" className="h-16 mx-auto mb-4 animate-pulse" />
+      <p className="text-muted-foreground">Carregando...</p>
     </div>
   </div>
 );

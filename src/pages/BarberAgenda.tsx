@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useUserAccess } from '@/hooks/useUserAccess';
 import { BarberLayout } from '@/components/layouts/BarberLayout';
 import { BarberScheduleCalendar } from '@/components/BarberScheduleCalendar';
-import { Scissors } from 'lucide-react';
+import b360Logo from '@/assets/b360-logo.png';
 import { useNavigate } from 'react-router-dom';
 
 export default function BarberAgenda() {
@@ -23,7 +23,7 @@ export default function BarberAgenda() {
     return (
       <BarberLayout currentTab={currentTab} onTabChange={handleTabChange}>
         <div className="flex-1 flex items-center justify-center">
-          <Scissors className="h-8 w-8 animate-spin text-primary" />
+          <img src={b360Logo} alt="B360" className="h-16 animate-pulse" />
         </div>
       </BarberLayout>
     );
