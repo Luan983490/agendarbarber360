@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { userService, UpdateProfileDTO } from '@/services';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { getErrorMessage } from '@/lib/error-handler';
+import { specificQueryConfig } from '@/lib/query-config';
 
 // Query keys
 export const userKeys = {
@@ -13,6 +14,7 @@ export const userKeys = {
 
 /**
  * Hook to get user profile
+ * Optimized: 10-minute cache
  */
 export function useUserProfile(userId: string | undefined) {
   return useQuery({
@@ -26,6 +28,7 @@ export function useUserProfile(userId: string | undefined) {
       return result.data;
     },
     enabled: !!userId,
+    ...specificQueryConfig.profile,
   });
 }
 
@@ -54,6 +57,7 @@ export function useUpdateProfile() {
 
 /**
  * Hook to get user roles
+ * Optimized: 30-minute cache, roles rarely change
  */
 export function useUserRoles(userId: string | undefined) {
   return useQuery({
@@ -67,11 +71,13 @@ export function useUserRoles(userId: string | undefined) {
       return result.data;
     },
     enabled: !!userId,
+    ...specificQueryConfig.roles,
   });
 }
 
 /**
  * Hook to check if user has a specific role in a barbershop
+ * Optimized: 30-minute cache
  */
 export function useHasRole(
   userId: string | undefined,
@@ -89,11 +95,13 @@ export function useHasRole(
       return result.data;
     },
     enabled: !!userId && !!barbershopId,
+    ...specificQueryConfig.roles,
   });
 }
 
 /**
  * Hook to check if user is barbershop owner
+ * Optimized: 30-minute cache
  */
 export function useIsBarbershopOwner(userId: string | undefined, barbershopId: string | undefined) {
   return useQuery({
@@ -107,11 +115,13 @@ export function useIsBarbershopOwner(userId: string | undefined, barbershopId: s
       return result.data;
     },
     enabled: !!userId && !!barbershopId,
+    ...specificQueryConfig.roles,
   });
 }
 
 /**
  * Hook to get barber record for a user
+ * Optimized: 30-minute cache
  */
 export function useBarberRecord(userId: string | undefined) {
   return useQuery({
@@ -125,5 +135,6 @@ export function useBarberRecord(userId: string | undefined) {
       return result.data;
     },
     enabled: !!userId,
+    ...specificQueryConfig.barbers,
   });
 }

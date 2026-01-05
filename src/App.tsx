@@ -2,6 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { defaultQueryClientConfig } from "@/lib/query-config";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { useSupabasePing } from "@/hooks/use-supabase-ping";
@@ -34,7 +35,7 @@ import Packages from "./pages/Packages";
 import Subscriptions from "./pages/Subscriptions";
 import Cards from "./pages/Cards";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient(defaultQueryClientConfig);
 
 const AppContent = () => {
   useSupabasePing();

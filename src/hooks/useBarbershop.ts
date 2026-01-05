@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { barbershopService, CreateBarbershopDTO, UpdateBarbershopDTO } from '@/services';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { getErrorMessage } from '@/lib/error-handler';
+import { specificQueryConfig } from '@/lib/query-config';
 
 // Query keys
 export const barbershopKeys = {
@@ -62,6 +63,7 @@ export function useUpdateBarbershop() {
 
 /**
  * Hook to get a barbershop by ID
+ * Optimized: 10-minute cache, rarely changes during session
  */
 export function useBarbershop(barbershopId: string | undefined) {
   return useQuery({
@@ -75,11 +77,13 @@ export function useBarbershop(barbershopId: string | undefined) {
       return result.data;
     },
     enabled: !!barbershopId,
+    ...specificQueryConfig.barbershop,
   });
 }
 
 /**
  * Hook to get barbershop by owner
+ * Optimized: 10-minute cache
  */
 export function useBarbershopByOwner(ownerId: string | undefined) {
   return useQuery({
@@ -93,11 +97,13 @@ export function useBarbershopByOwner(ownerId: string | undefined) {
       return result.data;
     },
     enabled: !!ownerId,
+    ...specificQueryConfig.barbershop,
   });
 }
 
 /**
  * Hook to search barbershops
+ * Optimized: 2-minute cache for search results
  */
 export function useSearchBarbershops(query: string, limit = 20) {
   return useQuery({
@@ -110,11 +116,13 @@ export function useSearchBarbershops(query: string, limit = 20) {
       return result.data;
     },
     enabled: query.length >= 2 || query === '',
+    ...specificQueryConfig.search,
   });
 }
 
 /**
  * Hook to get barbershop stats
+ * Optimized: 10-minute cache
  */
 export function useBarbershopStats(barbershopId: string | undefined) {
   return useQuery({
@@ -128,5 +136,6 @@ export function useBarbershopStats(barbershopId: string | undefined) {
       return result.data;
     },
     enabled: !!barbershopId,
+    ...specificQueryConfig.stats,
   });
 }
