@@ -237,3 +237,75 @@ export function useDeleteBlocksByDate() {
     },
   });
 }
+
+/**
+ * Hook to delete block by specific slot time
+ */
+export function useDeleteBlockBySlot() {
+  const queryClient = useQueryClient();
+  const { showErrorWithTitle } = useErrorHandler({ context: 'useDeleteBlockBySlot' });
+
+  return useMutation({
+    mutationFn: (data: { barberId: string; blockDate: string; slotTime: string }) => 
+      barberService.deleteBlockBySlot(data),
+    onSuccess: (result, variables) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: barberKeys.blocks(variables.barberId) });
+        queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      } else if (result.error) {
+        showErrorWithTitle('Erro ao desbloquear horário', result.error);
+      }
+    },
+    onError: (error) => {
+      showErrorWithTitle('Erro ao desbloquear horário', error);
+    },
+  });
+}
+
+/**
+ * Hook to delete blocks within a time range
+ */
+export function useDeleteBlocksInRange() {
+  const queryClient = useQueryClient();
+  const { showErrorWithTitle } = useErrorHandler({ context: 'useDeleteBlocksInRange' });
+
+  return useMutation({
+    mutationFn: (data: { barberId: string; blockDate: string; startTime: string; endTime: string }) => 
+      barberService.deleteBlocksInRange(data),
+    onSuccess: (result, variables) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: barberKeys.blocks(variables.barberId) });
+        queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      } else if (result.error) {
+        showErrorWithTitle('Erro ao desbloquear faixa', result.error);
+      }
+    },
+    onError: (error) => {
+      showErrorWithTitle('Erro ao desbloquear faixa', error);
+    },
+  });
+}
+
+/**
+ * Hook to delete all blocks for a day
+ */
+export function useDeleteAllBlocksForDay() {
+  const queryClient = useQueryClient();
+  const { showErrorWithTitle } = useErrorHandler({ context: 'useDeleteAllBlocksForDay' });
+
+  return useMutation({
+    mutationFn: (data: { barberId: string; blockDate: string }) => 
+      barberService.deleteAllBlocksForDay(data),
+    onSuccess: (result, variables) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: barberKeys.blocks(variables.barberId) });
+        queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      } else if (result.error) {
+        showErrorWithTitle('Erro ao desbloquear dia', result.error);
+      }
+    },
+    onError: (error) => {
+      showErrorWithTitle('Erro ao desbloquear dia', error);
+    },
+  });
+}
