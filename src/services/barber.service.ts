@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
+import { sanitizeString } from '@/lib/sanitizer';
 import {
   ServiceResponse,
   ValidationResult,
@@ -101,6 +102,30 @@ const createBlockSchema = z.object({
   startTime: z.string().regex(/^\d{2}:\d{2}/),
   endTime: z.string().regex(/^\d{2}:\d{2}/),
   reason: z.string().max(500).optional(),
+});
+
+const createFullDayBlockSchema = z.object({
+  barberId: uuidSchema,
+  blockDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  reason: z.string().max(500).optional(),
+});
+
+const deleteBlockBySlotSchema = z.object({
+  barberId: uuidSchema,
+  blockDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  slotTime: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/),
+});
+
+const deleteBlocksInRangeSchema = z.object({
+  barberId: uuidSchema,
+  blockDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  startTime: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/),
+  endTime: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/),
+});
+
+const deleteAllBlocksForDaySchema = z.object({
+  barberId: uuidSchema,
+  blockDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
 // ============================================================================
@@ -272,12 +297,18 @@ export class BarberService {
    * Create a time block for a barber
    */
   async createBlock(data: CreateBlockDTO): Promise<ServiceResponse<void>> {
-    logger.info('createBlock', 'Creating barber block', { 
-      barberId: data.barberId, 
-      blockDate: data.blockDate 
+    logger.info('createBlock', 'Creating barber block', {
+      barberId: data.barberId,
+      blockDate: data.blockDate,
     });
 
-    const validation = createBlockSchema.safeParse(data);
+    const sanitizedReason = data.reason ? sanitizeString(data.reason, { maxLength: 255 }) : undefined;
+
+    const validation = createBlockSchema.safeParse({
+      ...data,
+      reason: sanitizedReason,
+    });
+
     if (!validation.success) {
       return failure(ErrorCodes.VALIDATION_ERROR, 'Dados inválidos');
     }
@@ -290,7 +321,7 @@ export class BarberService {
           block_date: data.blockDate,
           start_time: data.startTime,
           end_time: data.endTime,
-          reason: data.reason,
+          reason: sanitizedReason || null,
         });
 
       if (error) {
@@ -395,81 +426,122 @@ export class BarberService {
 
   /**
    * Create a full-day block (single block entry from first to last working hour)
-   * FIXED: Ensures the end_time covers the ENTIRE last slot, not just its start
+   * FIXED: Uses schedule overrides when present and covers full working hours.
    */
   async createFullDayBlock(data: { barberId: string; blockDate: string; reason?: string }): Promise<ServiceResponse<void>> {
-    logger.info('createFullDayBlock', 'Creating full-day block', { barberId: data.barberId, blockDate: data.blockDate });
+    logger.info('createFullDayBlock', 'Creating full-day block', {
+      barberId: data.barberId,
+      blockDate: data.blockDate,
+    });
+
+    const sanitizedReason = data.reason ? sanitizeString(data.reason, { maxLength: 255 }) : undefined;
+
+    const validation = createFullDayBlockSchema.safeParse({
+      ...data,
+      reason: sanitizedReason,
+    });
+
+    if (!validation.success) {
+      return failure(ErrorCodes.VALIDATION_ERROR, 'Dados inválidos');
+    }
 
     try {
-      // First, get the working hours for this barber on this day
-      const dayOfWeek = new Date(data.blockDate + 'T12:00:00').getDay();
-      
+      const dayOfWeek = new Date(`${data.blockDate}T12:00:00`).getDay();
+
+      // 1) Prefer schedule override for this date
+      const { data: override, error: overrideError } = await supabase
+        .from('barber_schedule_overrides')
+        .select('*')
+        .eq('barber_id', data.barberId)
+        .eq('day_of_week', dayOfWeek)
+        .lte('start_date', data.blockDate)
+        .gte('end_date', data.blockDate)
+        .order('start_date', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (overrideError) {
+        logger.error('createFullDayBlock', 'Override fetch error', overrideError);
+        return failure(ErrorCodes.DATABASE_ERROR, 'Erro ao buscar horários especiais');
+      }
+
+      // 2) Fallback to base working hours
       const { data: workingHours, error: whError } = await supabase
         .from('barber_working_hours')
         .select('*')
         .eq('barber_id', data.barberId)
         .eq('day_of_week', dayOfWeek)
-        .single();
+        .maybeSingle();
 
-      if (whError || !workingHours) {
-        logger.warn('createFullDayBlock', 'No working hours found', undefined, { dayOfWeek });
+      if (whError) {
+        logger.error('createFullDayBlock', 'Working hours fetch error', whError);
+        return failure(ErrorCodes.DATABASE_ERROR, 'Erro ao buscar horários de trabalho');
+      }
+
+      const schedule = override || workingHours;
+
+      if (!schedule) {
+        logger.warn('createFullDayBlock', 'No schedule found', undefined, { dayOfWeek });
         return failure(ErrorCodes.VALIDATION_ERROR, 'Horários de trabalho não configurados para este dia');
       }
 
-      if (workingHours.is_day_off) {
-        return failure(ErrorCodes.VALIDATION_ERROR, 'Este dia já está configurado como folga');
+      if (schedule.is_day_off) {
+        return failure(ErrorCodes.VALIDATION_ERROR, 'Este dia está configurado como folga');
       }
 
-      // Collect all period times
       const startTimes: string[] = [];
       const endTimes: string[] = [];
-      
-      if (workingHours.period1_start && workingHours.period1_end) {
-        startTimes.push(workingHours.period1_start.substring(0, 5));
-        endTimes.push(workingHours.period1_end.substring(0, 5));
+
+      if (schedule.period1_start && schedule.period1_end) {
+        startTimes.push(schedule.period1_start.substring(0, 5));
+        endTimes.push(schedule.period1_end.substring(0, 5));
       }
-      if (workingHours.period2_start && workingHours.period2_end) {
-        startTimes.push(workingHours.period2_start.substring(0, 5));
-        endTimes.push(workingHours.period2_end.substring(0, 5));
+      if (schedule.period2_start && schedule.period2_end) {
+        startTimes.push(schedule.period2_start.substring(0, 5));
+        endTimes.push(schedule.period2_end.substring(0, 5));
       }
 
       if (startTimes.length === 0 || endTimes.length === 0) {
         return failure(ErrorCodes.VALIDATION_ERROR, 'Horários de trabalho inválidos');
       }
 
-      // Get earliest start and latest end
       startTimes.sort();
       endTimes.sort();
       const earliestStart = startTimes[0];
       const latestEnd = endTimes[endTimes.length - 1];
 
-      // Delete any existing blocks for this day first to avoid duplicates
-      await supabase
+      const { error: deleteError } = await supabase
         .from('barber_blocks')
         .delete()
         .eq('barber_id', data.barberId)
         .eq('block_date', data.blockDate);
 
-      // Create a single block covering the entire day (from earliest start to latest end)
-      const { error } = await supabase
+      if (deleteError) {
+        logger.error('createFullDayBlock', 'Delete existing blocks error', deleteError);
+        return failure(ErrorCodes.DATABASE_ERROR, 'Erro ao limpar bloqueios existentes');
+      }
+
+      const { error: insertError } = await supabase
         .from('barber_blocks')
         .insert({
           barber_id: data.barberId,
           block_date: data.blockDate,
           start_time: earliestStart,
           end_time: latestEnd,
-          reason: data.reason || 'Dia bloqueado',
+          reason: sanitizedReason || 'Dia bloqueado',
         });
 
-      if (error) {
-        logger.error('createFullDayBlock', 'Database error', error);
+      if (insertError) {
+        logger.error('createFullDayBlock', 'Database error', insertError);
         return failure(ErrorCodes.DATABASE_ERROR, 'Erro ao criar bloqueio');
       }
 
-      logger.info('createFullDayBlock', 'Full-day block created', { 
-        startTime: earliestStart, 
-        endTime: latestEnd 
+      logger.info('createFullDayBlock', 'Full-day block created', {
+        startTime: earliestStart,
+        endTime: latestEnd,
+        usedOverride: !!override,
       });
+
       return success(undefined);
     } catch (err) {
       logger.error('createFullDayBlock', 'Unexpected error', err);
@@ -482,6 +554,11 @@ export class BarberService {
    */
   async deleteBlockBySlot(data: { barberId: string; blockDate: string; slotTime: string }): Promise<ServiceResponse<{ deletedCount: number }>> {
     logger.info('deleteBlockBySlot', 'Deleting block for specific slot', data);
+
+    const validation = deleteBlockBySlotSchema.safeParse(data);
+    if (!validation.success) {
+      return failure(ErrorCodes.VALIDATION_ERROR, 'Dados inválidos');
+    }
 
     try {
       // Find blocks that cover this specific time
@@ -502,7 +579,7 @@ export class BarberService {
         return failure(ErrorCodes.VALIDATION_ERROR, 'Este horário não está bloqueado');
       }
 
-      const blockIds = blocks.map(b => b.id);
+      const blockIds = blocks.map((b) => b.id);
       const { error } = await supabase
         .from('barber_blocks')
         .delete()
@@ -527,6 +604,11 @@ export class BarberService {
   async deleteBlocksInRange(data: { barberId: string; blockDate: string; startTime: string; endTime: string }): Promise<ServiceResponse<{ deletedCount: number }>> {
     logger.info('deleteBlocksInRange', 'Deleting blocks in range', data);
 
+    const validation = deleteBlocksInRangeSchema.safeParse(data);
+    if (!validation.success) {
+      return failure(ErrorCodes.VALIDATION_ERROR, 'Dados inválidos');
+    }
+
     try {
       // Find blocks that overlap with this time range
       const { data: blocks, error: fetchError } = await supabase
@@ -546,7 +628,7 @@ export class BarberService {
         return failure(ErrorCodes.VALIDATION_ERROR, 'Nenhum bloqueio encontrado nesta faixa');
       }
 
-      const blockIds = blocks.map(b => b.id);
+      const blockIds = blocks.map((b) => b.id);
       const { error } = await supabase
         .from('barber_blocks')
         .delete()
@@ -570,6 +652,11 @@ export class BarberService {
    */
   async deleteAllBlocksForDay(data: { barberId: string; blockDate: string }): Promise<ServiceResponse<{ deletedCount: number }>> {
     logger.info('deleteAllBlocksForDay', 'Deleting all blocks for day', data);
+
+    const validation = deleteAllBlocksForDaySchema.safeParse(data);
+    if (!validation.success) {
+      return failure(ErrorCodes.VALIDATION_ERROR, 'Dados inválidos');
+    }
 
     try {
       const { error, count } = await supabase
