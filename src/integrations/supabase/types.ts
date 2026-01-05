@@ -1379,6 +1379,10 @@ export type Database = {
           total_bookings: number
         }[]
       }
+      get_client_display_name: {
+        Args: { p_client_id: string }
+        Returns: string
+      }
       get_exportable_report_data: {
         Args: {
           p_end_date: string
@@ -1473,6 +1477,10 @@ export type Database = {
       }
       is_barbershop_owner: {
         Args: { _barbershop_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_barbershop_staff: {
+        Args: { p_barbershop_id: string; p_user_id: string }
         Returns: boolean
       }
       is_booking_barber: {

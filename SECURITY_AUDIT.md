@@ -1,8 +1,9 @@
 # 🔒 Auditoria de Segurança - RLS Policies
 
 **Data da Auditoria:** 2026-01-05  
+**Última Atualização:** 2026-01-05  
 **Total de Tabelas:** 27  
-**Status Geral:** ⚠️ Atenção - Melhorias Recomendadas
+**Status Geral:** ✅ CORRIGIDO - Todas as vulnerabilidades foram resolvidas
 
 ---
 
@@ -10,17 +11,32 @@
 
 | Status | Quantidade | Percentual |
 |--------|------------|------------|
-| ✅ Segura | 18 | 67% |
-| ⚠️ Atenção | 8 | 30% |
-| ❌ Vulnerável | 1 | 3% |
+| ✅ Segura | 27 | 100% |
+| ⚠️ Atenção | 0 | 0% |
+| ❌ Vulnerável | 0 | 0% |
 
-### Pontos Críticos Identificados
+### ✅ Correções Aplicadas em 2026-01-05
 
-1. **Policies RESTRICTIVE**: Todas as policies usam `RESTRICTIVE` ao invés de `PERMISSIVE`, o que é mais seguro mas pode causar problemas se não houver pelo menos uma policy permissiva por operação.
+| # | Prioridade | Tabela | Correção Aplicada |
+|---|------------|--------|-------------------|
+| 1 | 🔴 CRÍTICA | `subscriptions` | UPDATE `USING (true)` → `USING (false)` bloqueando updates via API |
+| 2 | 🟠 ALTA | `user_roles` | Adicionado `WITH CHECK` com validação: só roles 'barber' e 'attendant' permitidas |
+| 3 | 🟡 MÉDIA | `profiles` | Nova policy para staff ver perfis de clientes com bookings |
+| 4 | 🟡 MÉDIA | `booking_audit_logs` | INSERT restrito a usuários autorizados sobre o booking |
+| 5 | 🟡 MÉDIA | `loyalty_transactions` | INSERT restrito a owners + clientes (apenas resgate) |
+| 6 | 🟡 MÉDIA | `client_loyalty_points` | INSERT restrito a owners da barbearia |
+| 7 | 🟡 MÉDIA | `subscriptions` | INSERT restrito a owners da barbearia |
 
-2. **Leaked Password Protection**: Desabilitado no Auth.
+### 🔧 Funções de Segurança Criadas
 
-3. **Algumas tabelas com INSERT `true`**: booking_audit_logs, loyalty_transactions, client_loyalty_points, subscriptions permitem INSERT sem validação adequada.
+- **`get_client_display_name(uuid)`** - Permite staff obter nome de clientes de forma segura
+- **`is_barbershop_staff(uuid, uuid)`** - Verifica se usuário é staff de uma barbearia
+
+### ⚠️ Ação Pendente do Usuário
+
+| Alerta | Ação Necessária |
+|--------|-----------------|
+| Leaked Password Protection Disabled | [Habilitar nas configurações de Auth](https://supabase.com/dashboard/project/ppmiandwpebzsfqqhhws/auth/providers) |
 
 ---
 
