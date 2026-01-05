@@ -11,6 +11,8 @@ import {
   passwordSchema,
 } from './types';
 import { createLogger } from './logger';
+import { rateLimiterService } from './rate-limiter.service';
+import { isRateLimitError } from '@/lib/errors';
 
 // ============================================================================
 // TYPES
@@ -85,6 +87,18 @@ export class AuthService {
     const timer = logger.startTimer();
     logger.info('signUp', 'Starting user registration', { email: data.email, userType: data.userType });
 
+    // Rate limit check
+    try {
+      await rateLimiterService.checkRateLimit('signup');
+    } catch (error) {
+      if (isRateLimitError(error)) {
+        return failure(
+          'RATE_LIMIT_SIGNUP',
+          'Muitos cadastros do mesmo IP. Aguarde 1 hora para tentar novamente.'
+        );
+      }
+    }
+
     // Validate input
     const validation = this.validateSignUp(data);
     if (!validation.valid) {
@@ -149,6 +163,18 @@ export class AuthService {
   async signIn(data: SignInDTO): Promise<ServiceResponse<AuthSession>> {
     const timer = logger.startTimer();
     logger.info('signIn', 'Starting sign in', { email: data.email });
+
+    // Rate limit check
+    try {
+      await rateLimiterService.checkRateLimit('login');
+    } catch (error) {
+      if (isRateLimitError(error)) {
+        return failure(
+          'RATE_LIMIT_LOGIN',
+          'Muitas tentativas de login. Aguarde 15 minutos para tentar novamente.'
+        );
+      }
+    }
 
     // Validate input
     const validation = this.validateSignIn(data);

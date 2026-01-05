@@ -45,3 +45,6 @@ export type {
   UserProfile, 
   UserRole 
 } from './user.service';
+
+export { rateLimiterService, RATE_LIMIT_CONFIG } from './rate-limiter.service';
+export type { RateLimitAction } from './rate-limiter.service';
