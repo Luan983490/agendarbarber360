@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { barberService, CreateBarberDTO, UpdateBarberDTO, CreateBlockDTO } from '@/services';
+import { barberService, CreateBarberDTO, UpdateBarberDTO, CreateBlockDTO, DeleteBlocksByDateDTO } from '@/services';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { getErrorMessage } from '@/lib/error-handler';
 import { specificQueryConfig } from '@/lib/query-config';
+import { bookingKeys } from './useBooking';
 
 // Query keys
 export const barberKeys = {
@@ -133,6 +134,7 @@ export function useCreateBarberBlock() {
     onSuccess: (result, variables) => {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: barberKeys.blocks(variables.barberId) });
+        queryClient.invalidateQueries({ queryKey: bookingKeys.all });
       } else if (result.error) {
         showErrorWithTitle('Erro ao bloquear horário', result.error);
       }
@@ -144,7 +146,31 @@ export function useCreateBarberBlock() {
 }
 
 /**
- * Hook to delete a block
+ * Hook to create a full-day block for a barber
+ */
+export function useCreateFullDayBlock() {
+  const queryClient = useQueryClient();
+  const { showErrorWithTitle } = useErrorHandler({ context: 'useCreateFullDayBlock' });
+
+  return useMutation({
+    mutationFn: (data: { barberId: string; blockDate: string; reason?: string }) => 
+      barberService.createFullDayBlock(data),
+    onSuccess: (result, variables) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: barberKeys.blocks(variables.barberId) });
+        queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      } else if (result.error) {
+        showErrorWithTitle('Erro ao bloquear dia', result.error);
+      }
+    },
+    onError: (error) => {
+      showErrorWithTitle('Erro ao bloquear dia', error);
+    },
+  });
+}
+
+/**
+ * Hook to delete a single block
  */
 export function useDeleteBarberBlock() {
   const queryClient = useQueryClient();
@@ -155,12 +181,59 @@ export function useDeleteBarberBlock() {
     onSuccess: (result) => {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: barberKeys.all });
+        queryClient.invalidateQueries({ queryKey: bookingKeys.all });
       } else if (result.error) {
         showErrorWithTitle('Erro ao remover bloqueio', result.error);
       }
     },
     onError: (error) => {
       showErrorWithTitle('Erro ao remover bloqueio', error);
+    },
+  });
+}
+
+/**
+ * Hook to delete multiple blocks by IDs
+ */
+export function useDeleteBarberBlocks() {
+  const queryClient = useQueryClient();
+  const { showErrorWithTitle } = useErrorHandler({ context: 'useDeleteBarberBlocks' });
+
+  return useMutation({
+    mutationFn: (blockIds: string[]) => barberService.deleteBlocks(blockIds),
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: barberKeys.all });
+        queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      } else if (result.error) {
+        showErrorWithTitle('Erro ao remover bloqueios', result.error);
+      }
+    },
+    onError: (error) => {
+      showErrorWithTitle('Erro ao remover bloqueios', error);
+    },
+  });
+}
+
+/**
+ * Hook to delete blocks by date (for day unblock)
+ */
+export function useDeleteBlocksByDate() {
+  const queryClient = useQueryClient();
+  const { showErrorWithTitle } = useErrorHandler({ context: 'useDeleteBlocksByDate' });
+
+  return useMutation({
+    mutationFn: (data: DeleteBlocksByDateDTO) => barberService.deleteBlocksByDate(data),
+    onSuccess: (result, variables) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: barberKeys.blocks(variables.barberId) });
+        queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      } else if (result.error) {
+        showErrorWithTitle('Erro ao desbloquear', result.error);
+      }
+    },
+    onError: (error) => {
+      showErrorWithTitle('Erro ao desbloquear', error);
     },
   });
 }

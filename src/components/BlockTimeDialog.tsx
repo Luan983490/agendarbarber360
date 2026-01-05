@@ -9,7 +9,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Ban, Trash2 } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Ban, Trash2, Calendar } from 'lucide-react';
+
+type UnblockType = 'single' | 'day';
 
 interface BlockTimeDialogProps {
   open: boolean;
@@ -18,8 +21,10 @@ interface BlockTimeDialogProps {
   date: Date;
   isBlocked: boolean;
   blockId?: string;
+  blockReason?: string;
+  hasMultipleBlocks?: boolean;
   onBlock: (reason: string) => void;
-  onUnblock: () => void;
+  onUnblock: (type?: UnblockType) => void;
 }
 
 export const BlockTimeDialog = ({
@@ -29,10 +34,13 @@ export const BlockTimeDialog = ({
   date,
   isBlocked,
   blockId,
+  blockReason,
+  hasMultipleBlocks = false,
   onBlock,
   onUnblock,
 }: BlockTimeDialogProps) => {
   const [reason, setReason] = useState('');
+  const [unblockType, setUnblockType] = useState<UnblockType>('single');
 
   const handleBlock = () => {
     onBlock(reason);
@@ -41,7 +49,8 @@ export const BlockTimeDialog = ({
   };
 
   const handleUnblock = () => {
-    onUnblock();
+    onUnblock(hasMultipleBlocks ? unblockType : 'single');
+    setUnblockType('single');
     onOpenChange(false);
   };
 
@@ -74,6 +83,13 @@ export const BlockTimeDialog = ({
             <p className="font-semibold">{time}</p>
           </div>
 
+          {isBlocked && blockReason && (
+            <div>
+              <p className="text-sm text-muted-foreground">Motivo do bloqueio:</p>
+              <p className="font-medium text-sm">{blockReason}</p>
+            </div>
+          )}
+
           {!isBlocked && (
             <div className="space-y-2">
               <Label htmlFor="reason">Motivo (opcional)</Label>
@@ -87,7 +103,36 @@ export const BlockTimeDialog = ({
             </div>
           )}
 
-          {isBlocked && (
+          {isBlocked && hasMultipleBlocks && (
+            <div className="space-y-3">
+              <Label>Tipo de Desbloqueio</Label>
+              <RadioGroup value={unblockType} onValueChange={(value: UnblockType) => setUnblockType(value)}>
+                <div className="flex items-center space-x-2 p-3 border rounded-md hover:bg-muted/50 cursor-pointer">
+                  <RadioGroupItem value="single" id="single" />
+                  <Label htmlFor="single" className="flex items-center gap-2 cursor-pointer flex-1">
+                    <Ban className="h-4 w-4" />
+                    <div>
+                      <p className="font-medium">Apenas este horário</p>
+                      <p className="text-xs text-muted-foreground">Desbloquear somente o slot selecionado</p>
+                    </div>
+                  </Label>
+                </div>
+
+                <div className="flex items-center space-x-2 p-3 border rounded-md hover:bg-muted/50 cursor-pointer">
+                  <RadioGroupItem value="day" id="day" />
+                  <Label htmlFor="day" className="flex items-center gap-2 cursor-pointer flex-1">
+                    <Calendar className="h-4 w-4" />
+                    <div>
+                      <p className="font-medium">Dia inteiro</p>
+                      <p className="text-xs text-muted-foreground">Desbloquear todos os horários do dia</p>
+                    </div>
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+          )}
+
+          {isBlocked && !hasMultipleBlocks && (
             <p className="text-sm text-muted-foreground">
               Tem certeza que deseja desbloquear este horário?
             </p>

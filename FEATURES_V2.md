@@ -17,9 +17,31 @@ Este documento lista todas as features temporariamente removidas do MVP para foc
 |---------|-----------|-------------|
 | **Dashboard** | Visão geral simplificada | `Dashboard.tsx` |
 | **Agenda** | Calendário visual de agendamentos | `BarberScheduleCalendar.tsx` |
+| **Bloqueios** | Bloqueio/desbloqueio de horários | `BlockTimeDialog.tsx`, `BlockOptionsDialog.tsx` |
 | **Cadastro de Serviços** | CRUD de serviços da barbearia | `ServiceForm.tsx` |
 | **Cadastro de Barbeiros** | CRUD de barbeiros | `BarberForm.tsx` |
 | **Configurações** | Edição da barbearia | `BarbershopEdit.tsx` |
+
+### Sistema de Bloqueios de Horários
+
+O sistema de bloqueios permite gerenciar a disponibilidade dos barbeiros:
+
+#### Funcionalidades de Bloqueio
+- **Horário específico**: Bloqueia um único slot de 15 minutos
+- **Dia inteiro**: Bloqueia todos os horários de trabalho de um dia (criado como um único bloco contínuo)
+- **Semana inteira**: Bloqueia todos os dias da semana
+- **Período personalizado**: Bloqueia um intervalo de datas selecionado
+
+#### Funcionalidades de Desbloqueio
+- **Horário específico**: Desbloqueia apenas o slot selecionado
+- **Dia inteiro**: Desbloqueia todos os bloqueios do dia de uma vez
+- Interface intuitiva: ao clicar em um horário bloqueado, o usuário escolhe se quer desbloquear apenas aquele slot ou o dia todo
+
+#### Implementação Técnica
+- **Service Layer**: `barberService.createBlock()`, `barberService.createFullDayBlock()`, `barberService.deleteBlock()`, `barberService.deleteBlocks()`, `barberService.deleteBlocksByDate()`
+- **Hooks**: `useCreateBarberBlock`, `useCreateFullDayBlock`, `useDeleteBarberBlock`, `useDeleteBarberBlocks`, `useDeleteBlocksByDate`
+- **Tabela**: `barber_blocks` (barber_id, block_date, start_time, end_time, reason)
+- **Índices**: `idx_barber_blocks_barber_date_time` para performance
 
 ---
 
