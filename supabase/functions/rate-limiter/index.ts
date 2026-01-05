@@ -84,6 +84,32 @@ function formatTimeRemaining(blockedUntil: string): string {
   return `${diffMinutes} minuto(s)`;
 }
 
+// Sanitização básica para Edge Function (sem DOMPurify)
+function sanitizeInput(value: string): string {
+  if (typeof value !== 'string') return '';
+  
+  // Remove caracteres de controle
+  let result = value.replace(/[\x00-\x1F\x7F]/g, '');
+  
+  // Escape HTML básico
+  result = result
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+  
+  // Normaliza espaços e trim
+  result = result.replace(/\s+/g, ' ').trim();
+  
+  return result;
+}
+
+// Valida UUID
+function isValidUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
 // Logger estruturado
 function log(level: 'info' | 'warn' | 'error', message: string, data?: Record<string, unknown>) {
   const logEntry = {
@@ -123,8 +149,19 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Obter IP do cliente
-    const ipAddress = body.ipAddress || getClientIP(req);
+    // Sanitizar e validar inputs
+    const sanitizedAction = sanitizeInput(action);
+    const sanitizedUserId = userId ? sanitizeInput(userId) : null;
+    const sanitizedIpAddress = sanitizeInput(body.ipAddress || getClientIP(req));
+
+    // Validar userId se fornecido
+    if (sanitizedUserId && !isValidUuid(sanitizedUserId)) {
+      log('warn', 'userId inválido', { userId: sanitizedUserId });
+      return new Response(
+        JSON.stringify({ error: 'userId inválido' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     
     // Criar cliente Supabase com service role para acessar tabela com RLS restritivo
     const supabaseAdmin = createClient(
@@ -134,13 +171,13 @@ Deno.serve(async (req) => {
     );
 
     // Obter configuração de rate limit
-    const config = RATE_LIMIT_CONFIG[action];
+    const config = RATE_LIMIT_CONFIG[sanitizedAction];
     
     // Chamar função de verificação de rate limit
     const { data, error } = await supabaseAdmin.rpc('check_rate_limit', {
-      p_ip_address: ipAddress,
-      p_action_type: action,
-      p_user_id: userId || null,
+      p_ip_address: sanitizedIpAddress,
+      p_action_type: sanitizedAction,
+      p_user_id: sanitizedUserId || null,
       p_max_attempts: config.maxAttempts,
       p_window_minutes: config.windowMinutes,
     });

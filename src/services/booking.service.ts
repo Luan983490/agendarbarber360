@@ -14,6 +14,7 @@ import {
 import { createLogger } from './logger';
 import { rateLimiterService } from './rate-limiter.service';
 import { isRateLimitError } from '@/lib/errors';
+import { sanitizeFormData, sanitizeString } from '@/lib/sanitizer';
 
 // ============================================================================
 // TYPES
@@ -130,16 +131,23 @@ export class BookingService {
    * Create a new booking
    */
   async create(data: CreateBookingDTO): Promise<ServiceResponse<Booking>> {
+    // Sanitizar dados de entrada - criar cópia sanitizada
+    const sanitizedData: CreateBookingDTO = {
+      ...data,
+      notes: data.notes ? sanitizeString(data.notes, { maxLength: 500 }) : undefined,
+      clientName: data.clientName ? sanitizeString(data.clientName, { maxLength: 100 }) : undefined,
+    };
+
     const timer = logger.startTimer();
     logger.info('create', 'Creating booking', {
-      barbershopId: data.barbershopId,
-      date: data.bookingDate,
-      time: data.bookingTime,
+      barbershopId: sanitizedData.barbershopId,
+      date: sanitizedData.bookingDate,
+      time: sanitizedData.bookingTime,
     });
 
     // Rate limit check
     try {
-      await rateLimiterService.checkRateLimit('booking_create', data.clientId);
+      await rateLimiterService.checkRateLimit('booking_create', sanitizedData.clientId);
     } catch (error) {
       if (isRateLimitError(error)) {
         return failure(
@@ -150,7 +158,7 @@ export class BookingService {
     }
 
     // Validate input
-    const validation = this.validateCreate(data);
+    const validation = this.validateCreate(sanitizedData);
     if (!validation.valid) {
       logger.warn('create', 'Validation failed', { errors: validation.errors });
       return failure(
@@ -162,17 +170,17 @@ export class BookingService {
 
     try {
       // Check for date in the past
-      const bookingDateTime = new Date(`${data.bookingDate}T${data.bookingTime}`);
+      const bookingDateTime = new Date(`${sanitizedData.bookingDate}T${sanitizedData.bookingTime}`);
       if (bookingDateTime < new Date()) {
         return failure(ErrorCodes.BOOKING_PAST_DATE, 'Não é possível agendar para uma data passada');
       }
 
       // Check for conflicts if barber is specified
-      if (data.barberId) {
+      if (sanitizedData.barberId) {
         const conflictCheck = await this.checkConflicts(
-          data.barberId,
-          data.bookingDate,
-          data.bookingTime
+          sanitizedData.barberId,
+          sanitizedData.bookingDate,
+          sanitizedData.bookingTime
         );
         if (!conflictCheck.success && conflictCheck.error) {
           return failure(conflictCheck.error.code, conflictCheck.error.message, conflictCheck.error.details);
@@ -180,9 +188,9 @@ export class BookingService {
 
         // Check for barber blocks
         const blockCheck = await this.checkBarberBlocks(
-          data.barberId,
-          data.bookingDate,
-          data.bookingTime
+          sanitizedData.barberId,
+          sanitizedData.bookingDate,
+          sanitizedData.bookingTime
         );
         if (!blockCheck.success && blockCheck.error) {
           return failure(blockCheck.error.code, blockCheck.error.message, blockCheck.error.details);
@@ -193,7 +201,7 @@ export class BookingService {
       const { data: serviceData } = await supabase
         .from('services')
         .select('duration')
-        .eq('id', data.serviceId)
+        .eq('id', sanitizedData.serviceId)
         .single();
 
       // Calculate end time

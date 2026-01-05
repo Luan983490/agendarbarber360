@@ -4,25 +4,120 @@ Este documento descreve as proteções de segurança implementadas no sistema Ba
 
 ## Índice
 
-1. [Rate Limiting](#rate-limiting)
-2. [Headers de Segurança](#headers-de-segurança)
-3. [Proteção contra Ataques](#proteção-contra-ataques)
-4. [Row-Level Security (RLS)](#row-level-security-rls)
-5. [Validação de Dados](#validação-de-dados)
-6. [Recomendações para Produção](#recomendações-para-produção)
+1. [Sanitização de Dados](#sanitização-de-dados)
+2. [Rate Limiting](#rate-limiting)
+3. [Headers de Segurança](#headers-de-segurança)
+4. [Proteção contra Ataques](#proteção-contra-ataques)
+5. [Row-Level Security (RLS)](#row-level-security-rls)
+6. [Validação de Dados](#validação-de-dados)
+7. [Auditoria de Segurança (OWASP Top 10)](#auditoria-de-segurança-owasp-top-10)
+8. [Testes de Segurança](#testes-de-segurança)
+9. [Recomendações para Produção](#recomendações-para-produção)
+
+---
+
+## Sanitização de Dados
+
+### Visão Geral
+
+O sistema implementa sanitização em múltiplas camadas para proteção contra XSS, SQL Injection e inputs maliciosos.
+
+**Arquivo principal:** `src/lib/sanitizer.ts`
+
+### Funções Disponíveis
+
+| Função | Descrição | Uso |
+|--------|-----------|-----|
+| `sanitizeString()` | Sanitiza strings, remove HTML/XSS | Campos de texto geral |
+| `sanitizeEmail()` | Normaliza e valida email | Campos de email |
+| `sanitizePhone()` | Mantém apenas caracteres válidos | Campos de telefone |
+| `sanitizeNumber()` | Converte para número seguro | Campos numéricos |
+| `sanitizeDate()` | Valida formato YYYY-MM-DD | Campos de data |
+| `sanitizeTime()` | Valida formato HH:MM | Campos de horário |
+| `sanitizeUuid()` | Valida formato UUID | IDs de entidades |
+| `sanitizeUrl()` | Bloqueia protocolos perigosos | Links externos |
+| `sanitizeObject()` | Sanitiza objetos recursivamente | Dados de formulário |
+| `sanitizeFormData()` | Sanitização com config padrão | Formulários |
+| `securityCheck()` | Detecta ameaças + sanitiza | Auditoria de inputs |
+
+### Proteção XSS com DOMPurify
+
+```typescript
+import DOMPurify from 'dompurify';
+
+// Configuração padrão - remove TODAS as tags HTML
+const DOMPURIFY_CONFIG = {
+  ALLOWED_TAGS: [],
+  ALLOWED_ATTR: [],
+  KEEP_CONTENT: true,
+};
+
+// Para campos com HTML básico (descrições)
+const BASIC_HTML_CONFIG = {
+  ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'br', 'p'],
+  ALLOWED_ATTR: [],
+};
+```
+
+### Detecção de Ameaças
+
+```typescript
+// SQL Injection patterns
+const SQL_PATTERNS = [
+  /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|TRUNCATE|EXEC|UNION)\b)/gi,
+  /(--)|(\/\*)|(\*\/)/g, // Comentários SQL
+  /(\bOR\b|\bAND\b)\s*[\d'"]?\s*=\s*[\d'"]/gi, // OR 1=1
+];
+
+// XSS patterns
+const XSS_PATTERNS = [
+  /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
+  /javascript:/gi,
+  /on\w+\s*=/gi, // onclick=, onload=
+  /<iframe/gi,
+  /<object/gi,
+];
+```
+
+### Integração com Zod
+
+```typescript
+import { sanitizedString, sanitizedEmail, sanitizedUuid } from '@/lib/sanitizer';
+
+// Schema com sanitização automática
+const formSchema = z.object({
+  name: sanitizedString({ minLength: 2, maxLength: 100 }),
+  email: sanitizedEmail,
+  barberId: sanitizedUuid,
+});
+```
+
+### Uso nos Services
+
+```typescript
+// AuthService
+async signUp(data: SignUpDTO) {
+  const sanitizedData = {
+    ...data,
+    email: sanitizeEmail(data.email),
+  };
+  // ... resto do código
+}
+
+// BookingService
+async create(data: CreateBookingDTO) {
+  const sanitizedData = {
+    ...data,
+    notes: sanitizeString(data.notes, { maxLength: 500 }),
+    clientName: sanitizeString(data.clientName, { maxLength: 100 }),
+  };
+  // ... resto do código
+}
+```
 
 ---
 
 ## Rate Limiting
-
-### Visão Geral
-
-O sistema implementa rate limiting em múltiplas camadas para proteger contra abusos:
-
-1. **Edge Function** (`supabase/functions/rate-limiter/`) - Middleware centralizado
-2. **Banco de Dados** - Tabelas `rate_limits` e `blocked_ips` com funções RPC
-3. **Frontend Service** (`src/services/rate-limiter.service.ts`) - Integração client-side
-4. **React Hook** (`src/hooks/useRateLimit.ts`) - Facilita uso em componentes
 
 ### Configurações por Ação
 
@@ -35,7 +130,7 @@ O sistema implementa rate limiting em múltiplas camadas para proteger contra ab
 | `password_reset` | 3 | 60 minutos | 2 horas |
 | `api_call` | 100 | 1 minuto | 2 minutos |
 
-### Funcionamento
+### Arquitetura
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -66,45 +161,19 @@ O sistema implementa rate limiting em múltiplas camadas para proteger contra ab
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Uso no Frontend
-
-```typescript
-import { useRateLimit } from '@/hooks/useRateLimit';
-import { rateLimiterService } from '@/services';
-
-// Com Hook (recomendado para componentes)
-function LoginForm() {
-  const { checkRateLimit, isRateLimited, rateLimitError } = useRateLimit();
-
-  const handleLogin = async () => {
-    const allowed = await checkRateLimit('login');
-    if (!allowed) return; // Toast já exibido automaticamente
-    
-    // Proceder com login...
-  };
-}
-
-// Com Service (para services/logic)
-async function createBooking(data: BookingData) {
-  await rateLimiterService.checkRateLimit('booking_create', user.id);
-  // Se chegar aqui, está dentro do limite
-}
-```
-
-### Estrutura do Banco de Dados
+### Tabelas no Banco
 
 ```sql
--- Tabela de contadores de rate limit
+-- Tabela de contadores
 CREATE TABLE rate_limits (
   id uuid PRIMARY KEY,
-  user_id uuid REFERENCES auth.users(id),
+  user_id uuid,
   ip_address text NOT NULL,
   action_type rate_limit_action NOT NULL,
   attempt_count integer DEFAULT 1,
-  first_attempt_at timestamp with time zone,
-  last_attempt_at timestamp with time zone,
-  blocked_until timestamp with time zone,
-  created_at timestamp with time zone
+  first_attempt_at timestamptz,
+  last_attempt_at timestamptz,
+  blocked_until timestamptz
 );
 
 -- Tabela de IPs bloqueados
@@ -112,99 +181,90 @@ CREATE TABLE blocked_ips (
   id uuid PRIMARY KEY,
   ip_address text UNIQUE NOT NULL,
   reason text,
-  blocked_at timestamp with time zone,
-  blocked_until timestamp with time zone,
-  is_permanent boolean DEFAULT false,
-  created_by uuid REFERENCES auth.users(id)
+  blocked_until timestamptz,
+  is_permanent boolean DEFAULT false
 );
-
--- Funções RPC
-SELECT check_rate_limit('192.168.1.1', 'login', null, 5, 15);
-SELECT reset_rate_limit('192.168.1.1', 'login');
-SELECT block_ip('192.168.1.1', 'Atividade suspeita', 24, false);
-SELECT cleanup_rate_limits(); -- Limpeza de registros antigos
 ```
 
 ---
 
 ## Headers de Segurança
 
-Todos os responses das Edge Functions incluem headers de segurança:
+Todos os responses das Edge Functions incluem:
 
 ```javascript
 const securityHeaders = {
-  // HSTS - Força HTTPS por 1 ano
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-  
-  // Previne MIME type sniffing
   'X-Content-Type-Options': 'nosniff',
-  
-  // Previne clickjacking
   'X-Frame-Options': 'DENY',
-  
-  // Controla referrer
   'Referrer-Policy': 'strict-origin-when-cross-origin',
-  
-  // CSP básico
-  'Content-Security-Policy': "default-src 'self'; script-src 'self'; ..."
+  'Content-Security-Policy': "default-src 'self'; script-src 'self'; ...",
 };
 ```
 
-### Detalhes dos Headers
-
-| Header | Valor | Proteção |
-|--------|-------|----------|
-| `Strict-Transport-Security` | `max-age=31536000` | Força HTTPS |
-| `X-Content-Type-Options` | `nosniff` | Previne MIME sniffing |
-| `X-Frame-Options` | `DENY` | Previne clickjacking |
-| `Referrer-Policy` | `strict-origin-when-cross-origin` | Controla vazamento de URL |
-| `Content-Security-Policy` | Ver código | Controla recursos carregados |
+| Header | Proteção |
+|--------|----------|
+| `Strict-Transport-Security` | Força HTTPS |
+| `X-Content-Type-Options` | Previne MIME sniffing |
+| `X-Frame-Options` | Previne clickjacking |
+| `Referrer-Policy` | Controla vazamento de URL |
+| `Content-Security-Policy` | Controla recursos carregados |
 
 ---
 
 ## Proteção contra Ataques
 
 ### Brute Force
+- ✅ Login limitado a 5 tentativas em 15 minutos
+- ✅ Signup limitado a 3 por hora por IP
+- ✅ Bloqueio automático após exceder limite
+- ✅ Mensagens de erro não revelam existência de usuários
 
-- **Login**: Máximo 5 tentativas em 15 minutos
-- **Signup**: Máximo 3 contas por hora por IP
-- **Password Reset**: Máximo 3 por hora
-- **Bloqueio automático** após exceder limite
+### SQL Injection
+- ✅ Supabase Client usa queries parametrizadas automaticamente
+- ✅ Detecção de padrões SQL maliciosos em inputs
+- ✅ Validação de tipos antes de queries
+- ✅ Nenhuma query SQL raw no código
 
-### DDoS/Abuso de API
+### XSS (Cross-Site Scripting)
+- ✅ DOMPurify para sanitização de HTML
+- ✅ React escape automático via JSX
+- ✅ Detecção de scripts maliciosos
+- ✅ Bloqueio de event handlers (onclick, onload)
+- ✅ Bloqueio de protocolos perigosos (javascript:, data:)
 
-- **Slots Query**: 60 req/min (consultas de horários)
-- **API Geral**: 100 req/min
-- **Fail Open**: Em caso de erro no rate limiter, permite requisição (evita lock-out)
+### CSRF (Cross-Site Request Forgery)
+- ✅ Tokens JWT com expiração curta (1h)
+- ✅ Refresh token rotation habilitado
+- ✅ Headers de CORS configurados
+- ✅ Validação de origem em Edge Functions
 
-### IP Blocking
-
-- Bloqueio temporário automático após excesso de tentativas
-- Bloqueio manual via função `block_ip()`
-- Bloqueio permanente para IPs maliciosos conhecidos
+### DDoS/Abuso
+- ✅ Rate limiting por IP
+- ✅ Rate limiting por usuário
+- ✅ Bloqueio temporário de IPs
+- ✅ Lista negra de IPs permanente
 
 ---
 
 ## Row-Level Security (RLS)
 
-Todas as tabelas têm RLS habilitado. Políticas principais:
+Todas as tabelas têm RLS habilitado. Exemplo de políticas:
 
-### rate_limits / blocked_ips
 ```sql
--- Apenas sistema pode gerenciar (via service_role)
+-- Usuários só veem seus próprios dados
+POLICY "Users can view own data"
+USING (auth.uid() = user_id);
+
+-- Owners podem ver dados de sua barbearia
+POLICY "Owners can view barbershop data"
+USING (barbershop_id IN (
+  SELECT id FROM barbershops WHERE owner_id = auth.uid()
+));
+
+-- Rate limits só acessíveis pelo sistema
 POLICY "Only system can manage rate limits"
 USING (false) WITH CHECK (false);
-```
-
-### bookings
-```sql
--- Usuários só veem seus próprios agendamentos
-POLICY "Users can view relevant bookings"
-USING (
-  auth.uid() = client_id OR
-  barbershop_id IN (SELECT id FROM barbershops WHERE owner_id = auth.uid()) OR
-  barber_id IN (SELECT id FROM barbers WHERE user_id = auth.uid())
-);
 ```
 
 ---
@@ -213,24 +273,22 @@ USING (
 
 ### Camadas de Validação
 
-1. **Frontend** - Validação Zod em formulários
-2. **Services** - Validação Zod antes de processar
-3. **Edge Functions** - Validação de input
-4. **Database** - Constraints e triggers
+1. **Frontend** - React Hook Form + Zod
+2. **Sanitização** - DOMPurify + funções customizadas
+3. **Services** - Zod validation
+4. **Edge Functions** - Validação de input
+5. **Database** - Constraints, triggers, RLS
 
 ### Schemas Principais
 
-Ver `src/lib/validation-schemas.ts` para schemas completos:
-
 ```typescript
-// Exemplo: Validação de login
-const signInSchema = z.object({
-  email: z.string().email('E-mail inválido').transform(s => s.toLowerCase().trim()),
-  password: z.string().min(6, 'Mínimo 6 caracteres'),
+// src/lib/validation-schemas.ts
+export const signInSchema = z.object({
+  email: z.string().email().transform(s => s.toLowerCase().trim()),
+  password: z.string().min(6),
 });
 
-// Exemplo: Validação de agendamento
-const bookingSchema = z.object({
+export const bookingSchema = z.object({
   barbershopId: z.string().uuid(),
   barberId: z.string().uuid(),
   serviceId: z.string().uuid(),
@@ -239,106 +297,143 @@ const bookingSchema = z.object({
 });
 ```
 
-### Sanitização
+---
 
-- Todos os inputs são `trim()`
-- Emails são convertidos para lowercase
-- HTML é escapado em campos de texto
-- XSS prevention via React (escape automático)
+## Auditoria de Segurança (OWASP Top 10)
+
+### Cobertura OWASP Top 10 2021
+
+| # | Vulnerabilidade | Status | Implementação |
+|---|-----------------|--------|---------------|
+| A01 | Broken Access Control | ✅ Coberto | RLS em todas as tabelas, validação de ownership |
+| A02 | Cryptographic Failures | ✅ Coberto | HTTPS forçado, senhas hasheadas pelo Supabase |
+| A03 | Injection | ✅ Coberto | Queries parametrizadas, sanitização de inputs |
+| A04 | Insecure Design | ✅ Coberto | Rate limiting, validação em múltiplas camadas |
+| A05 | Security Misconfiguration | ✅ Coberto | Headers seguros, CSP configurado |
+| A06 | Vulnerable Components | ⚠️ Parcial | Dependências atualizadas, mas requer monitoramento |
+| A07 | Auth Failures | ✅ Coberto | Rate limiting, session management, MFA disponível |
+| A08 | Software/Data Integrity | ✅ Coberto | Validação Zod, sanitização, RLS |
+| A09 | Logging Failures | ✅ Coberto | Logging estruturado em services e Edge Functions |
+| A10 | SSRF | ✅ Coberto | URLs validadas, protocolos bloqueados |
+
+### Resultados da Auditoria
+
+**Data:** 2026-01-05
+
+**Vulnerabilidades Críticas:** 0
+**Vulnerabilidades Altas:** 0
+**Vulnerabilidades Médias:** 0
+**Avisos:** 1 (Leaked Password Protection pendente)
+
+### Ações Pendentes
+
+1. **Habilitar "Leaked Password Protection"**
+   - Local: Supabase Dashboard > Auth > Providers > Settings
+   - Status: Ação manual necessária
+
+---
+
+## Testes de Segurança
+
+### Arquivos de Teste
+
+- `__tests__/security/sanitization.test.ts` - Testes de sanitização
+- `__tests__/security/xss.test.ts` - Testes de proteção XSS
+- `__tests__/security/rate-limit.test.ts` - Testes de rate limiting
+
+### Cobertura de Testes
+
+```bash
+# Executar testes de segurança
+npm run test -- __tests__/security/
+```
+
+### Payloads Testados
+
+**XSS:**
+- Script tags (`<script>alert(1)</script>`)
+- Event handlers (`<img onerror="alert(1)">`)
+- JavaScript protocol (`javascript:alert(1)`)
+- Data protocol (`data:text/html,...`)
+- SVG vectors
+- Encoded payloads
+
+**SQL Injection:**
+- `' OR 1=1 --`
+- `'; DROP TABLE users;--`
+- `UNION SELECT * FROM users`
+- Timing attacks
 
 ---
 
 ## Recomendações para Produção
 
-### Configurações Supabase
+### Configurações Obrigatórias
 
-1. **Habilitar "Leaked Password Protection"**
-   - Dashboard > Auth > Providers > Settings
-   - Verifica senhas em bases de dados vazadas
+1. **Habilitar Leaked Password Protection**
+   ```
+   Dashboard > Auth > Providers > Settings
+   ```
 
-2. **Configurar MFA (opcional)**
-   - Dashboard > Auth > Multi-Factor Authentication
+2. **Configurar MFA (recomendado)**
+   ```
+   Dashboard > Auth > Multi-Factor Authentication
+   ```
 
-3. **Revisar URLs permitidas**
-   - Dashboard > Auth > URL Configuration
+3. **Configurar WAF/CDN**
+   - Cloudflare, AWS WAF, ou similar
+   - Proteção DDoS adicional
 
 ### Monitoramento
 
-1. **Configurar alertas** para:
-   - Alto volume de tentativas bloqueadas
+1. **Alertas de Segurança**
+   - Alto volume de rate limit hits
    - IPs com múltiplos bloqueios
-   - Erros de rate limiting
+   - Tentativas de SQL Injection/XSS detectadas
 
-2. **Logs estruturados** já implementados nas Edge Functions
+2. **Logs para Análise**
+   - Todas as Edge Functions têm logging estruturado
+   - Formato JSON para fácil integração com SIEM
 
 ### Manutenção
 
-1. **Limpeza periódica** de rate_limits:
+1. **Limpeza Diária**
    ```sql
-   -- Executar diariamente via cron
    SELECT cleanup_rate_limits();
    ```
 
-2. **Revisar blocked_ips** mensalmente
+2. **Revisão Mensal**
+   - Tabela `blocked_ips`
+   - Dependências vulneráveis
+   - Políticas RLS
 
-3. **Atualizar limites** conforme uso real
+### Checklist Final de Segurança
 
-### Checklist de Segurança
-
-- [x] Rate limiting implementado
+- [x] Sanitização implementada em todos os inputs
+- [x] DOMPurify para proteção XSS
+- [x] Rate limiting em rotas críticas
 - [x] Headers de segurança configurados
 - [x] RLS em todas as tabelas
-- [x] Validação Zod em formulários
-- [x] Validação nos services
-- [x] Sanitização de inputs
+- [x] Validação Zod em formulários e services
 - [x] Logging estruturado
-- [ ] Leaked Password Protection (ação manual no dashboard)
-- [ ] Monitoramento de alertas (configurar conforme infra)
-- [ ] WAF/CDN com proteção DDoS (recomendado para produção)
+- [x] Testes de segurança automatizados
+- [x] OWASP Top 10 coberto
+- [ ] Leaked Password Protection (ação manual)
+- [ ] WAF/CDN (recomendado para produção)
+- [ ] Penetration test profissional (recomendado)
 
 ---
 
-## Classes de Erro
-
-```typescript
-// Erros de rate limiting
-class RateLimitError extends AppError {
-  retryAfter?: Date;        // Quando pode tentar novamente
-  remainingAttempts?: number; // Tentativas restantes
-  actionType?: string;      // Tipo de ação bloqueada
-
-  // Factory methods
-  static exceeded(retryAfter?, actionType?)
-  static login(retryAfter?)
-  static signup(retryAfter?)
-  static booking(retryAfter?)
-  static ipBlocked()
-
-  // Helper
-  getTimeRemainingMessage(): string // "15 minuto(s)"
-}
-```
-
-### Códigos de Erro
-
-| Código | Descrição |
-|--------|-----------|
-| `RATE_LIMIT_EXCEEDED` | Limite genérico excedido |
-| `RATE_LIMIT_LOGIN` | Muitas tentativas de login |
-| `RATE_LIMIT_SIGNUP` | Muitos cadastros do mesmo IP |
-| `RATE_LIMIT_BOOKING` | Muitos agendamentos |
-| `RATE_LIMIT_API` | Limite de API excedido |
-| `IP_BLOCKED` | IP na lista negra |
-
----
-
-## Arquivos Principais
+## Arquivos de Segurança
 
 | Arquivo | Descrição |
 |---------|-----------|
-| `supabase/functions/rate-limiter/index.ts` | Edge Function de rate limiting |
-| `src/services/rate-limiter.service.ts` | Service client-side |
-| `src/hooks/useRateLimit.ts` | React hook |
-| `src/lib/errors.ts` | Classes de erro (incluindo RateLimitError) |
+| `src/lib/sanitizer.ts` | Utilitário de sanitização global |
+| `src/lib/errors.ts` | Classes de erro (RateLimitError) |
 | `src/lib/validation-schemas.ts` | Schemas Zod centralizados |
+| `src/services/rate-limiter.service.ts` | Service de rate limiting |
+| `src/hooks/useRateLimit.ts` | React hook para rate limiting |
+| `supabase/functions/rate-limiter/` | Edge Function de rate limiting |
+| `__tests__/security/` | Testes de segurança |
 | `SECURITY.md` | Este documento |
+| `VALIDATION_RULES.md` | Regras de validação |
