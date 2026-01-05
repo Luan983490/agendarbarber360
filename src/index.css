@@ -8,59 +8,59 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Dark barbershop theme - main backgrounds */
-    --background: 0 0% 8%;
-    --foreground: 0 0% 98%;
+    /* Light clean theme - main backgrounds */
+    --background: 0 0% 98%;
+    --foreground: 0 0% 10%;
 
     /* Card styling */
-    --card: 0 0% 12%;
-    --card-foreground: 0 0% 95%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
 
     /* Popover styling */
-    --popover: 0 0% 10%;
-    --popover-foreground: 0 0% 95%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
 
     /* Primary branding - elegant gold/amber accent */
-    --primary: 45 93% 58%;
-    --primary-foreground: 0 0% 8%;
+    --primary: 45 93% 47%;
+    --primary-foreground: 0 0% 100%;
 
     /* Secondary elements */
-    --secondary: 0 0% 20%;
-    --secondary-foreground: 0 0% 90%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 20%;
 
     /* Muted elements */
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
 
     /* Accent elements */
-    --accent: 0 0% 18%;
-    --accent-foreground: 0 0% 92%;
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 15%;
 
     /* Destructive actions */
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
 
     /* Borders and inputs */
-    --border: 0 0% 25%;
-    --input: 0 0% 18%;
-    --ring: 45 93% 58%;
+    --border: 0 0% 90%;
+    --input: 0 0% 96%;
+    --ring: 45 93% 47%;
 
     /* Success states */
-    --success: 120 60% 50%;
-    --success-foreground: 0 0% 98%;
+    --success: 120 60% 45%;
+    --success-foreground: 0 0% 100%;
 
     /* Warning states */
     --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 8%;
+    --warning-foreground: 0 0% 10%;
 
     /* Custom gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(45 93% 58%), hsl(38 92% 50%));
-    --gradient-dark: linear-gradient(135deg, hsl(0 0% 8%), hsl(0 0% 15%));
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 12%), hsl(0 0% 16%));
+    --gradient-primary: linear-gradient(135deg, hsl(45 93% 47%), hsl(38 92% 45%));
+    --gradient-dark: linear-gradient(135deg, hsl(0 0% 98%), hsl(0 0% 94%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(0 0% 98%));
 
     /* Shadows */
-    --shadow-elegant: 0 8px 32px -4px hsla(0, 0%, 0%, 0.6);
-    --shadow-glow: 0 0 30px hsla(45, 93%, 58%, 0.3);
+    --shadow-elegant: 0 4px 20px -2px hsla(0, 0%, 0%, 0.1);
+    --shadow-glow: 0 0 20px hsla(45, 93%, 47%, 0.2);
 
     /* Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
