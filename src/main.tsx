@@ -2,9 +2,14 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 import { initSentry } from "./lib/sentry";
+import { setupGlobalErrorCapture } from "./services/logger";
 
 // Inicializa o Sentry antes de renderizar a aplicação
 initSentry();
+
+// Configura captura global de erros para Supabase
+setupGlobalErrorCapture();
+
 /**
  * Em alguns ambientes (preview/produção), scripts externos podem injetar o Tailwind CDN
  * (https://cdn.tailwindcss.com). Isso gera CSS em runtime e pode travar o desktop.

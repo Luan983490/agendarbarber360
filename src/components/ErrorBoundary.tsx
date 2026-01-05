@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { createLogger } from '@/services/logger';
 import { getErrorMessage, logError } from '@/lib/error-handler';
 import { captureException, setContext } from '@/lib/sentry';
+import { supabase } from '@/integrations/supabase/client';
 
 const logger = createLogger('ErrorBoundary');
 
@@ -21,6 +22,30 @@ interface State {
   errorId: string | null;
 }
 
+async function sendErrorToSupabase(
+  error: Error,
+  errorInfo: ErrorInfo | null,
+  errorId: string
+): Promise<void> {
+  try {
+    await (supabase.from('app_logs') as any).insert({
+      level: 'error',
+      service: 'ErrorBoundary',
+      method: 'componentDidCatch',
+      message: error.message || 'Unknown error',
+      context: {
+        errorId,
+        componentStack: errorInfo?.componentStack,
+      },
+      error_stack: error.stack,
+      url: typeof window !== 'undefined' ? window.location.href : null,
+      user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+    });
+  } catch (err) {
+    console.error('[ErrorBoundary] Failed to send error to Supabase:', err);
+  }
+}
+
 export class ErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false,
@@ -31,7 +56,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public static getDerivedStateFromError(error: Error): Partial<State> {
     // Gera um ID único para o erro (para referência em suporte)
-    const errorId = `ERR-${Date.now().toString(36).toUpperCase()}`;
+    const errorId = `ERR-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
     
     return { 
       hasError: true, 
@@ -41,10 +66,12 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    const errorId = this.state.errorId || `ERR-${Date.now().toString(36).toUpperCase()}`;
+    
     // Log estruturado do erro
     logError('ErrorBoundary', error, {
       componentStack: errorInfo.componentStack,
-      errorId: this.state.errorId,
+      errorId,
     });
 
     logger.error('componentDidCatch', 'Erro React não tratado capturado', error, {
@@ -54,13 +81,16 @@ export class ErrorBoundary extends Component<Props, State> {
     // Envia erro para o Sentry
     setContext('react', {
       componentStack: errorInfo.componentStack,
-      errorId: this.state.errorId,
+      errorId,
     });
     captureException(error, {
       componentStack: errorInfo.componentStack,
-      errorId: this.state.errorId,
+      errorId,
       errorBoundary: true,
     });
+
+    // Envia erro para o Supabase app_logs
+    sendErrorToSupabase(error, errorInfo, errorId);
 
     this.setState({ errorInfo });
 
