@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useToast } from '@/hooks/use-toast';
 import { barberService, CreateBarberDTO, UpdateBarberDTO, CreateBlockDTO } from '@/services';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
+import { getErrorMessage } from '@/lib/error-handler';
 
 // Query keys
 export const barberKeys = {
@@ -18,31 +19,19 @@ export const barberKeys = {
  */
 export function useCreateBarber() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
+  const { showErrorWithTitle } = useErrorHandler({ context: 'useCreateBarber' });
 
   return useMutation({
     mutationFn: (data: CreateBarberDTO) => barberService.create(data),
     onSuccess: (result, variables) => {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: barberKeys.list(variables.barbershopId) });
-        toast({
-          title: 'Barbeiro cadastrado',
-          description: 'O barbeiro foi adicionado com sucesso!',
-        });
-      } else {
-        toast({
-          title: 'Erro ao cadastrar',
-          description: result.error?.message || 'Erro desconhecido',
-          variant: 'destructive',
-        });
+      } else if (result.error) {
+        showErrorWithTitle('Erro ao cadastrar barbeiro', result.error);
       }
     },
-    onError: (error: Error) => {
-      toast({
-        title: 'Erro ao cadastrar',
-        description: error.message,
-        variant: 'destructive',
-      });
+    onError: (error) => {
+      showErrorWithTitle('Erro ao cadastrar barbeiro', error);
     },
   });
 }
@@ -52,7 +41,7 @@ export function useCreateBarber() {
  */
 export function useUpdateBarber() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
+  const { showErrorWithTitle } = useErrorHandler({ context: 'useUpdateBarber' });
 
   return useMutation({
     mutationFn: ({ barberId, data }: { barberId: string; data: UpdateBarberDTO }) =>
@@ -61,24 +50,12 @@ export function useUpdateBarber() {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: barberKeys.detail(variables.barberId) });
         queryClient.invalidateQueries({ queryKey: barberKeys.lists() });
-        toast({
-          title: 'Barbeiro atualizado',
-          description: 'Os dados do barbeiro foram atualizados.',
-        });
-      } else {
-        toast({
-          title: 'Erro ao atualizar',
-          description: result.error?.message || 'Erro desconhecido',
-          variant: 'destructive',
-        });
+      } else if (result.error) {
+        showErrorWithTitle('Erro ao atualizar barbeiro', result.error);
       }
     },
-    onError: (error: Error) => {
-      toast({
-        title: 'Erro ao atualizar',
-        description: error.message,
-        variant: 'destructive',
-      });
+    onError: (error) => {
+      showErrorWithTitle('Erro ao atualizar barbeiro', error);
     },
   });
 }
@@ -93,7 +70,7 @@ export function useBarber(barberId: string | undefined) {
       if (!barberId) return null;
       const result = await barberService.getById(barberId);
       if (!result.success) {
-        throw new Error(result.error?.message || 'Erro ao buscar barbeiro');
+        throw new Error(getErrorMessage(result.error));
       }
       return result.data;
     },
@@ -111,7 +88,7 @@ export function useBarbersByBarbershop(barbershopId: string | undefined, activeO
       if (!barbershopId) return [];
       const result = await barberService.getByBarbershop(barbershopId, activeOnly);
       if (!result.success) {
-        throw new Error(result.error?.message || 'Erro ao buscar barbeiros');
+        throw new Error(getErrorMessage(result.error));
       }
       return result.data;
     },
@@ -129,7 +106,7 @@ export function useBarberWorkingHours(barberId: string | undefined) {
       if (!barberId) return [];
       const result = await barberService.getWorkingHours(barberId);
       if (!result.success) {
-        throw new Error(result.error?.message || 'Erro ao buscar horários');
+        throw new Error(getErrorMessage(result.error));
       }
       return result.data;
     },
@@ -142,31 +119,19 @@ export function useBarberWorkingHours(barberId: string | undefined) {
  */
 export function useCreateBarberBlock() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
+  const { showErrorWithTitle } = useErrorHandler({ context: 'useCreateBarberBlock' });
 
   return useMutation({
     mutationFn: (data: CreateBlockDTO) => barberService.createBlock(data),
     onSuccess: (result, variables) => {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: barberKeys.blocks(variables.barberId) });
-        toast({
-          title: 'Bloqueio criado',
-          description: 'O horário foi bloqueado com sucesso.',
-        });
-      } else {
-        toast({
-          title: 'Erro ao bloquear',
-          description: result.error?.message || 'Erro desconhecido',
-          variant: 'destructive',
-        });
+      } else if (result.error) {
+        showErrorWithTitle('Erro ao bloquear horário', result.error);
       }
     },
-    onError: (error: Error) => {
-      toast({
-        title: 'Erro ao bloquear',
-        description: error.message,
-        variant: 'destructive',
-      });
+    onError: (error) => {
+      showErrorWithTitle('Erro ao bloquear horário', error);
     },
   });
 }
@@ -176,31 +141,19 @@ export function useCreateBarberBlock() {
  */
 export function useDeleteBarberBlock() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
+  const { showErrorWithTitle } = useErrorHandler({ context: 'useDeleteBarberBlock' });
 
   return useMutation({
     mutationFn: (blockId: string) => barberService.deleteBlock(blockId),
     onSuccess: (result) => {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: barberKeys.all });
-        toast({
-          title: 'Bloqueio removido',
-          description: 'O bloqueio foi removido com sucesso.',
-        });
-      } else {
-        toast({
-          title: 'Erro ao remover',
-          description: result.error?.message || 'Erro desconhecido',
-          variant: 'destructive',
-        });
+      } else if (result.error) {
+        showErrorWithTitle('Erro ao remover bloqueio', result.error);
       }
     },
-    onError: (error: Error) => {
-      toast({
-        title: 'Erro ao remover',
-        description: error.message,
-        variant: 'destructive',
-      });
+    onError: (error) => {
+      showErrorWithTitle('Erro ao remover bloqueio', error);
     },
   });
 }

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useToast } from '@/hooks/use-toast';
 import { userService, UpdateProfileDTO } from '@/services';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
+import { getErrorMessage } from '@/lib/error-handler';
 
 // Query keys
 export const userKeys = {
@@ -20,7 +21,7 @@ export function useUserProfile(userId: string | undefined) {
       if (!userId) return null;
       const result = await userService.getProfile(userId);
       if (!result.success) {
-        throw new Error(result.error?.message || 'Erro ao buscar perfil');
+        throw new Error(getErrorMessage(result.error));
       }
       return result.data;
     },
@@ -33,7 +34,7 @@ export function useUserProfile(userId: string | undefined) {
  */
 export function useUpdateProfile() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
+  const { showErrorWithTitle } = useErrorHandler({ context: 'useUpdateProfile' });
 
   return useMutation({
     mutationFn: ({ userId, data }: { userId: string; data: UpdateProfileDTO }) =>
@@ -41,24 +42,12 @@ export function useUpdateProfile() {
     onSuccess: (result, variables) => {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: userKeys.profile(variables.userId) });
-        toast({
-          title: 'Perfil atualizado',
-          description: 'Seus dados foram atualizados com sucesso.',
-        });
-      } else {
-        toast({
-          title: 'Erro ao atualizar',
-          description: result.error?.message || 'Erro desconhecido',
-          variant: 'destructive',
-        });
+      } else if (result.error) {
+        showErrorWithTitle('Erro ao atualizar perfil', result.error);
       }
     },
-    onError: (error: Error) => {
-      toast({
-        title: 'Erro ao atualizar',
-        description: error.message,
-        variant: 'destructive',
-      });
+    onError: (error) => {
+      showErrorWithTitle('Erro ao atualizar perfil', error);
     },
   });
 }
@@ -73,7 +62,7 @@ export function useUserRoles(userId: string | undefined) {
       if (!userId) return [];
       const result = await userService.getUserRoles(userId);
       if (!result.success) {
-        throw new Error(result.error?.message || 'Erro ao buscar roles');
+        throw new Error(getErrorMessage(result.error));
       }
       return result.data;
     },

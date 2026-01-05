@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useToast } from '@/hooks/use-toast';
 import { barbershopService, CreateBarbershopDTO, UpdateBarbershopDTO } from '@/services';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
+import { getErrorMessage } from '@/lib/error-handler';
 
 // Query keys
 export const barbershopKeys = {
@@ -18,31 +19,19 @@ export const barbershopKeys = {
  */
 export function useCreateBarbershop() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
+  const { showErrorWithTitle } = useErrorHandler({ context: 'useCreateBarbershop' });
 
   return useMutation({
     mutationFn: (data: CreateBarbershopDTO) => barbershopService.create(data),
     onSuccess: (result) => {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: barbershopKeys.all });
-        toast({
-          title: 'Barbearia criada',
-          description: 'Sua barbearia foi cadastrada com sucesso!',
-        });
-      } else {
-        toast({
-          title: 'Erro ao criar',
-          description: result.error?.message || 'Erro desconhecido',
-          variant: 'destructive',
-        });
+      } else if (result.error) {
+        showErrorWithTitle('Erro ao criar barbearia', result.error);
       }
     },
-    onError: (error: Error) => {
-      toast({
-        title: 'Erro ao criar',
-        description: error.message,
-        variant: 'destructive',
-      });
+    onError: (error) => {
+      showErrorWithTitle('Erro ao criar barbearia', error);
     },
   });
 }
@@ -52,7 +41,7 @@ export function useCreateBarbershop() {
  */
 export function useUpdateBarbershop() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
+  const { showErrorWithTitle } = useErrorHandler({ context: 'useUpdateBarbershop' });
 
   return useMutation({
     mutationFn: ({ barbershopId, data }: { barbershopId: string; data: UpdateBarbershopDTO }) =>
@@ -61,24 +50,12 @@ export function useUpdateBarbershop() {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: barbershopKeys.detail(variables.barbershopId) });
         queryClient.invalidateQueries({ queryKey: barbershopKeys.lists() });
-        toast({
-          title: 'Barbearia atualizada',
-          description: 'Os dados da barbearia foram atualizados.',
-        });
-      } else {
-        toast({
-          title: 'Erro ao atualizar',
-          description: result.error?.message || 'Erro desconhecido',
-          variant: 'destructive',
-        });
+      } else if (result.error) {
+        showErrorWithTitle('Erro ao atualizar barbearia', result.error);
       }
     },
-    onError: (error: Error) => {
-      toast({
-        title: 'Erro ao atualizar',
-        description: error.message,
-        variant: 'destructive',
-      });
+    onError: (error) => {
+      showErrorWithTitle('Erro ao atualizar barbearia', error);
     },
   });
 }
@@ -93,7 +70,7 @@ export function useBarbershop(barbershopId: string | undefined) {
       if (!barbershopId) return null;
       const result = await barbershopService.getById(barbershopId);
       if (!result.success) {
-        throw new Error(result.error?.message || 'Erro ao buscar barbearia');
+        throw new Error(getErrorMessage(result.error));
       }
       return result.data;
     },
@@ -111,7 +88,7 @@ export function useBarbershopByOwner(ownerId: string | undefined) {
       if (!ownerId) return null;
       const result = await barbershopService.getByOwner(ownerId);
       if (!result.success) {
-        throw new Error(result.error?.message || 'Erro ao buscar barbearia');
+        throw new Error(getErrorMessage(result.error));
       }
       return result.data;
     },
@@ -128,7 +105,7 @@ export function useSearchBarbershops(query: string, limit = 20) {
     queryFn: async () => {
       const result = await barbershopService.search(query, limit);
       if (!result.success) {
-        throw new Error(result.error?.message || 'Erro ao buscar barbearias');
+        throw new Error(getErrorMessage(result.error));
       }
       return result.data;
     },
@@ -146,7 +123,7 @@ export function useBarbershopStats(barbershopId: string | undefined) {
       if (!barbershopId) return null;
       const result = await barbershopService.getStats(barbershopId);
       if (!result.success) {
-        throw new Error(result.error?.message || 'Erro ao buscar estatísticas');
+        throw new Error(getErrorMessage(result.error));
       }
       return result.data;
     },
