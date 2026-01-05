@@ -66,6 +66,15 @@ This project is built with:
 - Supabase (Backend)
 - Vitest (Testing)
 
+## 🔒 Security & Monitoring
+
+- **Rate Limiting**: Proteção contra brute force e DDoS
+- **Data Sanitization**: Prevenção de XSS e SQL Injection
+- **Error Tracking**: Monitoramento completo via Supabase Dashboard (zero custo)
+- **Performance Monitoring**: Logs automáticos de operações lentas
+
+Veja [SECURITY.md](./SECURITY.md) e [MONITORING.md](./MONITORING.md) para detalhes.
+
 ## 🧪 Running Tests
 
 ```sh
