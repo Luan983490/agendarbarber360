@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Scissors, Edit, Trash2 } from 'lucide-react';
+import { serviceFormSchema, validateWithSchema, formatValidationErrors, sanitizeString, VALIDATION_CONSTANTS } from '@/lib/validation-schemas';
 
 // Opções de duração em intervalos de 15 minutos (15 a 360)
 const DURATION_OPTIONS = Array.from({ length: 24 }, (_, i) => (i + 1) * 15);
@@ -52,15 +53,49 @@ const ServiceForm = ({ barbershopId, services, onServicesChange }: ServiceFormPr
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validação com Zod
+    const validation = validateWithSchema(serviceFormSchema, formData);
+    if (!validation.success) {
+      toast({
+        title: 'Erro de validação',
+        description: formatValidationErrors(validation.errors),
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // Validar preço e duração
+    const price = parseFloat(formData.price);
+    const duration = parseInt(formData.duration);
+    
+    if (isNaN(price) || price < VALIDATION_CONSTANTS.PRICE_MIN || price > VALIDATION_CONSTANTS.PRICE_MAX) {
+      toast({
+        title: 'Erro de validação',
+        description: `Preço deve estar entre R$ ${VALIDATION_CONSTANTS.PRICE_MIN} e R$ ${VALIDATION_CONSTANTS.PRICE_MAX.toLocaleString('pt-BR')}`,
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    if (isNaN(duration) || duration < VALIDATION_CONSTANTS.DURATION_MIN || duration > VALIDATION_CONSTANTS.DURATION_MAX) {
+      toast({
+        title: 'Erro de validação',
+        description: `Duração deve estar entre ${VALIDATION_CONSTANTS.DURATION_MIN} e ${VALIDATION_CONSTANTS.DURATION_MAX} minutos`,
+        variant: 'destructive'
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
       const serviceData = {
         barbershop_id: barbershopId,
-        name: formData.name,
-        description: formData.description,
-        price: parseFloat(formData.price),
-        duration: parseInt(formData.duration),
+        name: sanitizeString(formData.name),
+        description: sanitizeString(formData.description),
+        price: price,
+        duration: duration,
         is_active: true
       };
 

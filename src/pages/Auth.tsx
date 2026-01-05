@@ -1,29 +1,34 @@
 import { useState, useEffect } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { User, Store } from 'lucide-react';
+import { loginSchema, signUpSchema, validateWithSchema, formatValidationErrors } from '@/lib/validation-schemas';
 import barber360Logo from '@/assets/barber360-logo.png';
 
 const Auth = () => {
-  const { user, signIn, signUp } = useAuth();
+  const { user, signIn, signUp, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const [loginData, setLoginData] = useState({ email: '', password: '' });
-  const [signupData, setSignupData] = useState({ 
-    email: '', 
-    password: '', 
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [loginData, setLoginData] = useState({
+    email: '',
+    password: ''
+  });
+  const [signupData, setSignupData] = useState({
+    email: '',
+    password: '',
     confirmPassword: '',
     userType: 'client' as 'client' | 'barbershop_owner'
   });
-  const [loading, setLoading] = useState(false);
 
-  // Check user profile and redirect accordingly
   useEffect(() => {
     if (user) {
       checkUserProfileAndRedirect();
@@ -31,51 +36,64 @@ const Auth = () => {
   }, [user]);
 
   const checkUserProfileAndRedirect = async () => {
-    try {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('user_type')
-        .eq('user_id', user?.id)
-        .single();
-
-      if (profile?.user_type === 'barbershop_owner') {
-        navigate('/dashboard', { replace: true });
-      } else if (profile?.user_type === 'barber') {
-        navigate('/barber/hoje', { replace: true });
-      } else {
-        navigate('/', { replace: true });
-      }
-    } catch (error) {
-      console.error('Erro ao verificar perfil:', error);
-      navigate('/', { replace: true });
+    if (!user) return;
+    
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('user_type')
+      .eq('user_id', user.id)
+      .single();
+    
+    if (profile?.user_type === 'barbershop_owner') {
+      navigate('/dashboard');
+    } else if (profile?.user_type === 'barber') {
+      navigate('/barber/hoje');
+    } else {
+      navigate('/');
     }
   };
 
-  // Don't render if user is already logged in
-  if (user) {
-    return null;
-  }
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    const { error } = await signIn(loginData.email, loginData.password);
-    if (!error) {
-      // Redirect will be handled by the useEffect above
+    
+    // Validação com Zod
+    const validation = validateWithSchema(loginSchema, loginData);
+    if (!validation.success) {
+      toast({
+        title: 'Erro de validação',
+        description: formatValidationErrors(validation.errors),
+        variant: 'destructive'
+      });
+      return;
     }
+    
+    setLoading(true);
+    const { error } = await signIn(loginData.email.trim().toLowerCase(), loginData.password);
     setLoading(false);
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (signupData.password !== signupData.confirmPassword) {
+    
+    // Validação com Zod
+    const validation = validateWithSchema(signUpSchema, signupData);
+    if (!validation.success) {
+      toast({
+        title: 'Erro de validação',
+        description: formatValidationErrors(validation.errors),
+        variant: 'destructive'
+      });
       return;
     }
+    
     setLoading(true);
-    await signUp(signupData.email, signupData.password, signupData.userType);
+    const { error } = await signUp(
+      signupData.email.trim().toLowerCase(), 
+      signupData.password, 
+      signupData.userType
+    );
     setLoading(false);
   };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-accent/20 flex items-center justify-center p-4">
       <div className="w-full max-w-md">

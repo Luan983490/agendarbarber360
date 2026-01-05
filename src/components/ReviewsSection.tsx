@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { StarRating } from './StarRating';
 import { MessageSquare, Send } from 'lucide-react';
 import { format } from 'date-fns';
+import { reviewCreateSchema, validateWithSchema, formatValidationErrors, sanitizeString, VALIDATION_CONSTANTS } from '@/lib/validation-schemas';
 
 interface Review {
   id: string;
@@ -109,10 +110,28 @@ export const ReviewsSection = ({ barbershopId, currentUserId }: ReviewsSectionPr
       return;
     }
 
-    if (rating === 0) {
+    // Validação com Zod
+    const reviewData = {
+      barbershop_id: barbershopId,
+      rating: rating,
+      comment: comment ? sanitizeString(comment) : null,
+    };
+
+    const validation = validateWithSchema(reviewCreateSchema, reviewData);
+    if (!validation.success) {
       toast({
-        title: 'Selecione uma nota',
-        description: 'Por favor, selecione de 1 a 5 estrelas',
+        title: 'Erro de validação',
+        description: formatValidationErrors(validation.errors),
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // Verificar comprimento do comentário
+    if (comment && comment.length > VALIDATION_CONSTANTS.COMMENT_MAX_LENGTH) {
+      toast({
+        title: 'Erro de validação',
+        description: `Comentário deve ter no máximo ${VALIDATION_CONSTANTS.COMMENT_MAX_LENGTH} caracteres`,
         variant: 'destructive'
       });
       return;
@@ -125,8 +144,8 @@ export const ReviewsSection = ({ barbershopId, currentUserId }: ReviewsSectionPr
         const { error } = await supabase
           .from('reviews')
           .update({
-            rating,
-            comment: comment || null
+            rating: validation.data.rating,
+            comment: validation.data.comment
           })
           .eq('id', userReview.id);
 
@@ -141,9 +160,9 @@ export const ReviewsSection = ({ barbershopId, currentUserId }: ReviewsSectionPr
           .from('reviews')
           .insert({
             client_id: currentUserId,
-            barbershop_id: barbershopId,
-            rating,
-            comment: comment || null
+            barbershop_id: validation.data.barbershop_id,
+            rating: validation.data.rating,
+            comment: validation.data.comment
           });
 
         if (error) throw error;
