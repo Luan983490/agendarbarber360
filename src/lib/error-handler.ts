@@ -12,9 +12,11 @@ import {
   ValidationError,
   BarbershopError,
   BarberError,
+  RateLimitError,
   ErrorCode,
   ERROR_MESSAGES,
   isAppError,
+  isRateLimitError,
 } from './errors';
 
 const logger = createLogger('ErrorHandler');
@@ -181,6 +183,11 @@ function createAppErrorByCode(code: ErrorCode, message?: string, originalError?:
     return new BarberError(code, message);
   }
   
+  // Erros de rate limiting
+  if (code.startsWith('RATE_LIMIT_') || code === 'IP_BLOCKED') {
+    return new RateLimitError(code, message);
+  }
+  
   // Erros de banco de dados e genéricos
   return new DatabaseError(code, message, originalError);
 }
@@ -291,7 +298,19 @@ export function isRetryableError(error: unknown): boolean {
       'TIMEOUT_ERROR',
       'DATABASE_CONNECTION_ERROR',
       'AUTH_RATE_LIMITED',
+      'RATE_LIMIT_EXCEEDED',
+      'RATE_LIMIT_LOGIN',
+      'RATE_LIMIT_SIGNUP',
+      'RATE_LIMIT_BOOKING',
+      'RATE_LIMIT_API',
     ].includes(error.code);
   }
   return false;
+}
+
+/**
+ * Verifica se o erro é de rate limiting
+ */
+export function isRateLimitingError(error: unknown): boolean {
+  return isRateLimitError(error);
 }

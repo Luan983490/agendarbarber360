@@ -12,6 +12,8 @@ import {
   timeSchema,
 } from './types';
 import { createLogger } from './logger';
+import { rateLimiterService } from './rate-limiter.service';
+import { isRateLimitError } from '@/lib/errors';
 
 // ============================================================================
 // TYPES
@@ -134,6 +136,18 @@ export class BookingService {
       date: data.bookingDate,
       time: data.bookingTime,
     });
+
+    // Rate limit check
+    try {
+      await rateLimiterService.checkRateLimit('booking_create', data.clientId);
+    } catch (error) {
+      if (isRateLimitError(error)) {
+        return failure(
+          'RATE_LIMIT_BOOKING',
+          'Limite de agendamentos atingido. Aguarde 1 hora para tentar novamente.'
+        );
+      }
+    }
 
     // Validate input
     const validation = this.validateCreate(data);

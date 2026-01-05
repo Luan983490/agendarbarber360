@@ -11,8 +11,9 @@ import {
   requiresLogout,
   isRetryableError,
   logError,
+  isRateLimitingError,
 } from '@/lib/error-handler';
-import { isAppError, AppError, ERROR_MESSAGES, ErrorCode } from '@/lib/errors';
+import { isAppError, AppError, ERROR_MESSAGES, ErrorCode, isRateLimitError, RateLimitError } from '@/lib/errors';
 import { ServiceResponse } from '@/services/types';
 
 interface UseErrorHandlerOptions {
@@ -73,6 +74,17 @@ export function useErrorHandler(options: UseErrorHandlerOptions = {}): ErrorHand
         description: 'Faça login novamente para continuar.',
       });
       onRequireLogout?.();
+      return;
+    }
+
+    // Verifica se é erro de rate limiting
+    if (isRateLimitError(appError)) {
+      const rateLimitErr = appError as RateLimitError;
+      toast({
+        variant: 'destructive',
+        title: 'Limite de tentativas excedido',
+        description: `Muitas tentativas. Aguarde ${rateLimitErr.getTimeRemainingMessage()}.`,
+      });
       return;
     }
 

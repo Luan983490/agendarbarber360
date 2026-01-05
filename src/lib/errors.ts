@@ -32,6 +32,7 @@ export type ErrorCode =
   | 'BOOKING_OUTSIDE_HOURS'
   | 'BOOKING_PAST_DATE'
   | 'BOOKING_INVALID_SERVICE'
+  | 'BOOKING_RATE_LIMITED'
   // Erros de barbearia
   | 'BARBERSHOP_NOT_FOUND'
   | 'BARBERSHOP_SUBSCRIPTION_EXPIRED'
@@ -46,6 +47,13 @@ export type ErrorCode =
   | 'DATABASE_CONSTRAINT_VIOLATION'
   | 'DATABASE_RLS_VIOLATION'
   | 'DATABASE_NOT_FOUND'
+  // Erros de rate limiting
+  | 'RATE_LIMIT_EXCEEDED'
+  | 'RATE_LIMIT_LOGIN'
+  | 'RATE_LIMIT_SIGNUP'
+  | 'RATE_LIMIT_BOOKING'
+  | 'RATE_LIMIT_API'
+  | 'IP_BLOCKED'
   // Erros genéricos
   | 'UNKNOWN_ERROR'
   | 'NETWORK_ERROR'
@@ -82,6 +90,7 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   BOOKING_OUTSIDE_HOURS: 'Horário fora do expediente',
   BOOKING_PAST_DATE: 'Não é possível agendar em datas passadas',
   BOOKING_INVALID_SERVICE: 'Serviço não disponível',
+  BOOKING_RATE_LIMITED: 'Muitos agendamentos em pouco tempo. Aguarde um momento',
   
   // Barbearia
   BARBERSHOP_NOT_FOUND: 'Barbearia não encontrada',
@@ -99,6 +108,14 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   DATABASE_CONSTRAINT_VIOLATION: 'Dados inválidos ou duplicados',
   DATABASE_RLS_VIOLATION: 'Você não tem permissão para acessar estes dados',
   DATABASE_NOT_FOUND: 'Registro não encontrado',
+  
+  // Rate limiting
+  RATE_LIMIT_EXCEEDED: 'Muitas tentativas. Aguarde alguns minutos',
+  RATE_LIMIT_LOGIN: 'Muitas tentativas de login. Aguarde 15 minutos',
+  RATE_LIMIT_SIGNUP: 'Muitos cadastros do mesmo IP. Aguarde 1 hora',
+  RATE_LIMIT_BOOKING: 'Limite de agendamentos atingido. Aguarde 1 hora',
+  RATE_LIMIT_API: 'Limite de requisições atingido. Aguarde 1 minuto',
+  IP_BLOCKED: 'Seu IP foi temporariamente bloqueado por atividade suspeita',
   
   // Genéricos
   UNKNOWN_ERROR: 'Ocorreu um erro inesperado. Tente novamente',
@@ -306,6 +323,66 @@ export class BarberError extends AppError {
   }
 }
 
+// Erro de rate limiting
+export class RateLimitError extends AppError {
+  public readonly retryAfter?: Date;
+  public readonly remainingAttempts?: number;
+  public readonly actionType?: string;
+
+  constructor(
+    code: ErrorCode = 'RATE_LIMIT_EXCEEDED',
+    message?: string,
+    retryAfter?: Date | string,
+    remainingAttempts?: number,
+    actionType?: string,
+    details?: Record<string, unknown>
+  ) {
+    super(code, message, { ...details, actionType, remainingAttempts });
+    this.retryAfter = retryAfter ? new Date(retryAfter) : undefined;
+    this.remainingAttempts = remainingAttempts;
+    this.actionType = actionType;
+  }
+
+  static exceeded(retryAfter?: Date | string, actionType?: string): RateLimitError {
+    return new RateLimitError('RATE_LIMIT_EXCEEDED', undefined, retryAfter, 0, actionType);
+  }
+
+  static login(retryAfter?: Date | string): RateLimitError {
+    return new RateLimitError('RATE_LIMIT_LOGIN', undefined, retryAfter, 0, 'login');
+  }
+
+  static signup(retryAfter?: Date | string): RateLimitError {
+    return new RateLimitError('RATE_LIMIT_SIGNUP', undefined, retryAfter, 0, 'signup');
+  }
+
+  static booking(retryAfter?: Date | string): RateLimitError {
+    return new RateLimitError('RATE_LIMIT_BOOKING', undefined, retryAfter, 0, 'booking_create');
+  }
+
+  static ipBlocked(): RateLimitError {
+    return new RateLimitError('IP_BLOCKED');
+  }
+
+  getTimeRemainingMessage(): string {
+    if (!this.retryAfter) return 'alguns minutos';
+    
+    const now = new Date();
+    const diffMs = this.retryAfter.getTime() - now.getTime();
+    
+    if (diffMs <= 0) return '0 minutos';
+    
+    const diffMinutes = Math.ceil(diffMs / (1000 * 60));
+    
+    if (diffMinutes >= 60) {
+      const hours = Math.floor(diffMinutes / 60);
+      const mins = diffMinutes % 60;
+      return mins > 0 ? `${hours} hora(s) e ${mins} minuto(s)` : `${hours} hora(s)`;
+    }
+    
+    return `${diffMinutes} minuto(s)`;
+  }
+}
+
 // Type guard para verificar se é um AppError
 export function isAppError(error: unknown): error is AppError {
   return error instanceof AppError;
@@ -326,4 +403,8 @@ export function isBookingError(error: unknown): error is BookingError {
 
 export function isDatabaseError(error: unknown): error is DatabaseError {
   return error instanceof DatabaseError;
+}
+
+export function isRateLimitError(error: unknown): error is RateLimitError {
+  return error instanceof RateLimitError;
 }

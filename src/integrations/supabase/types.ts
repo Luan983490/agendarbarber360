@@ -297,6 +297,39 @@ export type Database = {
           },
         ]
       }
+      blocked_ips: {
+        Row: {
+          blocked_at: string
+          blocked_until: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          ip_address: string
+          is_permanent: boolean
+          reason: string | null
+        }
+        Insert: {
+          blocked_at?: string
+          blocked_until?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          ip_address: string
+          is_permanent?: boolean
+          reason?: string | null
+        }
+        Update: {
+          blocked_at?: string
+          blocked_until?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          ip_address?: string
+          is_permanent?: boolean
+          reason?: string | null
+        }
+        Relationships: []
+      }
       booking_audit_logs: {
         Row: {
           action: string
@@ -1008,6 +1041,42 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limits: {
+        Row: {
+          action_type: Database["public"]["Enums"]["rate_limit_action"]
+          attempt_count: number
+          blocked_until: string | null
+          created_at: string
+          first_attempt_at: string
+          id: string
+          ip_address: string
+          last_attempt_at: string
+          user_id: string | null
+        }
+        Insert: {
+          action_type: Database["public"]["Enums"]["rate_limit_action"]
+          attempt_count?: number
+          blocked_until?: string | null
+          created_at?: string
+          first_attempt_at?: string
+          id?: string
+          ip_address: string
+          last_attempt_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          action_type?: Database["public"]["Enums"]["rate_limit_action"]
+          attempt_count?: number
+          blocked_until?: string | null
+          created_at?: string
+          first_attempt_at?: string
+          id?: string
+          ip_address?: string
+          last_attempt_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       report_alerts: {
         Row: {
           alert_type: string
@@ -1273,6 +1342,15 @@ export type Database = {
         Args: { p_barber_id: string; p_booking_date: string }
         Returns: undefined
       }
+      block_ip: {
+        Args: {
+          p_duration_hours?: number
+          p_ip_address: string
+          p_permanent?: boolean
+          p_reason?: string
+        }
+        Returns: string
+      }
       calculate_booking_end_time: {
         Args: { p_duration_minutes: number; p_start_time: string }
         Returns: string
@@ -1282,6 +1360,22 @@ export type Database = {
         Returns: boolean
       }
       check_and_trigger_alerts: { Args: never; Returns: number }
+      check_rate_limit: {
+        Args: {
+          p_action_type: Database["public"]["Enums"]["rate_limit_action"]
+          p_ip_address: string
+          p_max_attempts?: number
+          p_user_id?: string
+          p_window_minutes?: number
+        }
+        Returns: {
+          allowed: boolean
+          blocked_until: string
+          current_count: number
+          remaining_attempts: number
+          reset_at: string
+        }[]
+      }
       check_subscription_status: {
         Args: { barbershop_uuid: string }
         Returns: {
@@ -1290,6 +1384,7 @@ export type Database = {
           plan_type: string
         }[]
       }
+      cleanup_rate_limits: { Args: never; Returns: number }
       client_can_cancel_booking: {
         Args: { _booking_id: string; _user_id: string }
         Returns: boolean
@@ -1487,9 +1582,23 @@ export type Database = {
         Args: { _booking_id: string; _user_id: string }
         Returns: boolean
       }
+      reset_rate_limit: {
+        Args: {
+          p_action_type: Database["public"]["Enums"]["rate_limit_action"]
+          p_ip_address: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "owner" | "barber" | "attendant"
+      rate_limit_action:
+        | "login"
+        | "signup"
+        | "booking_create"
+        | "slots_query"
+        | "password_reset"
+        | "api_call"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1618,6 +1727,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["owner", "barber", "attendant"],
+      rate_limit_action: [
+        "login",
+        "signup",
+        "booking_create",
+        "slots_query",
+        "password_reset",
+        "api_call",
+      ],
     },
   },
 } as const
