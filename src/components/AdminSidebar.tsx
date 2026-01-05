@@ -69,8 +69,8 @@ export function AdminSidebar({ currentTab, onTabChange }: AdminSidebarProps) {
   };
 
   return (
-    <Sidebar className="border-r w-64" collapsible="none">
-      <SidebarHeader className="border-b p-4 bg-muted/50">
+    <Sidebar className="border-r w-64 bg-white" collapsible="none">
+      <SidebarHeader className="border-b p-4 bg-white">
         <div className="flex items-center justify-between">
           <div className="flex items-center min-w-0">
             <img src={b360Logo} alt="B360" className="h-10 flex-shrink-0" />
@@ -99,7 +99,7 @@ export function AdminSidebar({ currentTab, onTabChange }: AdminSidebarProps) {
                       tooltip={item.title}
                     >
                       <button
-                        className="w-full hover:bg-muted/50 transition-colors"
+                        className="w-full hover:bg-gray-100 transition-colors text-gray-900"
                         onClick={() => {
                           onTabChange(item.id);
                           if (isMobile) setOpenMobile(false);
@@ -137,7 +137,7 @@ export function AdminSidebar({ currentTab, onTabChange }: AdminSidebarProps) {
                               isActive={currentTab === subItem.id}
                             >
                               <button
-                                className="w-full hover:bg-muted/50 transition-colors"
+                                className="w-full hover:bg-gray-100 transition-colors text-gray-900"
                                 onClick={() => {
                                   onTabChange(subItem.id);
                                   if (isMobile) setOpenMobile(false);
