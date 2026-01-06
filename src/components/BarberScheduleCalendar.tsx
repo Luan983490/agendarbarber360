@@ -722,16 +722,12 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
       return;
     }
 
-    // Slot disponível - mostrar menu de ações (Criar Agendamento ou Bloquear)
     setSelectedSlot({
       time,
       date,
       isBlocked: false
     });
-    
-    // Posicionar o menu de ações onde o usuário clicou
-    setActionMenuPosition({ x: event.clientX, y: event.clientY });
-    setActionMenuOpen(true);
+    setCreateBookingOpen(true);
   };
 
   const handleBlock = async (type: 'single' | 'day' | 'week', reason: string) => {
