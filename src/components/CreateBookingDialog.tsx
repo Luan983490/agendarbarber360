@@ -78,6 +78,15 @@ export const CreateBookingDialog = ({
   const [recurringEndDate, setRecurringEndDate] = useState<Date>(initialDate);
   const { toast } = useToast();
 
+  // Calcular próximo horário padrão (30 min depois do inicial)
+  const getDefaultEndTime = (startTime: string) => {
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const totalMinutes = hours * 60 + minutes + 30;
+    const endHours = Math.floor(totalMinutes / 60);
+    const endMinutes = totalMinutes % 60;
+    return `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}`;
+  };
+
   useEffect(() => {
     if (open) {
       setDate(initialDate);
@@ -85,6 +94,11 @@ export const CreateBookingDialog = ({
       setSelectedBarber(barberId);
       setIsExternalBooking(true);
       setBlockStartTime(initialTime);
+      setBlockStartDate(initialDate);
+      setBlockEndDate(initialDate);
+      // Inicializar blockEndTime com 30 min após o horário inicial
+      const defaultEndTime = getDefaultEndTime(initialTime);
+      setBlockEndTime(defaultEndTime);
       fetchServices();
       fetchBarbers();
       fetchClients();
@@ -281,10 +295,28 @@ export const CreateBookingDialog = ({
       return;
     }
 
+    if (blockStartTime >= blockEndTime) {
+      toast({
+        title: 'Erro',
+        description: 'O horário de início deve ser menor que o horário de fim',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     if (blockStartDate > blockEndDate) {
       toast({
         title: 'Erro',
         description: 'A data de fim deve ser maior ou igual à data de início',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    if (!selectedBarber) {
+      toast({
+        title: 'Erro',
+        description: 'Selecione um profissional',
         variant: 'destructive'
       });
       return;
