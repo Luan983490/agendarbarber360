@@ -16,7 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { format, addDays } from 'date-fns';
+import { format, addDays, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { DateRange } from 'react-day-picker';
@@ -94,8 +94,10 @@ export const CreateBookingDialog = ({
       setSelectedBarber(barberId);
       setIsExternalBooking(true);
       setBlockStartTime(initialTime);
-      setBlockStartDate(initialDate);
-      setBlockEndDate(initialDate);
+      // Normalizar datas para não carregar hora/minuto e evitar bugs no range
+      const normalizedInitialDate = startOfDay(initialDate);
+      setBlockStartDate(normalizedInitialDate);
+      setBlockEndDate(normalizedInitialDate);
       // Inicializar blockEndTime com 30 min após o horário inicial
       const defaultEndTime = getDefaultEndTime(initialTime);
       setBlockEndTime(defaultEndTime);
@@ -295,7 +297,14 @@ export const CreateBookingDialog = ({
       return;
     }
 
-    if (blockStartTime >= blockEndTime) {
+    const startDate = startOfDay(blockStartDate);
+    const endDate = startOfDay(blockEndDate);
+    const startDateStr = format(startDate, 'yyyy-MM-dd');
+    const endDateStr = format(endDate, 'yyyy-MM-dd');
+    const isSameDay = startDateStr === endDateStr;
+
+    // Só faz sentido exigir start < end quando o bloqueio é no mesmo dia
+    if (isSameDay && blockStartTime >= blockEndTime) {
       toast({
         title: 'Erro',
         description: 'O horário de início deve ser menor que o horário de fim',
@@ -304,7 +313,7 @@ export const CreateBookingDialog = ({
       return;
     }
 
-    if (blockStartDate > blockEndDate) {
+    if (startDate > endDate) {
       toast({
         title: 'Erro',
         description: 'A data de fim deve ser maior ou igual à data de início',
@@ -324,27 +333,26 @@ export const CreateBookingDialog = ({
 
     try {
       const blocks = [];
-      let currentDate = new Date(blockStartDate);
-      const isSameDay = format(blockStartDate, 'yyyy-MM-dd') === format(blockEndDate, 'yyyy-MM-dd');
-      
-      while (currentDate <= blockEndDate) {
+      let currentDate = startDate;
+
+      while (currentDate <= endDate) {
         const dateStr = format(currentDate, 'yyyy-MM-dd');
-        const isFirstDay = dateStr === format(blockStartDate, 'yyyy-MM-dd');
-        const isLastDay = dateStr === format(blockEndDate, 'yyyy-MM-dd');
-        
+        const isFirstDay = dateStr === startDateStr;
+        const isLastDay = dateStr === endDateStr;
+
         let startTime: string;
         let endTime: string;
-        
+
         if (isSameDay) {
-          // Mesmo dia: usar horários selecionados diretamente
+          // Mesmo dia: bloquear exatamente o intervalo selecionado
           startTime = blockStartTime;
           endTime = blockEndTime;
         } else if (isFirstDay) {
-          // Primeiro dia: do horário selecionado até o fim do expediente (23:59)
+          // Primeiro dia: do horário inicial até o fim do dia
           startTime = blockStartTime;
           endTime = '23:59';
         } else if (isLastDay) {
-          // Último dia: do início do expediente (00:00) até o horário selecionado
+          // Último dia: do começo do dia até o horário final
           startTime = '00:00';
           endTime = blockEndTime;
         } else {
@@ -352,7 +360,7 @@ export const CreateBookingDialog = ({
           startTime = '00:00';
           endTime = '23:59';
         }
-        
+
         blocks.push({
           barber_id: selectedBarber,
           block_date: dateStr,
@@ -360,6 +368,7 @@ export const CreateBookingDialog = ({
           end_time: endTime,
           reason: blockReason || null
         });
+
         currentDate = addDays(currentDate, 1);
       }
 
