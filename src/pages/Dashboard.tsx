@@ -538,7 +538,7 @@ const Dashboard = () => {
               </Button>
 
               <a href="/" className="flex items-center">
-                <img src={b360Logo} alt="B360" className="h-10 sm:h-12" />
+                <img src={b360Logo} alt="B360" className="h-12 sm:h-14" />
               </a>
             </div>
 
