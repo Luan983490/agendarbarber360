@@ -10,6 +10,7 @@ import { useSupabasePing } from "@/hooks/use-supabase-ping";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 
 // Loading fallback component
 import b360Logo from '@/assets/b360-logo.png';
@@ -58,6 +59,7 @@ const AppContent = () => {
     <>
       <Toaster />
       <Sonner />
+      <PWAInstallPrompt />
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
           <Routes>
