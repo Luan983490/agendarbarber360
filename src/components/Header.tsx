@@ -41,7 +41,7 @@ export const Header = ({ showBackButton = false }: HeaderProps) => {
 
   return (
     <div className="w-full">
-      <header className="fixed top-0 left-0 right-0 z-50 bg-black text-white border-b border-gray-800">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-black text-white border-b border-gray-800" style={{ backgroundColor: '#000000' }}>
         <div className="w-full px-2 sm:px-4 py-2">
           <div className="flex items-center justify-between gap-2 sm:gap-4">
             {/* Left side - Back button or Logo */}
