@@ -325,13 +325,39 @@ export const CreateBookingDialog = ({
     try {
       const blocks = [];
       let currentDate = new Date(blockStartDate);
+      const isSameDay = format(blockStartDate, 'yyyy-MM-dd') === format(blockEndDate, 'yyyy-MM-dd');
       
       while (currentDate <= blockEndDate) {
+        const dateStr = format(currentDate, 'yyyy-MM-dd');
+        const isFirstDay = dateStr === format(blockStartDate, 'yyyy-MM-dd');
+        const isLastDay = dateStr === format(blockEndDate, 'yyyy-MM-dd');
+        
+        let startTime: string;
+        let endTime: string;
+        
+        if (isSameDay) {
+          // Mesmo dia: usar horários selecionados diretamente
+          startTime = blockStartTime;
+          endTime = blockEndTime;
+        } else if (isFirstDay) {
+          // Primeiro dia: do horário selecionado até o fim do expediente (23:59)
+          startTime = blockStartTime;
+          endTime = '23:59';
+        } else if (isLastDay) {
+          // Último dia: do início do expediente (00:00) até o horário selecionado
+          startTime = '00:00';
+          endTime = blockEndTime;
+        } else {
+          // Dias intermediários: bloquear o dia inteiro
+          startTime = '00:00';
+          endTime = '23:59';
+        }
+        
         blocks.push({
           barber_id: selectedBarber,
-          block_date: format(currentDate, 'yyyy-MM-dd'),
-          start_time: blockStartTime,
-          end_time: blockEndTime,
+          block_date: dateStr,
+          start_time: startTime,
+          end_time: endTime,
           reason: blockReason || null
         });
         currentDate = addDays(currentDate, 1);
