@@ -420,15 +420,16 @@ export class BarberService {
   }
 
   /**
-   * Delete blocks for a barber in a time range on a specific date
+   * Unblock a time range for a barber on a specific date.
+   * Handles partial unblocking by splitting overlapping blocks.
    */
-  async deleteBlocksByTimeRange(
+  async unblockTimeRange(
     barberId: string, 
     blockDate: string, 
     startTime: string, 
     endTime: string
   ): Promise<ServiceResponse<number>> {
-    logger.info('deleteBlocksByTimeRange', 'Deleting blocks in time range', { 
+    logger.info('unblockTimeRange', 'Unblocking time range', { 
       barberId, blockDate, startTime, endTime 
     });
 
@@ -444,30 +445,120 @@ export class BarberService {
       return failure(ErrorCodes.VALIDATION_ERROR, 'Horário inválido');
     }
 
-    try {
-      // Delete blocks that overlap with the specified time range
-      // A block overlaps if: block.start_time < endTime AND block.end_time > startTime
-      const { data, error } = await supabase
-        .from('barber_blocks')
-        .delete()
-        .eq('barber_id', barberId)
-        .eq('block_date', blockDate)
-        .gte('start_time', startTime)
-        .lt('end_time', endTime)
-        .select();
+    if (startTime >= endTime) {
+      return failure(ErrorCodes.VALIDATION_ERROR, 'Horário de início deve ser menor que o horário de fim');
+    }
 
-      if (error) {
-        logger.error('deleteBlocksByTimeRange', 'Database error', error);
-        return failure(ErrorCodes.DATABASE_ERROR, 'Erro ao remover bloqueios');
+    try {
+      // Fetch existing blocks for this date
+      const { data: existingBlocks, error: fetchError } = await supabase
+        .from('barber_blocks')
+        .select('*')
+        .eq('barber_id', barberId)
+        .eq('block_date', blockDate);
+
+      if (fetchError) {
+        logger.error('unblockTimeRange', 'Fetch error', fetchError);
+        return failure(ErrorCodes.DATABASE_ERROR, 'Erro ao buscar bloqueios');
       }
 
-      const deletedCount = data?.length || 0;
-      logger.info('deleteBlocksByTimeRange', 'Range blocks deleted', { deletedCount });
-      return success(deletedCount);
+      // Find blocks that overlap with the unblock range
+      const overlappingBlocks = (existingBlocks || []).filter(block => {
+        const blockStart = block.start_time.substring(0, 5);
+        const blockEnd = block.end_time.substring(0, 5);
+        return blockStart < endTime && blockEnd > startTime;
+      });
+
+      if (overlappingBlocks.length === 0) {
+        return success(0);
+      }
+
+      let totalProcessed = 0;
+
+      for (const block of overlappingBlocks) {
+        const blockStart = block.start_time.substring(0, 5);
+        const blockEnd = block.end_time.substring(0, 5);
+
+        // Delete the original block
+        const { error: deleteError } = await supabase
+          .from('barber_blocks')
+          .delete()
+          .eq('id', block.id);
+
+        if (deleteError) {
+          logger.error('unblockTimeRange', 'Delete error', deleteError);
+          throw deleteError;
+        }
+        totalProcessed++;
+
+        // Create new blocks for the parts outside the unblock range
+        interface BlockInsert {
+          barber_id: string;
+          block_date: string;
+          start_time: string;
+          end_time: string;
+          reason: string | null;
+        }
+        const newBlocks: BlockInsert[] = [];
+
+        // Keep the part before the unblock range
+        if (blockStart < startTime) {
+          newBlocks.push({
+            barber_id: barberId,
+            block_date: blockDate,
+            start_time: blockStart,
+            end_time: startTime,
+            reason: block.reason
+          });
+        }
+
+        // Keep the part after the unblock range
+        if (blockEnd > endTime) {
+          newBlocks.push({
+            barber_id: barberId,
+            block_date: blockDate,
+            start_time: endTime,
+            end_time: blockEnd,
+            reason: block.reason
+          });
+        }
+
+        // Insert the remaining blocks
+        if (newBlocks.length > 0) {
+          const { error: insertError } = await supabase
+            .from('barber_blocks')
+            .insert(newBlocks);
+
+          if (insertError) {
+            logger.error('unblockTimeRange', 'Insert error', insertError);
+            throw insertError;
+          }
+        }
+      }
+
+      logger.info('unblockTimeRange', 'Time range unblocked', { 
+        totalProcessed, 
+        blocksCreated: overlappingBlocks.length 
+      });
+      return success(totalProcessed);
     } catch (err) {
-      logger.error('deleteBlocksByTimeRange', 'Unexpected error', err);
-      return failure(ErrorCodes.UNKNOWN_ERROR, 'Erro inesperado ao remover bloqueios');
+      logger.error('unblockTimeRange', 'Unexpected error', err);
+      return failure(ErrorCodes.UNKNOWN_ERROR, 'Erro inesperado ao desbloquear horários');
     }
+  }
+
+  /**
+   * Delete blocks for a barber in a time range on a specific date
+   * @deprecated Use unblockTimeRange instead for proper partial unblocking
+   */
+  async deleteBlocksByTimeRange(
+    barberId: string, 
+    blockDate: string, 
+    startTime: string, 
+    endTime: string
+  ): Promise<ServiceResponse<number>> {
+    // Redirect to the new implementation
+    return this.unblockTimeRange(barberId, blockDate, startTime, endTime);
   }
 
   /**

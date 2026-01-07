@@ -261,6 +261,78 @@ describe('Block Business Logic', () => {
       expect(remainingBlocks[0].block_date).toBe('2024-01-16');
     });
 
+    it('should allow unblocking time range with block splitting', () => {
+      // Given a block from 08:00 to 18:00
+      // When unblocking 10:00 to 12:00
+      // Then should result in two blocks: 08:00-10:00 and 12:00-18:00
+      
+      const existingBlock = {
+        id: '1',
+        start_time: '08:00',
+        end_time: '18:00',
+        reason: 'Blocked day'
+      };
+      
+      const unblockStart = '10:00';
+      const unblockEnd = '12:00';
+      
+      const newBlocks: Array<{ start_time: string; end_time: string; reason: string | null }> = [];
+      
+      // Keep part before unblock range
+      if (existingBlock.start_time < unblockStart) {
+        newBlocks.push({
+          start_time: existingBlock.start_time,
+          end_time: unblockStart,
+          reason: existingBlock.reason
+        });
+      }
+      
+      // Keep part after unblock range
+      if (existingBlock.end_time > unblockEnd) {
+        newBlocks.push({
+          start_time: unblockEnd,
+          end_time: existingBlock.end_time,
+          reason: existingBlock.reason
+        });
+      }
+      
+      expect(newBlocks.length).toBe(2);
+      expect(newBlocks[0]).toEqual({ start_time: '08:00', end_time: '10:00', reason: 'Blocked day' });
+      expect(newBlocks[1]).toEqual({ start_time: '12:00', end_time: '18:00', reason: 'Blocked day' });
+    });
+
+    it('should handle unblocking at start of block', () => {
+      // Given a block from 08:00 to 18:00
+      // When unblocking 08:00 to 10:00
+      // Then should result in one block: 10:00-18:00
+      
+      const existingBlock = { start_time: '08:00', end_time: '18:00' };
+      const unblockStart = '08:00';
+      const unblockEnd = '10:00';
+      
+      const keepBefore = existingBlock.start_time < unblockStart;
+      const keepAfter = existingBlock.end_time > unblockEnd;
+      
+      expect(keepBefore).toBe(false);
+      expect(keepAfter).toBe(true);
+    });
+
+    it('should handle unblocking at end of block', () => {
+      // Given a block from 08:00 to 18:00
+      // When unblocking 16:00 to 18:00
+      // Then should result in one block: 08:00-16:00
+      
+      const existingBlock = { start_time: '08:00', end_time: '18:00' };
+      const unblockStart = '16:00';
+      const unblockEnd = '18:00';
+      
+      const keepBefore = existingBlock.start_time < unblockStart;
+      const keepAfter = existingBlock.end_time > unblockEnd;
+      
+      expect(keepBefore).toBe(true);
+      expect(keepAfter).toBe(false);
+    });
+
     it('should allow unblocking time range', () => {
       // Given multiple blocks
       // When unblocking a time range
