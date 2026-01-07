@@ -269,7 +269,7 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
           if (error) throw error;
           totalDeleted += data?.length || 0;
         } else {
-          // Delete blocks that overlap with the selected time range
+          // Handle partial unblock - need to split blocks that overlap with the range
           const { data: existingBlocks, error: fetchError } = await supabase
             .from('barber_blocks')
             .select('*')
@@ -279,19 +279,56 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
           if (fetchError) throw fetchError;
 
           // Find blocks that overlap with the selected range
-          const blocksToDelete = (existingBlocks || []).filter(block => {
-            // Check if block overlaps with selected range
+          const overlappingBlocks = (existingBlocks || []).filter(block => {
             return block.start_time < endTime && block.end_time > startTime;
           });
 
-          if (blocksToDelete.length > 0) {
+          for (const block of overlappingBlocks) {
+            const blockStart = block.start_time.substring(0, 5);
+            const blockEnd = block.end_time.substring(0, 5);
+
+            // Delete the original block
             const { error: deleteError } = await supabase
               .from('barber_blocks')
               .delete()
-              .in('id', blocksToDelete.map(b => b.id));
+              .eq('id', block.id);
 
             if (deleteError) throw deleteError;
-            totalDeleted += blocksToDelete.length;
+            totalDeleted++;
+
+            // Create new blocks for the parts outside the unblock range
+            const newBlocks: any[] = [];
+
+            // If block starts before the unblock range, keep that part
+            if (blockStart < startTime) {
+              newBlocks.push({
+                barber_id: barberId,
+                block_date: dateStr,
+                start_time: blockStart,
+                end_time: startTime,
+                reason: block.reason
+              });
+            }
+
+            // If block ends after the unblock range, keep that part
+            if (blockEnd > endTime) {
+              newBlocks.push({
+                barber_id: barberId,
+                block_date: dateStr,
+                start_time: endTime,
+                end_time: blockEnd,
+                reason: block.reason
+              });
+            }
+
+            // Insert the remaining blocks
+            if (newBlocks.length > 0) {
+              const { error: insertError } = await supabase
+                .from('barber_blocks')
+                .insert(newBlocks);
+
+              if (insertError) throw insertError;
+            }
           }
         }
       }
