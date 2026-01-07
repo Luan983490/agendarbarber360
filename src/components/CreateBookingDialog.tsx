@@ -759,9 +759,9 @@ export const CreateBookingDialog = ({
                         <SelectValue placeholder="Hora" />
                       </SelectTrigger>
                       <SelectContent className="bg-popover border-border z-50 max-h-60">
-                        {Array.from({ length: 48 }, (_, i) => {
-                          const hour = Math.floor(i / 2).toString().padStart(2, '0');
-                          const minute = (i % 2) * 30;
+                        {Array.from({ length: 96 }, (_, i) => {
+                          const hour = Math.floor(i / 4).toString().padStart(2, '0');
+                          const minute = (i % 4) * 15;
                           const minuteStr = minute.toString().padStart(2, '0');
                           return `${hour}:${minuteStr}`;
                         }).map(timeOption => (
@@ -778,9 +778,9 @@ export const CreateBookingDialog = ({
                         <SelectValue placeholder="Hora" />
                       </SelectTrigger>
                       <SelectContent className="bg-popover border-border z-50 max-h-60">
-                        {Array.from({ length: 48 }, (_, i) => {
-                          const hour = Math.floor(i / 2).toString().padStart(2, '0');
-                          const minute = (i % 2) * 30;
+                        {Array.from({ length: 96 }, (_, i) => {
+                          const hour = Math.floor(i / 4).toString().padStart(2, '0');
+                          const minute = (i % 4) * 15;
                           const minuteStr = minute.toString().padStart(2, '0');
                           return `${hour}:${minuteStr}`;
                         }).map(timeOption => (
@@ -968,9 +968,9 @@ export const CreateBookingDialog = ({
                         <SelectValue placeholder="Hora" />
                       </SelectTrigger>
                       <SelectContent className="bg-popover border-border z-50 max-h-60">
-                        {Array.from({ length: 48 }, (_, i) => {
-                          const hour = Math.floor(i / 2).toString().padStart(2, '0');
-                          const minute = (i % 2) * 30;
+                        {Array.from({ length: 96 }, (_, i) => {
+                          const hour = Math.floor(i / 4).toString().padStart(2, '0');
+                          const minute = (i % 4) * 15;
                           const minuteStr = minute.toString().padStart(2, '0');
                           return `${hour}:${minuteStr}`;
                         }).map(timeOption => (
@@ -987,9 +987,9 @@ export const CreateBookingDialog = ({
                         <SelectValue placeholder="Hora" />
                       </SelectTrigger>
                       <SelectContent className="bg-popover border-border z-50 max-h-60">
-                        {Array.from({ length: 48 }, (_, i) => {
-                          const hour = Math.floor(i / 2).toString().padStart(2, '0');
-                          const minute = (i % 2) * 30;
+                        {Array.from({ length: 96 }, (_, i) => {
+                          const hour = Math.floor(i / 4).toString().padStart(2, '0');
+                          const minute = (i % 4) * 15;
                           const minuteStr = minute.toString().padStart(2, '0');
                           return `${hour}:${minuteStr}`;
                         }).map(timeOption => (
@@ -1058,9 +1058,9 @@ export const CreateBookingDialog = ({
                     <SelectValue placeholder="Hora" />
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-border z-50 max-h-60">
-                    {Array.from({ length: 48 }, (_, i) => {
-                      const hour = Math.floor(i / 2).toString().padStart(2, '0');
-                      const minute = (i % 2) * 30;
+                    {Array.from({ length: 96 }, (_, i) => {
+                      const hour = Math.floor(i / 4).toString().padStart(2, '0');
+                      const minute = (i % 4) * 15;
                       const minuteStr = minute.toString().padStart(2, '0');
                       return `${hour}:${minuteStr}`;
                     }).map(timeOption => (
@@ -1100,9 +1100,9 @@ export const CreateBookingDialog = ({
                     <SelectValue placeholder="Hora" />
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-border z-50 max-h-60">
-                    {Array.from({ length: 48 }, (_, i) => {
-                      const hour = Math.floor(i / 2).toString().padStart(2, '0');
-                      const minute = (i % 2) * 30;
+                    {Array.from({ length: 96 }, (_, i) => {
+                      const hour = Math.floor(i / 4).toString().padStart(2, '0');
+                      const minute = (i % 4) * 15;
                       const minuteStr = minute.toString().padStart(2, '0');
                       return `${hour}:${minuteStr}`;
                     }).map(timeOption => (
