@@ -213,7 +213,36 @@ export function useDeleteBarberBlocksByDate() {
 }
 
 /**
+ * Hook to unblock a time range (with proper block splitting)
+ */
+export function useUnblockTimeRange() {
+  const queryClient = useQueryClient();
+  const { showErrorWithTitle } = useErrorHandler({ context: 'useUnblockTimeRange' });
+
+  return useMutation({
+    mutationFn: ({ barberId, blockDate, startTime, endTime }: { 
+      barberId: string; 
+      blockDate: string;
+      startTime: string;
+      endTime: string;
+    }) => barberService.unblockTimeRange(barberId, blockDate, startTime, endTime),
+    onSuccess: (result, variables) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: barberKeys.blocks(variables.barberId) });
+        queryClient.invalidateQueries({ queryKey: barberKeys.all });
+      } else if (result.error) {
+        showErrorWithTitle('Erro ao desbloquear faixa', result.error);
+      }
+    },
+    onError: (error) => {
+      showErrorWithTitle('Erro ao desbloquear faixa', error);
+    },
+  });
+}
+
+/**
  * Hook to delete blocks in a time range
+ * @deprecated Use useUnblockTimeRange instead
  */
 export function useDeleteBarberBlocksByTimeRange() {
   const queryClient = useQueryClient();
@@ -225,7 +254,7 @@ export function useDeleteBarberBlocksByTimeRange() {
       blockDate: string;
       startTime: string;
       endTime: string;
-    }) => barberService.deleteBlocksByTimeRange(barberId, blockDate, startTime, endTime),
+    }) => barberService.unblockTimeRange(barberId, blockDate, startTime, endTime),
     onSuccess: (result, variables) => {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: barberKeys.blocks(variables.barberId) });
