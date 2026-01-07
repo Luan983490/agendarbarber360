@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { barberService, CreateBarberDTO, UpdateBarberDTO, CreateBlockDTO } from '@/services';
+import { barberService, CreateBarberDTO, UpdateBarberDTO, CreateBlockDTO, CreateBlockPeriodDTO } from '@/services';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { getErrorMessage } from '@/lib/error-handler';
 import { specificQueryConfig } from '@/lib/query-config';
+import { useToast } from '@/hooks/use-toast';
 
 // Query keys
 export const barberKeys = {
@@ -262,6 +263,34 @@ export function useCreateFullDayBlock() {
     },
     onError: (error) => {
       showErrorWithTitle('Erro ao bloquear dia', error);
+    },
+  });
+}
+
+/**
+ * Hook to create blocks for a period (multiple days)
+ */
+export function useCreateBlocksForPeriod() {
+  const queryClient = useQueryClient();
+  const { showErrorWithTitle } = useErrorHandler({ context: 'useCreateBlocksForPeriod' });
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: (data: CreateBlockPeriodDTO) => barberService.createBlocksForPeriod(data),
+    onSuccess: (result, variables) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: barberKeys.blocks(variables.barberId) });
+        queryClient.invalidateQueries({ queryKey: barberKeys.all });
+        toast({
+          title: 'Horário bloqueado',
+          description: `${result.data} bloqueio(s) criado(s) com sucesso`,
+        });
+      } else if (result.error) {
+        showErrorWithTitle('Erro ao bloquear período', result.error);
+      }
+    },
+    onError: (error) => {
+      showErrorWithTitle('Erro ao bloquear período', error);
     },
   });
 }

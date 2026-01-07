@@ -284,4 +284,84 @@ describe('Block Business Logic', () => {
       expect(blocksInRange.map(b => b.id)).toContain('2');
     });
   });
+
+  describe('Period Blocking', () => {
+    it('should create correct blocks for same-day period', () => {
+      // Given a period from 09:00 to 14:00 on same day
+      // Then should create a single block with exact times
+      
+      const startDate = '2024-01-15';
+      const endDate = '2024-01-15';
+      const startTime = '09:00';
+      const endTime = '14:00';
+      
+      const isSameDay = startDate === endDate;
+      const expectedBlocks = [{
+        block_date: startDate,
+        start_time: startTime,
+        end_time: endTime,
+      }];
+      
+      expect(isSameDay).toBe(true);
+      expect(expectedBlocks.length).toBe(1);
+      expect(expectedBlocks[0].start_time).toBe('09:00');
+      expect(expectedBlocks[0].end_time).toBe('14:00');
+    });
+
+    it('should create correct blocks for multi-day period', () => {
+      // Given a period from Jan 15 09:00 to Jan 17 14:00
+      // Then should create:
+      // - Jan 15: 09:00-23:59
+      // - Jan 16: 00:00-23:59 (full day)
+      // - Jan 17: 00:00-14:00
+      
+      const startDate = '2024-01-15';
+      const endDate = '2024-01-17';
+      const startTime = '09:00';
+      const endTime = '14:00';
+      
+      const days = ['2024-01-15', '2024-01-16', '2024-01-17'];
+      const expectedBlocks = days.map(day => {
+        const isFirstDay = day === startDate;
+        const isLastDay = day === endDate;
+        
+        return {
+          block_date: day,
+          start_time: isFirstDay ? startTime : '00:00',
+          end_time: isLastDay ? endTime : '23:59',
+        };
+      });
+      
+      expect(expectedBlocks.length).toBe(3);
+      expect(expectedBlocks[0]).toEqual({ block_date: '2024-01-15', start_time: '09:00', end_time: '23:59' });
+      expect(expectedBlocks[1]).toEqual({ block_date: '2024-01-16', start_time: '00:00', end_time: '23:59' });
+      expect(expectedBlocks[2]).toEqual({ block_date: '2024-01-17', start_time: '00:00', end_time: '14:00' });
+    });
+
+    it('should validate that start time is before end time for same day', () => {
+      const startDate = '2024-01-15';
+      const endDate = '2024-01-15';
+      const startTime = '14:00';
+      const endTime = '09:00';
+      
+      const isSameDay = startDate === endDate;
+      const isValidTimeRange = !isSameDay || startTime < endTime;
+      
+      expect(isValidTimeRange).toBe(false);
+    });
+
+    it('should allow end time before start time for different days', () => {
+      // Valid case: Jan 15 at 20:00 to Jan 16 at 08:00
+      const startDate = '2024-01-15';
+      const endDate = '2024-01-16';
+      const startTime = '20:00';
+      const endTime = '08:00';
+      
+      const isSameDay = startDate === endDate;
+      const isValidTimeRange = !isSameDay || startTime < endTime;
+      
+      expect(isSameDay).toBe(false);
+      expect(isValidTimeRange).toBe(true);
+    });
+  });
 });

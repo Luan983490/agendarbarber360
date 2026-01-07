@@ -92,6 +92,28 @@ const createBlockSchema = z.object({
   reason: z.string().max(500).optional(),
 });
 
+// DTO para bloqueio de período
+export interface CreateBlockPeriodDTO {
+  barberId: string;
+  startDate: string;
+  endDate: string;
+  startTime: string;
+  endTime: string;
+  reason?: string;
+}
+
+const createBlockPeriodSchema = z.object({
+  barberId: uuidSchema,
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data de início inválida'),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data de fim inválida'),
+  startTime: z.string().regex(/^\d{2}:\d{2}/, 'Horário de início inválido'),
+  endTime: z.string().regex(/^\d{2}:\d{2}/, 'Horário de fim inválido'),
+  reason: z.string().max(500).optional(),
+}).refine(data => data.startDate <= data.endDate, {
+  message: 'Data de início deve ser anterior ou igual à data de fim',
+  path: ['endDate'],
+});
+
 // ============================================================================
 // BARBER SERVICE
 // ============================================================================
@@ -552,6 +574,92 @@ export class BarberService {
     } catch (err) {
       logger.error('createFullDayBlock', 'Unexpected error', err);
       return failure(ErrorCodes.UNKNOWN_ERROR, 'Erro inesperado ao criar bloqueio');
+    }
+  }
+
+  /**
+   * Create blocks for a period (multiple days with specific start/end times)
+   * This handles the logic of blocking from startDate:startTime to endDate:endTime
+   */
+  async createBlocksForPeriod(data: CreateBlockPeriodDTO): Promise<ServiceResponse<number>> {
+    logger.info('createBlocksForPeriod', 'Creating blocks for period', { ...data });
+
+    // Validate input
+    const validation = createBlockPeriodSchema.safeParse(data);
+    if (!validation.success) {
+      const firstError = validation.error.errors[0];
+      return failure(ErrorCodes.VALIDATION_ERROR, firstError.message);
+    }
+
+    const { barberId, startDate, endDate, startTime, endTime, reason } = data;
+    const isSameDay = startDate === endDate;
+
+    // For same day, validate start < end
+    if (isSameDay && startTime >= endTime) {
+      return failure(ErrorCodes.VALIDATION_ERROR, 'Horário de início deve ser menor que o horário de fim');
+    }
+
+    try {
+      const blocks: Array<{
+        barber_id: string;
+        block_date: string;
+        start_time: string;
+        end_time: string;
+        reason: string | null;
+      }> = [];
+
+      let currentDate = new Date(startDate + 'T00:00:00');
+      const endDateObj = new Date(endDate + 'T00:00:00');
+
+      while (currentDate <= endDateObj) {
+        const dateStr = currentDate.toISOString().split('T')[0];
+        const isFirstDay = dateStr === startDate;
+        const isLastDay = dateStr === endDate;
+
+        let blockStartTime: string;
+        let blockEndTime: string;
+
+        if (isSameDay) {
+          // Same day: use exact times
+          blockStartTime = startTime;
+          blockEndTime = endTime;
+        } else if (isFirstDay) {
+          // First day: from start time to end of day
+          blockStartTime = startTime;
+          blockEndTime = '23:59';
+        } else if (isLastDay) {
+          // Last day: from start of day to end time
+          blockStartTime = '00:00';
+          blockEndTime = endTime;
+        } else {
+          // Intermediate days: block entire day
+          blockStartTime = '00:00';
+          blockEndTime = '23:59';
+        }
+
+        blocks.push({
+          barber_id: barberId,
+          block_date: dateStr,
+          start_time: blockStartTime,
+          end_time: blockEndTime,
+          reason: reason || null,
+        });
+
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+
+      const { error } = await supabase.from('barber_blocks').insert(blocks);
+
+      if (error) {
+        logger.error('createBlocksForPeriod', 'Database error', error);
+        return failure(ErrorCodes.DATABASE_ERROR, 'Erro ao criar bloqueios');
+      }
+
+      logger.info('createBlocksForPeriod', 'Period blocks created', { count: blocks.length });
+      return success(blocks.length);
+    } catch (err) {
+      logger.error('createBlocksForPeriod', 'Unexpected error', err);
+      return failure(ErrorCodes.UNKNOWN_ERROR, 'Erro inesperado ao criar bloqueios');
     }
   }
 

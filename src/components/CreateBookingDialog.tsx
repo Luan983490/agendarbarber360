@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar as CalendarIcon, Clock, Plus, HelpCircle, Ban, Trash2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, Plus, HelpCircle, Ban, Trash2, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -22,6 +22,36 @@ import { cn } from '@/lib/utils';
 import { DateRange } from 'react-day-picker';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CreateClientDialog } from './CreateClientDialog';
+import { useCreateBlocksForPeriod } from '@/hooks/useBarber';
+import { sanitizeString } from '@/lib/sanitizer';
+
+// Types for local state
+interface ClientOption {
+  user_id: string;
+  display_name: string | null;
+  phone: string | null;
+}
+
+interface ServiceOption {
+  id: string;
+  name: string;
+  price: number;
+  duration: number;
+}
+
+interface BarberOption {
+  id: string;
+  name: string;
+}
+
+interface BlockRecord {
+  id: string;
+  barber_id: string;
+  block_date: string;
+  start_time: string;
+  end_time: string;
+  reason: string | null;
+}
 
 interface CreateBookingDialogProps {
   open: boolean;
@@ -42,9 +72,9 @@ export const CreateBookingDialog = ({
   time: initialTime,
   onSuccess,
 }: CreateBookingDialogProps) => {
-  const [clients, setClients] = useState<any[]>([]);
-  const [services, setServices] = useState<any[]>([]);
-  const [barbers, setBarbers] = useState<any[]>([]);
+  const [clients, setClients] = useState<ClientOption[]>([]);
+  const [services, setServices] = useState<ServiceOption[]>([]);
+  const [barbers, setBarbers] = useState<BarberOption[]>([]);
   const [selectedClient, setSelectedClient] = useState('');
   const [selectedService, setSelectedService] = useState('');
   const [selectedBarber, setSelectedBarber] = useState(barberId);
@@ -66,7 +96,7 @@ export const CreateBookingDialog = ({
   const [unblockEndTime, setUnblockEndTime] = useState('');
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [recurringDays, setRecurringDays] = useState<number[]>([]);
-  const [blocks, setBlocks] = useState<any[]>([]);
+  const [blocks, setBlocks] = useState<BlockRecord[]>([]);
   const [createClientOpen, setCreateClientOpen] = useState(false);
   const [recurringType, setRecurringType] = useState('single');
   const [recurringPeriodicity, setRecurringPeriodicity] = useState('weekly');
@@ -77,6 +107,7 @@ export const CreateBookingDialog = ({
   const [recurringStartDate, setRecurringStartDate] = useState<Date>(initialDate);
   const [recurringEndDate, setRecurringEndDate] = useState<Date>(initialDate);
   const { toast } = useToast();
+  const createBlocksForPeriod = useCreateBlocksForPeriod();
 
   // Calcular próximo horário padrão (30 min depois do inicial)
   const getDefaultEndTime = (startTime: string) => {
@@ -297,31 +328,6 @@ export const CreateBookingDialog = ({
       return;
     }
 
-    const startDate = startOfDay(blockStartDate);
-    const endDate = startOfDay(blockEndDate);
-    const startDateStr = format(startDate, 'yyyy-MM-dd');
-    const endDateStr = format(endDate, 'yyyy-MM-dd');
-    const isSameDay = startDateStr === endDateStr;
-
-    // Só faz sentido exigir start < end quando o bloqueio é no mesmo dia
-    if (isSameDay && blockStartTime >= blockEndTime) {
-      toast({
-        title: 'Erro',
-        description: 'O horário de início deve ser menor que o horário de fim',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    if (startDate > endDate) {
-      toast({
-        title: 'Erro',
-        description: 'A data de fim deve ser maior ou igual à data de início',
-        variant: 'destructive'
-      });
-      return;
-    }
-
     if (!selectedBarber) {
       toast({
         title: 'Erro',
@@ -331,68 +337,28 @@ export const CreateBookingDialog = ({
       return;
     }
 
-    try {
-      const blocks = [];
-      let currentDate = startDate;
+    const startDateStr = format(startOfDay(blockStartDate), 'yyyy-MM-dd');
+    const endDateStr = format(startOfDay(blockEndDate), 'yyyy-MM-dd');
 
-      while (currentDate <= endDate) {
-        const dateStr = format(currentDate, 'yyyy-MM-dd');
-        const isFirstDay = dateStr === startDateStr;
-        const isLastDay = dateStr === endDateStr;
+    // Sanitize reason before sending
+    const sanitizedReason = blockReason ? sanitizeString(blockReason, { maxLength: 500 }) : undefined;
 
-        let startTime: string;
-        let endTime: string;
-
-        if (isSameDay) {
-          // Mesmo dia: bloquear exatamente o intervalo selecionado
-          startTime = blockStartTime;
-          endTime = blockEndTime;
-        } else if (isFirstDay) {
-          // Primeiro dia: do horário inicial até o fim do dia
-          startTime = blockStartTime;
-          endTime = '23:59';
-        } else if (isLastDay) {
-          // Último dia: do começo do dia até o horário final
-          startTime = '00:00';
-          endTime = blockEndTime;
-        } else {
-          // Dias intermediários: bloquear o dia inteiro
-          startTime = '00:00';
-          endTime = '23:59';
+    createBlocksForPeriod.mutate({
+      barberId: selectedBarber,
+      startDate: startDateStr,
+      endDate: endDateStr,
+      startTime: blockStartTime,
+      endTime: blockEndTime,
+      reason: sanitizedReason,
+    }, {
+      onSuccess: (result) => {
+        if (result.success) {
+          onSuccess();
+          onOpenChange(false);
+          resetForm();
         }
-
-        blocks.push({
-          barber_id: selectedBarber,
-          block_date: dateStr,
-          start_time: startTime,
-          end_time: endTime,
-          reason: blockReason || null
-        });
-
-        currentDate = addDays(currentDate, 1);
       }
-
-      const { error } = await supabase
-        .from('barber_blocks')
-        .insert(blocks);
-
-      if (error) throw error;
-
-      toast({
-        title: 'Horário bloqueado',
-        description: `${blocks.length} bloqueio(s) criado(s) com sucesso`
-      });
-
-      onSuccess();
-      onOpenChange(false);
-      resetForm();
-    } catch (error: any) {
-      toast({
-        title: 'Erro ao bloquear horário',
-        description: error.message,
-        variant: 'destructive'
-      });
-    }
+    });
   };
 
   const handleUnblock = async () => {
@@ -1048,10 +1014,14 @@ export const CreateBookingDialog = ({
                 <Button 
                   onClick={handleBlockTime}
                   className="w-full h-11 bg-destructive hover:bg-destructive/90 text-white font-semibold text-sm mt-2"
-                  disabled={!blockStartTime || !blockEndTime || !selectedBarber}
+                  disabled={!blockStartTime || !blockEndTime || !selectedBarber || createBlocksForPeriod.isPending}
                 >
-                  <Ban className="mr-2 h-4 w-4" />
-                  BLOQUEAR PERÍODO
+                  {createBlocksForPeriod.isPending ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Ban className="mr-2 h-4 w-4" />
+                  )}
+                  {createBlocksForPeriod.isPending ? 'BLOQUEANDO...' : 'BLOQUEAR PERÍODO'}
                 </Button>
               </>
             )}
