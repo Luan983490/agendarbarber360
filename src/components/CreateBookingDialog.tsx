@@ -24,6 +24,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { CreateClientDialog } from './CreateClientDialog';
 import { useCreateBlocksForPeriod } from '@/hooks/useBarber';
 import { sanitizeString } from '@/lib/sanitizer';
+import { getErrorMessage } from '@/lib/error-handler';
 
 // Types for local state
 interface ClientOption {
@@ -295,10 +296,10 @@ export const CreateBookingDialog = ({
       onSuccess();
       onOpenChange(false);
       resetForm();
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: 'Erro ao criar agendamento',
-        description: error.message,
+        description: getErrorMessage(error),
         variant: 'destructive'
       });
     } finally {
@@ -411,10 +412,10 @@ export const CreateBookingDialog = ({
       onSuccess();
       onOpenChange(false);
       resetForm();
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: 'Erro ao desbloquear',
-        description: error.message,
+        description: getErrorMessage(error),
         variant: 'destructive'
       });
     }
@@ -480,10 +481,10 @@ export const CreateBookingDialog = ({
       onSuccess();
       onOpenChange(false);
       resetForm();
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: 'Erro ao criar bloqueios',
-        description: error.message,
+        description: getErrorMessage(error),
         variant: 'destructive'
       });
     }
@@ -882,10 +883,10 @@ export const CreateBookingDialog = ({
                       onSuccess();
                       onOpenChange(false);
                       resetForm();
-                    } catch (error: any) {
+                    } catch (error) {
                       toast({
                         title: 'Erro',
-                        description: error.message,
+                        description: getErrorMessage(error),
                         variant: 'destructive'
                       });
                     }
