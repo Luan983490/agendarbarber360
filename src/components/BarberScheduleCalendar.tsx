@@ -1254,10 +1254,26 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
             
             try {
               if (type === 'single') {
-                // Unblock only the specific slot
-                if (selectedSlot.overlappingBlocks && selectedSlot.overlappingBlocks.length > 0) {
-                  await handleUnblockMultiple(selectedSlot.overlappingBlocks);
-                }
+                // Unblock only the specific 15-minute slot using unblockTimeRange
+                const slotStartMinutes = timeToMinutes(selectedSlot.time);
+                const slotEndMinutes = slotStartMinutes + 15; // 15-minute slot
+                const endTime = minutesToHHMM(slotEndMinutes);
+                
+                // Use barberService.unblockTimeRange for proper partial unblocking
+                const { barberService } = await import('@/services/barber.service');
+                await barberService.unblockTimeRange(
+                  selectedBarber,
+                  dateStr,
+                  selectedSlot.time,
+                  endTime
+                );
+                
+                // Refresh data
+                fetchScheduleData();
+                toast({
+                  title: 'Horário desbloqueado',
+                  description: `O horário ${selectedSlot.time} foi desbloqueado com sucesso.`
+                });
               } else if (type === 'range') {
                 // Unblock all overlapping blocks
                 if (selectedSlot.overlappingBlocks) {
