@@ -1,4 +1,4 @@
-import { Calendar, CalendarDays, BarChart3, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import b360Logo from '@/assets/b360-logo.png';
 import { useEffect } from 'react';
 import {
@@ -21,13 +21,12 @@ interface BarberSidebarProps {
 interface MenuItem {
   id: string;
   title: string;
-  icon: any;
 }
 
 const menuStructure: MenuItem[] = [
-  { id: 'hoje', title: 'Hoje', icon: Calendar },
-  { id: 'agenda', title: 'Minha Agenda', icon: CalendarDays },
-  { id: 'performance', title: 'Meu Desempenho', icon: BarChart3 },
+  { id: 'hoje', title: 'Hoje' },
+  { id: 'agenda', title: 'Minha Agenda' },
+  { id: 'performance', title: 'Meu Desempenho' },
 ];
 
 export function BarberSidebar({ currentTab, onTabChange }: BarberSidebarProps) {
@@ -40,8 +39,8 @@ export function BarberSidebar({ currentTab, onTabChange }: BarberSidebarProps) {
   }, [isMobile, setOpen]);
 
   return (
-    <Sidebar className="border-r w-64 bg-white" collapsible="none">
-      <SidebarHeader className="border-b p-4 bg-white">
+    <Sidebar className="border-r w-64" collapsible="none" style={{ backgroundColor: '#e7e7e7' }}>
+      <SidebarHeader className="border-b p-4" style={{ backgroundColor: '#e7e7e7' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center min-w-0">
             <img src={b360Logo} alt="B360" className="h-10 flex-shrink-0" />
@@ -68,13 +67,12 @@ export function BarberSidebar({ currentTab, onTabChange }: BarberSidebarProps) {
                   tooltip={item.title}
                 >
                   <button
-                    className="w-full hover:bg-gray-100 transition-colors text-gray-900"
+                    className="w-full hover:bg-gray-200 transition-colors text-gray-900"
                     onClick={() => {
                       onTabChange(item.id);
                       if (isMobile) setOpenMobile(false);
                     }}
                   >
-                    <item.icon className="h-4 w-4" strokeWidth={1.5} />
                     <span>{item.title}</span>
                   </button>
                 </SidebarMenuButton>
