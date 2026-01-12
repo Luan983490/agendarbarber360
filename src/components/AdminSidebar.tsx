@@ -83,7 +83,7 @@ export function AdminSidebar({ currentTab, onTabChange }: AdminSidebarProps) {
           </Button>
         </div>
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="pt-4">
         <SidebarGroupContent>
           <SidebarMenu>
             {menuStructure.map((item) => {

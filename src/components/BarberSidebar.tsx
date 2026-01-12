@@ -56,7 +56,7 @@ export function BarberSidebar({ currentTab, onTabChange }: BarberSidebarProps) {
           </Button>
         </div>
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="pt-4">
         <SidebarGroupContent>
           <SidebarMenu>
             {menuStructure.map((item) => (
