@@ -43,11 +43,11 @@ export const SlotActionMenu = ({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" sideOffset={5}>
         <DropdownMenuItem onClick={onCreateBooking}>
-          <Calendar className="mr-2 h-4 w-4" />
+          <Calendar className="mr-2 h-4 w-4" strokeWidth={1.5} />
           Criar Agendamento
         </DropdownMenuItem>
         <DropdownMenuItem onClick={onBlockTime}>
-          <Ban className="mr-2 h-4 w-4" />
+          <Ban className="mr-2 h-4 w-4" strokeWidth={1.5} />
           Bloquear Horário
         </DropdownMenuItem>
       </DropdownMenuContent>

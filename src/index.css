@@ -139,4 +139,9 @@ All colors MUST be HSL.
   h1, h2, h3, h4, h5, h6 {
     @apply font-display font-semibold;
   }
+
+  /* Modern thin icons - applies to all Lucide SVG icons */
+  svg.lucide {
+    stroke-width: 1.5;
+  }
 }

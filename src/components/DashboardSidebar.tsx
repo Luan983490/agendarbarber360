@@ -113,7 +113,7 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
       <SidebarHeader className="border-b p-2 sm:p-3 lg:p-4 bg-muted/50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-            <Store className="h-4 w-4 text-primary flex-shrink-0" />
+            <Store className="h-4 w-4 text-primary flex-shrink-0" strokeWidth={1.5} />
             <h2 className="text-sm sm:text-base lg:text-lg font-semibold truncate">Dashboard</h2>
           </div>
           <Button 
@@ -122,7 +122,7 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
             className="lg:hidden gap-1 flex-shrink-0 h-7 w-7 sm:h-8 sm:w-8 p-0"
             onClick={() => setOpenMobile(false)}
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4" strokeWidth={1.5} />
           </Button>
         </div>
       </SidebarHeader>
@@ -149,7 +149,7 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
                             }
                           }}
                         >
-                          <item.icon className="h-4 w-4" />
+                          <item.icon className="h-4 w-4" strokeWidth={1.5} />
                           <span>{item.title}</span>
                         </button>
                       </SidebarMenuButton>
@@ -168,9 +168,9 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
                     <SidebarMenuItem>
                       <CollapsibleTrigger asChild>
                         <SidebarMenuButton tooltip={item.title}>
-                          <item.icon className="h-4 w-4" />
+                          <item.icon className="h-4 w-4" strokeWidth={1.5} />
                           <span>{item.title}</span>
-                          <ChevronRight className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                          <ChevronRight className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" strokeWidth={1.5} />
                         </SidebarMenuButton>
                       </CollapsibleTrigger>
                       <CollapsibleContent>
@@ -190,7 +190,7 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
                                     }
                                   }}
                                 >
-                                  <subItem.icon className="h-4 w-4" />
+                                  <subItem.icon className="h-4 w-4" strokeWidth={1.5} />
                                   <span>{subItem.title}</span>
                                 </button>
                               </SidebarMenuSubButton>

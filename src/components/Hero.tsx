@@ -34,9 +34,9 @@ export const Hero = () => {
                 searchSection?.scrollIntoView({ behavior: 'smooth' });
               }}
             >
-              <MapPin className="mr-2 h-5 w-5" />
+              <MapPin className="mr-2 h-5 w-5" strokeWidth={1.5} />
               Encontrar Próximo a Mim
-              <ArrowRight className="ml-2 h-5 w-5" />
+              <ArrowRight className="ml-2 h-5 w-5" strokeWidth={1.5} />
             </Button>
             
             <HowItWorks>

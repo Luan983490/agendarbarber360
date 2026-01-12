@@ -52,7 +52,7 @@ export function BarberSidebar({ currentTab, onTabChange }: BarberSidebarProps) {
             className="lg:hidden gap-1 flex-shrink-0"
             onClick={() => setOpenMobile(false)}
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4" strokeWidth={1.5} />
             <span className="text-xs">Fechar</span>
           </Button>
         </div>
@@ -74,7 +74,7 @@ export function BarberSidebar({ currentTab, onTabChange }: BarberSidebarProps) {
                       if (isMobile) setOpenMobile(false);
                     }}
                   >
-                    <item.icon className="h-4 w-4" />
+                    <item.icon className="h-4 w-4" strokeWidth={1.5} />
                     <span>{item.title}</span>
                   </button>
                 </SidebarMenuButton>
