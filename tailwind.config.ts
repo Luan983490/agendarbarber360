@@ -13,6 +13,10 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['Red Hat Display', 'system-ui', 'sans-serif'],
+        display: ['Red Hat Display', 'system-ui', 'sans-serif'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
