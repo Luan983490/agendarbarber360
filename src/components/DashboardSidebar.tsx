@@ -123,7 +123,7 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
           </Button>
         </div>
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="pt-4">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
