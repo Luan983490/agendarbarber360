@@ -81,7 +81,7 @@ export function AdminSidebar({ currentTab, onTabChange }: AdminSidebarProps) {
             className="lg:hidden gap-1 flex-shrink-0"
             onClick={() => setOpenMobile(false)}
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4" strokeWidth={1.5} />
             <span className="text-xs">Fechar</span>
           </Button>
         </div>
@@ -105,7 +105,7 @@ export function AdminSidebar({ currentTab, onTabChange }: AdminSidebarProps) {
                           if (isMobile) setOpenMobile(false);
                         }}
                       >
-                        <item.icon className="h-4 w-4" />
+                        <item.icon className="h-4 w-4" strokeWidth={1.5} />
                         <span>{item.title}</span>
                       </button>
                     </SidebarMenuButton>
@@ -123,9 +123,9 @@ export function AdminSidebar({ currentTab, onTabChange }: AdminSidebarProps) {
                   <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
                       <SidebarMenuButton tooltip={item.title}>
-                        <item.icon className="h-4 w-4" />
+                        <item.icon className="h-4 w-4" strokeWidth={1.5} />
                         <span>{item.title}</span>
-                        <ChevronRight className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                        <ChevronRight className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" strokeWidth={1.5} />
                       </SidebarMenuButton>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
@@ -143,7 +143,7 @@ export function AdminSidebar({ currentTab, onTabChange }: AdminSidebarProps) {
                                   if (isMobile) setOpenMobile(false);
                                 }}
                               >
-                                <subItem.icon className="h-4 w-4" />
+                                <subItem.icon className="h-4 w-4" strokeWidth={1.5} />
                                 <span>{subItem.title}</span>
                               </button>
                             </SidebarMenuSubButton>

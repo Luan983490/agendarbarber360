@@ -53,7 +53,7 @@ export const Header = ({ showBackButton = false }: HeaderProps) => {
                   className="h-8 w-8 sm:h-9 sm:w-9"
                   onClick={handleBack}
                 >
-                  <ArrowLeft className="h-5 w-5" />
+                  <ArrowLeft className="h-5 w-5" strokeWidth={1.5} />
                 </Button>
               )}
 
@@ -105,7 +105,7 @@ export const Header = ({ showBackButton = false }: HeaderProps) => {
                           handleDashboard();
                         }}
                       >
-                        <Store className="mr-2 h-4 w-4" />
+                        <Store className="mr-2 h-4 w-4" strokeWidth={1.5} />
                         <span>Dashboard</span>
                       </DropdownMenuItem>
                     ) : role === 'barber' ? (
@@ -117,7 +117,7 @@ export const Header = ({ showBackButton = false }: HeaderProps) => {
                             navigate('/barber/hoje');
                           }}
                         >
-                          <Calendar className="mr-2 h-4 w-4" />
+                          <Calendar className="mr-2 h-4 w-4" strokeWidth={1.5} />
                           <span>Hoje</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem 
@@ -127,7 +127,7 @@ export const Header = ({ showBackButton = false }: HeaderProps) => {
                             navigate('/barber/agenda');
                           }}
                         >
-                          <CalendarDays className="mr-2 h-4 w-4" />
+                          <CalendarDays className="mr-2 h-4 w-4" strokeWidth={1.5} />
                           <span>Minha Agenda</span>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
@@ -141,7 +141,7 @@ export const Header = ({ showBackButton = false }: HeaderProps) => {
                             handleDashboard();
                           }}
                         >
-                          <Calendar className="mr-2 h-4 w-4" />
+                          <Calendar className="mr-2 h-4 w-4" strokeWidth={1.5} />
                           <span>Meus Agendamentos</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem 
@@ -151,7 +151,7 @@ export const Header = ({ showBackButton = false }: HeaderProps) => {
                             navigate('/historico');
                           }}
                         >
-                          <History className="mr-2 h-4 w-4" />
+                          <History className="mr-2 h-4 w-4" strokeWidth={1.5} />
                           <span>Histórico</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem 
@@ -161,7 +161,7 @@ export const Header = ({ showBackButton = false }: HeaderProps) => {
                             navigate('/pacotes');
                           }}
                         >
-                          <Package className="mr-2 h-4 w-4" />
+                          <Package className="mr-2 h-4 w-4" strokeWidth={1.5} />
                           <span>Meus Pacotes</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem 
@@ -171,7 +171,7 @@ export const Header = ({ showBackButton = false }: HeaderProps) => {
                             navigate('/assinaturas');
                           }}
                         >
-                          <Calendar className="mr-2 h-4 w-4" />
+                          <Calendar className="mr-2 h-4 w-4" strokeWidth={1.5} />
                           <span>Minhas Assinaturas</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem 
@@ -181,7 +181,7 @@ export const Header = ({ showBackButton = false }: HeaderProps) => {
                             navigate('/cartoes');
                           }}
                         >
-                          <CreditCard className="mr-2 h-4 w-4" />
+                          <CreditCard className="mr-2 h-4 w-4" strokeWidth={1.5} />
                           <span>Meus Cartões</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem 
@@ -191,7 +191,7 @@ export const Header = ({ showBackButton = false }: HeaderProps) => {
                             navigate('/favoritos');
                           }}
                         >
-                          <Heart className="mr-2 h-4 w-4" />
+                          <Heart className="mr-2 h-4 w-4" strokeWidth={1.5} />
                           <span>Favoritos</span>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
@@ -205,7 +205,7 @@ export const Header = ({ showBackButton = false }: HeaderProps) => {
                         navigate('/perfil');
                       }}
                     >
-                      <User className="mr-2 h-4 w-4" />
+                      <User className="mr-2 h-4 w-4" strokeWidth={1.5} />
                       <span>Perfil</span>
                     </DropdownMenuItem>
 
@@ -216,7 +216,7 @@ export const Header = ({ showBackButton = false }: HeaderProps) => {
                         navigate('/perfil?tab=security');
                       }}
                     >
-                      <Settings className="mr-2 h-4 w-4" />
+                      <Settings className="mr-2 h-4 w-4" strokeWidth={1.5} />
                       <span>Configurações</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -227,7 +227,7 @@ export const Header = ({ showBackButton = false }: HeaderProps) => {
                         signOut();
                       }}
                     >
-                      <LogOut className="mr-2 h-4 w-4" />
+                      <LogOut className="mr-2 h-4 w-4" strokeWidth={1.5} />
                       <span>Sair</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -252,7 +252,7 @@ export const Header = ({ showBackButton = false }: HeaderProps) => {
                 <Sheet>
                   <SheetTrigger asChild>
                     <Button variant="ghost" size="icon" className="md:hidden h-8 w-8 sm:h-9 sm:w-9">
-                      <Menu className="h-5 w-5" />
+                      <Menu className="h-5 w-5" strokeWidth={1.5} />
                     </Button>
                   </SheetTrigger>
                   <SheetContent>
