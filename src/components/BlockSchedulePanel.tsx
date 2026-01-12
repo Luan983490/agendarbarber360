@@ -352,7 +352,7 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
     <>
       {/* Seletor de Profissional */}
       <div className="space-y-1.5">
-        <Label className="text-xs">Profissional</Label>
+        <Label className="text-xs text-gray-900">Profissional</Label>
         <Select value={barberId} onValueChange={setBarberId}>
           <SelectTrigger className="h-9 text-sm">
             <SelectValue placeholder="Selecione" />
@@ -384,7 +384,7 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
       {/* Dias Selecionados */}
       {selectedDates.length > 0 && (
         <div className="space-y-1.5">
-          <Label className="text-xs">Selecionados ({selectedDates.length})</Label>
+          <Label className="text-xs text-gray-900">Selecionados ({selectedDates.length})</Label>
           <div className="flex flex-wrap gap-1 max-h-16 overflow-y-auto">
             {selectedDates.sort((a, b) => a.getTime() - b.getTime()).map((date) => (
               <Badge 
@@ -407,7 +407,7 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
 
       {/* Tipo de Bloqueio/Desbloqueio */}
       <div className="space-y-1.5">
-        <Label className="text-xs flex items-center gap-1">
+        <Label className="text-xs flex items-center gap-1 text-gray-900">
           <Clock className="h-3.5 w-3.5" />
           {activeTab === 'block' ? 'Tipo de Bloqueio' : 'Tipo de Desbloqueio'}
         </Label>
@@ -437,7 +437,7 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
       {blockMode === 'specific-times' && (
         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Início</Label>
+            <Label className="text-xs text-gray-600">Início</Label>
             <Select value={startTime} onValueChange={setStartTime}>
               <SelectTrigger className="h-9 text-sm">
                 <SelectValue />
@@ -452,7 +452,7 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
             </Select>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Fim</Label>
+            <Label className="text-xs text-gray-600">Fim</Label>
             <Select value={endTime} onValueChange={setEndTime}>
               <SelectTrigger className="h-9 text-sm">
                 <SelectValue />
@@ -472,7 +472,7 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
       {/* Motivo (apenas para bloqueio) */}
       {activeTab === 'block' && (
         <div className="space-y-1">
-          <Label className="text-xs">Motivo (opcional)</Label>
+          <Label className="text-xs text-gray-900">Motivo (opcional)</Label>
           <Textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
@@ -507,9 +507,9 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
   );
 
   return (
-    <Card className="flex flex-col h-full">
+    <Card className="flex flex-col h-full text-gray-900" style={{ backgroundColor: '#e7e7e7' }}>
       <CardHeader className="pb-2 p-3 sm:p-4">
-        <CardTitle className="flex items-center gap-2 text-sm">
+        <CardTitle className="flex items-center gap-2 text-sm text-gray-900">
           {activeTab === 'block' ? <Ban className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
           Gerenciar Horários
         </CardTitle>
