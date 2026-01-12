@@ -141,7 +141,8 @@ const Sidebar = React.forwardRef<
   if (collapsible === "none") {
     return (
       <div
-        className={cn("flex h-full w-[--sidebar-width] flex-col bg-white text-gray-900", className)}
+        className={cn("flex h-full w-[--sidebar-width] flex-col text-gray-900", className)}
+        style={{ backgroundColor: '#e7e7e7', ...props.style }}
         ref={ref}
         {...props}
       >
@@ -156,10 +157,11 @@ const Sidebar = React.forwardRef<
         <SheetContent
           data-sidebar="sidebar"
           data-mobile="true"
-          className="w-[--sidebar-width] bg-white p-0 text-gray-900 [&>button]:hidden"
+          className="w-[--sidebar-width] p-0 text-gray-900 [&>button]:hidden"
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
+              backgroundColor: '#e7e7e7',
             } as React.CSSProperties
           }
           side={side}
@@ -206,7 +208,8 @@ const Sidebar = React.forwardRef<
       >
         <div
           data-sidebar="sidebar"
-          className="flex h-full w-full flex-col bg-white text-gray-900 group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
+          className="flex h-full w-full flex-col text-gray-900 group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
+          style={{ backgroundColor: '#e7e7e7' }}
         >
           {children}
         </div>
