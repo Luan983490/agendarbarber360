@@ -1,4 +1,4 @@
-import { Store, Edit, CalendarDays, Scissors, Users, X, ChevronRight, BarChart3, Settings, ClipboardList } from 'lucide-react';
+import { X, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   Sidebar,
@@ -26,7 +26,6 @@ interface DashboardSidebarProps {
 interface MenuItem {
   id: string;
   title: string;
-  icon: any;
   children?: MenuItem[];
 }
 
@@ -34,23 +33,21 @@ interface MenuItem {
 // 🚀 MENU PRINCIPAL - MVP v1.0
 // ============================================
 const menuStructure: MenuItem[] = [
-  { id: 'bookings', title: 'Agenda', icon: CalendarDays },
-  { id: 'reports', title: 'Relatórios', icon: BarChart3 },
+  { id: 'bookings', title: 'Agenda' },
+  { id: 'reports', title: 'Relatórios' },
   {
     id: 'cadastros',
     title: 'Cadastros',
-    icon: ClipboardList,
     children: [
-      { id: 'services', title: 'Serviços', icon: Scissors },
-      { id: 'barbers', title: 'Barbeiros', icon: Users },
+      { id: 'services', title: 'Serviços' },
+      { id: 'barbers', title: 'Barbeiros' },
     ],
   },
   {
     id: 'configuracoes',
     title: 'Configurações',
-    icon: Settings,
     children: [
-      { id: 'edit', title: 'Editar Barbearia', icon: Edit },
+      { id: 'edit', title: 'Editar Barbearia' },
     ],
   },
 ];
@@ -109,14 +106,14 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
     <Sidebar 
       className="border-r w-56 lg:w-64 shrink-0" 
       collapsible="offcanvas"
+      style={{ backgroundColor: '#e7e7e7' }}
     >
-      <SidebarHeader className="border-b p-2 sm:p-3 lg:p-4 bg-muted/50">
+      <SidebarHeader className="border-b p-2 sm:p-3 lg:p-4" style={{ backgroundColor: '#e7e7e7' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-            <Store className="h-4 w-4 text-primary flex-shrink-0" strokeWidth={1.5} />
-            <h2 className="text-sm sm:text-base lg:text-lg font-semibold truncate">Dashboard</h2>
+            <h2 className="text-sm sm:text-base lg:text-lg font-semibold truncate text-gray-900">Dashboard</h2>
           </div>
-          <Button 
+          <Button
             variant="ghost" 
             size="sm"
             className="lg:hidden gap-1 flex-shrink-0 h-7 w-7 sm:h-8 sm:w-8 p-0"
@@ -141,7 +138,7 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
                         tooltip={item.title}
                       >
                         <button
-                          className="w-full hover:bg-muted/50 transition-colors"
+                          className="w-full hover:bg-gray-200 transition-colors text-gray-900"
                           onClick={() => {
                             onTabChange(item.id);
                             if (isMobile) {
@@ -149,7 +146,6 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
                             }
                           }}
                         >
-                          <item.icon className="h-4 w-4" strokeWidth={1.5} />
                           <span>{item.title}</span>
                         </button>
                       </SidebarMenuButton>
@@ -167,8 +163,7 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
                   >
                     <SidebarMenuItem>
                       <CollapsibleTrigger asChild>
-                        <SidebarMenuButton tooltip={item.title}>
-                          <item.icon className="h-4 w-4" strokeWidth={1.5} />
+                        <SidebarMenuButton tooltip={item.title} className="text-gray-900 hover:bg-gray-200">
                           <span>{item.title}</span>
                           <ChevronRight className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" strokeWidth={1.5} />
                         </SidebarMenuButton>
@@ -182,7 +177,7 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
                                 isActive={currentTab === subItem.id}
                               >
                                 <button
-                                  className="w-full hover:bg-muted/50 transition-colors"
+                                  className="w-full hover:bg-gray-200 transition-colors text-gray-900"
                                   onClick={() => {
                                     onTabChange(subItem.id);
                                     if (isMobile) {
@@ -190,7 +185,6 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
                                     }
                                   }}
                                 >
-                                  <subItem.icon className="h-4 w-4" strokeWidth={1.5} />
                                   <span>{subItem.title}</span>
                                 </button>
                               </SidebarMenuSubButton>

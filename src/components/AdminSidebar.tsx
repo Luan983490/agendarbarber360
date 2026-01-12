@@ -1,4 +1,4 @@
-import { Edit, CalendarDays, Scissors, Users, X, ChevronRight, Settings, ClipboardList } from 'lucide-react';
+import { X, ChevronRight } from 'lucide-react';
 import b360Logo from '@/assets/b360-logo.png';
 import { useEffect, useState } from 'react';
 import {
@@ -25,27 +25,24 @@ interface AdminSidebarProps {
 interface MenuItem {
   id: string;
   title: string;
-  icon: any;
   children?: MenuItem[];
 }
 
 const menuStructure: MenuItem[] = [
-  { id: 'bookings', title: 'Agenda', icon: CalendarDays },
+  { id: 'bookings', title: 'Agenda' },
   {
     id: 'cadastros',
     title: 'Cadastros',
-    icon: ClipboardList,
     children: [
-      { id: 'services', title: 'Serviços', icon: Scissors },
-      { id: 'barbers', title: 'Barbeiros', icon: Users },
+      { id: 'services', title: 'Serviços' },
+      { id: 'barbers', title: 'Barbeiros' },
     ],
   },
   {
     id: 'configuracoes',
     title: 'Configurações',
-    icon: Settings,
     children: [
-      { id: 'edit', title: 'Editar Barbearia', icon: Edit },
+      { id: 'edit', title: 'Editar Barbearia' },
     ],
   },
 ];
@@ -69,8 +66,8 @@ export function AdminSidebar({ currentTab, onTabChange }: AdminSidebarProps) {
   };
 
   return (
-    <Sidebar className="border-r w-64 bg-white" collapsible="none">
-      <SidebarHeader className="border-b p-4 bg-white">
+    <Sidebar className="border-r w-64" collapsible="none" style={{ backgroundColor: '#e7e7e7' }}>
+      <SidebarHeader className="border-b p-4" style={{ backgroundColor: '#e7e7e7' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center min-w-0">
             <img src={b360Logo} alt="B360" className="h-10 flex-shrink-0" />
@@ -99,13 +96,12 @@ export function AdminSidebar({ currentTab, onTabChange }: AdminSidebarProps) {
                       tooltip={item.title}
                     >
                       <button
-                        className="w-full hover:bg-gray-100 transition-colors text-gray-900"
+                        className="w-full hover:bg-gray-200 transition-colors text-gray-900"
                         onClick={() => {
                           onTabChange(item.id);
                           if (isMobile) setOpenMobile(false);
                         }}
                       >
-                        <item.icon className="h-4 w-4" strokeWidth={1.5} />
                         <span>{item.title}</span>
                       </button>
                     </SidebarMenuButton>
@@ -122,8 +118,7 @@ export function AdminSidebar({ currentTab, onTabChange }: AdminSidebarProps) {
                 >
                   <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
-                      <SidebarMenuButton tooltip={item.title}>
-                        <item.icon className="h-4 w-4" strokeWidth={1.5} />
+                      <SidebarMenuButton tooltip={item.title} className="text-gray-900 hover:bg-gray-200">
                         <span>{item.title}</span>
                         <ChevronRight className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" strokeWidth={1.5} />
                       </SidebarMenuButton>
@@ -137,13 +132,12 @@ export function AdminSidebar({ currentTab, onTabChange }: AdminSidebarProps) {
                               isActive={currentTab === subItem.id}
                             >
                               <button
-                                className="w-full hover:bg-gray-100 transition-colors text-gray-900"
+                                className="w-full hover:bg-gray-200 transition-colors text-gray-900"
                                 onClick={() => {
                                   onTabChange(subItem.id);
                                   if (isMobile) setOpenMobile(false);
                                 }}
                               >
-                                <subItem.icon className="h-4 w-4" strokeWidth={1.5} />
                                 <span>{subItem.title}</span>
                               </button>
                             </SidebarMenuSubButton>
