@@ -354,12 +354,12 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
       <div className="space-y-1.5">
         <Label className="text-xs text-gray-900">Profissional</Label>
         <Select value={barberId} onValueChange={setBarberId}>
-          <SelectTrigger className="h-9 text-sm">
+          <SelectTrigger className="h-9 text-sm bg-white border-gray-300 text-gray-900">
             <SelectValue placeholder="Selecione" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white text-gray-900">
             {barbers.map((barber) => (
-              <SelectItem key={barber.id} value={barber.id}>
+              <SelectItem key={barber.id} value={barber.id} className="text-gray-900 focus:bg-gray-100">
                 {barber.name}
               </SelectItem>
             ))}
@@ -374,7 +374,7 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
           selected={undefined}
           onSelect={handleDateSelect}
           locale={ptBR}
-          className="rounded-md border pointer-events-auto"
+          className="rounded-md border border-gray-300 pointer-events-auto"
           modifiers={modifiers}
           modifiersStyles={modifiersStyles}
           disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
@@ -390,12 +390,12 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
               <Badge 
                 key={format(date, 'yyyy-MM-dd')}
                 variant="secondary"
-                className="flex items-center gap-1 text-xs"
+                className="flex items-center gap-1 text-xs bg-gray-200 text-gray-900 border-gray-300"
               >
                 {format(date, 'dd/MM', { locale: ptBR })}
                 <button
                   onClick={() => removeDate(date)}
-                  className="hover:text-destructive"
+                  className="hover:text-red-600"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -417,7 +417,7 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
             variant={blockMode === 'full-day' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setBlockMode('full-day')}
-            className="text-xs h-8"
+            className={`text-xs h-8 ${blockMode === 'full-day' ? '' : 'bg-white border-gray-300 text-gray-900 hover:bg-gray-100'}`}
           >
             Dia Inteiro
           </Button>
@@ -426,7 +426,7 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
             variant={blockMode === 'specific-times' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setBlockMode('specific-times')}
-            className="text-xs h-8"
+            className={`text-xs h-8 ${blockMode === 'specific-times' ? '' : 'bg-white border-gray-300 text-gray-900 hover:bg-gray-100'}`}
           >
             Horário Específico
           </Button>
@@ -439,12 +439,12 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
           <div className="space-y-1">
             <Label className="text-xs text-gray-600">Início</Label>
             <Select value={startTime} onValueChange={setStartTime}>
-              <SelectTrigger className="h-9 text-sm">
+              <SelectTrigger className="h-9 text-sm bg-white border-gray-300 text-gray-900">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="max-h-48">
+              <SelectContent className="max-h-48 bg-white text-gray-900">
                 {WORK_HOURS.slice(0, -1).map((time) => (
-                  <SelectItem key={time} value={time}>
+                  <SelectItem key={time} value={time} className="text-gray-900 focus:bg-gray-100">
                     {time}
                   </SelectItem>
                 ))}
@@ -454,12 +454,12 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
           <div className="space-y-1">
             <Label className="text-xs text-gray-600">Fim</Label>
             <Select value={endTime} onValueChange={setEndTime}>
-              <SelectTrigger className="h-9 text-sm">
+              <SelectTrigger className="h-9 text-sm bg-white border-gray-300 text-gray-900">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="max-h-48">
+              <SelectContent className="max-h-48 bg-white text-gray-900">
                 {WORK_HOURS.slice(1).map((time) => (
-                  <SelectItem key={time} value={time}>
+                  <SelectItem key={time} value={time} className="text-gray-900 focus:bg-gray-100">
                     {time}
                   </SelectItem>
                 ))}
@@ -478,7 +478,7 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
             onChange={(e) => setReason(e.target.value)}
             placeholder="Ex: Férias, folga, evento..."
             rows={2}
-            className="text-sm resize-none"
+            className="text-sm resize-none bg-white border-gray-300 text-gray-900 placeholder:text-gray-400"
           />
         </div>
       )}
@@ -516,12 +516,12 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
       </CardHeader>
       <CardContent className="flex-1 flex flex-col space-y-3 overflow-y-auto p-3 sm:p-4 pt-0">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="block" className="text-xs">
+          <TabsList className="grid w-full grid-cols-2 bg-gray-200">
+            <TabsTrigger value="block" className="text-xs text-gray-700 data-[state=active]:bg-white data-[state=active]:text-gray-900">
               <Ban className="h-3.5 w-3.5 mr-1" />
               Bloquear
             </TabsTrigger>
-            <TabsTrigger value="unblock" className="text-xs">
+            <TabsTrigger value="unblock" className="text-xs text-gray-700 data-[state=active]:bg-white data-[state=active]:text-gray-900">
               <Unlock className="h-3.5 w-3.5 mr-1" />
               Desbloquear
             </TabsTrigger>
