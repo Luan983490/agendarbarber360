@@ -1096,7 +1096,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                 <span className="sm:hidden">Externo</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-destructive" />
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded" style={{ backgroundColor: '#801010' }} />
                 <span>Bloqueado</span>
               </div>
               <div className="flex items-center gap-2">
