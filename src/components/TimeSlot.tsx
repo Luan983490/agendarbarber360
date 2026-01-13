@@ -66,8 +66,8 @@ export const TimeSlot = ({
           isBookingMiddle && 'rounded-none border-t-0 border-b-0'
         );
       case 'blocked':
-        // Vermelho para bloqueado
-        return 'bg-red-500 border-red-600 text-white cursor-pointer hover:bg-red-600 rounded';
+        // Vermelho para bloqueado - cor personalizada #a52424
+        return 'text-white cursor-pointer rounded' + ' ' + '[&]:bg-[#a52424] [&]:border-[#8a1e1e] [&]:hover:bg-[#8a1e1e]';
       case 'off-hours':
         // Preto/escuro para fora de funcionamento
         return 'bg-gray-900 dark:bg-black border-gray-800 dark:border-gray-900 cursor-not-allowed opacity-80 rounded';
