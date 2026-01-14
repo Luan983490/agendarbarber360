@@ -1205,7 +1205,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
 
                 {/* Linhas de horários - SCROLLÁVEL */}
                 <div className="flex-1 min-h-0 overflow-auto scrollbar-thin">
-                  <div className="divide-y divide-gray-400/20">
+                  <div className="divide-y divide-gray-400/10">
                     {allTimeSlotsForView.map((time) => (
                       <div
                         key={time}
@@ -1216,7 +1216,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                         }}
                       >
                         <div 
-                          className="text-[9px] sm:text-[10px] font-medium flex items-center justify-end pr-1 sticky left-0 z-10 text-black border-r border-gray-400/20"
+                          className="text-[9px] sm:text-[10px] font-medium flex items-center justify-end pr-1 sticky left-0 z-10 text-black border-r border-gray-400/10"
                           style={{ backgroundColor: '#d9d9d9' }}
                         >
                           {time.substring(0, 5)}
@@ -1224,7 +1224,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                         {displayDays.map((day, i) => {
                           const slotInfo = getSlotType(day, time);
                           return (
-                            <div key={i} className="min-w-0 overflow-hidden border-r border-gray-400/20 last:border-r-0">
+                            <div key={i} className="min-w-0 overflow-hidden border-r border-gray-400/10 last:border-r-0">
                               <TimeSlot
                                 time={time}
                                 type={slotInfo.type}
