@@ -1178,7 +1178,10 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
               /* Visualização Dia/Semana - Grade de Horários */
               <div className="flex flex-col h-full overflow-hidden">
                 {/* Cabeçalho dos dias - FIXO (fora do scroll) */}
-                <div className="flex-shrink-0 bg-background border-b pb-2 overflow-x-auto scrollbar-thin">
+                <div 
+                  className="flex-shrink-0 border-b pb-2 overflow-x-auto scrollbar-thin"
+                  style={{ backgroundColor: '#d9d9d9' }}
+                >
                   <div 
                     className="grid"
                     style={{ 
@@ -1186,13 +1189,13 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                       minWidth: displayDays.length > 1 ? `${40 + displayDays.length * 60}px` : 'auto'
                     }}
                   >
-                    <div className="bg-background sticky left-0 z-10" />
+                    <div className="sticky left-0 z-10" style={{ backgroundColor: '#d9d9d9' }} />
                     {displayDays.map((day, i) => (
                       <div key={i} className="text-center px-0.5 overflow-hidden">
-                        <p className="font-semibold text-[10px] sm:text-xs truncate text-gray-900">
+                        <p className="font-semibold text-[10px] sm:text-xs truncate text-black">
                           {format(day, 'EEE', { locale: ptBR })}
                         </p>
-                        <p className="text-[9px] sm:text-[10px] text-gray-700">
+                        <p className="text-[9px] sm:text-[10px] text-black">
                           {format(day, 'dd/MM')}
                         </p>
                       </div>
