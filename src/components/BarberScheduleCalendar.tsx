@@ -1183,7 +1183,8 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                   style={{ 
                     WebkitOverflowScrolling: 'touch',
                     overscrollBehavior: 'contain',
-                    touchAction: 'pan-x pan-y'
+                    touchAction: 'pan-x pan-y',
+                    backgroundColor: '#f0f0f0'
                   }}
                 >
                   <div 
