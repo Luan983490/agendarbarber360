@@ -1082,23 +1082,23 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                 <CollapsibleContent className="absolute right-0 mt-1 bg-popover border rounded-md shadow-lg p-2 z-50">
                   <div className="flex flex-col gap-1.5 text-xs whitespace-nowrap text-gray-900">
                     <div className="flex items-center gap-1.5">
-                      <div className="w-2.5 h-2.5 bg-foreground border border-border" />
+                      <div className="w-2.5 h-2.5" style={{ backgroundColor: '#0a007e' }} />
                       <span>Disponível</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <div className="w-2.5 h-2.5 bg-success" />
+                      <div className="w-2.5 h-2.5" style={{ backgroundColor: '#00700b' }} />
                       <span>Agendado</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <div className="w-2.5 h-2.5 bg-primary" />
+                      <div className="w-2.5 h-2.5 bg-amber-500" />
                       <span>Sem Cadastro</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <div className="w-2.5 h-2.5" style={{ backgroundColor: '#801010' }} />
+                      <div className="w-2.5 h-2.5" style={{ backgroundColor: '#5e0000' }} />
                       <span>Bloqueado</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <div className="w-2.5 h-2.5 bg-background border border-border/60" />
+                      <div className="w-2.5 h-2.5 bg-gray-900" />
                       <span>Folga</span>
                     </div>
                   </div>
