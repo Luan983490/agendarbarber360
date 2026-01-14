@@ -1176,67 +1176,60 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
               </div>
             ) : (
               /* Visualização Dia/Semana - Grade de Horários */
-              <div className="flex flex-col h-full overflow-hidden">
-                {/* Container com scroll horizontal apenas em mobile */}
-                <div className="flex flex-col h-full overflow-x-auto md:overflow-x-visible">
-                  <div className="min-w-[500px] md:min-w-0 flex flex-col h-full">
-                    {/* Cabeçalho dos dias - FIXO */}
-                    <div className="flex-shrink-0 bg-background border-b pb-2">
-                      <div
-                        className="grid"
-                        style={{ 
-                          gridTemplateColumns: `48px repeat(${displayDays.length}, 1fr)`
-                        }}
-                      >
-                        <div className="bg-background" />
-                        {displayDays.map((day, i) => (
-                          <div key={i} className="text-center min-w-0 px-0.5">
-                            <p className="font-semibold text-xs sm:text-sm truncate">
-                              {format(day, 'EEE', { locale: ptBR })}
-                            </p>
-                            <p className="text-[10px] sm:text-xs text-muted-foreground">
-                              {format(day, 'dd/MM')}
-                            </p>
-                          </div>
-                        ))}
+              <>
+                {/* Cabeçalho dos dias - FIXO (fora do scroll) */}
+                <div className="flex-shrink-0 bg-background border-b pb-2 overflow-x-auto md:overflow-x-hidden">
+                  <div 
+                    className="grid min-w-[500px] md:min-w-0"
+                    style={{ gridTemplateColumns: `48px repeat(${displayDays.length}, 1fr)` }}
+                  >
+                    <div className="bg-background" />
+                    {displayDays.map((day, i) => (
+                      <div key={i} className="text-center min-w-0 px-0.5">
+                        <p className="font-semibold text-xs sm:text-sm truncate">
+                          {format(day, 'EEE', { locale: ptBR })}
+                        </p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">
+                          {format(day, 'dd/MM')}
+                        </p>
                       </div>
-                    </div>
-
-                    {/* Linhas de horários - SCROLLÁVEL VERTICALMENTE */}
-                    <div className="flex-1 min-h-0 overflow-y-auto">
-                      <div className="space-y-0.5">
-                        {allTimeSlotsForView.map((time) => (
-                          <div
-                            key={time}
-                            className="grid gap-0.5"
-                            style={{ gridTemplateColumns: `48px repeat(${displayDays.length}, 1fr)` }}
-                          >
-                            <div className="text-[10px] sm:text-xs font-medium text-muted-foreground flex items-center justify-end pr-1 bg-background">
-                              {time.substring(0, 5)}
-                            </div>
-                            {displayDays.map((day, i) => {
-                              const slotInfo = getSlotType(day, time);
-                              return (
-                                <TimeSlot
-                                  key={i}
-                                  time={time}
-                                  type={slotInfo.type}
-                                  booking={slotInfo.booking}
-                                  block={slotInfo.block}
-                                  onClick={(e) => handleSlotClick(day, time, e)}
-                                  isBookingStart={slotInfo.isBookingStart}
-                                  isBookingMiddle={slotInfo.isBookingMiddle}
-                                  isBookingEnd={slotInfo.isBookingEnd}
-                                />
-                              );
-                            })}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
-              </div>
+
+                {/* Linhas de horários - SCROLLÁVEL VERTICALMENTE */}
+                <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto md:overflow-x-hidden">
+                  <div className="space-y-0.5 min-w-[500px] md:min-w-0">
+                    {allTimeSlotsForView.map((time) => (
+                      <div
+                        key={time}
+                        className="grid gap-0.5"
+                        style={{ gridTemplateColumns: `48px repeat(${displayDays.length}, 1fr)` }}
+                      >
+                        <div className="text-[10px] sm:text-xs font-medium text-muted-foreground flex items-center justify-end pr-1 bg-background sticky left-0">
+                          {time.substring(0, 5)}
+                        </div>
+                        {displayDays.map((day, i) => {
+                          const slotInfo = getSlotType(day, time);
+                          return (
+                            <TimeSlot
+                              key={i}
+                              time={time}
+                              type={slotInfo.type}
+                              booking={slotInfo.booking}
+                              block={slotInfo.block}
+                              onClick={(e) => handleSlotClick(day, time, e)}
+                              isBookingStart={slotInfo.isBookingStart}
+                              isBookingMiddle={slotInfo.isBookingMiddle}
+                              isBookingEnd={slotInfo.isBookingEnd}
+                            />
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
             )}
           </div>
         </CardContent>
