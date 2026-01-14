@@ -713,10 +713,13 @@ const Dashboard = () => {
           </div>
           
           <main className="flex-1 flex flex-col w-full min-h-[calc(100vh-56px)] min-w-0">
-            {/* Conteúdo com scroll */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 lg:p-6">
+            {/* Conteúdo - scroll condicional: bookings gerencia próprio scroll */}
+            <div className={cn(
+              "flex-1 p-3 sm:p-4 lg:p-6 flex flex-col",
+              currentTab === 'bookings' ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'
+            )}>
               {subscription && subscription.plan_type === 'teste_gratis' && subscription.days_remaining <= 2 && (
-                <Alert variant="destructive" className="mb-4 sm:mb-6">
+                <Alert variant="destructive" className="mb-4 sm:mb-6 flex-shrink-0">
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle className="text-sm">Teste Gratuito Encerrando</AlertTitle>
                   <AlertDescription className="text-xs sm:text-sm">
@@ -726,7 +729,7 @@ const Dashboard = () => {
                 </Alert>
               )}
 
-              <div className="h-full">
+              <div className={cn("flex-1", currentTab === 'bookings' ? 'min-h-0' : '')}>
                 {renderContent()}
               </div>
             </div>
