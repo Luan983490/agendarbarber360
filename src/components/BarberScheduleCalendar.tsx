@@ -1176,11 +1176,15 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
               </div>
             ) : (
               /* Visualização Dia/Semana - Grade de Horários */
-              <div className="flex flex-col h-full overflow-hidden touch-pan-x touch-pan-y">
+              <div className="flex flex-col h-full overflow-hidden">
                 {/* Container único para scroll sincronizado */}
                 <div 
-                  className="flex-1 min-h-0 overflow-auto scrollbar-thin overscroll-contain"
-                  style={{ WebkitOverflowScrolling: 'touch' }}
+                  className="flex-1 min-h-0 overflow-auto scrollbar-thin"
+                  style={{ 
+                    WebkitOverflowScrolling: 'touch',
+                    overscrollBehavior: 'contain',
+                    touchAction: 'pan-x pan-y'
+                  }}
                 >
                   <div 
                     style={{ 
