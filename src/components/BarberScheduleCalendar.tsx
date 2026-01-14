@@ -1176,70 +1176,78 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
               </div>
             ) : (
               /* Visualização Dia/Semana - Grade de Horários */
-              <div className="flex flex-col h-full overflow-hidden">
-                {/* Cabeçalho dos dias - FIXO (fora do scroll) */}
+              <div className="flex flex-col h-full overflow-hidden touch-pan-x touch-pan-y">
+                {/* Container único para scroll sincronizado */}
                 <div 
-                  className="flex-shrink-0 border-b pb-2 overflow-x-auto scrollbar-thin"
-                  style={{ backgroundColor: '#d9d9d9' }}
+                  className="flex-1 min-h-0 overflow-auto scrollbar-thin overscroll-contain"
+                  style={{ WebkitOverflowScrolling: 'touch' }}
                 >
                   <div 
-                    className="grid"
                     style={{ 
-                      gridTemplateColumns: `40px repeat(${displayDays.length}, minmax(50px, 1fr))`,
                       minWidth: displayDays.length > 1 ? `${40 + displayDays.length * 60}px` : 'auto'
                     }}
                   >
-                    <div className="sticky left-0 z-10" style={{ backgroundColor: '#d9d9d9' }} />
-                    {displayDays.map((day, i) => (
-                      <div key={i} className="text-center px-0.5 overflow-hidden">
-                        <p className="font-semibold text-[10px] sm:text-xs truncate text-black">
-                          {format(day, 'EEE', { locale: ptBR })}
-                        </p>
-                        <p className="text-[9px] sm:text-[10px] text-black">
-                          {format(day, 'dd/MM')}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Linhas de horários - SCROLLÁVEL */}
-                <div className="flex-1 min-h-0 overflow-auto scrollbar-thin">
-                  <div className="divide-y divide-gray-400/10">
-                    {allTimeSlotsForView.map((time) => (
-                      <div
-                        key={time}
+                    {/* Cabeçalho dos dias - STICKY no topo */}
+                    <div 
+                      className="sticky top-0 z-20 border-b pb-2"
+                      style={{ backgroundColor: '#d9d9d9' }}
+                    >
+                      <div 
                         className="grid"
                         style={{ 
-                          gridTemplateColumns: `40px repeat(${displayDays.length}, minmax(50px, 1fr))`,
-                          minWidth: displayDays.length > 1 ? `${40 + displayDays.length * 60}px` : 'auto'
+                          gridTemplateColumns: `40px repeat(${displayDays.length}, minmax(50px, 1fr))`
                         }}
                       >
-                        <div 
-                          className="text-[9px] sm:text-[10px] font-medium flex items-center justify-end pr-1 sticky left-0 z-10 text-black border-r border-gray-400/10"
-                          style={{ backgroundColor: '#d9d9d9' }}
-                        >
-                          {time.substring(0, 5)}
-                        </div>
-                        {displayDays.map((day, i) => {
-                          const slotInfo = getSlotType(day, time);
-                          return (
-                            <div key={i} className="min-w-0 overflow-hidden border-r border-gray-400/10 last:border-r-0">
-                              <TimeSlot
-                                time={time}
-                                type={slotInfo.type}
-                                booking={slotInfo.booking}
-                                block={slotInfo.block}
-                                onClick={(e) => handleSlotClick(day, time, e)}
-                                isBookingStart={slotInfo.isBookingStart}
-                                isBookingMiddle={slotInfo.isBookingMiddle}
-                                isBookingEnd={slotInfo.isBookingEnd}
-                              />
-                            </div>
-                          );
-                        })}
+                        <div className="sticky left-0 z-30" style={{ backgroundColor: '#d9d9d9' }} />
+                        {displayDays.map((day, i) => (
+                          <div key={i} className="text-center px-0.5 overflow-hidden">
+                            <p className="font-semibold text-[10px] sm:text-xs truncate text-black">
+                              {format(day, 'EEE', { locale: ptBR })}
+                            </p>
+                            <p className="text-[9px] sm:text-[10px] text-black">
+                              {format(day, 'dd/MM')}
+                            </p>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    </div>
+
+                    {/* Linhas de horários */}
+                    <div className="divide-y divide-gray-400/10">
+                      {allTimeSlotsForView.map((time) => (
+                        <div
+                          key={time}
+                          className="grid"
+                          style={{ 
+                            gridTemplateColumns: `40px repeat(${displayDays.length}, minmax(50px, 1fr))`
+                          }}
+                        >
+                          <div 
+                            className="text-[9px] sm:text-[10px] font-medium flex items-center justify-end pr-1 sticky left-0 z-10 text-black border-r border-gray-400/10"
+                            style={{ backgroundColor: '#d9d9d9' }}
+                          >
+                            {time.substring(0, 5)}
+                          </div>
+                          {displayDays.map((day, i) => {
+                            const slotInfo = getSlotType(day, time);
+                            return (
+                              <div key={i} className="min-w-0 overflow-hidden border-r border-gray-400/10 last:border-r-0">
+                                <TimeSlot
+                                  time={time}
+                                  type={slotInfo.type}
+                                  booking={slotInfo.booking}
+                                  block={slotInfo.block}
+                                  onClick={(e) => handleSlotClick(day, time, e)}
+                                  isBookingStart={slotInfo.isBookingStart}
+                                  isBookingMiddle={slotInfo.isBookingMiddle}
+                                  isBookingEnd={slotInfo.isBookingEnd}
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
