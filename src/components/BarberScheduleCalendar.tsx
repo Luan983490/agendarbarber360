@@ -1212,7 +1212,10 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                           minWidth: displayDays.length > 1 ? `${40 + displayDays.length * 60}px` : 'auto'
                         }}
                       >
-                        <div className="text-[9px] sm:text-[10px] font-medium text-muted-foreground flex items-center justify-end pr-1 bg-background sticky left-0 z-10">
+                        <div 
+                          className="text-[9px] sm:text-[10px] font-medium flex items-center justify-end pr-1 sticky left-0 z-10 text-black"
+                          style={{ backgroundColor: '#d9d9d9' }}
+                        >
                           {time.substring(0, 5)}
                         </div>
                         {displayDays.map((day, i) => {
