@@ -44,35 +44,33 @@ export const TimeSlot = ({
     
     switch (type) {
       case 'available':
-        return 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-300 dark:border-gray-600 cursor-pointer rounded';
+        return 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-300 dark:border-gray-600 cursor-pointer';
       case 'booked':
         // Verde para agendado com cliente cadastrado - texto branco para contraste
         return cn(
           'bg-emerald-600 border-emerald-700 text-white',
           'cursor-pointer hover:bg-emerald-700',
-          isBookingStart && !isBookingEnd && 'rounded-t border-b-0',
-          isBookingEnd && !isBookingStart && 'rounded-b border-t-0',
-          isBookingStart && isBookingEnd && 'rounded',
-          isBookingMiddle && 'rounded-none border-t-0 border-b-0'
+          isBookingStart && !isBookingEnd && 'border-b-0',
+          isBookingEnd && !isBookingStart && 'border-t-0',
+          isBookingMiddle && 'border-t-0 border-b-0'
         );
       case 'booked-external':
         // Amarelo para agendado sem cadastro (externo) - texto escuro para contraste
         return cn(
           'bg-amber-500 border-amber-600 text-amber-950',
           'cursor-pointer hover:bg-amber-600',
-          isBookingStart && !isBookingEnd && 'rounded-t border-b-0',
-          isBookingEnd && !isBookingStart && 'rounded-b border-t-0',
-          isBookingStart && isBookingEnd && 'rounded',
-          isBookingMiddle && 'rounded-none border-t-0 border-b-0'
+          isBookingStart && !isBookingEnd && 'border-b-0',
+          isBookingEnd && !isBookingStart && 'border-t-0',
+          isBookingMiddle && 'border-t-0 border-b-0'
         );
       case 'blocked':
         // Vermelho para bloqueado - cor personalizada #801010
-        return 'text-white cursor-pointer rounded' + ' ' + '[&]:bg-[#801010] [&]:border-[#600c0c] [&]:hover:bg-[#600c0c]';
+        return 'text-white cursor-pointer [&]:bg-[#801010] [&]:border-[#600c0c] [&]:hover:bg-[#600c0c]';
       case 'off-hours':
         // Preto/escuro para fora de funcionamento
-        return 'bg-gray-900 dark:bg-black border-gray-800 dark:border-gray-900 cursor-not-allowed opacity-80 rounded';
+        return 'bg-gray-900 dark:bg-black border-gray-800 dark:border-gray-900 cursor-not-allowed opacity-80';
       default:
-        return 'bg-muted border-border rounded';
+        return 'bg-muted border-border';
     }
   };
 
