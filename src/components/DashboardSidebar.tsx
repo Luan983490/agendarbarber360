@@ -106,9 +106,9 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
     <Sidebar 
       className="border-r w-56 lg:w-64 shrink-0" 
       collapsible="offcanvas"
-      style={{ backgroundColor: '#e7e7e7' }}
+      style={{ backgroundColor: '#fffce8' }}
     >
-      <SidebarHeader className="border-b p-2 sm:p-3 lg:p-4" style={{ backgroundColor: '#e7e7e7' }}>
+      <SidebarHeader className="border-b p-2 sm:p-3 lg:p-4" style={{ backgroundColor: '#fffce8' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             <h2 className="text-sm sm:text-base lg:text-lg font-semibold truncate text-gray-900">Dashboard</h2>
@@ -123,7 +123,7 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
           </Button>
         </div>
       </SidebarHeader>
-      <SidebarContent className="pt-4">
+      <SidebarContent className="pt-4" style={{ backgroundColor: '#fffce8' }}>
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
