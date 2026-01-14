@@ -1177,20 +1177,20 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
             ) : (
               /* Visualização Dia/Semana - Grade de Horários */
               <div className="flex flex-col h-full overflow-hidden">
-                <div className="overflow-x-auto">
-                  <div style={{ minWidth: `${56 + displayDays.length * 112}px` }}>
+                {/* Container com scroll horizontal apenas em mobile */}
+                <div className="flex flex-col h-full overflow-x-auto md:overflow-x-visible">
+                  <div className="min-w-[500px] md:min-w-0 flex flex-col h-full">
                     {/* Cabeçalho dos dias - FIXO */}
-                    <div className="bg-background border-b pb-2">
+                    <div className="flex-shrink-0 bg-background border-b pb-2">
                       <div
                         className="grid"
                         style={{ 
-                          gridTemplateColumns: `56px repeat(${displayDays.length}, minmax(112px, 1fr))`, 
-                          gap: '4px'
+                          gridTemplateColumns: `48px repeat(${displayDays.length}, 1fr)`
                         }}
                       >
                         <div className="bg-background" />
                         {displayDays.map((day, i) => (
-                          <div key={i} className="text-center min-w-0 px-1">
+                          <div key={i} className="text-center min-w-0 px-0.5">
                             <p className="font-semibold text-xs sm:text-sm truncate">
                               {format(day, 'EEE', { locale: ptBR })}
                             </p>
@@ -1203,15 +1203,15 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                     </div>
 
                     {/* Linhas de horários - SCROLLÁVEL VERTICALMENTE */}
-                    <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 320px)' }}>
+                    <div className="flex-1 min-h-0 overflow-y-auto">
                       <div className="space-y-0.5">
                         {allTimeSlotsForView.map((time) => (
                           <div
                             key={time}
                             className="grid gap-0.5"
-                            style={{ gridTemplateColumns: `56px repeat(${displayDays.length}, minmax(112px, 1fr))` }}
+                            style={{ gridTemplateColumns: `48px repeat(${displayDays.length}, 1fr)` }}
                           >
-                            <div className="text-[10px] sm:text-xs font-medium text-muted-foreground flex items-center justify-end pr-2 sticky left-0 bg-background z-10">
+                            <div className="text-[10px] sm:text-xs font-medium text-muted-foreground flex items-center justify-end pr-1 bg-background">
                               {time.substring(0, 5)}
                             </div>
                             {displayDays.map((day, i) => {
