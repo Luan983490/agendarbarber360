@@ -36,20 +36,19 @@ export const TimeSlot = ({
 
   const getSlotStyles = () => {
     // Cores conforme solicitado:
-    // Branco = disponível
-    // Verde = agendado (com cadastro)
+    // #0a007e (azul escuro) = disponível
+    // #00700b (verde escuro) = agendado (com cadastro)
     // Amarelo = agendado externo (sem cadastro)
-    // Vermelho = bloqueado
+    // #5e0000 (vermelho escuro) = bloqueado
     // Preto = fora de funcionamento/dias de folga
     
     switch (type) {
       case 'available':
-        return 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-300 dark:border-gray-600 cursor-pointer';
+        return 'text-white cursor-pointer [&]:bg-[#0a007e] [&]:border-[#080066] [&]:hover:bg-[#080066]';
       case 'booked':
         // Verde para agendado com cliente cadastrado - texto branco para contraste
         return cn(
-          'bg-emerald-600 border-emerald-700 text-white',
-          'cursor-pointer hover:bg-emerald-700',
+          'text-white cursor-pointer [&]:bg-[#00700b] [&]:border-[#005a09] [&]:hover:bg-[#005a09]',
           isBookingStart && !isBookingEnd && 'border-b-0',
           isBookingEnd && !isBookingStart && 'border-t-0',
           isBookingMiddle && 'border-t-0 border-b-0'
@@ -64,8 +63,8 @@ export const TimeSlot = ({
           isBookingMiddle && 'border-t-0 border-b-0'
         );
       case 'blocked':
-        // Vermelho para bloqueado - cor personalizada #801010
-        return 'text-white cursor-pointer [&]:bg-[#801010] [&]:border-[#600c0c] [&]:hover:bg-[#600c0c]';
+        // Vermelho escuro para bloqueado - cor personalizada #5e0000
+        return 'text-white cursor-pointer [&]:bg-[#5e0000] [&]:border-[#4a0000] [&]:hover:bg-[#4a0000]';
       case 'off-hours':
         // Preto/escuro para fora de funcionamento
         return 'bg-gray-900 dark:bg-black border-gray-800 dark:border-gray-900 cursor-not-allowed opacity-80';
@@ -150,7 +149,7 @@ export const TimeSlot = ({
         </div>
       )}
       {!isBooked && type === 'available' && (
-        <Clock className="h-2 w-2 sm:h-2.5 sm:w-2.5 text-gray-400 mx-auto" />
+        <Clock className="h-2 w-2 sm:h-2.5 sm:w-2.5 text-white/70 mx-auto" />
       )}
       {type === 'blocked' && (
         <Ban className="h-2 w-2 sm:h-2.5 sm:w-2.5 text-white/70 mx-auto" />
