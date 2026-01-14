@@ -1107,11 +1107,11 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
             </div>
           </div>
 
-          {/* Grade de Horários - Container principal */}
-          <div className="flex-1 min-h-0 border rounded-md flex flex-col overflow-hidden">
+          {/* Grade de Horários - Container com scroll isolado */}
+          <div className="flex-1 min-h-0 overflow-auto border rounded-md">
             {viewMode === 'month' ? (
               /* Visualização Mensal - Calendário */
-              <div className="flex-1 overflow-auto p-2">
+              <div className="overflow-x-auto -mx-2 px-2">
                 <div className="min-w-[320px]">
                   {/* Cabeçalho dos dias da semana */}
                   <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-2">
@@ -1176,37 +1176,33 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
               </div>
             ) : (
               /* Visualização Dia/Semana - Grade de Horários */
-              <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-                {/* Cabeçalho dos dias - FIXO (não rola) */}
-                <div className="flex-shrink-0 bg-background border-b overflow-x-auto">
-                  <div
-                    className="grid"
-                    style={{ 
-                      gridTemplateColumns: `56px repeat(${displayDays.length}, minmax(112px, 1fr))`, 
-                      gap: '4px',
-                      minWidth: `${56 + displayDays.length * 112}px`
-                    }}
-                  >
-                    <div className="bg-background" />
-                    {displayDays.map((day, i) => (
-                      <div key={i} className="text-center min-w-0 px-1 py-2">
-                        <p className="font-semibold text-xs sm:text-sm truncate">
-                          {format(day, 'EEE', { locale: ptBR })}
-                        </p>
-                        <p className="text-[10px] sm:text-xs text-muted-foreground">
-                          {format(day, 'dd/MM')}
-                        </p>
-                      </div>
-                    ))}
+              <div className="relative overflow-x-auto overflow-y-auto -mx-2 px-2">
+                <div
+                  className="min-w-0"
+                  style={{ minWidth: `${56 + displayDays.length * 112}px` }}
+                >
+                  {/* Cabeçalho dos dias */}
+                  <div className="sticky top-0 bg-background z-20 pb-2 border-b">
+                    <div
+                      className="grid"
+                      style={{ gridTemplateColumns: `56px repeat(${displayDays.length}, minmax(112px, 1fr))`, gap: '4px' }}
+                    >
+                      <div className="sticky left-0 z-30 bg-background" />
+                      {displayDays.map((day, i) => (
+                        <div key={i} className="text-center min-w-0 px-1">
+                          <p className="font-semibold text-xs sm:text-sm truncate">
+                            {format(day, 'EEE', { locale: ptBR })}
+                          </p>
+                          <p className="text-[10px] sm:text-xs text-muted-foreground">
+                            {format(day, 'dd/MM')}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                {/* Corpo da agenda - APENAS ESTA PARTE ROLA */}
-                <div className="flex-1 min-h-0 overflow-auto">
-                  <div 
-                    className="space-y-0.5"
-                    style={{ minWidth: `${56 + displayDays.length * 112}px` }}
-                  >
+                  {/* Linhas de horários */}
+                  <div className="space-y-0.5">
                     {allTimeSlotsForView.map((time) => (
                       <div
                         key={time}
