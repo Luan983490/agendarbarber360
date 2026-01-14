@@ -1016,108 +1016,99 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <Card className="flex flex-col h-full">
-        <CardContent className="flex flex-col flex-1 space-y-4 overflow-hidden p-3 sm:p-4 lg:p-6">
+    <div className="flex flex-col h-full overflow-hidden">
+      <Card className="flex flex-col h-full overflow-hidden">
+        <CardContent className="flex flex-col flex-1 overflow-hidden p-2 sm:p-3 lg:p-4 gap-2">
 
-          {/* Botões de Visualização e Navegação */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 flex-shrink-0">
-            <div className="flex gap-1 bg-muted p-1 rounded-md w-full sm:w-auto">
-              <Button
-                variant={viewMode === 'day' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('day')}
-                className="flex-1 sm:flex-initial"
-              >
-                Dia
-              </Button>
-              <Button
-                variant={viewMode === 'week' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('week')}
-                className="flex-1 sm:flex-initial"
-              >
-                Semana
-              </Button>
-              <Button
-                variant={viewMode === 'month' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('month')}
-                className="flex-1 sm:flex-initial"
-              >
-                Mês
-              </Button>
+          {/* Controles Compactos - Navegação + Legenda */}
+          <div className="flex-shrink-0 space-y-1.5">
+            {/* Linha única: View Mode + Navegação */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex gap-0.5 bg-muted p-0.5 rounded">
+                <Button
+                  variant={viewMode === 'day' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('day')}
+                  className="h-7 px-2 text-xs"
+                >
+                  Dia
+                </Button>
+                <Button
+                  variant={viewMode === 'week' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('week')}
+                  className="h-7 px-2 text-xs"
+                >
+                  Semana
+                </Button>
+                <Button
+                  variant={viewMode === 'month' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('month')}
+                  className="h-7 px-2 text-xs"
+                >
+                  Mês
+                </Button>
+              </div>
+              
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="sm" onClick={handlePrevious} className="h-7 w-7 p-0">
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleToday}
+                  className="hidden sm:inline-flex h-7 px-2 text-xs"
+                >
+                  Hoje
+                </Button>
+                <span className="font-medium text-xs text-center min-w-[100px] sm:min-w-[160px]">
+                  {getDateRangeLabel()}
+                </span>
+                <Button variant="ghost" size="sm" onClick={handleNext} className="h-7 w-7 p-0">
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Legenda Colapsável inline */}
+              <Collapsible className="hidden sm:block">
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm" className="gap-1 text-xs text-muted-foreground hover:text-foreground h-7 px-2">
+                    <span>Legenda</span>
+                    <ChevronDown className="h-3 w-3 transition-transform [[data-state=open]>&]:rotate-180" />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="absolute right-0 mt-1 bg-popover border rounded-md shadow-lg p-2 z-50">
+                  <div className="flex flex-col gap-1.5 text-xs whitespace-nowrap">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2.5 h-2.5 bg-foreground border border-border" />
+                      <span>Disponível</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2.5 h-2.5 bg-success" />
+                      <span>Agendado</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2.5 h-2.5 bg-primary" />
+                      <span>Sem Cadastro</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2.5 h-2.5" style={{ backgroundColor: '#801010' }} />
+                      <span>Bloqueado</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2.5 h-2.5 bg-background border border-border/60" />
+                      <span>Folga</span>
+                    </div>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
             </div>
-            
-            <div className="flex items-center justify-between sm:justify-center gap-2 sm:gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handlePrevious}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleToday}
-                className="hidden sm:inline-flex"
-              >
-                Hoje
-              </Button>
-              <span className="font-semibold text-xs sm:text-sm text-center min-w-[120px] sm:min-w-[200px]">
-                {getDateRangeLabel()}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleNext}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-            
-            <div className="w-full sm:w-auto" />
           </div>
 
-          {/* Legenda Colapsável */}
-          <Collapsible className="flex-shrink-0">
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" size="sm" className="gap-1 text-xs text-muted-foreground hover:text-foreground p-0 h-auto">
-                <span>Legenda</span>
-                <ChevronDown className="h-3 w-3 transition-transform [[data-state=open]>&]:rotate-180" />
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="pt-2">
-              <div className="flex flex-wrap gap-3 text-xs">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-3 h-3 bg-foreground border border-border" />
-                  <span>Disponível</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-3 h-3 bg-success" />
-                  <span>Agendado</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-3 h-3 bg-primary" />
-                  <span className="hidden sm:inline">Agendado sem Cadastro</span>
-                  <span className="sm:hidden">Externo</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-3 h-3" style={{ backgroundColor: '#801010' }} />
-                  <span>Bloqueado</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-3 h-3 bg-background border border-border/60" />
-                  <span className="hidden sm:inline">Fora do Expediente</span>
-                  <span className="sm:hidden">Folga</span>
-                </div>
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
-
-          {/* Grade de Horários ou Calendário Mensal - Container com scroll próprio */}
-          <div className="flex-1 min-h-0 overflow-auto">
+          {/* Grade de Horários - Container com scroll isolado */}
+          <div className="flex-1 min-h-0 overflow-auto border rounded-md">
             {viewMode === 'month' ? (
               /* Visualização Mensal - Calendário */
               <div className="overflow-x-auto -mx-2 px-2">
