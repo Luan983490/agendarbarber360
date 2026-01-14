@@ -1176,40 +1176,44 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
               </div>
             ) : (
               /* Visualização Dia/Semana - Grade de Horários */
-              <div className="relative overflow-x-auto overflow-y-auto -mx-2 px-2">
-                <div
-                  className="min-w-0"
-                  style={{ minWidth: `${56 + displayDays.length * 112}px` }}
-                >
-                  {/* Cabeçalho dos dias */}
-                  <div className="sticky top-0 bg-background z-20 pb-2 border-b">
-                    <div
-                      className="grid"
-                      style={{ gridTemplateColumns: `56px repeat(${displayDays.length}, minmax(112px, 1fr))`, gap: '4px' }}
-                    >
-                      <div className="sticky left-0 z-30 bg-background" />
-                      {displayDays.map((day, i) => (
-                        <div key={i} className="text-center min-w-0 px-1">
-                          <p className="font-semibold text-xs sm:text-sm truncate">
-                            {format(day, 'EEE', { locale: ptBR })}
-                          </p>
-                          <p className="text-[10px] sm:text-xs text-muted-foreground">
-                            {format(day, 'dd/MM')}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
+              <div className="flex flex-col h-full">
+                {/* Cabeçalho dos dias - FIXO */}
+                <div className="flex-shrink-0 bg-background border-b pb-2 overflow-x-auto">
+                  <div
+                    className="grid"
+                    style={{ 
+                      gridTemplateColumns: `56px repeat(${displayDays.length}, minmax(112px, 1fr))`, 
+                      gap: '4px',
+                      minWidth: `${56 + displayDays.length * 112}px`
+                    }}
+                  >
+                    <div className="bg-background" />
+                    {displayDays.map((day, i) => (
+                      <div key={i} className="text-center min-w-0 px-1">
+                        <p className="font-semibold text-xs sm:text-sm truncate">
+                          {format(day, 'EEE', { locale: ptBR })}
+                        </p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">
+                          {format(day, 'dd/MM')}
+                        </p>
+                      </div>
+                    ))}
                   </div>
+                </div>
 
-                  {/* Linhas de horários */}
-                  <div className="space-y-0.5">
+                {/* Linhas de horários - SCROLLÁVEL */}
+                <div className="flex-1 min-h-0 overflow-auto">
+                  <div
+                    className="space-y-0.5"
+                    style={{ minWidth: `${56 + displayDays.length * 112}px` }}
+                  >
                     {allTimeSlotsForView.map((time) => (
                       <div
                         key={time}
                         className="grid gap-0.5"
                         style={{ gridTemplateColumns: `56px repeat(${displayDays.length}, minmax(112px, 1fr))` }}
                       >
-                        <div className="text-[10px] sm:text-xs font-medium text-muted-foreground flex items-center justify-end pr-2 sticky left-0 bg-background z-30">
+                        <div className="text-[10px] sm:text-xs font-medium text-muted-foreground flex items-center justify-end pr-2 sticky left-0 bg-background z-10">
                           {time.substring(0, 5)}
                         </div>
                         {displayDays.map((day, i) => {
