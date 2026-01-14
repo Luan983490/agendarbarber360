@@ -150,10 +150,13 @@ export const TimeSlot = ({
         </div>
       )}
       {!isBooked && type === 'available' && (
-        <Clock className="h-2 w-2 sm:h-2.5 sm:w-2.5 text-success/60 mx-auto" />
+        <Clock className="h-2 w-2 sm:h-2.5 sm:w-2.5 text-gray-400 mx-auto" />
       )}
       {type === 'blocked' && (
-        <Ban className="h-2 w-2 sm:h-2.5 sm:w-2.5 text-destructive/60 mx-auto" />
+        <Ban className="h-2 w-2 sm:h-2.5 sm:w-2.5 text-white/70 mx-auto" />
+      )}
+      {type === 'off-hours' && (
+        <span className="text-white/50 text-[8px] mx-auto">—</span>
       )}
     </div>
   );
