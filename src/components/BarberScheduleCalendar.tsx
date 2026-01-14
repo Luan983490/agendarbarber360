@@ -12,7 +12,8 @@ import { BlockOptionsDialog } from './BlockOptionsDialog';
 import { SlotActionMenu } from './SlotActionMenu';
 import { MultiBlockDialog } from './MultiBlockDialog';
 import { useUserAccess } from '@/hooks/useUserAccess';
-import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   format,
   addDays,
@@ -1079,36 +1080,44 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
             <div className="w-full sm:w-auto" />
           </div>
 
-          {/* Ações e Legenda */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 flex-shrink-0">
-            <div className="flex flex-wrap gap-3 text-xs sm:text-sm">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-foreground border border-border" />
-                <span>Disponível</span>
+          {/* Legenda Colapsável */}
+          <Collapsible className="flex-shrink-0">
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm" className="gap-1 text-xs text-muted-foreground hover:text-foreground p-0 h-auto">
+                <span>Legenda</span>
+                <ChevronDown className="h-3 w-3 transition-transform [[data-state=open]>&]:rotate-180" />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-2">
+              <div className="flex flex-wrap gap-3 text-xs">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 bg-foreground border border-border" />
+                  <span>Disponível</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 bg-success" />
+                  <span>Agendado</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 bg-primary" />
+                  <span className="hidden sm:inline">Agendado sem Cadastro</span>
+                  <span className="sm:hidden">Externo</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3" style={{ backgroundColor: '#801010' }} />
+                  <span>Bloqueado</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 bg-background border border-border/60" />
+                  <span className="hidden sm:inline">Fora do Expediente</span>
+                  <span className="sm:hidden">Folga</span>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-success" />
-                <span>Agendado</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-primary" />
-                <span className="hidden sm:inline">Agendado sem Cadastro</span>
-                <span className="sm:hidden">Externo</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded" style={{ backgroundColor: '#801010' }} />
-                <span>Bloqueado</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-background border border-border/60" />
-                <span className="hidden sm:inline">Fora do Expediente</span>
-                <span className="sm:hidden">Folga</span>
-              </div>
-            </div>
-          </div>
+            </CollapsibleContent>
+          </Collapsible>
 
-          {/* Grade de Horários ou Calendário Mensal */}
-          <div className="flex-1 overflow-hidden flex flex-col">
+          {/* Grade de Horários ou Calendário Mensal - Container com scroll próprio */}
+          <div className="flex-1 min-h-0 overflow-auto">
             {viewMode === 'month' ? (
               /* Visualização Mensal - Calendário */
               <div className="overflow-x-auto -mx-2 px-2">
