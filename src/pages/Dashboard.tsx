@@ -424,9 +424,9 @@ const Dashboard = () => {
         );
       case 'bookings':
         return (
-          <div className="h-full flex flex-col gap-3 sm:gap-4">
+          <div className="flex-1 min-h-0 flex flex-col gap-3 sm:gap-4">
             {/* Botão Bloquear Horários - Mobile/Tablet (no topo) */}
-            <div className="xl:hidden">
+            <div className="xl:hidden flex-shrink-0">
               <Sheet open={blockPanelOpen} onOpenChange={setBlockPanelOpen}>
                 <SheetTrigger asChild>
                   <Button 
@@ -455,7 +455,7 @@ const Dashboard = () => {
             </div>
 
             {/* Layout Desktop com calendário e painel lateral */}
-            <div className="flex-1 flex flex-col xl:flex-row gap-4 min-h-0">
+            <div className="flex-1 min-h-0 flex flex-col xl:flex-row gap-4">
               {/* Calendário Principal */}
               <div className="flex-1 min-w-0 min-h-0 flex flex-col">
                 <BarberScheduleCalendar 
@@ -712,10 +712,10 @@ const Dashboard = () => {
             <DashboardSidebar currentTab={currentTab} onTabChange={setCurrentTab} />
           </div>
           
-          <main className="flex-1 flex flex-col w-full min-h-[calc(100vh-56px)] min-w-0">
+          <main className="flex-1 flex flex-col w-full h-[calc(100vh-56px)] min-w-0">
             {/* Conteúdo - scroll condicional: bookings gerencia próprio scroll */}
             <div className={cn(
-              "flex-1 p-3 sm:p-4 lg:p-6 flex flex-col",
+              "flex-1 min-h-0 p-3 sm:p-4 lg:p-6 flex flex-col",
               currentTab === 'bookings' ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'
             )}>
               {subscription && subscription.plan_type === 'teste_gratis' && subscription.days_remaining <= 2 && (
@@ -729,7 +729,7 @@ const Dashboard = () => {
                 </Alert>
               )}
 
-              <div className={cn("flex-1", currentTab === 'bookings' ? 'min-h-0' : '')}>
+              <div className={cn("flex-1 min-h-0 flex flex-col", currentTab === 'bookings' ? '' : '')}>
                 {renderContent()}
               </div>
             </div>
