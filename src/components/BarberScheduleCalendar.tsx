@@ -1189,10 +1189,10 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                     <div className="bg-background sticky left-0 z-10" />
                     {displayDays.map((day, i) => (
                       <div key={i} className="text-center px-0.5 overflow-hidden">
-                        <p className="font-semibold text-[10px] sm:text-xs truncate">
+                        <p className="font-semibold text-[10px] sm:text-xs truncate text-gray-900">
                           {format(day, 'EEE', { locale: ptBR })}
                         </p>
-                        <p className="text-[9px] sm:text-[10px] text-muted-foreground">
+                        <p className="text-[9px] sm:text-[10px] text-gray-700">
                           {format(day, 'dd/MM')}
                         </p>
                       </div>
