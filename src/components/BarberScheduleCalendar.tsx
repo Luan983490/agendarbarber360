@@ -1017,8 +1017,8 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <Card className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: '#fffce8' }}>
-        <CardContent className="flex flex-col flex-1 overflow-hidden p-2 sm:p-3 lg:p-4 gap-2">
+      <Card className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: '#f0f0f0' }}>
+        <CardContent className="flex flex-col flex-1 overflow-hidden p-2 sm:p-3 lg:p-4 gap-2" style={{ backgroundColor: '#f0f0f0' }}>
 
           {/* Controles Compactos - Navegação + Legenda */}
           <div className="flex-shrink-0 space-y-1.5">
