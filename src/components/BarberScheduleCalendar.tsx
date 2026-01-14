@@ -1024,12 +1024,12 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
           <div className="flex-shrink-0 space-y-1.5">
             {/* Linha única: View Mode + Navegação */}
             <div className="flex items-center justify-between gap-2">
-              <div className="flex gap-0.5 bg-muted p-0.5">
+              <div className="flex gap-0.5 bg-stone-200 p-0.5 rounded">
                 <Button
                   variant={viewMode === 'day' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setViewMode('day')}
-                  className="h-7 px-2 text-xs rounded-none"
+                  className="h-7 px-2 text-xs rounded-none text-gray-900"
                 >
                   Dia
                 </Button>
@@ -1037,7 +1037,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                   variant={viewMode === 'week' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setViewMode('week')}
-                  className="h-7 px-2 text-xs rounded-none"
+                  className="h-7 px-2 text-xs rounded-none text-gray-900"
                 >
                   Semana
                 </Button>
@@ -1045,28 +1045,28 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                   variant={viewMode === 'month' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setViewMode('month')}
-                  className="h-7 px-2 text-xs rounded-none"
+                  className="h-7 px-2 text-xs rounded-none text-gray-900"
                 >
                   Mês
                 </Button>
               </div>
               
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="sm" onClick={handlePrevious} className="h-7 w-7 p-0">
+                <Button variant="ghost" size="sm" onClick={handlePrevious} className="h-7 w-7 p-0 text-gray-900 hover:text-gray-700">
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handleToday}
-                  className="hidden sm:inline-flex h-7 px-2 text-xs"
+                  className="hidden sm:inline-flex h-7 px-2 text-xs text-gray-900 hover:text-gray-700"
                 >
                   Hoje
                 </Button>
-                <span className="font-medium text-xs text-center min-w-[100px] sm:min-w-[160px]">
+                <span className="font-medium text-xs text-center min-w-[100px] sm:min-w-[160px] text-gray-900">
                   {getDateRangeLabel()}
                 </span>
-                <Button variant="ghost" size="sm" onClick={handleNext} className="h-7 w-7 p-0">
+                <Button variant="ghost" size="sm" onClick={handleNext} className="h-7 w-7 p-0 text-gray-900 hover:text-gray-700">
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
@@ -1074,13 +1074,13 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
               {/* Legenda Colapsável inline */}
               <Collapsible className="hidden sm:block">
                 <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="sm" className="gap-1 text-xs text-muted-foreground hover:text-foreground h-7 px-2">
+                  <Button variant="ghost" size="sm" className="gap-1 text-xs text-gray-700 hover:text-gray-900 h-7 px-2">
                     <span>Legenda</span>
                     <ChevronDown className="h-3 w-3 transition-transform [[data-state=open]>&]:rotate-180" />
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="absolute right-0 mt-1 bg-popover border rounded-md shadow-lg p-2 z-50">
-                  <div className="flex flex-col gap-1.5 text-xs whitespace-nowrap">
+                  <div className="flex flex-col gap-1.5 text-xs whitespace-nowrap text-gray-900">
                     <div className="flex items-center gap-1.5">
                       <div className="w-2.5 h-2.5 bg-foreground border border-border" />
                       <span>Disponível</span>
