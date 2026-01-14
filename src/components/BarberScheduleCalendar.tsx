@@ -1176,7 +1176,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
               </div>
             ) : (
               /* Visualização Dia/Semana - Grade de Horários */
-              <>
+              <div className="flex flex-col h-full">
                 {/* Cabeçalho dos dias - FIXO (fora do scroll) */}
                 <div className="flex-shrink-0 bg-background border-b pb-2 overflow-x-auto md:overflow-x-hidden">
                   <div 
@@ -1229,7 +1229,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                     ))}
                   </div>
                 </div>
-              </>
+              </div>
             )}
           </div>
         </CardContent>
