@@ -98,6 +98,7 @@ export const TimeSlot = ({
   const slotHeight = 'h-[28px]';
 
   const clientLabel = booking?.client_name?.trim() || 'Cliente';
+  // Pega apenas o primeiro nome para mobile
   const clientShort = clientLabel.split(' ')[0] || clientLabel;
 
   // Continuação de booking usa margem negativa para "colar" no slot anterior
@@ -106,7 +107,8 @@ export const TimeSlot = ({
   const slotContent = (
     <div
       className={cn(
-        'px-1 transition-all flex items-center',
+        // Layout fixo: largura total da célula, overflow hidden para não empurrar outras colunas
+        'w-full overflow-hidden px-0.5 sm:px-1 transition-all flex items-center',
         getSlotStyles(),
         slotHeight,
         continuationStyle
@@ -114,24 +116,27 @@ export const TimeSlot = ({
       onClick={handleClick}
     >
       {isBookingStart && isBooked && booking && (
-        <div className="min-w-0 flex-1 px-1">
-          <div className="flex items-center gap-1.5 min-w-0">
+        <div className="min-w-0 w-full overflow-hidden px-0.5">
+          <div className="flex items-center gap-1 min-w-0">
             {getStatusDot()}
             <span
-              className="min-w-0 flex-1 text-[11px] sm:text-xs font-bold leading-tight truncate"
+              className="min-w-0 flex-1 text-[10px] sm:text-xs font-bold leading-tight truncate"
               title={clientLabel}
             >
-              {clientLabel}
+              {/* Mostra nome curto em mobile, completo em desktop */}
+              <span className="sm:hidden">{clientShort}</span>
+              <span className="hidden sm:inline">{clientLabel}</span>
             </span>
           </div>
 
+          {/* Mostra duração apenas em telas maiores para evitar overflow */}
           {(booking.duration || booking.end_time) && (
             <div className={cn(
-              "mt-1 text-[10px] leading-none truncate font-medium",
+              "hidden sm:block mt-0.5 text-[9px] sm:text-[10px] leading-none truncate font-medium",
               type === 'booked' ? 'text-white/80' : 'text-amber-950/70'
             )}>
               {booking.duration ? `${booking.duration}min` : ''}
-              {booking.end_time ? ` • até ${booking.end_time}` : ''}
+              {booking.end_time ? ` • ${booking.end_time}` : ''}
             </div>
           )}
         </div>
@@ -139,16 +144,16 @@ export const TimeSlot = ({
       {isContinuation && (
         <div className="w-full flex justify-center">
           <div className={cn(
-            "w-1 h-3 rounded-full",
+            "w-1 h-2 sm:h-3 rounded-full",
             type === 'booked' ? "bg-white/40" : "bg-amber-950/30"
           )} />
         </div>
       )}
       {!isBooked && type === 'available' && (
-        <Clock className="h-2.5 w-2.5 text-success/60 mx-auto" />
+        <Clock className="h-2 w-2 sm:h-2.5 sm:w-2.5 text-success/60 mx-auto" />
       )}
       {type === 'blocked' && (
-        <Ban className="h-2.5 w-2.5 text-destructive/60 mx-auto" />
+        <Ban className="h-2 w-2 sm:h-2.5 sm:w-2.5 text-destructive/60 mx-auto" />
       )}
     </div>
   );

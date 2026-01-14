@@ -1176,20 +1176,23 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
               </div>
             ) : (
               /* Visualização Dia/Semana - Grade de Horários */
-              <div className="flex flex-col h-full">
+              <div className="flex flex-col h-full overflow-hidden">
                 {/* Cabeçalho dos dias - FIXO (fora do scroll) */}
-                <div className="flex-shrink-0 bg-background border-b pb-2 overflow-x-auto md:overflow-x-hidden">
+                <div className="flex-shrink-0 bg-background border-b pb-2 overflow-x-auto scrollbar-thin">
                   <div 
-                    className="grid min-w-[500px] md:min-w-0"
-                    style={{ gridTemplateColumns: `48px repeat(${displayDays.length}, 1fr)` }}
+                    className="grid"
+                    style={{ 
+                      gridTemplateColumns: `40px repeat(${displayDays.length}, minmax(50px, 1fr))`,
+                      minWidth: displayDays.length > 1 ? `${40 + displayDays.length * 60}px` : 'auto'
+                    }}
                   >
-                    <div className="bg-background" />
+                    <div className="bg-background sticky left-0 z-10" />
                     {displayDays.map((day, i) => (
-                      <div key={i} className="text-center min-w-0 px-0.5">
-                        <p className="font-semibold text-xs sm:text-sm truncate">
+                      <div key={i} className="text-center px-0.5 overflow-hidden">
+                        <p className="font-semibold text-[10px] sm:text-xs truncate">
                           {format(day, 'EEE', { locale: ptBR })}
                         </p>
-                        <p className="text-[10px] sm:text-xs text-muted-foreground">
+                        <p className="text-[9px] sm:text-[10px] text-muted-foreground">
                           {format(day, 'dd/MM')}
                         </p>
                       </div>
@@ -1197,32 +1200,36 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                   </div>
                 </div>
 
-                {/* Linhas de horários - SCROLLÁVEL VERTICALMENTE */}
-                <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto md:overflow-x-hidden">
-                  <div className="space-y-0.5 min-w-[500px] md:min-w-0">
+                {/* Linhas de horários - SCROLLÁVEL */}
+                <div className="flex-1 min-h-0 overflow-auto scrollbar-thin">
+                  <div className="space-y-0.5">
                     {allTimeSlotsForView.map((time) => (
                       <div
                         key={time}
                         className="grid gap-0.5"
-                        style={{ gridTemplateColumns: `48px repeat(${displayDays.length}, 1fr)` }}
+                        style={{ 
+                          gridTemplateColumns: `40px repeat(${displayDays.length}, minmax(50px, 1fr))`,
+                          minWidth: displayDays.length > 1 ? `${40 + displayDays.length * 60}px` : 'auto'
+                        }}
                       >
-                        <div className="text-[10px] sm:text-xs font-medium text-muted-foreground flex items-center justify-end pr-1 bg-background sticky left-0">
+                        <div className="text-[9px] sm:text-[10px] font-medium text-muted-foreground flex items-center justify-end pr-1 bg-background sticky left-0 z-10">
                           {time.substring(0, 5)}
                         </div>
                         {displayDays.map((day, i) => {
                           const slotInfo = getSlotType(day, time);
                           return (
-                            <TimeSlot
-                              key={i}
-                              time={time}
-                              type={slotInfo.type}
-                              booking={slotInfo.booking}
-                              block={slotInfo.block}
-                              onClick={(e) => handleSlotClick(day, time, e)}
-                              isBookingStart={slotInfo.isBookingStart}
-                              isBookingMiddle={slotInfo.isBookingMiddle}
-                              isBookingEnd={slotInfo.isBookingEnd}
-                            />
+                            <div key={i} className="min-w-0 overflow-hidden">
+                              <TimeSlot
+                                time={time}
+                                type={slotInfo.type}
+                                booking={slotInfo.booking}
+                                block={slotInfo.block}
+                                onClick={(e) => handleSlotClick(day, time, e)}
+                                isBookingStart={slotInfo.isBookingStart}
+                                isBookingMiddle={slotInfo.isBookingMiddle}
+                                isBookingEnd={slotInfo.isBookingEnd}
+                              />
+                            </div>
                           );
                         })}
                       </div>
