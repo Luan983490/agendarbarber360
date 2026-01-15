@@ -1022,15 +1022,16 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
 
           {/* Controles Compactos - Navegação + Legenda */}
           <div className="flex-shrink-0 space-y-1.5">
-            {/* Linha 1: View Mode + Encaixe (desktop) + Navegação */}
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Linha 1: View Mode + Navegação (sempre na mesma linha) */}
+            <div className="flex items-center justify-between gap-1">
+              {/* View Mode + Navegação de data juntos */}
+              <div className="flex items-center gap-1 sm:gap-2">
                 <div className="flex gap-0.5 bg-stone-200 p-0.5 rounded-none">
                   <Button
                     variant={viewMode === 'day' ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => setViewMode('day')}
-                    className="h-7 px-1.5 sm:px-2 text-xs rounded-none text-gray-900"
+                    className="h-6 sm:h-7 px-1 sm:px-2 text-[10px] sm:text-xs rounded-none text-gray-900"
                   >
                     Dia
                   </Button>
@@ -1038,19 +1039,44 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                     variant={viewMode === 'week' ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => setViewMode('week')}
-                    className="h-7 px-1.5 sm:px-2 text-xs rounded-none text-gray-900"
+                    className="h-6 sm:h-7 px-1 sm:px-2 text-[10px] sm:text-xs rounded-none text-gray-900"
                   >
-                    Semana
+                    Sem
                   </Button>
                   <Button
                     variant={viewMode === 'month' ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => setViewMode('month')}
-                    className="h-7 px-1.5 sm:px-2 text-xs rounded-none text-gray-900"
+                    className="h-6 sm:h-7 px-1 sm:px-2 text-[10px] sm:text-xs rounded-none text-gray-900"
                   >
                     Mês
                   </Button>
                 </div>
+                
+                {/* Navegação de data */}
+                <div className="flex items-center gap-0">
+                  <Button variant="ghost" size="sm" onClick={handlePrevious} className="h-6 sm:h-7 w-6 sm:w-7 p-0 text-gray-900 hover:text-gray-700">
+                    <ChevronLeft className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={handleNext} className="h-6 sm:h-7 w-6 sm:w-7 p-0 text-gray-900 hover:text-gray-700">
+                    <ChevronRight className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Data label + Hoje */}
+              <div className="flex items-center gap-1">
+                <span className="font-medium text-[10px] sm:text-xs text-center text-gray-900 truncate max-w-[80px] sm:max-w-[160px]">
+                  {getDateRangeLabel()}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleToday}
+                  className="hidden sm:inline-flex h-7 px-2 text-xs text-gray-900 hover:text-gray-700"
+                >
+                  Hoje
+                </Button>
                 
                 {/* Botão Encaixe - visível apenas em telas grandes */}
                 <Button 
@@ -1061,26 +1087,6 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                 >
                   <Plus className="h-3 w-3" strokeWidth={1.5} />
                   <span>Encaixe</span>
-                </Button>
-              </div>
-              
-              <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
-                <Button variant="ghost" size="sm" onClick={handlePrevious} className="h-7 w-7 p-0 text-gray-900 hover:text-gray-700">
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleToday}
-                  className="hidden md:inline-flex h-7 px-2 text-xs text-gray-900 hover:text-gray-700"
-                >
-                  Hoje
-                </Button>
-                <span className="font-medium text-xs text-center min-w-[80px] sm:min-w-[100px] md:min-w-[160px] text-gray-900 truncate">
-                  {getDateRangeLabel()}
-                </span>
-                <Button variant="ghost" size="sm" onClick={handleNext} className="h-7 w-7 p-0 text-gray-900 hover:text-gray-700">
-                  <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>
