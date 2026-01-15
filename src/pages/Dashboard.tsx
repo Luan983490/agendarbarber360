@@ -424,9 +424,9 @@ const Dashboard = () => {
         );
       case 'bookings':
         return (
-          <div className="flex flex-col gap-3 sm:gap-4" style={{ backgroundColor: '#000000' }}>
+          <div className="flex flex-col h-[calc(100vh-120px)] overflow-hidden" style={{ backgroundColor: '#000000' }}>
             {/* Botão Bloquear Horários - Mobile/Tablet (no topo) */}
-            <div className="xl:hidden flex-shrink-0">
+            <div className="xl:hidden flex-shrink-0 px-1">
               <Sheet open={blockPanelOpen} onOpenChange={setBlockPanelOpen}>
                 <SheetTrigger asChild>
                   <Button 
@@ -455,9 +455,9 @@ const Dashboard = () => {
             </div>
 
             {/* Layout Desktop com calendário e painel lateral */}
-            <div className="flex flex-col xl:flex-row gap-4">
-              {/* Calendário Principal - altura fixa com scroll interno */}
-              <div className="flex-1 min-w-0 h-[calc(100vh-180px)]">
+            <div className="flex-1 flex flex-col xl:flex-row gap-4 min-h-0 overflow-hidden mt-2">
+              {/* Calendário Principal - ocupa toda altura disponível */}
+              <div className="flex-1 min-w-0 min-h-0 overflow-hidden">
                 <BarberScheduleCalendar 
                   barbershopId={barbershop!.id} 
                   barberIdFilter={selectedBarber}
@@ -465,8 +465,8 @@ const Dashboard = () => {
                 />
               </div>
               
-              {/* Painel de Bloqueio - Desktop (rola junto com a página) */}
-              <div className="hidden xl:block w-72 2xl:w-80 flex-shrink-0">
+              {/* Painel de Bloqueio - Desktop */}
+              <div className="hidden xl:block w-72 2xl:w-80 flex-shrink-0 overflow-y-auto">
                 <BlockSchedulePanel 
                   barbershopId={barbershop!.id} 
                   selectedBarberId={selectedBarber}
