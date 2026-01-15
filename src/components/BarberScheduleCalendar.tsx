@@ -1108,7 +1108,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
           </div>
 
           {/* Grade de Horários - Container com altura flexível */}
-          <div className="flex-1 min-h-0 overflow-hidden border rounded-md flex flex-col">
+          <div className="flex-1 min-h-0 overflow-hidden border border-border flex flex-col">
             {viewMode === 'month' ? (
               /* Visualização Mensal - Calendário */
               <div className="flex flex-col h-full">

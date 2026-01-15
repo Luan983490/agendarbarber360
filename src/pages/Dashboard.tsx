@@ -424,7 +424,7 @@ const Dashboard = () => {
         );
       case 'bookings':
         return (
-          <div className="flex-1 min-h-0 flex flex-col gap-3 sm:gap-4 overflow-hidden" style={{ backgroundColor: '#000000' }}>
+          <div className="flex flex-col gap-3 sm:gap-4" style={{ backgroundColor: '#000000' }}>
             {/* Botão Bloquear Horários - Mobile/Tablet (no topo) */}
             <div className="xl:hidden flex-shrink-0">
               <Sheet open={blockPanelOpen} onOpenChange={setBlockPanelOpen}>
@@ -455,9 +455,9 @@ const Dashboard = () => {
             </div>
 
             {/* Layout Desktop com calendário e painel lateral */}
-            <div className="flex-1 flex flex-col xl:flex-row gap-4 min-h-0 overflow-hidden">
-              {/* Calendário Principal - scroll independente em TODOS os dispositivos */}
-              <div className="flex-1 min-w-0 min-h-0 overflow-hidden">
+            <div className="flex flex-col xl:flex-row gap-4">
+              {/* Calendário Principal - altura fixa com scroll interno */}
+              <div className="flex-1 min-w-0 h-[calc(100vh-180px)]">
                 <BarberScheduleCalendar 
                   barbershopId={barbershop!.id} 
                   barberIdFilter={selectedBarber}
@@ -703,18 +703,18 @@ const Dashboard = () => {
 
   return (
     <SidebarProvider>
-      <div className="h-screen bg-background flex flex-col w-full overflow-hidden">
+      <div className="min-h-screen bg-background flex flex-col w-full">
         <DashboardHeader />
         
-        <div className="flex flex-1 w-full pt-14 overflow-hidden">
+        <div className="flex flex-1 w-full pt-14">
           {/* Sidebar Fixo */}
           <div className="sticky top-14 h-[calc(100vh-56px)] z-40">
             <DashboardSidebar currentTab={currentTab} onTabChange={setCurrentTab} />
           </div>
           
-          <main className="flex-1 flex flex-col w-full min-w-0 overflow-hidden">
+          <main className="flex-1 flex flex-col w-full min-w-0">
             {/* Conteúdo - área principal */}
-            <div className="flex-1 p-3 sm:p-4 lg:p-6 flex flex-col min-h-0 overflow-hidden">
+            <div className="flex-1 p-3 sm:p-4 lg:p-6 flex flex-col min-h-0">
               {subscription && subscription.plan_type === 'teste_gratis' && subscription.days_remaining <= 2 && (
                 <Alert variant="destructive" className="mb-4 sm:mb-6 flex-shrink-0">
                   <AlertCircle className="h-4 w-4" />
@@ -726,7 +726,7 @@ const Dashboard = () => {
                 </Alert>
               )}
 
-              <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+              <div className="flex-1 flex flex-col min-h-0">
                 {renderContent()}
               </div>
             </div>
