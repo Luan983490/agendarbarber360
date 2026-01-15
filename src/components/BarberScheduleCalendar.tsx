@@ -1065,8 +1065,8 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
               </div>
 
               {/* Data label + Hoje */}
-              <div className="flex items-center gap-1">
-                <span className="font-medium text-[10px] sm:text-xs text-center text-gray-900 truncate max-w-[80px] sm:max-w-[160px]">
+              <div className="flex items-center gap-1 flex-1 justify-center sm:justify-end sm:flex-none">
+                <span className="font-medium text-[10px] sm:text-xs text-center text-gray-900 truncate max-w-[120px] sm:max-w-[160px]">
                   {getDateRangeLabel()}
                 </span>
                 <Button
