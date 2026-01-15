@@ -1107,8 +1107,8 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
             </div>
           </div>
 
-          {/* Grade de Horários - Container maximizado */}
-          <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+          {/* Grade de Horários - Container maximizado, sem border-radius */}
+          <div className="flex-1 min-h-0 overflow-hidden flex flex-col" style={{ borderRadius: 0 }}>
             {viewMode === 'month' ? (
               /* Visualização Mensal - Calendário */
               <div className="flex flex-col h-full">
@@ -1175,8 +1175,8 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                 </div>
               </div>
             ) : (
-              /* Visualização Dia/Semana - Grade de Horários */
-              <div className="flex flex-col h-full min-h-0">
+              /* Visualização Dia/Semana - Grade de Horários - Quadrada */
+              <div className="flex flex-col h-full min-h-0" style={{ borderRadius: 0 }}>
                 {/* Cabeçalho dos dias - FIXO (não rola) */}
                 <div 
                   className="flex-shrink-0"
@@ -1203,14 +1203,15 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                   </div>
                 </div>
 
-                {/* Container para scroll - apenas os horários rolam */}
+                {/* Container para scroll - apenas os horários rolam, sem bordas arredondadas */}
                 <div 
                   className="flex-1 min-h-0 overflow-y-scroll overflow-x-auto"
                   style={{ 
                     WebkitOverflowScrolling: 'touch',
                     overscrollBehavior: 'contain',
                     touchAction: 'pan-y',
-                    backgroundColor: '#f0f0f0'
+                    backgroundColor: '#f0f0f0',
+                    borderRadius: 0
                   }}
                 >
                   <div 
