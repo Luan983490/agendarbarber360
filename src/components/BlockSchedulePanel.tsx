@@ -507,14 +507,14 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
   );
 
   return (
-    <Card className="flex flex-col h-full">
+    <Card className="flex flex-col">
       <CardHeader className="pb-2 p-3 sm:p-4">
         <CardTitle className="flex items-center gap-2 text-sm">
           {activeTab === 'block' ? <Ban className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
           Gerenciar Horários
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col space-y-3 overflow-y-auto p-3 sm:p-4 pt-0">
+      <CardContent className="flex-1 flex flex-col space-y-3 p-3 sm:p-4 pt-0">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="block" className="text-xs">
