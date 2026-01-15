@@ -1133,10 +1133,9 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
               <div className="flex flex-col h-full">
                 {/* Cabeçalho dos dias da semana - FIXO */}
                 <div className="flex-shrink-0 grid grid-cols-7 gap-1 sm:gap-2 mb-2">
-                  {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, i) => (
-                    <div key={i} className="text-center font-semibold text-[10px] sm:text-sm py-1 sm:py-2 border-b">
-                      <span className="sm:hidden">{day}</span>
-                      <span className="hidden sm:inline">{['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][i]}</span>
+                  {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day, i) => (
+                    <div key={i} className="text-center font-semibold text-[10px] sm:text-sm py-1 sm:py-2 border-b text-black">
+                      {day}
                     </div>
                   ))}
                 </div>
