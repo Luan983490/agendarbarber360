@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { BarberShopCard } from "@/components/BarberShopCard";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Filter, Navigation } from "lucide-react";
+import { MapPin, Filter, Navigation, Loader2, SearchX } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateDistanceKm, formatDistance } from "@/hooks/useGeolocation";
 import { SearchType } from "@/components/AdvancedSearch";
@@ -67,15 +67,24 @@ export const BarberShopGrid = ({
       // Filter by city if selected
       if (searchType === 'city' && selectedCity) {
         const [cityName, stateName] = selectedCity.split('/');
-        query = query.eq('city', cityName).eq('state', stateName);
+        query = query
+          .eq('city', cityName.trim())
+          .eq('state', stateName.trim());
       }
 
-      // Filter by name if searching
-      if (searchType === 'name' && searchQuery) {
-        query = query.ilike('name', `%${searchQuery}%`);
+      // Filter by name if searching (using ilike for partial match)
+      if (searchType === 'name' && searchQuery && searchQuery.trim()) {
+        query = query.ilike('name', `%${searchQuery.trim()}%`);
       }
 
-      const { data, error } = await query.order('created_at', { ascending: false });
+      // For proximity search, only get barbershops with coordinates
+      if (searchType === 'proximity' && userLatitude && userLongitude) {
+        query = query
+          .not('latitude', 'is', null)
+          .not('longitude', 'is', null);
+      }
+
+      const { data, error } = await query.order('name');
 
       if (error) throw error;
 
@@ -121,6 +130,7 @@ export const BarberShopGrid = ({
       setBarbershops(transformedData);
     } catch (error) {
       console.error('Erro ao carregar barbearias:', error);
+      setBarbershops([]);
     } finally {
       setLoading(false);
     }
@@ -150,23 +160,20 @@ export const BarberShopGrid = ({
     };
   }, [fetchBarbershops]);
 
-  // Filter logic
-  const filteredShops = barbershops.filter(shop => {
-    // For name search without query, show all
-    if (searchType === 'name' && searchQuery && !shop.name.toLowerCase().includes(searchQuery.toLowerCase())) {
-      return false;
-    }
-    
-    if (activeFilters.includes("open_now") && !shop.isOpen) {
-      return false;
-    }
-    
-    if (activeFilters.includes("highly_rated") && shop.rating < 4.7) {
-      return false;
-    }
-    
-    return true;
-  });
+  // Apply additional filters (activeFilters)
+  const filteredShops = useMemo(() => {
+    return barbershops.filter(shop => {
+      if (activeFilters.includes("open_now") && !shop.isOpen) {
+        return false;
+      }
+      
+      if (activeFilters.includes("highly_rated") && shop.rating < 4.7) {
+        return false;
+      }
+      
+      return true;
+    });
+  }, [barbershops, activeFilters]);
 
   const getLocationLabel = () => {
     if (searchType === 'city' && selectedCity) {
@@ -178,15 +185,35 @@ export const BarberShopGrid = ({
     return location;
   };
 
+  const getEmptyMessage = () => {
+    if (searchType === 'name' && searchQuery) {
+      return `Nenhuma barbearia encontrada com "${searchQuery}"`;
+    }
+    if (searchType === 'city' && selectedCity) {
+      return `Nenhuma barbearia encontrada em ${selectedCity}`;
+    }
+    if (searchType === 'proximity') {
+      return 'Nenhuma barbearia cadastrou coordenadas geográficas ainda';
+    }
+    return 'Nenhuma barbearia cadastrada ainda';
+  };
+
   return (
     <div>
       {/* Results Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div className="flex items-center space-x-2 mb-2 sm:mb-0">
           <h2 className="text-xl font-semibold text-foreground">
-            {filteredShops.length} {filteredShops.length === 1 ? 'barbearia encontrada' : 'barbearias encontradas'}
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Buscando...
+              </span>
+            ) : (
+              `${filteredShops.length} ${filteredShops.length === 1 ? 'barbearia encontrada' : 'barbearias encontradas'}`
+            )}
           </h2>
-          {getLocationLabel() && (
+          {getLocationLabel() && !loading && (
             <div className="flex items-center text-muted-foreground">
               {searchType === 'proximity' ? (
                 <Navigation className="h-4 w-4 mr-1 text-primary" />
@@ -205,10 +232,10 @@ export const BarberShopGrid = ({
               Ordenado por distância
             </Badge>
           )}
-          {searchType !== 'proximity' && (
+          {searchType !== 'proximity' && filteredShops.length > 0 && (
             <Badge variant="outline" className="text-muted-foreground border-border">
               <Filter className="h-3 w-3 mr-1" />
-              Ordenar por distância
+              Ordenado por nome
             </Badge>
           )}
         </div>
@@ -221,23 +248,21 @@ export const BarberShopGrid = ({
             <div key={i} className="h-64 bg-muted rounded-lg animate-pulse" />
           ))}
         </div>
-      ) : (
+      ) : filteredShops.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredShops.map((shop) => (
             <BarberShopCard key={shop.id} barberShop={shop} />
           ))}
         </div>
-      )}
-
-      {!loading && filteredShops.length === 0 && (
+      ) : (
         <div className="text-center py-12">
           <div className="text-muted-foreground mb-4">
-            <Filter className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p className="text-lg">Nenhuma barbearia encontrada</p>
-            <p className="text-sm">
+            <SearchX className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p className="text-lg font-medium">{getEmptyMessage()}</p>
+            <p className="text-sm mt-2">
               {searchType === 'proximity' 
-                ? 'Nenhuma barbearia cadastrou coordenadas geográficas ainda'
-                : 'Tente ajustar os filtros ou a busca'}
+                ? 'As barbearias precisam cadastrar seu endereço completo para aparecerem aqui.'
+                : 'Tente ajustar os filtros ou fazer uma busca diferente.'}
             </p>
           </div>
         </div>

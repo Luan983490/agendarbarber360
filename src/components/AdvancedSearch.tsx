@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useGeolocation } from "@/hooks/useGeolocation";
+import { useDebounce } from "@/hooks/useDebounce";
 import {
   Command,
   CommandEmpty,
@@ -63,28 +64,45 @@ export const AdvancedSearch = ({
   const [loadingCities, setLoadingCities] = useState(false);
   const [citySearchOpen, setCitySearchOpen] = useState(false);
   const [citySearchQuery, setCitySearchQuery] = useState("");
+  const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
   
   const geolocation = useGeolocation();
+  
+  // Debounce the search query (500ms)
+  const debouncedSearchQuery = useDebounce(localSearchQuery, 500);
+  
+  // Update parent when debounced value changes
+  useEffect(() => {
+    onSearchChange(debouncedSearchQuery);
+  }, [debouncedSearchQuery, onSearchChange]);
+  
+  // Sync local state with prop
+  useEffect(() => {
+    if (searchQuery !== localSearchQuery && searchQuery !== debouncedSearchQuery) {
+      setLocalSearchQuery(searchQuery);
+    }
+  }, [searchQuery]);
 
   // Fetch cities from database
   useEffect(() => {
     const fetchCities = async () => {
       setLoadingCities(true);
       try {
-        const { data, error } = await supabase
-          .rpc('get_barbershop_cities');
+        // Try the RPC function first
+        const { data, error } = await supabase.rpc('get_barbershop_cities');
         
         if (error) throw error;
         setCities(data || []);
       } catch (error) {
-        console.error('Erro ao carregar cidades:', error);
+        console.error('Erro ao carregar cidades via RPC:', error);
         // Fallback: fetch unique cities directly
         try {
           const { data } = await supabase
             .from('barbershops')
             .select('city, state')
             .not('city', 'is', null)
-            .not('state', 'is', null);
+            .not('state', 'is', null)
+            .order('city');
           
           if (data) {
             const uniqueCities = data.reduce((acc: City[], curr) => {
@@ -114,20 +132,20 @@ export const AdvancedSearch = ({
     if (!citySearchQuery) return cities;
     const query = citySearchQuery.toLowerCase();
     return cities.filter(
-      c => c.city.toLowerCase().includes(query) || 
-           c.state.toLowerCase().includes(query)
+      c => c.city?.toLowerCase().includes(query) || 
+           c.state?.toLowerCase().includes(query)
     );
   }, [cities, citySearchQuery]);
 
   // Handle proximity search
-  const handleProximityClick = () => {
+  const handleProximityClick = useCallback(() => {
     if (isProximityActive) {
       onClearProximity();
       geolocation.clearLocation();
     } else {
       geolocation.requestLocation();
     }
-  };
+  }, [isProximityActive, onClearProximity, geolocation]);
 
   // Trigger proximity search when location is obtained
   useEffect(() => {
@@ -136,12 +154,17 @@ export const AdvancedSearch = ({
     }
   }, [geolocation.hasLocation, geolocation.latitude, geolocation.longitude, searchType, onProximitySearch]);
 
-  const handleSearchTypeChange = (type: SearchType) => {
+  const handleSearchTypeChange = useCallback((type: SearchType) => {
     onSearchTypeChange(type);
     if (type === 'proximity' && !geolocation.hasLocation && !geolocation.loading) {
       geolocation.requestLocation();
     }
-  };
+  }, [onSearchTypeChange, geolocation]);
+
+  const handleClearSearch = useCallback(() => {
+    setLocalSearchQuery("");
+    onSearchChange("");
+  }, [onSearchChange]);
 
   return (
     <div className="bg-card rounded-xl p-6 shadow-elegant mb-8">
@@ -187,19 +210,24 @@ export const AdvancedSearch = ({
             <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
             <Input
               placeholder="Digite o nome da barbearia..."
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
+              value={localSearchQuery}
+              onChange={(e) => setLocalSearchQuery(e.target.value)}
               className="pl-10 bg-input border-border text-foreground"
             />
-            {searchQuery && (
+            {localSearchQuery && (
               <Button
                 variant="ghost"
                 size="sm"
                 className="absolute right-2 top-2"
-                onClick={() => onSearchChange("")}
+                onClick={handleClearSearch}
               >
                 <X className="h-4 w-4" />
               </Button>
+            )}
+            {localSearchQuery !== debouncedSearchQuery && (
+              <div className="absolute right-12 top-3">
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              </div>
             )}
           </div>
         )}
@@ -273,6 +301,12 @@ export const AdvancedSearch = ({
                   </Button>
                 </Badge>
               </div>
+            )}
+            
+            {cities.length === 0 && !loadingCities && (
+              <p className="text-sm text-muted-foreground text-center">
+                Nenhuma cidade cadastrada ainda. As barbearias precisam completar seus dados de endereço.
+              </p>
             )}
           </div>
         )}
