@@ -1212,7 +1212,10 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                     {displayDays.map((day, i) => (
                       <div key={i} className="text-center px-0.5 py-2 overflow-hidden">
                         <p className="font-semibold text-[10px] sm:text-xs truncate text-black capitalize">
-                          {format(day, "EEEE, dd/MMM/yyyy", { locale: ptBR }).replace('-feira', '')}
+                          {viewMode === 'week' 
+                            ? format(day, "EEE dd/M", { locale: ptBR })
+                            : format(day, "EEEE, dd/MMM/yyyy", { locale: ptBR }).replace('-feira', '')
+                          }
                         </p>
                       </div>
                     ))}
