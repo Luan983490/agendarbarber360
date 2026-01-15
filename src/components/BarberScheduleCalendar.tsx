@@ -1177,7 +1177,33 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
             ) : (
               /* Visualização Dia/Semana - Grade de Horários */
               <div className="flex flex-col h-full overflow-hidden min-h-0">
-                {/* Container único para scroll sincronizado */}
+                {/* Cabeçalho dos dias - FIXO (não rola) */}
+                <div 
+                  className="flex-shrink-0 border-b"
+                  style={{ backgroundColor: '#d9d9d9' }}
+                >
+                  <div 
+                    className="grid"
+                    style={{ 
+                      gridTemplateColumns: `40px repeat(${displayDays.length}, minmax(50px, 1fr))`,
+                      minWidth: displayDays.length > 1 ? `${40 + displayDays.length * 60}px` : 'auto'
+                    }}
+                  >
+                    <div style={{ backgroundColor: '#d9d9d9' }} />
+                    {displayDays.map((day, i) => (
+                      <div key={i} className="text-center px-0.5 py-2 overflow-hidden">
+                        <p className="font-semibold text-[10px] sm:text-xs truncate text-black">
+                          {format(day, 'EEE', { locale: ptBR })}
+                        </p>
+                        <p className="text-[9px] sm:text-[10px] text-black">
+                          {format(day, 'dd/MM')}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Container para scroll - apenas os horários rolam */}
                 <div 
                   className="flex-1 min-h-0 overflow-auto scrollbar-thin"
                   style={{ 
@@ -1192,31 +1218,6 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                       minWidth: displayDays.length > 1 ? `${40 + displayDays.length * 60}px` : 'auto'
                     }}
                   >
-                    {/* Cabeçalho dos dias - STICKY no topo */}
-                    <div 
-                      className="sticky top-0 z-20 border-b pb-2"
-                      style={{ backgroundColor: '#d9d9d9' }}
-                    >
-                      <div 
-                        className="grid"
-                        style={{ 
-                          gridTemplateColumns: `40px repeat(${displayDays.length}, minmax(50px, 1fr))`
-                        }}
-                      >
-                        <div className="sticky left-0 z-30" style={{ backgroundColor: '#d9d9d9' }} />
-                        {displayDays.map((day, i) => (
-                          <div key={i} className="text-center px-0.5 overflow-hidden">
-                            <p className="font-semibold text-[10px] sm:text-xs truncate text-black">
-                              {format(day, 'EEE', { locale: ptBR })}
-                            </p>
-                            <p className="text-[9px] sm:text-[10px] text-black">
-                              {format(day, 'dd/MM')}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
                     {/* Linhas de horários */}
                     <div className="divide-y divide-gray-400/10">
                       {allTimeSlotsForView.map((time) => (
