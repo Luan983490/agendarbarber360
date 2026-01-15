@@ -1031,7 +1031,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                     variant="ghost"
                     size="sm"
                     onClick={() => setViewMode('day')}
-                    className={`h-7 sm:h-7 px-2 sm:px-2 text-xs sm:text-xs rounded-none ${viewMode === 'day' ? 'bg-amber-500 text-black' : 'text-gray-900 hover:bg-gray-100'}`}
+                    className={`h-7 sm:h-7 px-2 sm:px-2 text-xs sm:text-xs rounded-none ${viewMode === 'day' ? 'bg-amber-500 text-black' : 'text-gray-900 hover:bg-black hover:text-white'}`}
                   >
                     Dia
                   </Button>
@@ -1039,7 +1039,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                     variant="ghost"
                     size="sm"
                     onClick={() => setViewMode('week')}
-                    className={`h-7 sm:h-7 px-2 sm:px-2 text-xs sm:text-xs rounded-none ${viewMode === 'week' ? 'bg-amber-500 text-black' : 'text-gray-900 hover:bg-gray-100'}`}
+                    className={`h-7 sm:h-7 px-2 sm:px-2 text-xs sm:text-xs rounded-none ${viewMode === 'week' ? 'bg-amber-500 text-black' : 'text-gray-900 hover:bg-black hover:text-white'}`}
                   >
                     Sem
                   </Button>
@@ -1047,7 +1047,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                     variant="ghost"
                     size="sm"
                     onClick={() => setViewMode('month')}
-                    className={`h-7 sm:h-7 px-2 sm:px-2 text-xs sm:text-xs rounded-none ${viewMode === 'month' ? 'bg-amber-500 text-black' : 'text-gray-900 hover:bg-gray-100'}`}
+                    className={`h-7 sm:h-7 px-2 sm:px-2 text-xs sm:text-xs rounded-none ${viewMode === 'month' ? 'bg-amber-500 text-black' : 'text-gray-900 hover:bg-black hover:text-white'}`}
                   >
                     Mês
                   </Button>
