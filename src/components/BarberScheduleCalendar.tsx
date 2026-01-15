@@ -1016,15 +1016,15 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      <Card className="flex flex-col h-full overflow-hidden border-0 shadow-none" style={{ backgroundColor: '#f0f0f0' }}>
-        <CardContent className="flex flex-col flex-1 overflow-hidden p-2 sm:p-3 lg:p-4 gap-2 min-h-0" style={{ backgroundColor: '#f0f0f0' }}>
+    <div className="flex flex-col h-full overflow-hidden" style={{ borderRadius: 0 }}>
+      <Card className="flex flex-col h-full overflow-hidden border-0 shadow-none rounded-none" style={{ backgroundColor: '#f0f0f0', borderRadius: 0 }}>
+        <CardContent className="flex flex-col flex-1 overflow-hidden p-2 sm:p-3 lg:p-4 gap-2 min-h-0 rounded-none" style={{ backgroundColor: '#f0f0f0', borderRadius: 0 }}>
 
           {/* Controles Compactos - Navegação + Legenda */}
           <div className="flex-shrink-0 space-y-1.5">
             {/* Linha única: View Mode + Navegação */}
             <div className="flex items-center justify-between gap-2">
-              <div className="flex gap-0.5 bg-stone-200 p-0.5 rounded">
+              <div className="flex gap-0.5 bg-stone-200 p-0.5 rounded-none">
                 <Button
                   variant={viewMode === 'day' ? 'default' : 'ghost'}
                   size="sm"
