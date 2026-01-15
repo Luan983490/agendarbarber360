@@ -1028,26 +1028,26 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
               <div className="flex items-center gap-1 sm:gap-2">
                 <div className="flex gap-0.5 bg-stone-200 p-0.5 sm:p-0.5 rounded-none">
                   <Button
-                    variant={viewMode === 'day' ? 'default' : 'ghost'}
+                    variant="ghost"
                     size="sm"
                     onClick={() => setViewMode('day')}
-                    className="h-7 sm:h-7 px-2 sm:px-2 text-xs sm:text-xs rounded-none text-gray-900"
+                    className={`h-7 sm:h-7 px-2 sm:px-2 text-xs sm:text-xs rounded-none ${viewMode === 'day' ? 'bg-amber-500 text-black' : 'text-gray-900 hover:bg-gray-100'}`}
                   >
                     Dia
                   </Button>
                   <Button
-                    variant={viewMode === 'week' ? 'default' : 'ghost'}
+                    variant="ghost"
                     size="sm"
                     onClick={() => setViewMode('week')}
-                    className="h-7 sm:h-7 px-2 sm:px-2 text-xs sm:text-xs rounded-none text-gray-900"
+                    className={`h-7 sm:h-7 px-2 sm:px-2 text-xs sm:text-xs rounded-none ${viewMode === 'week' ? 'bg-amber-500 text-black' : 'text-gray-900 hover:bg-gray-100'}`}
                   >
                     Sem
                   </Button>
                   <Button
-                    variant={viewMode === 'month' ? 'default' : 'ghost'}
+                    variant="ghost"
                     size="sm"
                     onClick={() => setViewMode('month')}
-                    className="h-7 sm:h-7 px-2 sm:px-2 text-xs sm:text-xs rounded-none text-gray-900"
+                    className={`h-7 sm:h-7 px-2 sm:px-2 text-xs sm:text-xs rounded-none ${viewMode === 'month' ? 'bg-amber-500 text-black' : 'text-gray-900 hover:bg-gray-100'}`}
                   >
                     Mês
                   </Button>
