@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
-import { SearchFilters } from "@/components/SearchFilters";
 import { BarberShopGrid } from "@/components/BarberShopGrid";
 import { AdvancedSearch, SearchType } from "@/components/AdvancedSearch";
 import FavoritesList from "@/components/FavoritesList";
@@ -12,7 +11,6 @@ import b360Logo from '@/assets/b360-logo.png';
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [location, setLocation] = useState("");
   const [searchType, setSearchType] = useState<SearchType>('name');
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
@@ -92,14 +90,9 @@ const Index = () => {
         isProximityActive={isProximityActive}
       />
       
-      <SearchFilters 
-        activeFilters={activeFilters}
-        onFiltersChange={setActiveFilters}
-      />
-      
       <BarberShopGrid 
         searchQuery={searchQuery}
-        activeFilters={activeFilters}
+        activeFilters={[]}
         location={location}
         searchType={searchType}
         selectedCity={selectedCity}
