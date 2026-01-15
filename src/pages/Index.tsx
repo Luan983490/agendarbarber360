@@ -4,7 +4,6 @@ import { Header } from "@/components/Header";
 import { SearchFilters } from "@/components/SearchFilters";
 import { BarberShopGrid } from "@/components/BarberShopGrid";
 import { LocationSearch } from "@/components/LocationSearch";
-import { Hero } from "@/components/Hero";
 import FavoritesList from "@/components/FavoritesList";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserAccess } from "@/hooks/useUserAccess";
@@ -49,8 +48,6 @@ const Index = () => {
       <Header />
       
       <main className="pt-20">
-        <Hero />
-        
         <section className="container mx-auto px-4 py-8">
           <LocationSearch 
             location={location}
