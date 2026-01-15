@@ -989,11 +989,11 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
 
   const getDateRangeLabel = () => {
     if (viewMode === 'day') {
-      return format(currentDate, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+      return format(currentDate, "EEEE, dd 'de' MMM 'de' yyyy", { locale: ptBR });
     } else if (viewMode === 'week') {
       return `${format(currentWeekStart, "dd 'de' MMM", { locale: ptBR })} - ${format(addDays(currentWeekStart, 6), "dd 'de' MMM 'de' yyyy", { locale: ptBR })}`;
     } else {
-      return format(currentDate, "MMMM 'de' yyyy", { locale: ptBR });
+      return format(currentDate, "MMM 'de' yyyy", { locale: ptBR });
     }
   };
 
