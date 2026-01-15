@@ -106,24 +106,24 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
     <Sidebar 
       className="border-r w-56 lg:w-64 shrink-0" 
       collapsible="offcanvas"
-      style={{ backgroundColor: '#fffce8' }}
+      style={{ backgroundColor: '#615e5e' }}
     >
-      <SidebarHeader className="border-b p-2 sm:p-3 lg:p-4" style={{ backgroundColor: '#fffce8' }}>
+      <SidebarHeader className="border-b border-[#4a4848] p-2 sm:p-3 lg:p-4" style={{ backgroundColor: '#615e5e' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-            <h2 className="text-sm sm:text-base lg:text-lg font-semibold truncate text-gray-900">Dashboard</h2>
+            <h2 className="text-sm sm:text-base lg:text-lg font-semibold truncate" style={{ color: '#d9d9d9' }}>Dashboard</h2>
           </div>
           <Button
             variant="ghost" 
             size="sm"
-            className="lg:hidden gap-1 flex-shrink-0 h-7 w-7 sm:h-8 sm:w-8 p-0"
+            className="lg:hidden gap-1 flex-shrink-0 h-7 w-7 sm:h-8 sm:w-8 p-0 text-[#d9d9d9] hover:bg-[#4a4848]"
             onClick={() => setOpenMobile(false)}
           >
             <X className="h-4 w-4" strokeWidth={1.5} />
           </Button>
         </div>
       </SidebarHeader>
-      <SidebarContent className="pt-4" style={{ backgroundColor: '#fffce8' }}>
+      <SidebarContent className="pt-4" style={{ backgroundColor: '#615e5e' }}>
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -138,7 +138,8 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
                         tooltip={item.title}
                       >
                         <button
-                          className="w-full hover:bg-gray-200 transition-colors text-gray-900"
+                          className="w-full hover:bg-[#4a4848] transition-colors"
+                          style={{ color: '#d9d9d9' }}
                           onClick={() => {
                             onTabChange(item.id);
                             if (isMobile) {
@@ -163,7 +164,7 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
                   >
                     <SidebarMenuItem>
                       <CollapsibleTrigger asChild>
-                        <SidebarMenuButton tooltip={item.title} className="text-gray-900 hover:bg-gray-200">
+                        <SidebarMenuButton tooltip={item.title} className="hover:bg-[#4a4848]" style={{ color: '#d9d9d9' }}>
                           <span>{item.title}</span>
                           <ChevronRight className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" strokeWidth={1.5} />
                         </SidebarMenuButton>
@@ -177,7 +178,8 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
                                 isActive={currentTab === subItem.id}
                               >
                                 <button
-                                  className="w-full hover:bg-gray-200 transition-colors text-gray-900"
+                                  className="w-full hover:bg-[#4a4848] transition-colors"
+                                  style={{ color: '#d9d9d9' }}
                                   onClick={() => {
                                     onTabChange(subItem.id);
                                     if (isMobile) {
