@@ -1061,6 +1061,18 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                   <Button variant="ghost" size="sm" onClick={handleNext} className="h-6 sm:h-7 w-6 sm:w-7 p-0 text-gray-900 hover:text-gray-700">
                     <ChevronRight className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
                   </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => {
+                      const today = new Date();
+                      setCurrentDate(today);
+                      setCurrentWeekStart(startOfWeek(today, { locale: ptBR }));
+                    }} 
+                    className="h-6 sm:h-7 px-2 text-xs text-gray-900 hover:text-gray-700 hover:bg-gray-100"
+                  >
+                    Hoje
+                  </Button>
                 </div>
               </div>
 
