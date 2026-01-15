@@ -507,7 +507,7 @@ export const BlockSchedulePanel = ({ barbershopId, selectedBarberId, onBlockSucc
   );
 
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-col rounded-none" style={{ borderRadius: 0 }}>
       <CardHeader className="pb-2 p-3 sm:p-4">
         <CardTitle className="flex items-center gap-2 text-sm">
           {activeTab === 'block' ? <Ban className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
