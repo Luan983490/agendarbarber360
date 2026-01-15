@@ -1064,31 +1064,16 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                 </div>
               </div>
 
-              {/* Data label + Hoje */}
-              <div className="flex items-center gap-1 flex-1 justify-center sm:justify-end sm:flex-none">
-                <span className="font-medium text-[10px] sm:text-xs text-center text-gray-900 truncate max-w-[120px] sm:max-w-[160px]">
-                  {getDateRangeLabel()}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleToday}
-                  className="hidden sm:inline-flex h-7 px-2 text-xs text-gray-900 hover:text-gray-700"
-                >
-                  Hoje
-                </Button>
-                
-                {/* Botão Encaixe - visível apenas em telas grandes */}
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="hidden lg:flex gap-1 text-xs text-gray-700 hover:text-white hover:bg-gray-900 h-7 px-2 rounded-none"
-                  onClick={() => setCreateBookingOpen(true)}
-                >
-                  <Plus className="h-3 w-3" strokeWidth={1.5} />
-                  <span>Encaixe</span>
-                </Button>
-              </div>
+              {/* Botão Encaixe - visível apenas em telas grandes */}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="hidden lg:flex gap-1 text-xs text-gray-700 hover:text-white hover:bg-gray-900 h-7 px-2 rounded-none"
+                onClick={() => setCreateBookingOpen(true)}
+              >
+                <Plus className="h-3 w-3" strokeWidth={1.5} />
+                <span>Encaixe</span>
+              </Button>
             </div>
 
             {/* Linha 2: Encaixe (mobile/tablet) + Legenda */}
