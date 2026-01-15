@@ -455,9 +455,9 @@ const Dashboard = () => {
             </div>
 
             {/* Layout Desktop com calendário e painel lateral */}
-            <div className="flex-1 min-h-0 flex flex-col xl:flex-row gap-4">
-              {/* Calendário Principal */}
-              <div className="flex-1 min-w-0 min-h-0 flex flex-col">
+            <div className="flex-1 flex flex-col xl:flex-row gap-4">
+              {/* Calendário Principal - scroll independente */}
+              <div className="flex-1 min-w-0 h-[calc(100vh-200px)] overflow-y-auto">
                 <BarberScheduleCalendar 
                   barbershopId={barbershop!.id} 
                   barberIdFilter={selectedBarber}
@@ -465,8 +465,8 @@ const Dashboard = () => {
                 />
               </div>
               
-              {/* Painel de Bloqueio - Desktop (rola com a tela, sem scrollbar) */}
-              <div className="hidden xl:flex xl:flex-col w-72 2xl:w-80 flex-shrink-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              {/* Painel de Bloqueio - Desktop (rola junto com a página) */}
+              <div className="hidden xl:block w-72 2xl:w-80 flex-shrink-0">
                 <BlockSchedulePanel 
                   barbershopId={barbershop!.id} 
                   selectedBarberId={selectedBarber}
@@ -712,12 +712,9 @@ const Dashboard = () => {
             <DashboardSidebar currentTab={currentTab} onTabChange={setCurrentTab} />
           </div>
           
-          <main className="flex-1 flex flex-col w-full h-[calc(100vh-56px)] min-w-0">
-            {/* Conteúdo - scroll condicional: bookings gerencia próprio scroll */}
-            <div className={cn(
-              "flex-1 min-h-0 p-3 sm:p-4 lg:p-6 flex flex-col",
-              currentTab === 'bookings' ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'
-            )}>
+          <main className="flex-1 flex flex-col w-full min-w-0 overflow-y-auto">
+            {/* Conteúdo - área de scroll principal */}
+            <div className="flex-1 p-3 sm:p-4 lg:p-6 flex flex-col">
               {subscription && subscription.plan_type === 'teste_gratis' && subscription.days_remaining <= 2 && (
                 <Alert variant="destructive" className="mb-4 sm:mb-6 flex-shrink-0">
                   <AlertCircle className="h-4 w-4" />
@@ -729,7 +726,7 @@ const Dashboard = () => {
                 </Alert>
               )}
 
-              <div className={cn("flex-1 min-h-0 flex flex-col", currentTab === 'bookings' ? '' : '')}>
+              <div className="flex-1 flex flex-col">
                 {renderContent()}
               </div>
             </div>
