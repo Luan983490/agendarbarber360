@@ -1022,32 +1022,45 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
 
           {/* Controles Compactos - Navegação + Legenda */}
           <div className="flex-shrink-0 space-y-1.5">
-            {/* Linha única: View Mode + Navegação */}
+            {/* Linha 1: View Mode + Encaixe (desktop) + Navegação */}
             <div className="flex items-center justify-between gap-2">
-              <div className="flex gap-0.5 bg-stone-200 p-0.5 rounded-none">
-                <Button
-                  variant={viewMode === 'day' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('day')}
-                  className="h-7 px-2 text-xs rounded-none text-gray-900"
+              <div className="flex items-center gap-2">
+                <div className="flex gap-0.5 bg-stone-200 p-0.5 rounded-none">
+                  <Button
+                    variant={viewMode === 'day' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('day')}
+                    className="h-7 px-2 text-xs rounded-none text-gray-900"
+                  >
+                    Dia
+                  </Button>
+                  <Button
+                    variant={viewMode === 'week' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('week')}
+                    className="h-7 px-2 text-xs rounded-none text-gray-900"
+                  >
+                    Semana
+                  </Button>
+                  <Button
+                    variant={viewMode === 'month' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('month')}
+                    className="h-7 px-2 text-xs rounded-none text-gray-900"
+                  >
+                    Mês
+                  </Button>
+                </div>
+                
+                {/* Botão Encaixe - visível apenas em telas maiores */}
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="hidden sm:flex gap-1 text-xs text-gray-700 hover:text-white hover:bg-gray-900 h-7 px-2 rounded-none"
+                  onClick={() => setCreateBookingOpen(true)}
                 >
-                  Dia
-                </Button>
-                <Button
-                  variant={viewMode === 'week' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('week')}
-                  className="h-7 px-2 text-xs rounded-none text-gray-900"
-                >
-                  Semana
-                </Button>
-                <Button
-                  variant={viewMode === 'month' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('month')}
-                  className="h-7 px-2 text-xs rounded-none text-gray-900"
-                >
-                  Mês
+                  <Plus className="h-3 w-3" strokeWidth={1.5} />
+                  <span>Encaixe</span>
                 </Button>
               </div>
               
@@ -1072,8 +1085,19 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
               </div>
             </div>
 
-            {/* Legenda e Encaixe - abaixo do seletor de visualização */}
+            {/* Linha 2: Encaixe (mobile) + Legenda */}
             <div className="flex items-center gap-2">
+              {/* Botão Encaixe - visível apenas em mobile */}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="sm:hidden flex gap-1 text-xs text-gray-700 hover:text-white hover:bg-gray-900 h-7 px-2 rounded-none"
+                onClick={() => setCreateBookingOpen(true)}
+              >
+                <Plus className="h-3 w-3" strokeWidth={1.5} />
+                <span>Encaixe</span>
+              </Button>
+
               {/* Legenda Colapsável */}
               <Collapsible>
                 <CollapsibleTrigger asChild>
@@ -1108,17 +1132,6 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                   </div>
                 </CollapsibleContent>
               </Collapsible>
-
-              {/* Botão Encaixe */}
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="gap-1 text-xs text-gray-700 hover:text-white hover:bg-gray-900 h-7 px-2 rounded-none"
-                onClick={() => setCreateBookingOpen(true)}
-              >
-                <Plus className="h-3 w-3" strokeWidth={1.5} />
-                <span>Encaixe</span>
-              </Button>
             </div>
           </div>
 
