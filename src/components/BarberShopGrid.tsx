@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { BarberShopCard } from "@/components/BarberShopCard";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Filter, Navigation, Loader2, SearchX } from "lucide-react";
+import { MapPin, Filter, Navigation, Loader2, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateDistanceKm, formatDistance } from "@/hooks/useGeolocation";
 import { SearchType } from "@/components/AdvancedSearch";
@@ -55,10 +55,33 @@ export const BarberShopGrid = ({
   userLongitude = null,
 }: BarberShopGridProps) => {
   const [barbershops, setBarbershops] = useState<BarberShop[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+
+  // Check if there's an active search
+  const isSearchActive = useMemo(() => {
+    if (searchType === 'name' && searchQuery && searchQuery.trim().length > 0) {
+      return true;
+    }
+    if (searchType === 'city' && selectedCity) {
+      return true;
+    }
+    if (searchType === 'proximity' && userLatitude && userLongitude) {
+      return true;
+    }
+    return false;
+  }, [searchType, searchQuery, selectedCity, userLatitude, userLongitude]);
 
   const fetchBarbershops = useCallback(async () => {
+    // Don't fetch if no search is active
+    if (!isSearchActive) {
+      setBarbershops([]);
+      setHasSearched(false);
+      return;
+    }
+
     setLoading(true);
+    setHasSearched(true);
     try {
       let query = supabase
         .from('barbershops')
@@ -134,12 +157,14 @@ export const BarberShopGrid = ({
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, searchType, selectedCity, userLatitude, userLongitude]);
+  }, [searchQuery, searchType, selectedCity, userLatitude, userLongitude, isSearchActive]);
 
   useEffect(() => {
     fetchBarbershops();
 
-    // Subscribe to real-time changes in barbershops table
+    // Only subscribe to real-time changes if there's an active search
+    if (!isSearchActive) return;
+
     const channel = supabase
       .channel('barbershops-changes')
       .on(
@@ -158,7 +183,7 @@ export const BarberShopGrid = ({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchBarbershops]);
+  }, [fetchBarbershops, isSearchActive]);
 
   // Apply additional filters (activeFilters)
   const filteredShops = useMemo(() => {
@@ -197,6 +222,23 @@ export const BarberShopGrid = ({
     }
     return 'Nenhuma barbearia cadastrada ainda';
   };
+
+  // Show initial placeholder when no search is active
+  if (!isSearchActive && !hasSearched) {
+    return (
+      <div className="text-center py-16">
+        <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-6">
+          <Search className="h-10 w-10 text-primary" />
+        </div>
+        <h3 className="text-xl font-semibold text-foreground mb-2">
+          Encontre sua barbearia ideal
+        </h3>
+        <p className="text-muted-foreground max-w-md mx-auto">
+          Use os filtros acima para buscar por nome, cidade ou encontrar as barbearias mais próximas de você.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -257,7 +299,7 @@ export const BarberShopGrid = ({
       ) : (
         <div className="text-center py-12">
           <div className="text-muted-foreground mb-4">
-            <SearchX className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p className="text-lg font-medium">{getEmptyMessage()}</p>
             <p className="text-sm mt-2">
               {searchType === 'proximity' 
