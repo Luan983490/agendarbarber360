@@ -1072,40 +1072,54 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
               </div>
             </div>
 
-            {/* Legenda Colapsável - abaixo do seletor de visualização */}
-            <Collapsible className="w-full">
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-1 text-xs text-gray-700 hover:text-white hover:bg-gray-900 h-7 px-2 w-auto rounded-none">
-                  <Plus className="h-3 w-3 transition-transform [[data-state=open]>&]:hidden" />
-                  <Minus className="h-3 w-3 transition-transform hidden [[data-state=open]>&]:block" />
-                  <span>Legenda</span>
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-1 bg-stone-200 border border-stone-300 p-2">
-                <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-gray-900">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2.5 h-2.5" style={{ backgroundColor: '#0a007e' }} />
-                    <span>Disponível</span>
+            {/* Legenda e Encaixe - abaixo do seletor de visualização */}
+            <div className="flex items-center gap-2">
+              {/* Legenda Colapsável */}
+              <Collapsible>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm" className="gap-1 text-xs text-gray-700 hover:text-white hover:bg-gray-900 h-7 px-2 rounded-none">
+                    <Plus className="h-3 w-3 transition-transform [[data-state=open]>&]:hidden" />
+                    <Minus className="h-3 w-3 transition-transform hidden [[data-state=open]>&]:block" />
+                    <span>Legenda</span>
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="absolute left-0 mt-1 bg-stone-200 border border-stone-300 p-2 z-50">
+                  <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-gray-900">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2.5 h-2.5" style={{ backgroundColor: '#0a007e' }} />
+                      <span>Disponível</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2.5 h-2.5" style={{ backgroundColor: '#00700b' }} />
+                      <span>Agendado</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2.5 h-2.5 bg-amber-500" />
+                      <span>Sem Cadastro</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2.5 h-2.5" style={{ backgroundColor: '#ce0000' }} />
+                      <span>Bloqueado</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2.5 h-2.5 bg-gray-900" />
+                      <span>Folga</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2.5 h-2.5" style={{ backgroundColor: '#00700b' }} />
-                    <span>Agendado</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2.5 h-2.5 bg-amber-500" />
-                    <span>Sem Cadastro</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2.5 h-2.5" style={{ backgroundColor: '#ce0000' }} />
-                    <span>Bloqueado</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2.5 h-2.5 bg-gray-900" />
-                    <span>Folga</span>
-                  </div>
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
+                </CollapsibleContent>
+              </Collapsible>
+
+              {/* Botão Encaixe */}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="gap-1 text-xs text-gray-700 hover:text-white hover:bg-gray-900 h-7 px-2 rounded-none"
+                onClick={() => setCreateBookingOpen(true)}
+              >
+                <Plus className="h-3 w-3" strokeWidth={1.5} />
+                <span>Encaixe</span>
+              </Button>
+            </div>
           </div>
 
           {/* Grade de Horários - Container maximizado, sem border-radius */}
