@@ -465,8 +465,8 @@ const Dashboard = () => {
                 />
               </div>
               
-              {/* Painel de Bloqueio - Desktop (com scroll) */}
-              <div className="hidden xl:flex xl:flex-col w-72 2xl:w-80 flex-shrink-0 max-h-full overflow-y-auto">
+              {/* Painel de Bloqueio - Desktop (rola com a tela) */}
+              <div className="hidden xl:flex xl:flex-col w-72 2xl:w-80 flex-shrink-0">
                 <BlockSchedulePanel 
                   barbershopId={barbershop!.id} 
                   selectedBarberId={selectedBarber}
