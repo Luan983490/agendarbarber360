@@ -1075,7 +1075,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
             {/* Legenda Colapsável - abaixo do seletor de visualização */}
             <Collapsible className="w-full">
               <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-1 text-xs text-gray-700 hover:text-gray-900 h-7 px-2 w-auto">
+                <Button variant="ghost" size="sm" className="gap-1 text-xs text-gray-700 hover:text-white hover:bg-gray-900 h-7 px-2 w-auto rounded-none">
                   <Plus className="h-3 w-3 transition-transform [[data-state=open]>&]:hidden" />
                   <Minus className="h-3 w-3 transition-transform hidden [[data-state=open]>&]:block" />
                   <span>Legenda</span>
