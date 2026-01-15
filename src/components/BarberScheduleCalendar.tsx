@@ -1017,8 +1017,8 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <Card className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: '#f0f0f0' }}>
-        <CardContent className="flex flex-col flex-1 overflow-hidden p-2 sm:p-3 lg:p-4 gap-2" style={{ backgroundColor: '#f0f0f0' }}>
+      <Card className="flex flex-col h-full overflow-hidden border-0 shadow-none" style={{ backgroundColor: '#f0f0f0' }}>
+        <CardContent className="flex flex-col flex-1 overflow-hidden p-2 sm:p-3 lg:p-4 gap-2 min-h-0" style={{ backgroundColor: '#f0f0f0' }}>
 
           {/* Controles Compactos - Navegação + Legenda */}
           <div className="flex-shrink-0 space-y-1.5">
@@ -1107,7 +1107,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
             </div>
           </div>
 
-          {/* Grade de Horários - Container sem scroll próprio */}
+          {/* Grade de Horários - Container com altura flexível */}
           <div className="flex-1 min-h-0 overflow-hidden border rounded-md flex flex-col">
             {viewMode === 'month' ? (
               /* Visualização Mensal - Calendário */
@@ -1176,7 +1176,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
               </div>
             ) : (
               /* Visualização Dia/Semana - Grade de Horários */
-              <div className="flex flex-col h-full overflow-hidden">
+              <div className="flex flex-col h-full overflow-hidden min-h-0">
                 {/* Container único para scroll sincronizado */}
                 <div 
                   className="flex-1 min-h-0 overflow-auto scrollbar-thin"
