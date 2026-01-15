@@ -424,7 +424,7 @@ const Dashboard = () => {
         );
       case 'bookings':
         return (
-          <div className="flex flex-col h-[calc(100vh-120px)] overflow-hidden" style={{ backgroundColor: '#000000' }}>
+          <div className="flex flex-col xl:flex-row gap-4 h-[calc(100vh-80px)]" style={{ backgroundColor: '#000000' }}>
             {/* Botão Bloquear Horários - Mobile/Tablet (no topo) */}
             <div className="xl:hidden flex-shrink-0 px-1">
               <Sheet open={blockPanelOpen} onOpenChange={setBlockPanelOpen}>
@@ -454,25 +454,22 @@ const Dashboard = () => {
               </Sheet>
             </div>
 
-            {/* Layout Desktop com calendário e painel lateral */}
-            <div className="flex-1 flex flex-col xl:flex-row gap-4 min-h-0 overflow-hidden mt-2">
-              {/* Calendário Principal - ocupa toda altura disponível */}
-              <div className="flex-1 min-w-0 min-h-0 overflow-hidden">
-                <BarberScheduleCalendar 
-                  barbershopId={barbershop!.id} 
-                  barberIdFilter={selectedBarber}
-                  onRefreshRef={calendarRefreshRef}
-                />
-              </div>
-              
-              {/* Painel de Bloqueio - Desktop */}
-              <div className="hidden xl:block w-72 2xl:w-80 flex-shrink-0 overflow-y-auto">
-                <BlockSchedulePanel 
-                  barbershopId={barbershop!.id} 
-                  selectedBarberId={selectedBarber}
-                  onBlockSuccess={handleBlockSuccess}
-                />
-              </div>
+            {/* Calendário Principal - ocupa toda altura disponível */}
+            <div className="flex-1 min-w-0 h-full overflow-hidden">
+              <BarberScheduleCalendar 
+                barbershopId={barbershop!.id} 
+                barberIdFilter={selectedBarber}
+                onRefreshRef={calendarRefreshRef}
+              />
+            </div>
+            
+            {/* Painel de Bloqueio - Desktop (sem scroll próprio) */}
+            <div className="hidden xl:block w-72 2xl:w-80 flex-shrink-0">
+              <BlockSchedulePanel 
+                barbershopId={barbershop!.id} 
+                selectedBarberId={selectedBarber}
+                onBlockSuccess={handleBlockSuccess}
+              />
             </div>
           </div>
         );
