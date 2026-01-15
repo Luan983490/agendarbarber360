@@ -1080,7 +1080,8 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="hidden lg:flex gap-1 text-xs text-gray-700 hover:text-white hover:bg-gray-900 h-7 px-2 rounded-none"
+                className="hidden lg:flex gap-1 text-xs text-white h-7 px-2 rounded-none"
+                style={{ backgroundColor: '#2d044a' }}
                 onClick={() => setCreateBookingOpen(true)}
               >
                 <Plus className="h-3 w-3" strokeWidth={1.5} />
@@ -1094,7 +1095,8 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="lg:hidden flex gap-1 text-xs text-gray-700 hover:text-white hover:bg-gray-900 h-7 px-2 rounded-none"
+                className="lg:hidden flex gap-1 text-xs text-white h-7 px-2 rounded-none"
+                style={{ backgroundColor: '#2d044a' }}
                 onClick={() => setCreateBookingOpen(true)}
               >
                 <Plus className="h-3 w-3" strokeWidth={1.5} />
