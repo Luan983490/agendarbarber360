@@ -1069,7 +1069,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                       setCurrentDate(today);
                       setCurrentWeekStart(startOfWeek(today, { locale: ptBR }));
                     }} 
-                    className="h-6 sm:h-7 px-2 text-xs text-gray-900 hover:text-gray-700 hover:bg-gray-100"
+                    className="h-6 sm:h-7 px-2 text-xs bg-black text-white hover:bg-amber-500 hover:text-black rounded-none"
                   >
                     Hoje
                   </Button>
@@ -1104,7 +1104,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
               {/* Legenda Colapsável */}
               <Collapsible>
                 <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="sm" className="gap-1 text-xs text-gray-700 hover:text-white hover:bg-gray-900 h-7 px-2 rounded-none">
+                  <Button variant="ghost" size="sm" className="gap-1 text-xs bg-black text-white hover:bg-amber-500 hover:text-black h-7 px-2 rounded-none">
                     <Plus className="h-3 w-3 transition-transform [[data-state=open]>&]:hidden" />
                     <Minus className="h-3 w-3 transition-transform hidden [[data-state=open]>&]:block" />
                     <span>Legenda</span>
