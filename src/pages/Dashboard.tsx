@@ -703,10 +703,10 @@ const Dashboard = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen bg-background flex flex-col w-full">
+      <div className="h-screen bg-background flex flex-col w-full overflow-hidden">
         <DashboardHeader />
         
-        <div className="flex min-h-screen w-full pt-14">
+        <div className="flex flex-1 w-full pt-14 overflow-hidden">
           {/* Sidebar Fixo */}
           <div className="sticky top-14 h-[calc(100vh-56px)] z-40">
             <DashboardSidebar currentTab={currentTab} onTabChange={setCurrentTab} />
