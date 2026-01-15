@@ -1211,11 +1211,8 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                     <div style={{ backgroundColor: '#d9d9d9' }} />
                     {displayDays.map((day, i) => (
                       <div key={i} className="text-center px-0.5 py-2 overflow-hidden">
-                        <p className="font-semibold text-[10px] sm:text-xs truncate text-black">
-                          {format(day, 'EEE', { locale: ptBR })}
-                        </p>
-                        <p className="text-[9px] sm:text-[10px] text-black">
-                          {format(day, 'dd/MM')}
+                        <p className="font-semibold text-[10px] sm:text-xs truncate text-black capitalize">
+                          {format(day, "EEEE, dd/MMM/yyyy", { locale: ptBR })}
                         </p>
                       </div>
                     ))}
