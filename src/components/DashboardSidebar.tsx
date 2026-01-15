@@ -1,5 +1,5 @@
-import { X, ChevronRight } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { X, ChevronRight, CalendarDays, BarChart3, FolderOpen, Scissors, UserRound, Settings, Store, LucideIcon } from 'lucide-react';
+import { useState } from 'react';
 import {
   Sidebar,
   SidebarContent,
@@ -26,6 +26,7 @@ interface DashboardSidebarProps {
 interface MenuItem {
   id: string;
   title: string;
+  icon?: LucideIcon;
   children?: MenuItem[];
 }
 
@@ -33,21 +34,23 @@ interface MenuItem {
 // 🚀 MENU PRINCIPAL - MVP v1.0
 // ============================================
 const menuStructure: MenuItem[] = [
-  { id: 'bookings', title: 'Agenda' },
-  { id: 'reports', title: 'Relatórios' },
+  { id: 'bookings', title: 'Agenda', icon: CalendarDays },
+  { id: 'reports', title: 'Relatórios', icon: BarChart3 },
   {
     id: 'cadastros',
     title: 'Cadastros',
+    icon: FolderOpen,
     children: [
-      { id: 'services', title: 'Serviços' },
-      { id: 'barbers', title: 'Barbeiros' },
+      { id: 'services', title: 'Serviços', icon: Scissors },
+      { id: 'barbers', title: 'Barbeiros', icon: UserRound },
     ],
   },
   {
     id: 'configuracoes',
     title: 'Configurações',
+    icon: Settings,
     children: [
-      { id: 'edit', title: 'Editar Barbearia' },
+      { id: 'edit', title: 'Editar Barbearia', icon: Store },
     ],
   },
 ];
@@ -127,7 +130,8 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuStructure.map((item) => {
+                {menuStructure.map((item) => {
+                const IconComponent = item.icon;
                 // Item sem filhos (link direto)
                 if (!item.children || item.children.length === 0) {
                   return (
@@ -138,7 +142,7 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
                         tooltip={item.title}
                       >
                         <button
-                          className="w-full hover:bg-[#3a3939] transition-colors"
+                          className="w-full hover:bg-[#3a3939] transition-colors flex items-center gap-2"
                           style={{ color: '#d9d9d9' }}
                           onClick={() => {
                             onTabChange(item.id);
@@ -147,6 +151,7 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
                             }
                           }}
                         >
+                          {IconComponent && <IconComponent className="h-4 w-4" strokeWidth={1.5} />}
                           <span>{item.title}</span>
                         </button>
                       </SidebarMenuButton>
@@ -164,21 +169,24 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
                   >
                     <SidebarMenuItem>
                       <CollapsibleTrigger asChild>
-                        <SidebarMenuButton tooltip={item.title} className="hover:bg-[#3a3939]" style={{ color: '#d9d9d9' }}>
+                        <SidebarMenuButton tooltip={item.title} className="hover:bg-[#3a3939] flex items-center gap-2" style={{ color: '#d9d9d9' }}>
+                          {IconComponent && <IconComponent className="h-4 w-4" strokeWidth={1.5} />}
                           <span>{item.title}</span>
                           <ChevronRight className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" strokeWidth={1.5} />
                         </SidebarMenuButton>
                       </CollapsibleTrigger>
                       <CollapsibleContent>
                         <SidebarMenuSub>
-                          {item.children.map((subItem) => (
+                          {item.children.map((subItem) => {
+                            const SubIconComponent = subItem.icon;
+                            return (
                             <SidebarMenuSubItem key={subItem.id}>
                               <SidebarMenuSubButton
                                 asChild
                                 isActive={currentTab === subItem.id}
                               >
                                 <button
-                                  className="w-full hover:bg-[#3a3939] transition-colors"
+                                  className="w-full hover:bg-[#3a3939] transition-colors flex items-center gap-2"
                                   style={{ color: '#d9d9d9' }}
                                   onClick={() => {
                                     onTabChange(subItem.id);
@@ -187,11 +195,13 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
                                     }
                                   }}
                                 >
+                                  {SubIconComponent && <SubIconComponent className="h-3.5 w-3.5" strokeWidth={1.5} />}
                                   <span>{subItem.title}</span>
                                 </button>
                               </SidebarMenuSubButton>
                             </SidebarMenuSubItem>
-                          ))}
+                            );
+                          })}
                         </SidebarMenuSub>
                       </CollapsibleContent>
                     </SidebarMenuItem>
