@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { SearchFilters } from "@/components/SearchFilters";
 import { BarberShopGrid } from "@/components/BarberShopGrid";
-import { LocationSearch } from "@/components/LocationSearch";
+import { AdvancedSearch, SearchType } from "@/components/AdvancedSearch";
 import FavoritesList from "@/components/FavoritesList";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserAccess } from "@/hooks/useUserAccess";
@@ -14,6 +14,12 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [location, setLocation] = useState("");
+  const [searchType, setSearchType] = useState<SearchType>('name');
+  const [selectedCity, setSelectedCity] = useState<string | null>(null);
+  const [userLatitude, setUserLatitude] = useState<number | null>(null);
+  const [userLongitude, setUserLongitude] = useState<number | null>(null);
+  const [isProximityActive, setIsProximityActive] = useState(false);
+  
   const { user } = useAuth();
   const { role, loading } = useUserAccess();
   const navigate = useNavigate();
@@ -31,6 +37,35 @@ const Index = () => {
     }
   }, [user, role, loading, navigate]);
 
+  // Handle proximity search
+  const handleProximitySearch = useCallback((lat: number, lng: number) => {
+    setUserLatitude(lat);
+    setUserLongitude(lng);
+    setIsProximityActive(true);
+  }, []);
+
+  // Clear proximity search
+  const handleClearProximity = useCallback(() => {
+    setUserLatitude(null);
+    setUserLongitude(null);
+    setIsProximityActive(false);
+  }, []);
+
+  // Handle search type change
+  const handleSearchTypeChange = (type: SearchType) => {
+    setSearchType(type);
+    // Clear other search states when switching types
+    if (type !== 'name') {
+      setSearchQuery("");
+    }
+    if (type !== 'city') {
+      setSelectedCity(null);
+    }
+    if (type !== 'proximity') {
+      handleClearProximity();
+    }
+  };
+
   // Show loading while checking user role
   if (loading && user) {
     return (
@@ -43,19 +78,43 @@ const Index = () => {
     );
   }
 
+  const renderSearchAndGrid = () => (
+    <>
+      <AdvancedSearch
+        searchType={searchType}
+        onSearchTypeChange={handleSearchTypeChange}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        selectedCity={selectedCity}
+        onCityChange={setSelectedCity}
+        onProximitySearch={handleProximitySearch}
+        onClearProximity={handleClearProximity}
+        isProximityActive={isProximityActive}
+      />
+      
+      <SearchFilters 
+        activeFilters={activeFilters}
+        onFiltersChange={setActiveFilters}
+      />
+      
+      <BarberShopGrid 
+        searchQuery={searchQuery}
+        activeFilters={activeFilters}
+        location={location}
+        searchType={searchType}
+        selectedCity={selectedCity}
+        userLatitude={userLatitude}
+        userLongitude={userLongitude}
+      />
+    </>
+  );
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
       
       <main className="pt-20">
         <section className="container mx-auto px-4 py-8">
-          <LocationSearch 
-            location={location}
-            onLocationChange={setLocation}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-          />
-          
           {user ? (
             <Tabs defaultValue="all" className="w-full">
               <TabsList className="grid w-full max-w-md mx-auto mb-6 grid-cols-2">
@@ -64,16 +123,7 @@ const Index = () => {
               </TabsList>
               
               <TabsContent value="all">
-                <SearchFilters 
-                  activeFilters={activeFilters}
-                  onFiltersChange={setActiveFilters}
-                />
-                
-                <BarberShopGrid 
-                  searchQuery={searchQuery}
-                  activeFilters={activeFilters}
-                  location={location}
-                />
+                {renderSearchAndGrid()}
               </TabsContent>
               
               <TabsContent value="favorites">
@@ -81,18 +131,7 @@ const Index = () => {
               </TabsContent>
             </Tabs>
           ) : (
-            <>
-              <SearchFilters 
-                activeFilters={activeFilters}
-                onFiltersChange={setActiveFilters}
-              />
-              
-              <BarberShopGrid 
-                searchQuery={searchQuery}
-                activeFilters={activeFilters}
-                location={location}
-              />
-            </>
+            renderSearchAndGrid()
           )}
         </section>
       </main>

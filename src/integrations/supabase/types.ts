@@ -290,48 +290,60 @@ export type Database = {
         Row: {
           address: string
           amenities: string[] | null
+          city: string | null
           created_at: string
           description: string | null
           email: string | null
           id: string
           image_url: string | null
+          latitude: number | null
+          longitude: number | null
           name: string
           opening_hours: Json | null
           owner_id: string
           phone: string | null
           rating: number | null
+          state: string | null
           total_reviews: number | null
           updated_at: string
         }
         Insert: {
           address: string
           amenities?: string[] | null
+          city?: string | null
           created_at?: string
           description?: string | null
           email?: string | null
           id?: string
           image_url?: string | null
+          latitude?: number | null
+          longitude?: number | null
           name: string
           opening_hours?: Json | null
           owner_id: string
           phone?: string | null
           rating?: number | null
+          state?: string | null
           total_reviews?: number | null
           updated_at?: string
         }
         Update: {
           address?: string
           amenities?: string[] | null
+          city?: string | null
           created_at?: string
           description?: string | null
           email?: string | null
           id?: string
           image_url?: string | null
+          latitude?: number | null
+          longitude?: number | null
           name?: string
           opening_hours?: Json | null
           owner_id?: string
           phone?: string | null
           rating?: number | null
+          state?: string | null
           total_reviews?: number | null
           updated_at?: string
         }
@@ -1456,6 +1468,10 @@ export type Database = {
         Args: { p_duration_minutes: number; p_start_time: string }
         Returns: string
       }
+      calculate_distance_km: {
+        Args: { lat1: number; lat2: number; lon1: number; lon2: number }
+        Returns: number
+      }
       can_manage_booking: {
         Args: { _booking_id: string; _user_id: string }
         Returns: boolean
@@ -1547,6 +1563,14 @@ export type Database = {
           barber_name: string
           total_bookings: number
           total_revenue: number
+        }[]
+      }
+      get_barbershop_cities: {
+        Args: never
+        Returns: {
+          barbershop_count: number
+          city: string
+          state: string
         }[]
       }
       get_bookings_report: {
@@ -1705,6 +1729,22 @@ export type Database = {
           p_ip_address: string
         }
         Returns: undefined
+      }
+      search_barbershops_by_proximity: {
+        Args: { max_distance_km?: number; user_lat: number; user_lon: number }
+        Returns: {
+          address: string
+          city: string
+          distance_km: number
+          id: string
+          image_url: string
+          latitude: number
+          longitude: number
+          name: string
+          rating: number
+          state: string
+          total_reviews: number
+        }[]
       }
     }
     Enums: {
