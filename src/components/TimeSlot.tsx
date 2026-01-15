@@ -44,30 +44,30 @@ export const TimeSlot = ({
     
     switch (type) {
       case 'available':
-        return 'text-white cursor-pointer [&]:bg-[#0a007e] [&]:border-[#080066] [&]:hover:bg-[#080066]';
+        // Disponível - #77bbc2 (teal/cyan)
+        return 'text-white cursor-pointer [&]:bg-[#77bbc2] [&]:border-[#5a9ca3] [&]:hover:bg-[#5a9ca3]';
       case 'booked':
-        // Verde para agendado com cliente cadastrado - texto branco para contraste
+        // Agendado - #066d3e (verde escuro)
         return cn(
-          'text-white cursor-pointer [&]:bg-[#00700b] [&]:border-[#005a09] [&]:hover:bg-[#005a09]',
+          'text-white cursor-pointer [&]:bg-[#066d3e] [&]:border-[#055530] [&]:hover:bg-[#055530]',
           isBookingStart && !isBookingEnd && 'border-b-0',
           isBookingEnd && !isBookingStart && 'border-t-0',
           isBookingMiddle && 'border-t-0 border-b-0'
         );
       case 'booked-external':
-        // Amarelo para agendado sem cadastro (externo) - texto escuro para contraste
+        // Encaixe - #2d044a (roxo escuro)
         return cn(
-          'bg-amber-500 border-amber-600 text-amber-950',
-          'cursor-pointer hover:bg-amber-600',
+          'text-white cursor-pointer [&]:bg-[#2d044a] [&]:border-[#1f0333] [&]:hover:bg-[#1f0333]',
           isBookingStart && !isBookingEnd && 'border-b-0',
           isBookingEnd && !isBookingStart && 'border-t-0',
           isBookingMiddle && 'border-t-0 border-b-0'
         );
       case 'blocked':
-        // Vermelho para bloqueado - cor personalizada #ce0000
-        return 'text-white cursor-pointer [&]:bg-[#ce0000] [&]:border-[#a50000] [&]:hover:bg-[#a50000]';
+        // Bloqueado - #6a1f1f (vermelho escuro/marrom)
+        return 'text-white cursor-pointer [&]:bg-[#6a1f1f] [&]:border-[#521818] [&]:hover:bg-[#521818]';
       case 'off-hours':
-        // Preto/escuro para fora de funcionamento
-        return 'bg-gray-900 dark:bg-black border-gray-800 dark:border-gray-900 cursor-not-allowed opacity-80';
+        // Fora do expediente - #000000 (preto)
+        return '[&]:bg-[#000000] [&]:border-[#000000] cursor-not-allowed';
       default:
         return 'bg-muted border-border';
     }
