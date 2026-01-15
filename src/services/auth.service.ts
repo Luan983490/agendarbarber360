@@ -118,7 +118,8 @@ export class AuthService {
     }
 
     try {
-      const redirectUrl = `${window.location.origin}/`;
+      // Use dedicated callback route for email confirmation
+      const redirectUrl = `${window.location.origin}/auth/callback`;
 
       const { data: authData, error } = await supabase.auth.signUp({
         email: sanitizedData.email,
@@ -127,6 +128,7 @@ export class AuthService {
           emailRedirectTo: redirectUrl,
           data: {
             user_type: sanitizedData.userType,
+            full_name: '',
           },
         },
       });

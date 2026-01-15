@@ -27,6 +27,7 @@ const PageLoader = () => (
 // Public pages (eager load - critical path)
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import AuthCallback from "./pages/AuthCallback";
 import NotFound from "./pages/NotFound";
 
 // Admin pages (lazy load - heavy components)
@@ -66,6 +67,7 @@ const AppContent = () => {
             {/* Public Routes */}
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             
             {/* Admin Routes (Owner only) */}
             <Route 
