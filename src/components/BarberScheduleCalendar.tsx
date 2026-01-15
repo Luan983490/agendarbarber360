@@ -12,7 +12,7 @@ import { BlockOptionsDialog } from './BlockOptionsDialog';
 import { SlotActionMenu } from './SlotActionMenu';
 import { MultiBlockDialog } from './MultiBlockDialog';
 import { useUserAccess } from '@/hooks/useUserAccess';
-import { ChevronLeft, ChevronRight, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, ChevronDown, ChevronUp, Plus, Minus } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   format,
@@ -1071,16 +1071,17 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                 </Button>
               </div>
 
-              {/* Legenda Colapsável inline */}
-              <Collapsible className="hidden sm:block">
+              {/* Legenda Colapsável inline - visível em todos os tamanhos */}
+              <Collapsible>
                 <CollapsibleTrigger asChild>
                   <Button variant="ghost" size="sm" className="gap-1 text-xs text-gray-700 hover:text-gray-900 h-7 px-2">
-                    <span>Legenda</span>
-                    <ChevronDown className="h-3 w-3 transition-transform [[data-state=open]>&]:rotate-180" />
+                    <Plus className="h-3 w-3 transition-transform [[data-state=open]>&]:hidden" />
+                    <Minus className="h-3 w-3 transition-transform hidden [[data-state=open]>&]:block" />
+                    <span className="hidden sm:inline">Legenda</span>
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="absolute right-0 mt-1 bg-popover border rounded-md shadow-lg p-2 z-50">
-                  <div className="flex flex-col gap-1.5 text-xs whitespace-nowrap text-gray-900">
+                  <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-xs whitespace-nowrap text-gray-900">
                     <div className="flex items-center gap-1.5">
                       <div className="w-2.5 h-2.5" style={{ backgroundColor: '#0a007e' }} />
                       <span>Disponível</span>
