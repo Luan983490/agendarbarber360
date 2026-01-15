@@ -44,8 +44,8 @@ export const TimeSlot = ({
     
     switch (type) {
       case 'available':
-        // Disponível - #77bbc2 (teal/cyan)
-        return 'text-white cursor-pointer [&]:bg-[#77bbc2] [&]:border-[#5a9ca3] [&]:hover:bg-[#5a9ca3]';
+        // Disponível - #558b90
+        return 'text-white cursor-pointer [&]:bg-[#558b90] [&]:border-[#456f73] [&]:hover:bg-[#456f73]';
       case 'booked':
         // Agendado - #066d3e (verde escuro)
         return cn(
@@ -55,9 +55,9 @@ export const TimeSlot = ({
           isBookingMiddle && 'border-t-0 border-b-0'
         );
       case 'booked-external':
-        // Encaixe - #2d044a (roxo escuro)
+        // Sem Cadastro - #d19102 (amarelo/dourado)
         return cn(
-          'text-white cursor-pointer [&]:bg-[#2d044a] [&]:border-[#1f0333] [&]:hover:bg-[#1f0333]',
+          'text-white cursor-pointer [&]:bg-[#d19102] [&]:border-[#a87502] [&]:hover:bg-[#a87502]',
           isBookingStart && !isBookingEnd && 'border-b-0',
           isBookingEnd && !isBookingStart && 'border-t-0',
           isBookingMiddle && 'border-t-0 border-b-0'
