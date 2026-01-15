@@ -457,7 +457,7 @@ const Dashboard = () => {
             {/* Layout Desktop com calendário e painel lateral */}
             <div className="flex-1 flex flex-col xl:flex-row gap-4">
               {/* Calendário Principal - scroll independente */}
-              <div className="flex-1 min-w-0 h-[calc(100vh-200px)] overflow-y-auto">
+              <div className="flex-1 min-w-0 h-[calc(100vh-120px)] overflow-y-auto">
                 <BarberScheduleCalendar 
                   barbershopId={barbershop!.id} 
                   barberIdFilter={selectedBarber}
