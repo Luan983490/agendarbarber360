@@ -102,6 +102,16 @@ export const passwordSchema = z
   .min(VALIDATION_CONSTANTS.PASSWORD_MIN_LENGTH, ERROR_MESSAGES.passwordMin)
   .max(VALIDATION_CONSTANTS.PASSWORD_MAX_LENGTH, ERROR_MESSAGES.passwordMax);
 
+// Strong password schema with complexity requirements
+export const strongPasswordSchema = z
+  .string({ required_error: ERROR_MESSAGES.required })
+  .min(8, 'Senha deve ter pelo menos 8 caracteres')
+  .max(VALIDATION_CONSTANTS.PASSWORD_MAX_LENGTH, ERROR_MESSAGES.passwordMax)
+  .regex(/[A-Z]/, 'Senha deve conter pelo menos uma letra maiúscula')
+  .regex(/[a-z]/, 'Senha deve conter pelo menos uma letra minúscula')
+  .regex(/[0-9]/, 'Senha deve conter pelo menos um número')
+  .regex(/[^A-Za-z0-9]/, 'Senha deve conter pelo menos um caractere especial (!@#$%^&*)');
+
 export const phoneSchema = z
   .string()
   .trim()
@@ -211,7 +221,7 @@ export const loginSchema = z.object({
 
 export const signUpSchema = z.object({
   email: emailSchema,
-  password: passwordSchema,
+  password: strongPasswordSchema,
   confirmPassword: z.string({ required_error: ERROR_MESSAGES.required }),
   userType: z.enum(['client', 'barbershop_owner', 'barber'], {
     errorMap: () => ({ message: ERROR_MESSAGES.invalidUserType }),
