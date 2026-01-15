@@ -1026,12 +1026,12 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
             <div className="flex items-center justify-between gap-1">
               {/* View Mode + Navegação de data juntos */}
               <div className="flex items-center gap-1 sm:gap-2">
-                <div className="flex gap-0.5 bg-stone-200 p-0.5 rounded-none">
+                <div className="flex gap-0.5 bg-stone-200 p-0.5 sm:p-0.5 rounded-none">
                   <Button
                     variant={viewMode === 'day' ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => setViewMode('day')}
-                    className="h-6 sm:h-7 px-1 sm:px-2 text-[10px] sm:text-xs rounded-none text-gray-900"
+                    className="h-7 sm:h-7 px-2 sm:px-2 text-xs sm:text-xs rounded-none text-gray-900"
                   >
                     Dia
                   </Button>
@@ -1039,7 +1039,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                     variant={viewMode === 'week' ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => setViewMode('week')}
-                    className="h-6 sm:h-7 px-1 sm:px-2 text-[10px] sm:text-xs rounded-none text-gray-900"
+                    className="h-7 sm:h-7 px-2 sm:px-2 text-xs sm:text-xs rounded-none text-gray-900"
                   >
                     Sem
                   </Button>
@@ -1047,7 +1047,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                     variant={viewMode === 'month' ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => setViewMode('month')}
-                    className="h-6 sm:h-7 px-1 sm:px-2 text-[10px] sm:text-xs rounded-none text-gray-900"
+                    className="h-7 sm:h-7 px-2 sm:px-2 text-xs sm:text-xs rounded-none text-gray-900"
                   >
                     Mês
                   </Button>
