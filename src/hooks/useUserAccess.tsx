@@ -56,9 +56,14 @@ export const useUserAccess = (): UserAccess => {
     fetchingRef.current = true;
 
     try {
+      // First, get the user profile to check user_type
+      const profileResult = await userService.getProfile(userId);
+      const userType = profileResult.data?.userType;
+
       // Check if user is a barbershop owner using BarbershopService
       const barbershopResult = await barbershopService.getByOwner(userId);
 
+      // User is an owner if they have a barbershop OR if their user_type is barbershop_owner
       if (barbershopResult.success && barbershopResult.data) {
         const ownerAccess: UserAccess = {
           role: 'owner',
@@ -71,6 +76,26 @@ export const useUserAccess = (): UserAccess => {
           canManageBookings: true,
           canViewAllBookings: true,
           canManageSchedule: true,
+        };
+        accessCache = { userId, access: ownerAccess, timestamp: Date.now() };
+        setAccess(ownerAccess);
+        fetchingRef.current = false;
+        return;
+      }
+
+      // If user_type is barbershop_owner but no barbershop yet (new user)
+      if (userType === 'barbershop_owner') {
+        const ownerAccess: UserAccess = {
+          role: 'owner',
+          barbershopId: undefined, // No barbershop yet
+          loading: false,
+          canManageBarbershop: true,
+          canManageBarbers: false,
+          canManageServices: false,
+          canManageProducts: false,
+          canManageBookings: false,
+          canViewAllBookings: false,
+          canManageSchedule: false,
         };
         accessCache = { userId, access: ownerAccess, timestamp: Date.now() };
         setAccess(ownerAccess);
