@@ -69,11 +69,30 @@ const Auth = () => {
     [signupData.password]
   );
 
+  // Mostrar mensagem de sucesso após reset de senha
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const passwordResetSuccess = urlParams.get('password_reset') === 'success';
+    const justReset = sessionStorage.getItem('password_just_reset') === 'true';
+    
+    if (passwordResetSuccess || justReset) {
+      toast({
+        title: 'Senha alterada com sucesso!',
+        description: 'Faça login com sua nova senha.',
+      });
+      // Limpar flags
+      sessionStorage.removeItem('password_just_reset');
+      // Limpar URL
+      window.history.replaceState({}, '', '/auth');
+    }
+  }, []);
+
   useEffect(() => {
     // Don't redirect if user is in password recovery flow
     const isPasswordRecoveryFlow = sessionStorage.getItem('password_recovery_flow') === 'true';
+    const justReset = sessionStorage.getItem('password_just_reset') === 'true';
     
-    if (user && !authLoading && !isPasswordRecoveryFlow) {
+    if (user && !authLoading && !isPasswordRecoveryFlow && !justReset) {
       checkUserProfileAndRedirect();
     }
   }, [user, authLoading]);
