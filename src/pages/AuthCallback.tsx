@@ -44,8 +44,17 @@ const AuthCallback = () => {
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token');
+        const type = hashParams.get('type');
 
-        console.log('[AuthCallback] URL params - code:', !!code, 'access_token:', !!accessToken);
+        console.log('[AuthCallback] URL params - code:', !!code, 'access_token:', !!accessToken, 'type:', type);
+
+        // Check if this is a password recovery flow - redirect to reset-password page
+        if (type === 'recovery' && accessToken) {
+          console.log('[AuthCallback] Password recovery detected, redirecting to /reset-password');
+          // Keep the hash params for the reset-password page to use
+          navigate(`/reset-password${window.location.hash}`, { replace: true });
+          return;
+        }
 
         // If we have tokens in the hash (implicit flow), set the session
         if (accessToken) {

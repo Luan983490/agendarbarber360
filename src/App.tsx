@@ -28,6 +28,7 @@ const PageLoader = () => (
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import AuthCallback from "./pages/AuthCallback";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 // Admin pages (lazy load - heavy components)
@@ -68,6 +69,7 @@ const AppContent = () => {
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             
             {/* Admin Routes (Owner only) */}
             <Route 
