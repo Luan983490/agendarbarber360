@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { Navigate, useNavigate, Link } from 'react-router-dom';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { User, Store, Check, X, Eye, EyeOff, Loader2, Mail } from 'lucide-react';
+import { User, Store, Check, X, Eye, EyeOff, Loader2, Mail, AlertCircle, LogIn } from 'lucide-react';
 import { loginSchema, signUpSchema, validateWithSchema, formatValidationErrors } from '@/lib/validation-schemas';
 import b360Logo from '@/assets/b360-logo.png';
 
@@ -45,6 +45,9 @@ const Auth = () => {
   const [signupSuccess, setSignupSuccess] = useState(false);
   const [signupEmail, setSignupEmail] = useState('');
   const [isResending, setIsResending] = useState(false);
+  const [emailAlreadyExists, setEmailAlreadyExists] = useState(false);
+  const [activeTab, setActiveTab] = useState('login');
+  const tabsRef = useRef<HTMLDivElement>(null);
   
   const [loginData, setLoginData] = useState({
     email: '',
@@ -107,6 +110,7 @@ const Auth = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    setEmailAlreadyExists(false);
     
     // Validação com Zod
     const validation = validateWithSchema(signUpSchema, signupData);
@@ -127,10 +131,29 @@ const Auth = () => {
     );
     setLoading(false);
     
-    if (!error) {
+    if (error) {
+      // Check if it's an email already exists error
+      if (error.code === 'AUTH_EMAIL_IN_USE' || 
+          error.message?.includes('already registered') ||
+          error.message?.includes('já está cadastrado')) {
+        setEmailAlreadyExists(true);
+        toast({
+          title: 'Email já cadastrado',
+          description: 'Este email já possui uma conta. Faça login ou recupere sua senha.',
+          variant: 'destructive'
+        });
+        return;
+      }
+    } else {
       setSignupEmail(signupData.email);
       setSignupSuccess(true);
     }
+  };
+
+  const switchToLogin = () => {
+    setActiveTab('login');
+    setLoginData(prev => ({ ...prev, email: signupData.email }));
+    setEmailAlreadyExists(false);
   };
 
   const handleResendConfirmation = async () => {
@@ -250,7 +273,7 @@ const Auth = () => {
         </div>
 
         <Card>
-          <Tabs defaultValue="login">
+          <Tabs value={activeTab} onValueChange={setActiveTab} ref={tabsRef}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">Entrar</TabsTrigger>
               <TabsTrigger value="signup">Cadastrar</TabsTrigger>
@@ -303,6 +326,17 @@ const Auth = () => {
                       'Entrar'
                     )}
                   </Button>
+                  
+                  <div className="text-center text-sm text-muted-foreground">
+                    Não tem uma conta?{' '}
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('signup')}
+                      className="text-primary hover:underline font-medium"
+                    >
+                      Cadastre-se
+                    </button>
+                  </div>
                 </form>
               </CardContent>
             </TabsContent>
@@ -346,9 +380,44 @@ const Auth = () => {
                       id="signup-email"
                       type="email"
                       value={signupData.email}
-                      onChange={(e) => setSignupData(prev => ({ ...prev, email: e.target.value }))}
+                      onChange={(e) => {
+                        setSignupData(prev => ({ ...prev, email: e.target.value }));
+                        setEmailAlreadyExists(false);
+                      }}
                       required
+                      className={emailAlreadyExists ? 'border-destructive' : ''}
                     />
+                    
+                    {/* Email already exists warning */}
+                    {emailAlreadyExists && (
+                      <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 space-y-2">
+                        <div className="flex items-center gap-2 text-destructive text-sm">
+                          <AlertCircle className="h-4 w-4" />
+                          <span className="font-medium">Este email já está cadastrado</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={switchToLogin}
+                            className="flex-1"
+                          >
+                            <LogIn className="h-3 w-3 mr-1" />
+                            Fazer Login
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {/* TODO: Add password recovery */}}
+                            className="flex-1 text-muted-foreground"
+                          >
+                            Recuperar Senha
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="space-y-2">
@@ -468,6 +537,17 @@ const Auth = () => {
                       A senha precisa atender aos requisitos acima para continuar
                     </p>
                   )}
+                  
+                  <div className="text-center text-sm text-muted-foreground">
+                    Já tem uma conta?{' '}
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('login')}
+                      className="text-primary hover:underline font-medium"
+                    >
+                      Fazer login
+                    </button>
+                  </div>
                 </form>
               </CardContent>
             </TabsContent>
