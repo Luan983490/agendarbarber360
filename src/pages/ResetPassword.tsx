@@ -155,16 +155,14 @@ const ResetPassword = () => {
         return;
       }
 
+      // Sign out the user so they need to login again with new password
+      await supabase.auth.signOut();
+
       setSuccess(true);
       toast({
         title: 'Senha atualizada!',
-        description: 'Sua senha foi alterada com sucesso.',
+        description: 'Sua senha foi alterada com sucesso. Faça login com sua nova senha.',
       });
-
-      // Redirect to auth after 3 seconds
-      setTimeout(() => {
-        navigate('/auth');
-      }, 3000);
     } catch (error) {
       console.error('Unexpected error:', error);
       toast({
