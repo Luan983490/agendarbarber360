@@ -49,18 +49,47 @@ const ResetPassword = () => {
     // Check if user has a valid recovery session
     const checkSession = async () => {
       try {
+        // First check for code in URL (PKCE flow - used by Supabase for password recovery)
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        
+        if (code) {
+          console.log('[ResetPassword] Found code in URL, exchanging for session...');
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          
+          if (error) {
+            console.error('[ResetPassword] Error exchanging code:', error);
+            toast({
+              title: 'Link inválido ou expirado',
+              description: 'O link de recuperação é inválido ou expirou. Solicite um novo.',
+              variant: 'destructive',
+            });
+            navigate('/auth');
+            return;
+          }
+          
+          if (data.session) {
+            console.log('[ResetPassword] Session established from code');
+            setIsValidSession(true);
+            setCheckingSession(false);
+            return;
+          }
+        }
+
+        // Check for existing session
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session) {
+          console.log('[ResetPassword] Found existing session');
           setIsValidSession(true);
         } else {
-          // Try to get session from URL hash (recovery flow)
+          // Try to get session from URL hash (implicit flow - fallback)
           const hashParams = new URLSearchParams(window.location.hash.substring(1));
           const accessToken = hashParams.get('access_token');
           const type = hashParams.get('type');
           
           if (accessToken && type === 'recovery') {
-            // Set session from recovery link
+            console.log('[ResetPassword] Found tokens in hash');
             const { data, error } = await supabase.auth.setSession({
               access_token: accessToken,
               refresh_token: hashParams.get('refresh_token') || '',
@@ -69,7 +98,7 @@ const ResetPassword = () => {
             if (data.session && !error) {
               setIsValidSession(true);
             } else {
-              console.error('Error setting session:', error);
+              console.error('[ResetPassword] Error setting session:', error);
               toast({
                 title: 'Link inválido',
                 description: 'O link de recuperação é inválido ou expirou. Solicite um novo.',
@@ -78,6 +107,7 @@ const ResetPassword = () => {
               navigate('/auth');
             }
           } else {
+            console.log('[ResetPassword] No valid recovery params found');
             toast({
               title: 'Sessão inválida',
               description: 'Você precisa acessar esta página através do link enviado por email.',
@@ -87,7 +117,7 @@ const ResetPassword = () => {
           }
         }
       } catch (error) {
-        console.error('Error checking session:', error);
+        console.error('[ResetPassword] Error checking session:', error);
         navigate('/auth');
       } finally {
         setCheckingSession(false);
