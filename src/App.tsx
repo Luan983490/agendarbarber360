@@ -9,9 +9,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { useSupabasePing } from "@/hooks/use-supabase-ping";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { Skeleton } from "@/components/ui/skeleton";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
-import { RecoveryRedirectHandler } from "@/components/RecoveryRedirectHandler";
 
 // Loading fallback component
 import b360Logo from '@/assets/b360-logo.png';
@@ -64,146 +62,144 @@ const AppContent = () => {
       <Sonner />
       <PWAInstallPrompt />
       <BrowserRouter>
-        <RecoveryRedirectHandler>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/auth/callback" element={<AuthCallback />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              
-              {/* Admin Routes (Owner only) */}
-              <Route 
-                path="/admin/dashboard" 
-                element={
-                  <ProtectedRoute allowedRoles={['owner']}>
-                    <Dashboard />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/dashboard" 
-                element={
-                  <ProtectedRoute allowedRoles={['owner']}>
-                    <Dashboard />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Barber Routes */}
-              <Route 
-                path="/barber/hoje" 
-                element={
-                  <ProtectedRoute allowedRoles={['barber']}>
-                    <BarberHoje />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/barber/agenda" 
-                element={
-                  <ProtectedRoute allowedRoles={['barber']}>
-                    <BarberAgenda />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/barber/performance" 
-                element={
-                  <ProtectedRoute allowedRoles={['barber']}>
-                    <BarberPerformance />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Legacy barber route - redirect to new */}
-              <Route 
-                path="/barber-dashboard" 
-                element={<Navigate to="/barber/hoje" replace />} 
-              />
-              
-              {/* Attendant Routes */}
-              <Route 
-                path="/attendant/dashboard" 
-                element={
-                  <ProtectedRoute allowedRoles={['attendant']}>
-                    <AttendantDashboard />
-                  </ProtectedRoute>
-                } 
-              />
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            
+            {/* Admin Routes (Owner only) */}
+            <Route 
+              path="/admin/dashboard" 
+              element={
+                <ProtectedRoute allowedRoles={['owner']}>
+                  <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard" 
+              element={
+                <ProtectedRoute allowedRoles={['owner']}>
+                  <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Barber Routes */}
+            <Route 
+              path="/barber/hoje" 
+              element={
+                <ProtectedRoute allowedRoles={['barber']}>
+                  <BarberHoje />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/barber/agenda" 
+              element={
+                <ProtectedRoute allowedRoles={['barber']}>
+                  <BarberAgenda />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/barber/performance" 
+              element={
+                <ProtectedRoute allowedRoles={['barber']}>
+                  <BarberPerformance />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Legacy barber route - redirect to new */}
+            <Route 
+              path="/barber-dashboard" 
+              element={<Navigate to="/barber/hoje" replace />} 
+            />
+            
+            {/* Attendant Routes */}
+            <Route 
+              path="/attendant/dashboard" 
+              element={
+                <ProtectedRoute allowedRoles={['attendant']}>
+                  <AttendantDashboard />
+                </ProtectedRoute>
+              } 
+            />
 
-              {/* Legacy attendant route - redirect to new */}
-              <Route 
-                path="/attendant-dashboard" 
-                element={<Navigate to="/attendant/dashboard" replace />} 
-              />
-              
-              {/* Client Routes (client only) */}
-              <Route 
-                path="/my-bookings" 
-                element={
-                  <ProtectedRoute allowedRoles={['client']}>
-                    <MyBookings />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/historico" 
-                element={
-                  <ProtectedRoute allowedRoles={['client']}>
-                    <BookingsHistory />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/favoritos" 
-                element={
-                  <ProtectedRoute allowedRoles={['client']}>
-                    <Favorites />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/perfil" 
-                element={
-                  <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Legacy client routes - kept for backwards compatibility */}
-              <Route 
-                path="/pacotes" 
-                element={
-                  <ProtectedRoute allowedRoles={['client']}>
-                    <Packages />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/assinaturas" 
-                element={
-                  <ProtectedRoute allowedRoles={['client']}>
-                    <Subscriptions />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/cartoes" 
-                element={
-                  <ProtectedRoute allowedRoles={['client']}>
-                    <Cards />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Catch-all */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </RecoveryRedirectHandler>
+            {/* Legacy attendant route - redirect to new */}
+            <Route 
+              path="/attendant-dashboard" 
+              element={<Navigate to="/attendant/dashboard" replace />} 
+            />
+            
+            {/* Client Routes (client only) */}
+            <Route 
+              path="/my-bookings" 
+              element={
+                <ProtectedRoute allowedRoles={['client']}>
+                  <MyBookings />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/historico" 
+              element={
+                <ProtectedRoute allowedRoles={['client']}>
+                  <BookingsHistory />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/favoritos" 
+              element={
+                <ProtectedRoute allowedRoles={['client']}>
+                  <Favorites />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/perfil" 
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Legacy client routes - kept for backwards compatibility */}
+            <Route 
+              path="/pacotes" 
+              element={
+                <ProtectedRoute allowedRoles={['client']}>
+                  <Packages />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/assinaturas" 
+              element={
+                <ProtectedRoute allowedRoles={['client']}>
+                  <Subscriptions />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/cartoes" 
+              element={
+                <ProtectedRoute allowedRoles={['client']}>
+                  <Cards />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Catch-all */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </>
   );

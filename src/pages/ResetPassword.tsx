@@ -51,21 +51,28 @@ const ResetPassword = () => {
     const validateRecoveryToken = async () => {
       try {
         console.log('[ResetPassword] Starting validation...');
-        console.log('[ResetPassword] URL:', window.location.href);
-        console.log('[ResetPassword] Hash:', window.location.hash);
-        console.log('[ResetPassword] Search params - code:', searchParams.get('code'));
-
-        // PRIORITY 1: Check for PKCE code in URL query params
-        const code = searchParams.get('code');
+        console.log('[ResetPassword] Full URL:', window.location.href);
         
+        // Get URL components
+        const code = searchParams.get('code');
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const type = hashParams.get('type');
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+
+        console.log('[ResetPassword] code:', !!code, 'type:', type, 'accessToken:', !!accessToken);
+
+        // OPTION 1: PKCE flow - code in query params
         if (code) {
-          console.log('[ResetPassword] PKCE code found, exchanging for session...');
+          console.log('[ResetPassword] Processing PKCE code...');
           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
           
           if (error) {
-            console.error('[ResetPassword] Error exchanging code:', error);
-            toast.error('Link inválido ou expirado. Solicite um novo link.');
-            navigate('/auth');
+            console.error('[ResetPassword] PKCE exchange error:', error);
+            if (isMounted) {
+              toast.error('Link inválido ou expirado. Solicite um novo link.');
+              navigate('/auth');
+            }
             return;
           }
           
@@ -73,22 +80,15 @@ const ResetPassword = () => {
             console.log('[ResetPassword] Session established via PKCE');
             setIsValidSession(true);
             setCheckingSession(false);
-            // Clean URL
+            // Clean URL without losing React Router state
             window.history.replaceState({}, '', '/reset-password');
             return;
           }
         }
 
-        // PRIORITY 2: Check for hash params (type=recovery with tokens)
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const type = hashParams.get('type');
-        const accessToken = hashParams.get('access_token');
-        const refreshToken = hashParams.get('refresh_token');
-
-        console.log('[ResetPassword] Hash params - type:', type, 'hasAccessToken:', !!accessToken);
-
+        // OPTION 2: Implicit flow - tokens in hash
         if (type === 'recovery' && accessToken) {
-          console.log('[ResetPassword] Recovery flow detected with tokens');
+          console.log('[ResetPassword] Processing implicit flow tokens...');
           
           const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
@@ -96,14 +96,16 @@ const ResetPassword = () => {
           });
 
           if (error) {
-            console.error('[ResetPassword] Error setting session:', error);
-            toast.error('Link inválido ou expirado. Solicite um novo link.');
-            navigate('/auth');
+            console.error('[ResetPassword] Set session error:', error);
+            if (isMounted) {
+              toast.error('Link inválido ou expirado. Solicite um novo link.');
+              navigate('/auth');
+            }
             return;
           }
 
           if (data.session && isMounted) {
-            console.log('[ResetPassword] Session established via hash tokens');
+            console.log('[ResetPassword] Session established via implicit flow');
             setIsValidSession(true);
             setCheckingSession(false);
             // Clean URL
@@ -112,24 +114,24 @@ const ResetPassword = () => {
           }
         }
 
-        // PRIORITY 3: Check for existing valid session
+        // OPTION 3: Check for existing valid session (user might have been redirected after token processing elsewhere)
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session && isMounted) {
-          console.log('[ResetPassword] Existing session found');
+          console.log('[ResetPassword] Found existing session');
           setIsValidSession(true);
           setCheckingSession(false);
           return;
         }
 
-        // No valid session found - redirect
+        // No valid session found
         if (isMounted) {
-          console.log('[ResetPassword] No valid session found, redirecting to auth');
+          console.log('[ResetPassword] No valid session, redirecting to auth');
           toast.error('Link inválido ou expirado. Solicite um novo link.');
           navigate('/auth');
         }
       } catch (error) {
-        console.error('[ResetPassword] Error during validation:', error);
+        console.error('[ResetPassword] Validation error:', error);
         if (isMounted) {
           toast.error('Erro ao validar link. Tente novamente.');
           navigate('/auth');
@@ -137,10 +139,7 @@ const ResetPassword = () => {
       }
     };
 
-    // Small delay to ensure URL params are available
-    setTimeout(() => {
-      validateRecoveryToken();
-    }, 100);
+    validateRecoveryToken();
 
     return () => {
       isMounted = false;
@@ -193,45 +192,44 @@ const ResetPassword = () => {
       });
 
       if (error) {
-        console.error('Error updating password:', error);
+        console.error('[ResetPassword] Update password error:', error);
         toast.error(error.message || 'Erro ao atualizar senha.');
         return;
       }
 
-      // Success - sign out and redirect
+      // Success
       setSuccess(true);
       toast.success('Senha alterada com sucesso!');
       
-      // Sign out the user
+      // Sign out and redirect to login
       await supabase.auth.signOut();
       
-      // Redirect to login after 2 seconds
       setTimeout(() => {
-        navigate('/auth', { 
-          replace: true,
-          state: { message: 'Senha alterada! Faça login com sua nova senha.' }
-        });
+        navigate('/auth', { replace: true });
       }, 2000);
       
     } catch (error) {
-      console.error('Unexpected error:', error);
+      console.error('[ResetPassword] Unexpected error:', error);
       toast.error('Ocorreu um erro inesperado. Tente novamente.');
     } finally {
       setLoading(false);
     }
   };
 
+  // Loading state
   if (checkingSession) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-accent/20 flex items-center justify-center p-4">
         <div className="text-center">
           <img src={b360Logo} alt="B360" className="h-16 mx-auto mb-4 animate-pulse" />
-          <p className="text-muted-foreground">Verificando sessão...</p>
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-primary" />
+          <p className="text-muted-foreground">Validando link...</p>
         </div>
       </div>
     );
   }
 
+  // Success state
   if (success) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-accent/20 flex items-center justify-center p-4">
@@ -255,6 +253,7 @@ const ResetPassword = () => {
     );
   }
 
+  // Form state
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-accent/20 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
