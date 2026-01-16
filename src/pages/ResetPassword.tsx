@@ -5,9 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Eye, EyeOff, Loader2, Check, X, Lock, CheckCircle } from 'lucide-react';
+import { toast } from 'sonner';
 import b360Logo from '@/assets/b360-logo.png';
 
 // Password strength checker
@@ -33,7 +33,6 @@ const checkPasswordStrength = (password: string) => {
 
 const ResetPassword = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -46,147 +45,94 @@ const ResetPassword = () => {
   const passwordStrength = checkPasswordStrength(password);
 
   useEffect(() => {
-    // Mark that we're in password recovery flow to prevent auto-redirects
-    sessionStorage.setItem('password_recovery_flow', 'true');
-    
-    // Cleanup on unmount
-    return () => {
-      sessionStorage.removeItem('password_recovery_flow');
-    };
-  }, []);
-
-  useEffect(() => {
     let isMounted = true;
-    let timeoutId: NodeJS.Timeout | null = null;
-    
-    // Check if user has a valid recovery session
-    const checkSession = async () => {
+
+    const initializeSession = async () => {
       try {
-        const urlParams = new URLSearchParams(window.location.search);
+        // Check for recovery hash params (type=recovery in URL hash)
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        
-        const code = urlParams.get('code');
-        const accessToken = hashParams.get('access_token');
         const type = hashParams.get('type');
-        
-        console.log('[ResetPassword] URL check - code:', !!code, 'accessToken:', !!accessToken, 'type:', type);
-        
-        // PRIORITY 1: Handle PKCE flow (code in URL) - must exchange before checking session
-        if (code) {
-          console.log('[ResetPassword] Found code in URL, exchanging for session...');
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+
+        console.log('[ResetPassword] Checking hash - type:', type, 'hasAccessToken:', !!accessToken);
+
+        // If type=recovery and we have tokens, set the session
+        if (type === 'recovery' && accessToken) {
+          console.log('[ResetPassword] Recovery flow detected with tokens');
           
-          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-          
-          if (error) {
-            console.error('[ResetPassword] Error exchanging code:', error);
-            if (isMounted) {
-              toast({
-                title: 'Link inválido ou expirado',
-                description: 'O link de recuperação é inválido ou expirou. Solicite um novo.',
-                variant: 'destructive',
-              });
-              sessionStorage.removeItem('password_recovery_flow');
-              navigate('/auth');
-            }
-            return;
-          }
-          
-          if (data.session && isMounted) {
-            console.log('[ResetPassword] Session established from code');
-            setIsValidSession(true);
-            setCheckingSession(false);
-            window.history.replaceState({}, '', '/reset-password');
-            return;
-          }
-        }
-        
-        // PRIORITY 2: Handle implicit flow (tokens in hash)
-        if (accessToken && type === 'recovery') {
-          console.log('[ResetPassword] Found recovery tokens in hash');
           const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
-            refresh_token: hashParams.get('refresh_token') || '',
+            refresh_token: refreshToken || '',
           });
-          
-          if (data.session && !error && isMounted) {
-            console.log('[ResetPassword] Session established from hash');
+
+          if (error) {
+            console.error('[ResetPassword] Error setting session:', error);
+            toast.error('Link inválido ou expirado. Solicite um novo.');
+            navigate('/auth');
+            return;
+          }
+
+          if (data.session && isMounted) {
+            console.log('[ResetPassword] Session established successfully');
             setIsValidSession(true);
             setCheckingSession(false);
+            // Clean URL
             window.history.replaceState({}, '', '/reset-password');
             return;
           }
         }
 
-        // PRIORITY 3: Check for existing session (user redirected from AuthCallback)
+        // Check for existing valid session (user might have been redirected with session already set)
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session && isMounted) {
-          console.log('[ResetPassword] Found existing session - valid for password reset');
+          // Verify this is indeed a recovery session by checking recovery_sent_at
+          const user = session.user;
+          const recoverySentAt = (user as any)?.recovery_sent_at;
+          
+          if (recoverySentAt) {
+            const timeSinceRecovery = Date.now() - new Date(recoverySentAt).getTime();
+            // Recovery link valid for 24 hours
+            if (timeSinceRecovery < 86400000) {
+              console.log('[ResetPassword] Valid recovery session found');
+              setIsValidSession(true);
+              setCheckingSession(false);
+              return;
+            }
+          }
+          
+          // If session exists but not from recovery, still allow (might be edge case)
+          console.log('[ResetPassword] Session exists, allowing password reset');
           setIsValidSession(true);
           setCheckingSession(false);
           return;
         }
-        
-        // No session yet - if recovery flag is set, wait briefly for auth state change
-        const isRecoveryFlow = sessionStorage.getItem('password_recovery_flow') === 'true';
-        if (isRecoveryFlow && isMounted) {
-          console.log('[ResetPassword] Recovery flag set, waiting briefly for session...');
-          // Set a timeout to stop waiting after 3 seconds
-          timeoutId = setTimeout(() => {
-            if (isMounted && checkingSession) {
-              console.log('[ResetPassword] Timeout waiting for session, redirecting...');
-              toast({
-                title: 'Sessão expirada',
-                description: 'Solicite um novo link de recuperação de senha.',
-                variant: 'destructive',
-              });
-              sessionStorage.removeItem('password_recovery_flow');
-              navigate('/auth');
-            }
-          }, 3000);
-          return;
-        }
-        
-        // No valid session found and no recovery flow flag
+
+        // No valid session - redirect to auth
         if (isMounted) {
-          console.log('[ResetPassword] No valid recovery session found');
-          toast({
-            title: 'Sessão inválida',
-            description: 'Você precisa acessar esta página através do link enviado por email.',
-            variant: 'destructive',
-          });
-          sessionStorage.removeItem('password_recovery_flow');
+          console.log('[ResetPassword] No valid session found');
+          toast.error('Link inválido ou expirado. Solicite um novo.');
           navigate('/auth');
         }
       } catch (error) {
-        console.error('[ResetPassword] Error checking session:', error);
+        console.error('[ResetPassword] Error:', error);
         if (isMounted) {
-          sessionStorage.removeItem('password_recovery_flow');
+          toast.error('Erro ao verificar sessão. Tente novamente.');
           navigate('/auth');
         }
       }
     };
 
-    // Listen for auth state changes - this catches session established by AuthCallback
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('[ResetPassword] Auth state changed:', event, 'session:', !!session);
-      
-      if (session && isMounted) {
-        console.log('[ResetPassword] Session received via auth state change');
-        if (timeoutId) clearTimeout(timeoutId);
-        setIsValidSession(true);
-        setCheckingSession(false);
-      }
-    });
+    // Small delay to ensure hash is available
+    setTimeout(() => {
+      initializeSession();
+    }, 100);
 
-    checkSession();
-    
     return () => {
       isMounted = false;
-      if (timeoutId) clearTimeout(timeoutId);
-      subscription.unsubscribe();
     };
-  }, [navigate, toast]);
+  }, [navigate]);
 
   const getStrengthColor = (strength: string) => {
     switch (strength) {
@@ -212,20 +158,17 @@ const ResetPassword = () => {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      toast({
-        title: 'Erro',
-        description: 'As senhas não coincidem.',
-        variant: 'destructive',
-      });
+      toast.error('As senhas não coincidem.');
+      return;
+    }
+
+    if (password.length < 8) {
+      toast.error('A senha deve ter no mínimo 8 caracteres.');
       return;
     }
 
     if (passwordStrength.score < 3) {
-      toast({
-        title: 'Senha fraca',
-        description: 'Sua senha deve atender pelo menos 3 critérios de segurança.',
-        variant: 'destructive',
-      });
+      toast.error('Sua senha deve atender pelo menos 3 critérios de segurança.');
       return;
     }
 
@@ -238,30 +181,28 @@ const ResetPassword = () => {
 
       if (error) {
         console.error('Error updating password:', error);
-        toast({
-          title: 'Erro ao atualizar senha',
-          description: error.message,
-          variant: 'destructive',
-        });
+        toast.error(error.message || 'Erro ao atualizar senha.');
         return;
       }
 
-      // Clear the recovery flag and sign out
-      sessionStorage.removeItem('password_recovery_flow');
-      await supabase.auth.signOut();
-
+      // Success - sign out and redirect
       setSuccess(true);
-      toast({
-        title: 'Senha atualizada!',
-        description: 'Sua senha foi alterada com sucesso. Faça login com sua nova senha.',
-      });
+      toast.success('Senha alterada com sucesso!');
+      
+      // Sign out the user
+      await supabase.auth.signOut();
+      
+      // Redirect to login after 2 seconds
+      setTimeout(() => {
+        navigate('/auth', { 
+          replace: true,
+          state: { message: 'Senha alterada! Faça login com sua nova senha.' }
+        });
+      }, 2000);
+      
     } catch (error) {
       console.error('Unexpected error:', error);
-      toast({
-        title: 'Erro',
-        description: 'Ocorreu um erro inesperado. Tente novamente.',
-        variant: 'destructive',
-      });
+      toast.error('Ocorreu um erro inesperado. Tente novamente.');
     } finally {
       setLoading(false);
     }
