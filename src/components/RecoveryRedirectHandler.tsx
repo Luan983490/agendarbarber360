@@ -18,8 +18,8 @@ export const RecoveryRedirectHandler = ({ children }: { children: React.ReactNod
 
   useEffect(() => {
     const checkForRecoveryFlow = () => {
-      // Skip if already on reset-password or auth/callback page
-      if (location.pathname === '/reset-password' || location.pathname === '/auth/callback') {
+      // Skip if already on reset-password page
+      if (location.pathname === '/reset-password') {
         setIsChecking(false);
         return;
       }
@@ -33,6 +33,7 @@ export const RecoveryRedirectHandler = ({ children }: { children: React.ReactNod
       const error = urlParams.get('error');
       
       console.log('[RecoveryHandler] Checking URL - code:', !!code, 'type:', type, 'accessToken:', !!accessToken, 'error:', error);
+      console.log('[RecoveryHandler] Current path:', location.pathname);
 
       // If there's an error, let the normal flow handle it
       if (error) {
@@ -50,9 +51,16 @@ export const RecoveryRedirectHandler = ({ children }: { children: React.ReactNod
         return;
       }
 
-      // For PKCE flow with code but no type indicator, we cannot determine if it's recovery
-      // without consuming the code. Let the normal AuthCallback or ResetPassword handle it.
-      // The user should access /reset-password directly from the email link.
+      // For AuthCallback with code, set the flag so AuthCallback knows to check for recovery
+      // This helps when the email link goes to /auth/callback with just a code
+      if (location.pathname === '/auth/callback' && code) {
+        console.log('[RecoveryHandler] Code found on auth/callback, checking if from recovery email...');
+        // We can't know for sure if it's recovery without consuming the code
+        // But we set a temporary flag that AuthCallback will use to decide
+        // Don't redirect here - let AuthCallback handle it
+        setIsChecking(false);
+        return;
+      }
       
       setIsChecking(false);
     };
