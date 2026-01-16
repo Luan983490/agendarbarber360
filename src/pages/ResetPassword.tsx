@@ -56,36 +56,21 @@ const ResetPassword = () => {
   }, []);
 
   useEffect(() => {
+    let isMounted = true;
+    
     // Check if user has a valid recovery session
     const checkSession = async () => {
       try {
         const urlParams = new URLSearchParams(window.location.search);
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         
-        // Check for code in URL (PKCE flow - used by Supabase for password recovery)
         const code = urlParams.get('code');
-        
-        // Check for tokens in hash (implicit flow)
         const accessToken = hashParams.get('access_token');
         const type = hashParams.get('type');
         
         console.log('[ResetPassword] URL check - code:', !!code, 'accessToken:', !!accessToken, 'type:', type);
         
-        // PRIORITY 1: Check for existing session FIRST (user redirected from AuthCallback with valid session)
-        const { data: { session: existingSession } } = await supabase.auth.getSession();
-        
-        if (existingSession) {
-          console.log('[ResetPassword] Found existing session - valid for password reset');
-          setIsValidSession(true);
-          setCheckingSession(false);
-          // Clean URL if there are params
-          if (code || accessToken) {
-            window.history.replaceState({}, '', '/reset-password');
-          }
-          return;
-        }
-        
-        // PRIORITY 2: Handle PKCE flow (code in URL)
+        // PRIORITY 1: Handle PKCE flow (code in URL) - must exchange before checking session
         if (code) {
           console.log('[ResetPassword] Found code in URL, exchanging for session...');
           
@@ -93,27 +78,28 @@ const ResetPassword = () => {
           
           if (error) {
             console.error('[ResetPassword] Error exchanging code:', error);
-            toast({
-              title: 'Link inválido ou expirado',
-              description: 'O link de recuperação é inválido ou expirou. Solicite um novo.',
-              variant: 'destructive',
-            });
-            sessionStorage.removeItem('password_recovery_flow');
-            navigate('/auth');
+            if (isMounted) {
+              toast({
+                title: 'Link inválido ou expirado',
+                description: 'O link de recuperação é inválido ou expirou. Solicite um novo.',
+                variant: 'destructive',
+              });
+              sessionStorage.removeItem('password_recovery_flow');
+              navigate('/auth');
+            }
             return;
           }
           
-          if (data.session) {
+          if (data.session && isMounted) {
             console.log('[ResetPassword] Session established from code');
             setIsValidSession(true);
             setCheckingSession(false);
-            // Clear the URL params to prevent re-processing on refresh
             window.history.replaceState({}, '', '/reset-password');
             return;
           }
         }
         
-        // PRIORITY 3: Handle implicit flow (tokens in hash) - type must be 'recovery'
+        // PRIORITY 2: Handle implicit flow (tokens in hash)
         if (accessToken && type === 'recovery') {
           console.log('[ResetPassword] Found recovery tokens in hash');
           const { data, error } = await supabase.auth.setSession({
@@ -121,60 +107,70 @@ const ResetPassword = () => {
             refresh_token: hashParams.get('refresh_token') || '',
           });
           
-          if (data.session && !error) {
+          if (data.session && !error && isMounted) {
             console.log('[ResetPassword] Session established from hash');
             setIsValidSession(true);
             setCheckingSession(false);
-            // Clear the hash
             window.history.replaceState({}, '', '/reset-password');
             return;
-          } else {
-            console.error('[ResetPassword] Error setting session:', error);
           }
         }
 
-        // PRIORITY 4: If the recovery flag is set, we might be in a redirect loop - wait a bit and retry
+        // PRIORITY 3: Check for existing session (user redirected from AuthCallback)
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session && isMounted) {
+          console.log('[ResetPassword] Found existing session - valid for password reset');
+          setIsValidSession(true);
+          setCheckingSession(false);
+          return;
+        }
+        
+        // No session yet - if recovery flag is set, wait for auth state change
         const isRecoveryFlow = sessionStorage.getItem('password_recovery_flow') === 'true';
-        if (isRecoveryFlow) {
-          console.log('[ResetPassword] Recovery flag set but no session, waiting for auth state...');
-          // Wait for onAuthStateChange to potentially set the session
-          setTimeout(async () => {
-            const { data: { session: retrySession } } = await supabase.auth.getSession();
-            if (retrySession) {
-              console.log('[ResetPassword] Session found on retry');
-              setIsValidSession(true);
-              setCheckingSession(false);
-            } else {
-              console.log('[ResetPassword] No session on retry, redirecting to auth');
-              toast({
-                title: 'Sessão expirada',
-                description: 'Sua sessão expirou. Por favor, solicite um novo link de recuperação.',
-                variant: 'destructive',
-              });
-              sessionStorage.removeItem('password_recovery_flow');
-              navigate('/auth');
-            }
-          }, 1000);
+        if (isRecoveryFlow && isMounted) {
+          console.log('[ResetPassword] Recovery flag set, waiting for session via auth state...');
+          // Don't redirect yet - let onAuthStateChange handle it
           return;
         }
         
         // No valid session found and no recovery flow flag
-        console.log('[ResetPassword] No valid recovery session found');
-        toast({
-          title: 'Sessão inválida',
-          description: 'Você precisa acessar esta página através do link enviado por email.',
-          variant: 'destructive',
-        });
-        sessionStorage.removeItem('password_recovery_flow');
-        navigate('/auth');
+        if (isMounted) {
+          console.log('[ResetPassword] No valid recovery session found');
+          toast({
+            title: 'Sessão inválida',
+            description: 'Você precisa acessar esta página através do link enviado por email.',
+            variant: 'destructive',
+          });
+          sessionStorage.removeItem('password_recovery_flow');
+          navigate('/auth');
+        }
       } catch (error) {
         console.error('[ResetPassword] Error checking session:', error);
-        sessionStorage.removeItem('password_recovery_flow');
-        navigate('/auth');
+        if (isMounted) {
+          sessionStorage.removeItem('password_recovery_flow');
+          navigate('/auth');
+        }
       }
     };
 
+    // Listen for auth state changes - this catches session established by AuthCallback
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('[ResetPassword] Auth state changed:', event, 'session:', !!session);
+      
+      if (session && isMounted) {
+        console.log('[ResetPassword] Session received via auth state change');
+        setIsValidSession(true);
+        setCheckingSession(false);
+      }
+    });
+
     checkSession();
+    
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, [navigate, toast]);
 
   const getStrengthColor = (strength: string) => {
