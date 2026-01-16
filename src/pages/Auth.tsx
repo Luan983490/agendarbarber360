@@ -66,25 +66,53 @@ const Auth = () => {
   );
 
   useEffect(() => {
-    if (user) {
+    if (user && !authLoading) {
       checkUserProfileAndRedirect();
     }
-  }, [user]);
+  }, [user, authLoading]);
 
   const checkUserProfileAndRedirect = async () => {
     if (!user) return;
     
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('user_type')
-      .eq('user_id', user.id)
-      .single();
-    
-    if (profile?.user_type === 'barbershop_owner') {
-      navigate('/dashboard');
-    } else if (profile?.user_type === 'barber') {
-      navigate('/barber/hoje');
-    } else {
+    try {
+      console.log('[Auth] Checking profile for user:', user.id);
+      
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('user_type')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (error) {
+        console.error('[Auth] Error fetching profile:', error);
+        // If profile doesn't exist yet, check user metadata
+        const userType = user.user_metadata?.user_type;
+        console.log('[Auth] Fallback to user_metadata.user_type:', userType);
+        
+        if (userType === 'barbershop_owner') {
+          navigate('/dashboard');
+        } else if (userType === 'barber') {
+          navigate('/barber/hoje');
+        } else {
+          navigate('/');
+        }
+        return;
+      }
+      
+      console.log('[Auth] Profile found, user_type:', profile?.user_type);
+      
+      if (profile?.user_type === 'barbershop_owner') {
+        console.log('[Auth] Redirecting to /dashboard');
+        navigate('/dashboard');
+      } else if (profile?.user_type === 'barber') {
+        console.log('[Auth] Redirecting to /barber/hoje');
+        navigate('/barber/hoje');
+      } else {
+        console.log('[Auth] Redirecting to /');
+        navigate('/');
+      }
+    } catch (err) {
+      console.error('[Auth] Unexpected error:', err);
       navigate('/');
     }
   };
