@@ -136,8 +136,9 @@ export class AuthService {
       if (error) {
         logger.error('signUp', 'Supabase auth error', error);
 
-        if (error.message.includes('already registered')) {
-          return failure(ErrorCodes.AUTH_EMAIL_IN_USE, 'Este email já está cadastrado');
+        if (error.message.includes('already registered') || 
+            error.message.includes('User already registered')) {
+          return failure(ErrorCodes.AUTH_EMAIL_IN_USE, 'Este email já está cadastrado. Faça login ou recupere sua senha.');
         }
         if (error.message.includes('weak password')) {
           return failure(ErrorCodes.AUTH_WEAK_PASSWORD, 'Senha muito fraca');
@@ -148,6 +149,14 @@ export class AuthService {
 
       if (!authData.user) {
         return failure(ErrorCodes.UNKNOWN_ERROR, 'Erro ao criar usuário');
+      }
+
+      // CRITICAL: Check if user already exists
+      // Supabase returns a user with empty identities array if email already exists
+      // This happens when the email is already registered (confirmed or not)
+      if (authData.user.identities && authData.user.identities.length === 0) {
+        logger.warn('signUp', 'Email already registered (empty identities)', { email: sanitizedData.email });
+        return failure(ErrorCodes.AUTH_EMAIL_IN_USE, 'Este email já está cadastrado. Faça login ou recupere sua senha.');
       }
 
       const user: AuthUser = {
