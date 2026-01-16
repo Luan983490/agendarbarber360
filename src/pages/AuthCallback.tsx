@@ -103,9 +103,8 @@ const AuthCallback = () => {
             // Check if this is a recovery flow by multiple indicators
             const user = data.session.user;
             const userRecoverySentAt = (user as any)?.recovery_sent_at;
-            const appMetadataProvider = (user as any)?.app_metadata?.provider;
             
-            // Check recovery by: recovery_sent_at timestamp OR if the referrer suggests recovery
+            // Check recovery by: recovery_sent_at timestamp
             // The recovery_sent_at should be recent (within 24 hours to be safe)
             const recentRecovery = userRecoverySentAt && 
               (new Date().getTime() - new Date(userRecoverySentAt).getTime()) < 86400000; // 24 hours
@@ -122,9 +121,9 @@ const AuthCallback = () => {
             
             if (recentRecovery || isRecoveryFlow || referrerHasRecovery) {
               console.log('[AuthCallback] Recovery session detected, redirecting to /reset-password');
-              // Set the recovery flag so Auth.tsx doesn't redirect away
+              // Set the recovery flag so ResetPassword knows the session is valid
               sessionStorage.setItem('password_recovery_flow', 'true');
-              // DO NOT sign out - user needs the session to update their password
+              // DO NOT include code in URL - it's already consumed. Session is already established.
               navigate('/reset-password', { replace: true });
               return;
             }

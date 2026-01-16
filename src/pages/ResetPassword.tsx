@@ -57,6 +57,7 @@ const ResetPassword = () => {
 
   useEffect(() => {
     let isMounted = true;
+    let timeoutId: NodeJS.Timeout | null = null;
     
     // Check if user has a valid recovery session
     const checkSession = async () => {
@@ -126,11 +127,23 @@ const ResetPassword = () => {
           return;
         }
         
-        // No session yet - if recovery flag is set, wait for auth state change
+        // No session yet - if recovery flag is set, wait briefly for auth state change
         const isRecoveryFlow = sessionStorage.getItem('password_recovery_flow') === 'true';
         if (isRecoveryFlow && isMounted) {
-          console.log('[ResetPassword] Recovery flag set, waiting for session via auth state...');
-          // Don't redirect yet - let onAuthStateChange handle it
+          console.log('[ResetPassword] Recovery flag set, waiting briefly for session...');
+          // Set a timeout to stop waiting after 3 seconds
+          timeoutId = setTimeout(() => {
+            if (isMounted && checkingSession) {
+              console.log('[ResetPassword] Timeout waiting for session, redirecting...');
+              toast({
+                title: 'Sessão expirada',
+                description: 'Solicite um novo link de recuperação de senha.',
+                variant: 'destructive',
+              });
+              sessionStorage.removeItem('password_recovery_flow');
+              navigate('/auth');
+            }
+          }, 3000);
           return;
         }
         
@@ -160,6 +173,7 @@ const ResetPassword = () => {
       
       if (session && isMounted) {
         console.log('[ResetPassword] Session received via auth state change');
+        if (timeoutId) clearTimeout(timeoutId);
         setIsValidSession(true);
         setCheckingSession(false);
       }
@@ -169,6 +183,7 @@ const ResetPassword = () => {
     
     return () => {
       isMounted = false;
+      if (timeoutId) clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
   }, [navigate, toast]);
