@@ -62,9 +62,6 @@ const ResetPassword = () => {
         const urlParams = new URLSearchParams(window.location.search);
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         
-        // Check for recovery pending (user was redirected from AuthCallback)
-        const recoveryPending = urlParams.get('recovery') === 'pending';
-        
         // Check for code in URL (PKCE flow - used by Supabase for password recovery)
         const code = urlParams.get('code');
         
@@ -72,20 +69,7 @@ const ResetPassword = () => {
         const accessToken = hashParams.get('access_token');
         const type = hashParams.get('type');
         
-        console.log('[ResetPassword] URL check - code:', !!code, 'accessToken:', !!accessToken, 'type:', type, 'recoveryPending:', recoveryPending);
-        
-        // If recovery pending, just show the "request new link" message
-        if (recoveryPending) {
-          console.log('[ResetPassword] Recovery pending - need to request new link');
-          toast({
-            title: 'Solicite um novo link',
-            description: 'Por motivos de segurança, solicite um novo link de recuperação.',
-            variant: 'destructive',
-          });
-          sessionStorage.removeItem('password_recovery_flow');
-          navigate('/auth');
-          return;
-        }
+        console.log('[ResetPassword] URL check - code:', !!code, 'accessToken:', !!accessToken, 'type:', type);
         
         // Handle PKCE flow (code in URL)
         if (code) {
@@ -135,7 +119,7 @@ const ResetPassword = () => {
           }
         }
 
-        // Check for existing session (user might have refreshed the page after establishing session)
+        // Check for existing session (user might have been redirected from AuthCallback)
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session) {
