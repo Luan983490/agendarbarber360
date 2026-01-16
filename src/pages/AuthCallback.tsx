@@ -44,8 +44,17 @@ const AuthCallback = () => {
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token');
+        const type = hashParams.get('type');
 
-        console.log('[AuthCallback] URL params - code:', !!code, 'access_token:', !!accessToken);
+        console.log('[AuthCallback] URL params - code:', !!code, 'access_token:', !!accessToken, 'type:', type);
+
+        // Check if this is a password recovery flow - redirect to reset-password page
+        if (type === 'recovery') {
+          console.log('[AuthCallback] Recovery flow detected, redirecting to /reset-password');
+          // Pass the hash params to the reset-password page
+          navigate(`/reset-password${window.location.hash}`, { replace: true });
+          return;
+        }
 
         // If we have tokens in the hash (implicit flow), set the session
         if (accessToken) {
@@ -68,7 +77,8 @@ const AuthCallback = () => {
           }
         }
 
-        // If we have a code (PKCE flow), exchange it for a session
+        // If we have a code (PKCE flow), we need to check if it's for password recovery
+        // by looking at the referer or checking after exchange
         if (code) {
           console.log('[AuthCallback] Exchanging code for session');
           const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
@@ -90,6 +100,20 @@ const AuthCallback = () => {
           }
 
           if (data.session) {
+            // Check if user came from recovery flow by checking recovery_sent_at timestamp
+            const userMetadata = data.session.user?.user_metadata;
+            const userRecoverySentAt = (data.session.user as any)?.recovery_sent_at;
+            const recentRecovery = userRecoverySentAt && 
+              (new Date().getTime() - new Date(userRecoverySentAt).getTime()) < 3600000; // 1 hour
+            
+            if (recentRecovery) {
+              console.log('[AuthCallback] Recovery session detected, redirecting to /reset-password');
+              // Sign out to clear the session, user needs to set new password first
+              await supabase.auth.signOut();
+              navigate('/reset-password?recovery=pending', { replace: true });
+              return;
+            }
+            
             await handleSuccessfulAuth(data.session);
             return;
           }
