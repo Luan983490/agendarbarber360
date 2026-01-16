@@ -33,18 +33,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('[useAuth] Auth state changed:', event);
+        
+        // IGNORAR eventos de sessão durante o fluxo de reset de senha
+        // Isso evita que o sistema faça login automático durante a troca de senha
+        const isPasswordResetFlow = window.location.pathname === '/reset-password' ||
+          sessionStorage.getItem('password_just_reset') === 'true';
+        
+        if (isPasswordResetFlow && event !== 'SIGNED_OUT') {
+          console.log('[useAuth] Ignoring auth event during password reset flow');
+          setLoading(false);
+          return;
+        }
+        
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
       }
     );
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    // Get initial session - mas NÃO durante reset de senha
+    const isPasswordResetFlow = window.location.pathname === '/reset-password' ||
+      sessionStorage.getItem('password_just_reset') === 'true';
+    
+    if (!isPasswordResetFlow) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      });
+    } else {
+      console.log('[useAuth] Skipping session check during password reset flow');
       setLoading(false);
-    });
+    }
 
     return () => subscription.unsubscribe();
   }, []);

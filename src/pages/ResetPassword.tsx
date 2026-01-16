@@ -54,6 +54,9 @@ const ResetPassword = () => {
 
   useEffect(() => {
     let isMounted = true;
+    
+    // Marcar que estamos no fluxo de reset de senha para impedir login automático
+    sessionStorage.setItem('password_reset_in_progress', 'true');
 
     const validateRecoveryToken = async () => {
       try {
@@ -200,21 +203,23 @@ const ResetPassword = () => {
       console.log('[ResetPassword] Senha atualizada com sucesso!');
       toast.success('Senha alterada com sucesso!');
       
-      // Deslogar COMPLETAMENTE
+      // Marcar ANTES do signOut para evitar que o listener do useAuth capture a sessão
+      sessionStorage.setItem('password_just_reset', 'true');
+      sessionStorage.removeItem('password_reset_in_progress');
+      
+      // Deslogar COMPLETAMENTE - usar scope: 'global' para garantir
       console.log('[ResetPassword] Deslogando usuário completamente...');
-      await supabase.auth.signOut({ scope: 'local' });
+      await supabase.auth.signOut({ scope: 'global' });
       
       // Limpar COMPLETAMENTE a URL de qualquer token/hash
       window.history.replaceState({}, '', '/');
       
-      // Marcar que estamos no fluxo pós-reset para evitar interferência
-      sessionStorage.setItem('password_just_reset', 'true');
-      
       setSuccess(true);
       
-      // Redirecionar via window.location para garantir limpeza total
+      // Redirecionar via window.location.replace para evitar histórico
       setTimeout(() => {
-        window.location.href = '/auth?password_reset=success';
+        // Usar replace para não manter no histórico
+        window.location.replace('/auth?password_reset=success');
       }, 2000);
       
     } catch (error) {
