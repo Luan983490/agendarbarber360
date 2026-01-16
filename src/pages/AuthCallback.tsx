@@ -100,17 +100,31 @@ const AuthCallback = () => {
           }
 
           if (data.session) {
-            // Check if user came from recovery flow by checking recovery_sent_at timestamp
-            const userRecoverySentAt = (data.session.user as any)?.recovery_sent_at;
-            const recentRecovery = userRecoverySentAt && 
-              (new Date().getTime() - new Date(userRecoverySentAt).getTime()) < 3600000; // 1 hour
+            // Check if this is a recovery flow by multiple indicators
+            const user = data.session.user;
+            const userRecoverySentAt = (user as any)?.recovery_sent_at;
+            const appMetadataProvider = (user as any)?.app_metadata?.provider;
             
-            if (recentRecovery) {
+            // Check recovery by: recovery_sent_at timestamp OR if the referrer suggests recovery
+            // The recovery_sent_at should be recent (within 24 hours to be safe)
+            const recentRecovery = userRecoverySentAt && 
+              (new Date().getTime() - new Date(userRecoverySentAt).getTime()) < 86400000; // 24 hours
+            
+            // Also check if the sessionStorage flag was set (from RecoveryRedirectHandler)
+            const isRecoveryFlow = sessionStorage.getItem('password_recovery_flow') === 'true';
+            
+            // Check the document referrer for recovery indicators
+            const referrerHasRecovery = document.referrer?.includes('type=recovery') || 
+                                         document.referrer?.includes('recovery');
+            
+            console.log('[AuthCallback] Recovery check - recentRecovery:', recentRecovery, 
+                        'isRecoveryFlow:', isRecoveryFlow, 'referrerHasRecovery:', referrerHasRecovery);
+            
+            if (recentRecovery || isRecoveryFlow || referrerHasRecovery) {
               console.log('[AuthCallback] Recovery session detected, redirecting to /reset-password');
               // Set the recovery flag so Auth.tsx doesn't redirect away
               sessionStorage.setItem('password_recovery_flow', 'true');
               // DO NOT sign out - user needs the session to update their password
-              // Just redirect to reset-password, the session is already established
               navigate('/reset-password', { replace: true });
               return;
             }
