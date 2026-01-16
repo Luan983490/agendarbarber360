@@ -101,16 +101,17 @@ const AuthCallback = () => {
 
           if (data.session) {
             // Check if user came from recovery flow by checking recovery_sent_at timestamp
-            const userMetadata = data.session.user?.user_metadata;
             const userRecoverySentAt = (data.session.user as any)?.recovery_sent_at;
             const recentRecovery = userRecoverySentAt && 
               (new Date().getTime() - new Date(userRecoverySentAt).getTime()) < 3600000; // 1 hour
             
             if (recentRecovery) {
               console.log('[AuthCallback] Recovery session detected, redirecting to /reset-password');
-              // Sign out to clear the session, user needs to set new password first
-              await supabase.auth.signOut();
-              navigate('/reset-password?recovery=pending', { replace: true });
+              // Set the recovery flag so Auth.tsx doesn't redirect away
+              sessionStorage.setItem('password_recovery_flow', 'true');
+              // DO NOT sign out - user needs the session to update their password
+              // Just redirect to reset-password, the session is already established
+              navigate('/reset-password', { replace: true });
               return;
             }
             
