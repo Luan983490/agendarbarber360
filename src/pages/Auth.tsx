@@ -47,6 +47,7 @@ const Auth = () => {
   const [isResending, setIsResending] = useState(false);
   const [emailAlreadyExists, setEmailAlreadyExists] = useState(false);
   const [activeTab, setActiveTab] = useState('login');
+  const [isRecovering, setIsRecovering] = useState(false);
   const tabsRef = useRef<HTMLDivElement>(null);
   
   const [loginData, setLoginData] = useState({
@@ -214,6 +215,62 @@ const Auth = () => {
     }
   };
 
+  const handleForgotPassword = async (email?: string) => {
+    const emailToUse = email || loginData.email.trim().toLowerCase();
+    
+    if (!emailToUse) {
+      toast({
+        title: 'Email necessário',
+        description: 'Digite seu email para recuperar a senha.',
+        variant: 'destructive'
+      });
+      return;
+    }
+    
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailToUse)) {
+      toast({
+        title: 'Email inválido',
+        description: 'Digite um email válido para recuperar a senha.',
+        variant: 'destructive'
+      });
+      return;
+    }
+    
+    setIsRecovering(true);
+    
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(emailToUse, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      
+      if (error) {
+        console.error('[Auth] Password reset error:', error);
+        toast({
+          title: 'Erro ao enviar email',
+          description: error.message || 'Tente novamente mais tarde.',
+          variant: 'destructive'
+        });
+        return;
+      }
+      
+      toast({
+        title: 'Email de recuperação enviado!',
+        description: `Verifique sua caixa de entrada em ${emailToUse}`,
+      });
+    } catch (err) {
+      console.error('[Auth] Unexpected error:', err);
+      toast({
+        title: 'Erro inesperado',
+        description: 'Tente novamente mais tarde.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsRecovering(false);
+    }
+  };
+
   const getStrengthColor = (strength: string) => {
     switch (strength) {
       case 'strong': return 'bg-green-500';
@@ -355,15 +412,33 @@ const Auth = () => {
                     )}
                   </Button>
                   
-                  <div className="text-center text-sm text-muted-foreground">
-                    Não tem uma conta?{' '}
+                  <div className="flex flex-col gap-2 text-center text-sm">
                     <button
                       type="button"
-                      onClick={() => setActiveTab('signup')}
-                      className="text-primary hover:underline font-medium"
+                      onClick={() => handleForgotPassword()}
+                      disabled={isRecovering}
+                      className="text-primary hover:underline font-medium disabled:opacity-50"
                     >
-                      Cadastre-se
+                      {isRecovering ? (
+                        <>
+                          <Loader2 className="inline mr-1 h-3 w-3 animate-spin" />
+                          Enviando...
+                        </>
+                      ) : (
+                        'Esqueceu a senha?'
+                      )}
                     </button>
+                    
+                    <div className="text-muted-foreground">
+                      Não tem uma conta?{' '}
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('signup')}
+                        className="text-primary hover:underline font-medium"
+                      >
+                        Cadastre-se
+                      </button>
+                    </div>
                   </div>
                 </form>
               </CardContent>
@@ -438,10 +513,18 @@ const Auth = () => {
                             type="button"
                             variant="ghost"
                             size="sm"
-                            onClick={() => {/* TODO: Add password recovery */}}
+                            onClick={() => handleForgotPassword(signupData.email)}
+                            disabled={isRecovering}
                             className="flex-1 text-muted-foreground"
                           >
-                            Recuperar Senha
+                            {isRecovering ? (
+                              <>
+                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                Enviando...
+                              </>
+                            ) : (
+                              'Recuperar Senha'
+                            )}
                           </Button>
                         </div>
                       </div>
