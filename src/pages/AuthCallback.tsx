@@ -21,14 +21,6 @@ const AuthCallback = () => {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // Verificar se acabou de resetar senha - não fazer nada
-        const justReset = sessionStorage.getItem('password_just_reset') === 'true';
-        if (justReset) {
-          console.log('[AuthCallback] Password just reset, skipping callback processing');
-          navigate('/auth?password_reset=success', { replace: true });
-          return;
-        }
-
         // Check for error in URL params
         const error = searchParams.get('error');
         const errorDescription = searchParams.get('error_description');
@@ -52,17 +44,8 @@ const AuthCallback = () => {
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token');
-        const type = hashParams.get('type');
 
-        console.log('[AuthCallback] URL params - code:', !!code, 'access_token:', !!accessToken, 'type:', type);
-
-        // Check if this is a password recovery flow - redirect to reset-password page
-        if (type === 'recovery') {
-          console.log('[AuthCallback] Recovery flow detected in hash, redirecting to /reset-password');
-          // Pass the hash params to the reset-password page so it can set the session
-          navigate(`/reset-password${window.location.hash}`, { replace: true });
-          return;
-        }
+        console.log('[AuthCallback] URL params - code:', !!code, 'access_token:', !!accessToken);
 
         // If we have tokens in the hash (implicit flow), set the session
         if (accessToken) {
@@ -85,8 +68,7 @@ const AuthCallback = () => {
           }
         }
 
-        // If we have a code (PKCE flow), we need to check if it's for password recovery
-        // by looking at the referer or checking after exchange
+        // If we have a code (PKCE flow), exchange it for a session
         if (code) {
           console.log('[AuthCallback] Exchanging code for session');
           const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
@@ -108,20 +90,6 @@ const AuthCallback = () => {
           }
 
           if (data.session) {
-            // Check if this might be a recovery flow by checking recovery_sent_at
-            const user = data.session.user;
-            const userRecoverySentAt = (user as any)?.recovery_sent_at;
-            
-            // If recovery was sent recently (within 1 hour), treat as recovery
-            const recentRecovery = userRecoverySentAt && 
-              (Date.now() - new Date(userRecoverySentAt).getTime()) < 3600000; // 1 hour
-            
-            if (recentRecovery) {
-              console.log('[AuthCallback] Recent recovery detected, redirecting to /reset-password');
-              navigate('/reset-password', { replace: true });
-              return;
-            }
-            
             await handleSuccessfulAuth(data.session);
             return;
           }

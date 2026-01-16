@@ -48,10 +48,6 @@ const Auth = () => {
   const [emailAlreadyExists, setEmailAlreadyExists] = useState(false);
   const [activeTab, setActiveTab] = useState('login');
   const tabsRef = useRef<HTMLDivElement>(null);
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
-  const [forgotPasswordSent, setForgotPasswordSent] = useState(false);
-  const [sendingResetEmail, setSendingResetEmail] = useState(false);
   
   const [loginData, setLoginData] = useState({
     email: '',
@@ -69,30 +65,8 @@ const Auth = () => {
     [signupData.password]
   );
 
-  // Mostrar mensagem de sucesso após reset de senha
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const passwordResetSuccess = urlParams.get('password_reset') === 'success';
-    const justReset = sessionStorage.getItem('password_just_reset') === 'true';
-    
-    if (passwordResetSuccess || justReset) {
-      toast({
-        title: 'Senha alterada com sucesso!',
-        description: 'Faça login com sua nova senha.',
-      });
-      // Limpar flags
-      sessionStorage.removeItem('password_just_reset');
-      // Limpar URL
-      window.history.replaceState({}, '', '/auth');
-    }
-  }, []);
-
-  useEffect(() => {
-    // Don't redirect if user is in password recovery flow
-    const isPasswordRecoveryFlow = sessionStorage.getItem('password_recovery_flow') === 'true';
-    const justReset = sessionStorage.getItem('password_just_reset') === 'true';
-    
-    if (user && !authLoading && !isPasswordRecoveryFlow && !justReset) {
+    if (user && !authLoading) {
       checkUserProfileAndRedirect();
     }
   }, [user, authLoading]);
@@ -240,43 +214,6 @@ const Auth = () => {
     }
   };
 
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!forgotPasswordEmail) {
-      toast({
-        title: 'Email obrigatório',
-        description: 'Digite seu email para recuperar a senha.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setSendingResetEmail(true);
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(forgotPasswordEmail.trim().toLowerCase(), {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-
-      if (error) throw error;
-
-      setForgotPasswordSent(true);
-      toast({
-        title: 'Email enviado!',
-        description: 'Verifique sua caixa de entrada para redefinir sua senha.',
-      });
-    } catch (error: any) {
-      console.error('Error sending reset email:', error);
-      toast({
-        title: 'Erro ao enviar email',
-        description: error.message || 'Tente novamente mais tarde.',
-        variant: 'destructive',
-      });
-    } finally {
-      setSendingResetEmail(false);
-    }
-  };
-
   const getStrengthColor = (strength: string) => {
     switch (strength) {
       case 'strong': return 'bg-green-500';
@@ -388,19 +325,7 @@ const Auth = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="password">Senha</Label>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowForgotPassword(true);
-                          setForgotPasswordEmail(loginData.email);
-                        }}
-                        className="text-xs text-primary hover:underline"
-                      >
-                        Esqueci minha senha
-                      </button>
-                    </div>
+                    <Label htmlFor="password">Senha</Label>
                     <div className="relative">
                       <Input
                         id="password"
@@ -657,103 +582,6 @@ const Auth = () => {
           </Tabs>
         </Card>
       </div>
-
-      {/* Forgot Password Modal */}
-      {showForgotPassword && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Mail className="h-5 w-5" />
-                Recuperar Senha
-              </CardTitle>
-              <CardDescription>
-                {forgotPasswordSent 
-                  ? 'Email enviado! Verifique sua caixa de entrada.'
-                  : 'Digite seu email para receber o link de recuperação'
-                }
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {forgotPasswordSent ? (
-                <div className="text-center space-y-4">
-                  <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-                    <Mail className="h-8 w-8 text-green-600" />
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Enviamos um email para <strong>{forgotPasswordEmail}</strong> com um link para redefinir sua senha.
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Não recebeu? Verifique sua pasta de spam ou tente novamente.
-                  </p>
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      className="flex-1"
-                      onClick={() => {
-                        setForgotPasswordSent(false);
-                      }}
-                    >
-                      Tentar outro email
-                    </Button>
-                    <Button 
-                      className="flex-1"
-                      onClick={() => {
-                        setShowForgotPassword(false);
-                        setForgotPasswordSent(false);
-                        setForgotPasswordEmail('');
-                      }}
-                    >
-                      Fechar
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <form onSubmit={handleForgotPassword} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="forgot-email">Email</Label>
-                    <Input
-                      id="forgot-email"
-                      type="email"
-                      value={forgotPasswordEmail}
-                      onChange={(e) => setForgotPasswordEmail(e.target.value)}
-                      placeholder="seu@email.com"
-                      required
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button 
-                      type="button"
-                      variant="outline" 
-                      className="flex-1"
-                      onClick={() => {
-                        setShowForgotPassword(false);
-                        setForgotPasswordEmail('');
-                      }}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button 
-                      type="submit"
-                      className="flex-1"
-                      disabled={sendingResetEmail}
-                    >
-                      {sendingResetEmail ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Enviando...
-                        </>
-                      ) : (
-                        'Enviar Link'
-                      )}
-                    </Button>
-                  </div>
-                </form>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
     </div>
   );
 };
