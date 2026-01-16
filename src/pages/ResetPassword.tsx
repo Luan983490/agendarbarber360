@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -33,6 +33,7 @@ const checkPasswordStrength = (password: string) => {
 
 const ResetPassword = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -47,17 +48,45 @@ const ResetPassword = () => {
   useEffect(() => {
     let isMounted = true;
 
-    const initializeSession = async () => {
+    const validateRecoveryToken = async () => {
       try {
-        // Check for recovery hash params (type=recovery in URL hash)
+        console.log('[ResetPassword] Starting validation...');
+        console.log('[ResetPassword] URL:', window.location.href);
+        console.log('[ResetPassword] Hash:', window.location.hash);
+        console.log('[ResetPassword] Search params - code:', searchParams.get('code'));
+
+        // PRIORITY 1: Check for PKCE code in URL query params
+        const code = searchParams.get('code');
+        
+        if (code) {
+          console.log('[ResetPassword] PKCE code found, exchanging for session...');
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          
+          if (error) {
+            console.error('[ResetPassword] Error exchanging code:', error);
+            toast.error('Link inválido ou expirado. Solicite um novo link.');
+            navigate('/auth');
+            return;
+          }
+          
+          if (data.session && isMounted) {
+            console.log('[ResetPassword] Session established via PKCE');
+            setIsValidSession(true);
+            setCheckingSession(false);
+            // Clean URL
+            window.history.replaceState({}, '', '/reset-password');
+            return;
+          }
+        }
+
+        // PRIORITY 2: Check for hash params (type=recovery with tokens)
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const type = hashParams.get('type');
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token');
 
-        console.log('[ResetPassword] Checking hash - type:', type, 'hasAccessToken:', !!accessToken);
+        console.log('[ResetPassword] Hash params - type:', type, 'hasAccessToken:', !!accessToken);
 
-        // If type=recovery and we have tokens, set the session
         if (type === 'recovery' && accessToken) {
           console.log('[ResetPassword] Recovery flow detected with tokens');
           
@@ -68,13 +97,13 @@ const ResetPassword = () => {
 
           if (error) {
             console.error('[ResetPassword] Error setting session:', error);
-            toast.error('Link inválido ou expirado. Solicite um novo.');
+            toast.error('Link inválido ou expirado. Solicite um novo link.');
             navigate('/auth');
             return;
           }
 
           if (data.session && isMounted) {
-            console.log('[ResetPassword] Session established successfully');
+            console.log('[ResetPassword] Session established via hash tokens');
             setIsValidSession(true);
             setCheckingSession(false);
             // Clean URL
@@ -83,56 +112,40 @@ const ResetPassword = () => {
           }
         }
 
-        // Check for existing valid session (user might have been redirected with session already set)
+        // PRIORITY 3: Check for existing valid session
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session && isMounted) {
-          // Verify this is indeed a recovery session by checking recovery_sent_at
-          const user = session.user;
-          const recoverySentAt = (user as any)?.recovery_sent_at;
-          
-          if (recoverySentAt) {
-            const timeSinceRecovery = Date.now() - new Date(recoverySentAt).getTime();
-            // Recovery link valid for 24 hours
-            if (timeSinceRecovery < 86400000) {
-              console.log('[ResetPassword] Valid recovery session found');
-              setIsValidSession(true);
-              setCheckingSession(false);
-              return;
-            }
-          }
-          
-          // If session exists but not from recovery, still allow (might be edge case)
-          console.log('[ResetPassword] Session exists, allowing password reset');
+          console.log('[ResetPassword] Existing session found');
           setIsValidSession(true);
           setCheckingSession(false);
           return;
         }
 
-        // No valid session - redirect to auth
+        // No valid session found - redirect
         if (isMounted) {
-          console.log('[ResetPassword] No valid session found');
-          toast.error('Link inválido ou expirado. Solicite um novo.');
+          console.log('[ResetPassword] No valid session found, redirecting to auth');
+          toast.error('Link inválido ou expirado. Solicite um novo link.');
           navigate('/auth');
         }
       } catch (error) {
-        console.error('[ResetPassword] Error:', error);
+        console.error('[ResetPassword] Error during validation:', error);
         if (isMounted) {
-          toast.error('Erro ao verificar sessão. Tente novamente.');
+          toast.error('Erro ao validar link. Tente novamente.');
           navigate('/auth');
         }
       }
     };
 
-    // Small delay to ensure hash is available
+    // Small delay to ensure URL params are available
     setTimeout(() => {
-      initializeSession();
+      validateRecoveryToken();
     }, 100);
 
     return () => {
       isMounted = false;
     };
-  }, [navigate]);
+  }, [navigate, searchParams]);
 
   const getStrengthColor = (strength: string) => {
     switch (strength) {
