@@ -198,18 +198,23 @@ const ResetPassword = () => {
 
       // Sucesso!
       console.log('[ResetPassword] Senha atualizada com sucesso!');
-      setSuccess(true);
       toast.success('Senha alterada com sucesso!');
       
-      // Deslogar IMEDIATAMENTE e redirecionar para login
-      console.log('[ResetPassword] Deslogando usuário...');
-      await supabase.auth.signOut();
+      // Deslogar COMPLETAMENTE
+      console.log('[ResetPassword] Deslogando usuário completamente...');
+      await supabase.auth.signOut({ scope: 'local' });
       
-      // Limpar URL
-      window.history.replaceState({}, '', '/reset-password');
+      // Limpar COMPLETAMENTE a URL de qualquer token/hash
+      window.history.replaceState({}, '', '/');
       
+      // Marcar que estamos no fluxo pós-reset para evitar interferência
+      sessionStorage.setItem('password_just_reset', 'true');
+      
+      setSuccess(true);
+      
+      // Redirecionar via window.location para garantir limpeza total
       setTimeout(() => {
-        navigate('/auth', { replace: true });
+        window.location.href = '/auth?password_reset=success';
       }, 2000);
       
     } catch (error) {

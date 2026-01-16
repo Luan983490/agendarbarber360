@@ -21,6 +21,14 @@ const AuthCallback = () => {
   useEffect(() => {
     const handleCallback = async () => {
       try {
+        // Verificar se acabou de resetar senha - não fazer nada
+        const justReset = sessionStorage.getItem('password_just_reset') === 'true';
+        if (justReset) {
+          console.log('[AuthCallback] Password just reset, skipping callback processing');
+          navigate('/auth?password_reset=success', { replace: true });
+          return;
+        }
+
         // Check for error in URL params
         const error = searchParams.get('error');
         const errorDescription = searchParams.get('error_description');
