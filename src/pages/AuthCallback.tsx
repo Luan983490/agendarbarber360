@@ -39,120 +39,127 @@ const AuthCallback = () => {
           return;
         }
 
-        // Get the session - Supabase automatically handles the token exchange
+        // First, try to get the code from URL (PKCE flow)
+        const code = searchParams.get('code');
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+
+        console.log('[AuthCallback] URL params - code:', !!code, 'access_token:', !!accessToken);
+
+        // If we have tokens in the hash (implicit flow), set the session
+        if (accessToken) {
+          console.log('[AuthCallback] Setting session from hash tokens');
+          const { data, error: setSessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken || '',
+          });
+
+          if (setSessionError) {
+            console.error('[AuthCallback] Set session error:', setSessionError);
+            setErrorMessage('Erro ao estabelecer sessão.');
+            setStatus('error');
+            return;
+          }
+
+          if (data.session) {
+            await handleSuccessfulAuth(data.session);
+            return;
+          }
+        }
+
+        // If we have a code (PKCE flow), exchange it for a session
+        if (code) {
+          console.log('[AuthCallback] Exchanging code for session');
+          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          
+          if (exchangeError) {
+            console.error('[AuthCallback] Code exchange error:', exchangeError);
+            
+            // If exchange fails, try getting existing session
+            const { data: { session: existingSession } } = await supabase.auth.getSession();
+            if (existingSession) {
+              console.log('[AuthCallback] Found existing session after exchange error');
+              await handleSuccessfulAuth(existingSession);
+              return;
+            }
+            
+            setErrorMessage('Link de confirmação inválido ou expirado.');
+            setStatus('resend');
+            return;
+          }
+
+          if (data.session) {
+            await handleSuccessfulAuth(data.session);
+            return;
+          }
+        }
+
+        // If no code or tokens, check for existing session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
-          console.error('Session error:', sessionError);
+          console.error('[AuthCallback] Session error:', sessionError);
           setErrorMessage('Erro ao verificar sessão. Tente fazer login novamente.');
           setStatus('error');
           return;
         }
 
         if (session) {
-          console.log('[AuthCallback] Session found, user id:', session.user.id);
-          setStatus('success');
-          
-          // Get user profile to redirect to correct dashboard
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('user_type')
-            .eq('user_id', session.user.id)
-            .single();
-
-          if (profileError) {
-            console.error('[AuthCallback] Profile error:', profileError);
-            // Fallback to user metadata
-            const userType = session.user.user_metadata?.user_type;
-            console.log('[AuthCallback] Fallback to user_metadata:', userType);
-          }
-
-          console.log('[AuthCallback] Profile user_type:', profile?.user_type);
-
-          toast({
-            title: 'Email confirmado!',
-            description: 'Seu cadastro foi confirmado com sucesso.',
-          });
-
-          // Delay redirect to show success message
-          setTimeout(() => {
-            const userType = profile?.user_type || session.user.user_metadata?.user_type;
-            console.log('[AuthCallback] Redirecting based on user_type:', userType);
-            
-            if (userType === 'barbershop_owner') {
-              console.log('[AuthCallback] -> /dashboard');
-              navigate('/dashboard', { replace: true });
-            } else if (userType === 'barber') {
-              console.log('[AuthCallback] -> /barber/hoje');
-              navigate('/barber/hoje', { replace: true });
-            } else {
-              console.log('[AuthCallback] -> /');
-              navigate('/', { replace: true });
-            }
-          }, 2000);
-        } else {
-          // No session found - might need to exchange code
-          const code = searchParams.get('code');
-          
-          if (code) {
-            // Exchange code for session (PKCE flow)
-            const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-            
-            if (exchangeError) {
-              console.error('Code exchange error:', exchangeError);
-              setErrorMessage('Link de confirmação inválido ou expirado.');
-              setStatus('resend');
-              return;
-            }
-
-            if (data.session) {
-              console.log('[AuthCallback] Session from code exchange, user id:', data.session.user.id);
-              setStatus('success');
-              
-              toast({
-                title: 'Email confirmado!',
-                description: 'Seu cadastro foi confirmado com sucesso.',
-              });
-
-              // Get user profile
-              const { data: profile, error: profileError } = await supabase
-                .from('profiles')
-                .select('user_type')
-                .eq('user_id', data.session.user.id)
-                .single();
-
-              if (profileError) {
-                console.error('[AuthCallback] Profile error:', profileError);
-              }
-              
-              console.log('[AuthCallback] Profile user_type:', profile?.user_type);
-
-              setTimeout(() => {
-                const userType = profile?.user_type || data.session!.user.user_metadata?.user_type;
-                console.log('[AuthCallback] Redirecting based on user_type:', userType);
-                
-                if (userType === 'barbershop_owner') {
-                  console.log('[AuthCallback] -> /dashboard');
-                  navigate('/dashboard', { replace: true });
-                } else if (userType === 'barber') {
-                  console.log('[AuthCallback] -> /barber/hoje');
-                  navigate('/barber/hoje', { replace: true });
-                } else {
-                  console.log('[AuthCallback] -> /');
-                  navigate('/', { replace: true });
-                }
-              }, 2000);
-            }
-          } else {
-            setErrorMessage('Link de confirmação inválido.');
-            setStatus('error');
-          }
+          console.log('[AuthCallback] Found existing session');
+          await handleSuccessfulAuth(session);
+          return;
         }
+
+        // No session found at all
+        console.log('[AuthCallback] No session found');
+        setErrorMessage('Link de confirmação inválido.');
+        setStatus('error');
       } catch (err) {
-        console.error('Callback error:', err);
+        console.error('[AuthCallback] Callback error:', err);
         setErrorMessage('Erro inesperado. Tente novamente.');
         setStatus('error');
       }
+    };
+
+    const handleSuccessfulAuth = async (session: any) => {
+      console.log('[AuthCallback] Session established, user id:', session.user.id);
+      setStatus('success');
+      
+      // Get user profile to redirect to correct dashboard
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('user_type')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (profileError) {
+        console.error('[AuthCallback] Profile error:', profileError);
+      }
+
+      const userType = profile?.user_type || session.user.user_metadata?.user_type;
+      console.log('[AuthCallback] User type:', userType);
+
+      toast({
+        title: 'Email confirmado com sucesso!',
+        description: userType === 'barbershop_owner' 
+          ? 'Você será redirecionado para configurar sua barbearia.' 
+          : 'Você está logado automaticamente.',
+      });
+
+      // Redirect after showing success message
+      setTimeout(() => {
+        if (userType === 'barbershop_owner') {
+          console.log('[AuthCallback] -> /dashboard (owner)');
+          navigate('/dashboard', { replace: true });
+        } else if (userType === 'barber') {
+          console.log('[AuthCallback] -> /barber/hoje');
+          navigate('/barber/hoje', { replace: true });
+        } else {
+          console.log('[AuthCallback] -> / (client)');
+          navigate('/', { replace: true });
+        }
+      }, 2000);
     };
 
     handleCallback();
