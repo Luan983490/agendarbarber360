@@ -50,8 +50,8 @@ const AuthCallback = () => {
 
         // Check if this is a password recovery flow - redirect to reset-password page
         if (type === 'recovery') {
-          console.log('[AuthCallback] Recovery flow detected, redirecting to /reset-password');
-          // Pass the hash params to the reset-password page
+          console.log('[AuthCallback] Recovery flow detected in hash, redirecting to /reset-password');
+          // Pass the hash params to the reset-password page so it can set the session
           navigate(`/reset-password${window.location.hash}`, { replace: true });
           return;
         }
@@ -100,30 +100,16 @@ const AuthCallback = () => {
           }
 
           if (data.session) {
-            // Check if this is a recovery flow by multiple indicators
+            // Check if this might be a recovery flow by checking recovery_sent_at
             const user = data.session.user;
             const userRecoverySentAt = (user as any)?.recovery_sent_at;
             
-            // Check recovery by: recovery_sent_at timestamp
-            // The recovery_sent_at should be recent (within 24 hours to be safe)
+            // If recovery was sent recently (within 1 hour), treat as recovery
             const recentRecovery = userRecoverySentAt && 
-              (new Date().getTime() - new Date(userRecoverySentAt).getTime()) < 86400000; // 24 hours
+              (Date.now() - new Date(userRecoverySentAt).getTime()) < 3600000; // 1 hour
             
-            // Also check if the sessionStorage flag was set (from RecoveryRedirectHandler)
-            const isRecoveryFlow = sessionStorage.getItem('password_recovery_flow') === 'true';
-            
-            // Check the document referrer for recovery indicators
-            const referrerHasRecovery = document.referrer?.includes('type=recovery') || 
-                                         document.referrer?.includes('recovery');
-            
-            console.log('[AuthCallback] Recovery check - recentRecovery:', recentRecovery, 
-                        'isRecoveryFlow:', isRecoveryFlow, 'referrerHasRecovery:', referrerHasRecovery);
-            
-            if (recentRecovery || isRecoveryFlow || referrerHasRecovery) {
-              console.log('[AuthCallback] Recovery session detected, redirecting to /reset-password');
-              // Set the recovery flag so ResetPassword knows the session is valid
-              sessionStorage.setItem('password_recovery_flow', 'true');
-              // DO NOT include code in URL - it's already consumed. Session is already established.
+            if (recentRecovery) {
+              console.log('[AuthCallback] Recent recovery detected, redirecting to /reset-password');
               navigate('/reset-password', { replace: true });
               return;
             }
