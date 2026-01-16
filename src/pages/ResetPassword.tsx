@@ -45,12 +45,19 @@ const ResetPassword = () => {
 
   const passwordStrength = checkPasswordStrength(password);
 
+  // Armazenar tokens para uso posterior (NÃO fazer login automático)
+  const [storedTokens, setStoredTokens] = useState<{
+    accessToken: string;
+    refreshToken: string;
+    code?: string;
+  } | null>(null);
+
   useEffect(() => {
     let isMounted = true;
 
     const validateRecoveryToken = async () => {
       try {
-        console.log('[ResetPassword] Starting validation...');
+        console.log('[ResetPassword] Validando presença de tokens (SEM fazer login)...');
         console.log('[ResetPassword] Full URL:', window.location.href);
         
         // Get URL components
@@ -62,71 +69,33 @@ const ResetPassword = () => {
 
         console.log('[ResetPassword] code:', !!code, 'type:', type, 'accessToken:', !!accessToken);
 
-        // OPTION 1: PKCE flow - code in query params
+        // OPÇÃO 1: PKCE flow - código nos query params
+        // NÃO trocar código aqui! Apenas validar que existe
         if (code) {
-          console.log('[ResetPassword] Processing PKCE code...');
-          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-          
-          if (error) {
-            console.error('[ResetPassword] PKCE exchange error:', error);
-            if (isMounted) {
-              toast.error('Link inválido ou expirado. Solicite um novo link.');
-              navigate('/auth');
-            }
-            return;
-          }
-          
-          if (data.session && isMounted) {
-            console.log('[ResetPassword] Session established via PKCE');
+          console.log('[ResetPassword] Código PKCE encontrado - NÃO fazendo login automático');
+          if (isMounted) {
+            setStoredTokens({ accessToken: '', refreshToken: '', code });
             setIsValidSession(true);
             setCheckingSession(false);
-            // Clean URL without losing React Router state
-            window.history.replaceState({}, '', '/reset-password');
-            return;
           }
-        }
-
-        // OPTION 2: Implicit flow - tokens in hash
-        if (type === 'recovery' && accessToken) {
-          console.log('[ResetPassword] Processing implicit flow tokens...');
-          
-          const { data, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken || '',
-          });
-
-          if (error) {
-            console.error('[ResetPassword] Set session error:', error);
-            if (isMounted) {
-              toast.error('Link inválido ou expirado. Solicite um novo link.');
-              navigate('/auth');
-            }
-            return;
-          }
-
-          if (data.session && isMounted) {
-            console.log('[ResetPassword] Session established via implicit flow');
-            setIsValidSession(true);
-            setCheckingSession(false);
-            // Clean URL
-            window.history.replaceState({}, '', '/reset-password');
-            return;
-          }
-        }
-
-        // OPTION 3: Check for existing valid session (user might have been redirected after token processing elsewhere)
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session && isMounted) {
-          console.log('[ResetPassword] Found existing session');
-          setIsValidSession(true);
-          setCheckingSession(false);
           return;
         }
 
-        // No valid session found
+        // OPÇÃO 2: Implicit flow - tokens no hash
+        // NÃO estabelecer sessão aqui! Apenas validar que existem
+        if (type === 'recovery' && accessToken && refreshToken) {
+          console.log('[ResetPassword] Tokens de recovery encontrados - NÃO fazendo login automático');
+          if (isMounted) {
+            setStoredTokens({ accessToken, refreshToken });
+            setIsValidSession(true);
+            setCheckingSession(false);
+          }
+          return;
+        }
+
+        // Se não encontrou tokens válidos, redirecionar
         if (isMounted) {
-          console.log('[ResetPassword] No valid session, redirecting to auth');
+          console.log('[ResetPassword] Nenhum token válido encontrado, redirecionando...');
           toast.error('Link inválido ou expirado. Solicite um novo link.');
           navigate('/auth');
         }
@@ -187,6 +156,36 @@ const ResetPassword = () => {
     setLoading(true);
 
     try {
+      // AGORA SIM estabelecer sessão temporária APENAS para trocar a senha
+      if (storedTokens) {
+        if (storedTokens.code) {
+          // PKCE flow - trocar código por sessão
+          console.log('[ResetPassword] Estabelecendo sessão via PKCE para trocar senha...');
+          const { error: codeError } = await supabase.auth.exchangeCodeForSession(storedTokens.code);
+          if (codeError) {
+            console.error('[ResetPassword] PKCE exchange error:', codeError);
+            toast.error('Link expirado. Solicite um novo link de recuperação.');
+            navigate('/auth');
+            return;
+          }
+        } else if (storedTokens.accessToken && storedTokens.refreshToken) {
+          // Implicit flow - estabelecer sessão com tokens
+          console.log('[ResetPassword] Estabelecendo sessão via tokens para trocar senha...');
+          const { error: sessionError } = await supabase.auth.setSession({
+            access_token: storedTokens.accessToken,
+            refresh_token: storedTokens.refreshToken,
+          });
+          if (sessionError) {
+            console.error('[ResetPassword] Set session error:', sessionError);
+            toast.error('Link expirado. Solicite um novo link de recuperação.');
+            navigate('/auth');
+            return;
+          }
+        }
+      }
+
+      // Atualizar senha
+      console.log('[ResetPassword] Atualizando senha...');
       const { error } = await supabase.auth.updateUser({
         password: password,
       });
@@ -197,12 +196,17 @@ const ResetPassword = () => {
         return;
       }
 
-      // Success
+      // Sucesso!
+      console.log('[ResetPassword] Senha atualizada com sucesso!');
       setSuccess(true);
       toast.success('Senha alterada com sucesso!');
       
-      // Sign out and redirect to login
+      // Deslogar IMEDIATAMENTE e redirecionar para login
+      console.log('[ResetPassword] Deslogando usuário...');
       await supabase.auth.signOut();
+      
+      // Limpar URL
+      window.history.replaceState({}, '', '/reset-password');
       
       setTimeout(() => {
         navigate('/auth', { replace: true });
