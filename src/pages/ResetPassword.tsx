@@ -59,14 +59,38 @@ const ResetPassword = () => {
     // Check if user has a valid recovery session
     const checkSession = async () => {
       try {
-        // First check for code in URL (PKCE flow - used by Supabase for password recovery)
         const urlParams = new URLSearchParams(window.location.search);
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        
+        // Check for recovery pending (user was redirected from AuthCallback)
+        const recoveryPending = urlParams.get('recovery') === 'pending';
+        
+        // Check for code in URL (PKCE flow - used by Supabase for password recovery)
         const code = urlParams.get('code');
         
+        // Check for tokens in hash (implicit flow)
+        const accessToken = hashParams.get('access_token');
+        const type = hashParams.get('type');
+        
+        console.log('[ResetPassword] URL check - code:', !!code, 'accessToken:', !!accessToken, 'type:', type, 'recoveryPending:', recoveryPending);
+        
+        // If recovery pending, just show the "request new link" message
+        if (recoveryPending) {
+          console.log('[ResetPassword] Recovery pending - need to request new link');
+          toast({
+            title: 'Solicite um novo link',
+            description: 'Por motivos de segurança, solicite um novo link de recuperação.',
+            variant: 'destructive',
+          });
+          sessionStorage.removeItem('password_recovery_flow');
+          navigate('/auth');
+          return;
+        }
+        
+        // Handle PKCE flow (code in URL)
         if (code) {
           console.log('[ResetPassword] Found code in URL, exchanging for session...');
           
-          // Exchange the code for session
           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
           
           if (error) {
@@ -90,30 +114,17 @@ const ResetPassword = () => {
             return;
           }
         }
-
-        // Check for existing session (user might have refreshed the page)
-        const { data: { session } } = await supabase.auth.getSession();
         
-        if (session) {
-          console.log('[ResetPassword] Found existing session');
-          setIsValidSession(true);
-          setCheckingSession(false);
-          return;
-        }
-        
-        // Try to get session from URL hash (implicit flow - fallback for older Supabase versions)
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const accessToken = hashParams.get('access_token');
-        const type = hashParams.get('type');
-        
+        // Handle implicit flow (tokens in hash) - type must be 'recovery'
         if (accessToken && type === 'recovery') {
-          console.log('[ResetPassword] Found tokens in hash');
+          console.log('[ResetPassword] Found recovery tokens in hash');
           const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: hashParams.get('refresh_token') || '',
           });
           
           if (data.session && !error) {
+            console.log('[ResetPassword] Session established from hash');
             setIsValidSession(true);
             setCheckingSession(false);
             // Clear the hash
@@ -122,6 +133,16 @@ const ResetPassword = () => {
           } else {
             console.error('[ResetPassword] Error setting session:', error);
           }
+        }
+
+        // Check for existing session (user might have refreshed the page after establishing session)
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+          console.log('[ResetPassword] Found existing session');
+          setIsValidSession(true);
+          setCheckingSession(false);
+          return;
         }
         
         // No valid session found
