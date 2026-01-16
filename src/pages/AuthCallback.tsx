@@ -50,14 +50,24 @@ const AuthCallback = () => {
         }
 
         if (session) {
+          console.log('[AuthCallback] Session found, user id:', session.user.id);
           setStatus('success');
           
           // Get user profile to redirect to correct dashboard
-          const { data: profile } = await supabase
+          const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('user_type')
             .eq('user_id', session.user.id)
             .single();
+
+          if (profileError) {
+            console.error('[AuthCallback] Profile error:', profileError);
+            // Fallback to user metadata
+            const userType = session.user.user_metadata?.user_type;
+            console.log('[AuthCallback] Fallback to user_metadata:', userType);
+          }
+
+          console.log('[AuthCallback] Profile user_type:', profile?.user_type);
 
           toast({
             title: 'Email confirmado!',
@@ -66,11 +76,17 @@ const AuthCallback = () => {
 
           // Delay redirect to show success message
           setTimeout(() => {
-            if (profile?.user_type === 'barbershop_owner') {
+            const userType = profile?.user_type || session.user.user_metadata?.user_type;
+            console.log('[AuthCallback] Redirecting based on user_type:', userType);
+            
+            if (userType === 'barbershop_owner') {
+              console.log('[AuthCallback] -> /dashboard');
               navigate('/dashboard', { replace: true });
-            } else if (profile?.user_type === 'barber') {
+            } else if (userType === 'barber') {
+              console.log('[AuthCallback] -> /barber/hoje');
               navigate('/barber/hoje', { replace: true });
             } else {
+              console.log('[AuthCallback] -> /');
               navigate('/', { replace: true });
             }
           }, 2000);
@@ -90,6 +106,7 @@ const AuthCallback = () => {
             }
 
             if (data.session) {
+              console.log('[AuthCallback] Session from code exchange, user id:', data.session.user.id);
               setStatus('success');
               
               toast({
@@ -98,18 +115,30 @@ const AuthCallback = () => {
               });
 
               // Get user profile
-              const { data: profile } = await supabase
+              const { data: profile, error: profileError } = await supabase
                 .from('profiles')
                 .select('user_type')
                 .eq('user_id', data.session.user.id)
                 .single();
 
+              if (profileError) {
+                console.error('[AuthCallback] Profile error:', profileError);
+              }
+              
+              console.log('[AuthCallback] Profile user_type:', profile?.user_type);
+
               setTimeout(() => {
-                if (profile?.user_type === 'barbershop_owner') {
+                const userType = profile?.user_type || data.session!.user.user_metadata?.user_type;
+                console.log('[AuthCallback] Redirecting based on user_type:', userType);
+                
+                if (userType === 'barbershop_owner') {
+                  console.log('[AuthCallback] -> /dashboard');
                   navigate('/dashboard', { replace: true });
-                } else if (profile?.user_type === 'barber') {
+                } else if (userType === 'barber') {
+                  console.log('[AuthCallback] -> /barber/hoje');
                   navigate('/barber/hoje', { replace: true });
                 } else {
+                  console.log('[AuthCallback] -> /');
                   navigate('/', { replace: true });
                 }
               }, 2000);
