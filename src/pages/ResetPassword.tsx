@@ -46,6 +46,16 @@ const ResetPassword = () => {
   const passwordStrength = checkPasswordStrength(password);
 
   useEffect(() => {
+    // Mark that we're in password recovery flow to prevent auto-redirects
+    sessionStorage.setItem('password_recovery_flow', 'true');
+    
+    // Cleanup on unmount
+    return () => {
+      sessionStorage.removeItem('password_recovery_flow');
+    };
+  }, []);
+
+  useEffect(() => {
     // Check if user has a valid recovery session
     const checkSession = async () => {
       try {
@@ -55,6 +65,8 @@ const ResetPassword = () => {
         
         if (code) {
           console.log('[ResetPassword] Found code in URL, exchanging for session...');
+          
+          // Exchange the code for session
           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
           
           if (error) {
@@ -64,6 +76,7 @@ const ResetPassword = () => {
               description: 'O link de recuperação é inválido ou expirou. Solicite um novo.',
               variant: 'destructive',
             });
+            sessionStorage.removeItem('password_recovery_flow');
             navigate('/auth');
             return;
           }
@@ -72,52 +85,57 @@ const ResetPassword = () => {
             console.log('[ResetPassword] Session established from code');
             setIsValidSession(true);
             setCheckingSession(false);
+            // Clear the URL params to prevent re-processing on refresh
+            window.history.replaceState({}, '', '/reset-password');
             return;
           }
         }
 
-        // Check for existing session
+        // Check for existing session (user might have refreshed the page)
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session) {
           console.log('[ResetPassword] Found existing session');
           setIsValidSession(true);
-        } else {
-          // Try to get session from URL hash (implicit flow - fallback)
-          const hashParams = new URLSearchParams(window.location.hash.substring(1));
-          const accessToken = hashParams.get('access_token');
-          const type = hashParams.get('type');
+          setCheckingSession(false);
+          return;
+        }
+        
+        // Try to get session from URL hash (implicit flow - fallback for older Supabase versions)
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const type = hashParams.get('type');
+        
+        if (accessToken && type === 'recovery') {
+          console.log('[ResetPassword] Found tokens in hash');
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: hashParams.get('refresh_token') || '',
+          });
           
-          if (accessToken && type === 'recovery') {
-            console.log('[ResetPassword] Found tokens in hash');
-            const { data, error } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: hashParams.get('refresh_token') || '',
-            });
-            
-            if (data.session && !error) {
-              setIsValidSession(true);
-            } else {
-              console.error('[ResetPassword] Error setting session:', error);
-              toast({
-                title: 'Link inválido',
-                description: 'O link de recuperação é inválido ou expirou. Solicite um novo.',
-                variant: 'destructive',
-              });
-              navigate('/auth');
-            }
+          if (data.session && !error) {
+            setIsValidSession(true);
+            setCheckingSession(false);
+            // Clear the hash
+            window.history.replaceState({}, '', '/reset-password');
+            return;
           } else {
-            console.log('[ResetPassword] No valid recovery params found');
-            toast({
-              title: 'Sessão inválida',
-              description: 'Você precisa acessar esta página através do link enviado por email.',
-              variant: 'destructive',
-            });
-            navigate('/auth');
+            console.error('[ResetPassword] Error setting session:', error);
           }
         }
+        
+        // No valid session found
+        console.log('[ResetPassword] No valid recovery params found');
+        toast({
+          title: 'Sessão inválida',
+          description: 'Você precisa acessar esta página através do link enviado por email.',
+          variant: 'destructive',
+        });
+        sessionStorage.removeItem('password_recovery_flow');
+        navigate('/auth');
       } catch (error) {
         console.error('[ResetPassword] Error checking session:', error);
+        sessionStorage.removeItem('password_recovery_flow');
         navigate('/auth');
       } finally {
         setCheckingSession(false);
@@ -185,7 +203,8 @@ const ResetPassword = () => {
         return;
       }
 
-      // Sign out the user so they need to login again with new password
+      // Clear the recovery flag and sign out
+      sessionStorage.removeItem('password_recovery_flow');
       await supabase.auth.signOut();
 
       setSuccess(true);

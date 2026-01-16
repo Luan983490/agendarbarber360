@@ -70,7 +70,10 @@ const Auth = () => {
   );
 
   useEffect(() => {
-    if (user && !authLoading) {
+    // Don't redirect if user is in password recovery flow
+    const isPasswordRecoveryFlow = sessionStorage.getItem('password_recovery_flow') === 'true';
+    
+    if (user && !authLoading && !isPasswordRecoveryFlow) {
       checkUserProfileAndRedirect();
     }
   }, [user, authLoading]);
