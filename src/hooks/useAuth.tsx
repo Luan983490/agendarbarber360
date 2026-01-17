@@ -33,18 +33,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        // CRITICAL: Ignore auth events when on reset-password page
+        // This prevents auto-login during password recovery flow
+        const isOnResetPassword = window.location.pathname === '/reset-password';
+        
+        if (isOnResetPassword) {
+          console.log('[Auth] Ignoring auth event on reset-password page:', event);
+          setLoading(false);
+          return;
+        }
+        
+        console.log('[Auth] Auth state changed:', event);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
       }
     );
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    // Get initial session - also ignore on reset-password page
+    const isOnResetPassword = window.location.pathname === '/reset-password';
+    if (!isOnResetPassword) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      });
+    } else {
       setLoading(false);
-    });
+    }
 
     return () => subscription.unsubscribe();
   }, []);
