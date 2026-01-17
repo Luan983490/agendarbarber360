@@ -49,10 +49,12 @@ const AuthCallback = () => {
         console.log('[AuthCallback] URL params - code:', !!code, 'access_token:', !!accessToken, 'type:', type);
 
         // Check if this is a password recovery flow - redirect to reset-password page
+        // IMPORTANT: Use window.location.href instead of navigate() to preserve hash on mobile browsers
         if (type === 'recovery' && accessToken) {
           console.log('[AuthCallback] Password recovery detected, redirecting to /reset-password');
-          // Keep the hash params for the reset-password page to use
-          navigate(`/reset-password${window.location.hash}`, { replace: true });
+          console.log('[AuthCallback] Hash to preserve:', window.location.hash);
+          // Use window.location.href for full page reload - preserves hash on ALL browsers (mobile included)
+          window.location.href = `/reset-password${window.location.hash}`;
           return;
         }
 
