@@ -49,23 +49,24 @@ const ResetPassword = () => {
 
   const passwordStrength = checkPasswordStrength(formData.password);
 
-  // Validate token on mount
+  // Validate token on mount - IMMEDIATELY capture hash before it can be lost
   useEffect(() => {
     const validateToken = async () => {
       try {
-        // Check if we have a valid session from the recovery link
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        // Also check URL hash for tokens (recovery flow)
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        // CRITICAL: Capture hash IMMEDIATELY on page load (before any async operations)
+        // Mobile browsers (Safari, Chrome) can lose the hash during navigation
+        const currentHash = window.location.hash;
+        const hashParams = new URLSearchParams(currentHash.substring(1));
         const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token') || '';
         const type = hashParams.get('type');
         
-        console.log('[ResetPassword] Session:', !!session, 'Hash token:', !!accessToken, 'Type:', type);
+        console.log('[ResetPassword] Hash captured:', currentHash ? 'EXISTS' : 'EMPTY');
+        console.log('[ResetPassword] Type:', type, 'Has access_token:', !!accessToken, 'Has refresh_token:', !!refreshToken);
         
-        // If we have tokens in the hash, set the session
-        if (accessToken && type === 'recovery') {
-          const refreshToken = hashParams.get('refresh_token') || '';
+        // Priority 1: If we have tokens in the hash AND it's a recovery flow
+        if (type === 'recovery' && accessToken && refreshToken) {
+          console.log('[ResetPassword] Setting session from hash tokens...');
           
           const { error: setSessionError } = await supabase.auth.setSession({
             access_token: accessToken,
@@ -74,34 +75,47 @@ const ResetPassword = () => {
           
           if (setSessionError) {
             console.error('[ResetPassword] Set session error:', setSessionError);
-            setErrorMessage('Link de recuperação inválido ou expirado.');
+            setErrorMessage('Link de recuperação inválido ou expirado. Solicite um novo link.');
             setStatus('error');
             return;
           }
           
+          console.log('[ResetPassword] Session established successfully!');
           // Clear the hash from URL for security
           window.history.replaceState(null, '', window.location.pathname);
           setStatus('ready');
           return;
         }
         
-        // Check for existing valid session
+        // Priority 2: Check for existing valid session (may have been set by Supabase SDK automatically)
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('[ResetPassword] Get session error:', sessionError);
+        }
+        
         if (session) {
+          console.log('[ResetPassword] Found existing session, ready to reset password');
+          // Clear hash if present for security
+          if (currentHash) {
+            window.history.replaceState(null, '', window.location.pathname);
+          }
           setStatus('ready');
           return;
         }
         
-        // No valid session or token
-        console.log('[ResetPassword] No valid session or recovery token');
-        setErrorMessage('Link de recuperação inválido ou expirado.');
+        // No valid session or token found
+        console.log('[ResetPassword] No valid session or recovery token found');
+        setErrorMessage('Link de recuperação inválido ou expirado. Solicite um novo link na página de login.');
         setStatus('error');
       } catch (err) {
         console.error('[ResetPassword] Validation error:', err);
-        setErrorMessage('Erro ao validar link de recuperação.');
+        setErrorMessage('Erro ao validar link de recuperação. Tente novamente.');
         setStatus('error');
       }
     };
 
+    // Execute immediately
     validateToken();
   }, []);
 
@@ -158,11 +172,9 @@ const ResetPassword = () => {
       await supabase.auth.signOut();
       
       // Redirect to auth after 2 seconds
+      // Use window.location.href for full page reload - ensures clean state on mobile
       setTimeout(() => {
-        navigate('/auth', { 
-          replace: true,
-          state: { passwordResetSuccess: true }
-        });
+        window.location.href = '/auth?password_reset=success';
       }, 2000);
       
     } catch (err) {
