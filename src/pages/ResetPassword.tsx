@@ -42,6 +42,13 @@ const ResetPassword = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
+  // CRITICAL FIX: Store tokens in state to persist across the entire flow
+  // This prevents issues where session expires between validation and password change
+  const [recoveryTokens, setRecoveryTokens] = useState<{
+    accessToken: string;
+    refreshToken: string;
+  } | null>(null);
+  
   const [formData, setFormData] = useState({
     password: '',
     confirmPassword: ''
@@ -66,8 +73,13 @@ const ResetPassword = () => {
         
         // Priority 1: If we have tokens in the hash AND it's a recovery flow
         if (type === 'recovery' && accessToken && refreshToken) {
-          console.log('[ResetPassword] Setting session from hash tokens...');
+          console.log('[ResetPassword] Storing tokens in state for later use...');
           
+          // CRITICAL FIX: Store tokens in state BEFORE any async operations
+          // This ensures we can re-establish session later if needed
+          setRecoveryTokens({ accessToken, refreshToken });
+          
+          // Try to establish session now
           const { error: setSessionError } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
@@ -81,8 +93,8 @@ const ResetPassword = () => {
           }
           
           console.log('[ResetPassword] Session established successfully!');
-          // Clear the hash from URL for security
-          window.history.replaceState(null, '', window.location.pathname);
+          // CRITICAL FIX: DON'T clear hash yet - keep tokens accessible
+          // We'll clear after successful password change
           setStatus('ready');
           return;
         }
@@ -96,10 +108,6 @@ const ResetPassword = () => {
         
         if (session) {
           console.log('[ResetPassword] Found existing session, ready to reset password');
-          // Clear hash if present for security
-          if (currentHash) {
-            window.history.replaceState(null, '', window.location.pathname);
-          }
           setStatus('ready');
           return;
         }
@@ -145,23 +153,82 @@ const ResetPassword = () => {
     setStatus('submitting');
     
     try {
-      // Update the password
+      // CRITICAL FIX: Re-establish session before updateUser()
+      // This fixes the issue where session expires between page load and form submit
+      // Especially important on mobile where this can take longer
+      
+      // First, check if we have stored tokens to re-establish session
+      if (recoveryTokens) {
+        console.log('[ResetPassword] Re-establishing session from stored tokens before updateUser...');
+        const { error: reSessionError } = await supabase.auth.setSession({
+          access_token: recoveryTokens.accessToken,
+          refresh_token: recoveryTokens.refreshToken,
+        });
+        
+        if (reSessionError) {
+          console.error('[ResetPassword] Re-session error:', reSessionError);
+          // Token might have truly expired - show friendly error
+          toast({
+            title: 'Sessão expirada',
+            description: 'O link de recuperação expirou. Solicite um novo link.',
+            variant: 'destructive'
+          });
+          setStatus('error');
+          setErrorMessage('O link de recuperação expirou. Solicite um novo link na página de login.');
+          return;
+        }
+        console.log('[ResetPassword] Session re-established successfully!');
+      } else {
+        // No stored tokens - verify current session is valid
+        console.log('[ResetPassword] No stored tokens, checking current session...');
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError || !session) {
+          console.error('[ResetPassword] No valid session for updateUser:', sessionError);
+          toast({
+            title: 'Sessão inválida',
+            description: 'Sua sessão expirou. Solicite um novo link de recuperação.',
+            variant: 'destructive'
+          });
+          setStatus('error');
+          setErrorMessage('Sessão expirada. Solicite um novo link na página de login.');
+          return;
+        }
+        console.log('[ResetPassword] Current session is valid');
+      }
+      
+      // Now update the password with a guaranteed valid session
+      console.log('[ResetPassword] Calling updateUser with new password...');
       const { error: updateError } = await supabase.auth.updateUser({
         password: formData.password
       });
       
       if (updateError) {
         console.error('[ResetPassword] Update error:', updateError);
+        
+        // Provide more specific error messages
+        let errorMsg = 'Tente novamente.';
+        if (updateError.message?.includes('session') || updateError.message?.includes('token')) {
+          errorMsg = 'Sua sessão expirou. Solicite um novo link de recuperação.';
+        } else if (updateError.message?.includes('password')) {
+          errorMsg = 'A senha não atende aos requisitos de segurança.';
+        }
+        
         toast({
           title: 'Erro ao atualizar senha',
-          description: updateError.message || 'Tente novamente.',
+          description: errorMsg,
           variant: 'destructive'
         });
         setStatus('ready');
         return;
       }
       
+      console.log('[ResetPassword] Password updated successfully!');
       setStatus('success');
+      
+      // CRITICAL FIX: Clear tokens and hash ONLY after successful password change
+      setRecoveryTokens(null);
+      window.history.replaceState(null, '', window.location.pathname);
       
       toast({
         title: 'Senha atualizada com sucesso!',
