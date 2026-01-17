@@ -151,6 +151,7 @@ const ResetPassword = () => {
     }
     
     setStatus('submitting');
+    let passwordUpdated = false;
     
     try {
       // CRITICAL FIX: Re-establish session before updateUser()
@@ -175,6 +176,9 @@ const ResetPassword = () => {
           });
           setStatus('error');
           setErrorMessage('O link de recuperação expirou. Solicite um novo link na página de login.');
+          // CRITICAL: Force signOut to prevent auto-login
+          await supabase.auth.signOut();
+          window.location.href = '/auth';
           return;
         }
         console.log('[ResetPassword] Session re-established successfully!');
@@ -192,6 +196,9 @@ const ResetPassword = () => {
           });
           setStatus('error');
           setErrorMessage('Sessão expirada. Solicite um novo link na página de login.');
+          // CRITICAL: Force signOut to prevent auto-login
+          await supabase.auth.signOut();
+          window.location.href = '/auth';
           return;
         }
         console.log('[ResetPassword] Current session is valid');
@@ -199,15 +206,15 @@ const ResetPassword = () => {
       
       // Now update the password with a guaranteed valid session
       console.log('[ResetPassword] Calling updateUser with new password...');
-      const { error: updateError } = await supabase.auth.updateUser({
+      const { data, error: updateError } = await supabase.auth.updateUser({
         password: formData.password
       });
       
       if (updateError) {
-        console.error('[ResetPassword] Update error:', updateError);
+        console.error('[ResetPassword] Update error:', updateError.message, updateError);
         
         // Provide more specific error messages
-        let errorMsg = 'Tente novamente.';
+        let errorMsg = updateError.message || 'Tente novamente.';
         if (updateError.message?.includes('session') || updateError.message?.includes('token')) {
           errorMsg = 'Sua sessão expirou. Solicite um novo link de recuperação.';
         } else if (updateError.message?.includes('password')) {
@@ -219,11 +226,14 @@ const ResetPassword = () => {
           description: errorMsg,
           variant: 'destructive'
         });
-        setStatus('ready');
+        // CRITICAL: Force signOut to prevent auto-login after error
+        await supabase.auth.signOut();
+        window.location.href = '/auth';
         return;
       }
       
-      console.log('[ResetPassword] Password updated successfully!');
+      console.log('[ResetPassword] Password updated successfully!', data);
+      passwordUpdated = true;
       setStatus('success');
       
       // CRITICAL FIX: Clear tokens and hash ONLY after successful password change
@@ -235,23 +245,32 @@ const ResetPassword = () => {
         description: 'Você será redirecionado para fazer login.',
       });
       
-      // Sign out the user
-      await supabase.auth.signOut();
-      
-      // Redirect to auth after 2 seconds
-      // Use window.location.href for full page reload - ensures clean state on mobile
-      setTimeout(() => {
-        window.location.href = '/auth?password_reset=success';
-      }, 2000);
-      
-    } catch (err) {
-      console.error('[ResetPassword] Submit error:', err);
+    } catch (err: any) {
+      console.error('[ResetPassword] Submit error:', err?.message || err);
       toast({
         title: 'Erro inesperado',
-        description: 'Tente novamente mais tarde.',
+        description: err?.message || 'Tente novamente mais tarde.',
         variant: 'destructive'
       });
-      setStatus('ready');
+    } finally {
+      // CRITICAL: ALWAYS sign out and redirect to prevent auto-login
+      // This runs whether success or failure
+      console.log('[ResetPassword] Forcing signOut to prevent auto-login...');
+      try {
+        await supabase.auth.signOut();
+      } catch (signOutError) {
+        console.error('[ResetPassword] SignOut error (ignoring):', signOutError);
+      }
+      
+      // Redirect to auth page - use window.location.href for full page reload
+      // This ensures clean state on mobile and prevents any cached session issues
+      setTimeout(() => {
+        if (passwordUpdated) {
+          window.location.href = '/auth?password_reset=success';
+        } else {
+          window.location.href = '/auth';
+        }
+      }, passwordUpdated ? 2000 : 500);
     }
   };
 
