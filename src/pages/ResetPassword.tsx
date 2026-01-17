@@ -319,6 +319,12 @@ const ResetPassword = () => {
 
             {status === 'ready' && (
               <>
+                <div className="bg-muted/50 border border-border rounded-lg px-4 py-3 mb-4">
+                  <p className="text-xs text-muted-foreground flex items-start gap-2">
+                    <span className="shrink-0">🔒</span>
+                    <span>Por segurança, este link só funciona neste navegador e expira em 1 hora.</span>
+                  </p>
+                </div>
                 <div className="flex justify-center mb-4">
                   <KeyRound className="h-12 w-12 text-primary" />
                 </div>
