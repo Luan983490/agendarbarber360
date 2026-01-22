@@ -43,7 +43,6 @@ const ResetPassword = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   // CRITICAL FIX: Store tokens in state to persist across the entire flow
-  // This prevents issues where session expires between validation and password change
   const [recoveryTokens, setRecoveryTokens] = useState<{
     accessToken: string;
     refreshToken: string;
@@ -56,7 +55,22 @@ const ResetPassword = () => {
 
   const passwordStrength = checkPasswordStrength(formData.password);
 
-  // Proteção contra reload da página - previne login acidental
+  // CRITICAL: First useEffect - Check for valid recovery hash on mount
+  useEffect(() => {
+    const currentHash = window.location.hash;
+    
+    if (!currentHash || !currentHash.includes('type=recovery')) {
+      // Se não tem hash de recovery, força logout e volta pro login
+      const clearAndRedirect = async () => {
+        console.log('[ResetPassword] No recovery hash found, signing out and redirecting...');
+        await supabase.auth.signOut();
+        window.location.href = '/auth';
+      };
+      clearAndRedirect();
+    }
+  }, []); // Roda apenas uma vez ao montar
+
+  // Protection against page reload - prevents accidental login
   useEffect(() => {
     const preventAccidentalLogin = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -71,11 +85,10 @@ const ResetPassword = () => {
     preventAccidentalLogin();
   }, [recoveryTokens]);
 
-  // Validate token on mount - IMMEDIATELY capture hash before it can be lost
+  // Validate token on mount with enhanced expiration checks
   useEffect(() => {
     const validateToken = async () => {
       try {
-        // CRITICAL: Capture hash IMMEDIATELY on page load (before any async operations)
         const currentHash = window.location.hash;
         
         // Se não tem hash, não tenta nada
@@ -104,6 +117,7 @@ const ResetPassword = () => {
             description: 'Este não é um link de recuperação de senha válido.',
             variant: 'destructive',
           });
+          await supabase.auth.signOut();
           return;
         }
         
@@ -117,24 +131,50 @@ const ResetPassword = () => {
             description: 'Este link de recuperação expirou. Solicite um novo.',
             variant: 'destructive',
           });
+          await supabase.auth.signOut();
           return;
         }
         
         console.log('[ResetPassword] Storing tokens in state for later use...');
-        
-        // CRITICAL FIX: Store tokens in state BEFORE any async operations
         setRecoveryTokens({ accessToken, refreshToken });
         
-        // Try to establish session now
-        const { error: setSessionError } = await supabase.auth.setSession({
+        // NOVO: Tenta estabelecer sessão e verifica se está válida
+        const { data, error } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken,
         });
         
-        if (setSessionError) {
-          console.error('[ResetPassword] Set session error:', setSessionError);
-          setErrorMessage('Link de recuperação inválido ou expirado. Solicite um novo link.');
+        if (error) {
+          // Token expirado ou inválido
+          console.error('[ResetPassword] Set session error:', error);
           setStatus('error');
+          setErrorMessage('Link de recuperação expirado ou inválido. Solicite um novo link.');
+          toast({
+            title: 'Link expirado ou inválido',
+            description: 'Por favor, solicite um novo link de recuperação.',
+            variant: 'destructive',
+          });
+          await supabase.auth.signOut();
+          
+          // Após 3 segundos, redireciona para login
+          setTimeout(() => {
+            window.location.href = '/auth';
+          }, 3000);
+          return;
+        }
+        
+        // Verifica se o token está realmente ativo
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          console.log('[ResetPassword] Session not valid after setSession');
+          setStatus('error');
+          setErrorMessage('Não foi possível validar o link. Tente novamente.');
+          toast({
+            title: 'Sessão inválida',
+            description: 'Não foi possível validar o link. Tente novamente.',
+            variant: 'destructive',
+          });
+          await supabase.auth.signOut();
           return;
         }
         
@@ -147,9 +187,24 @@ const ResetPassword = () => {
       }
     };
 
-    // Execute immediately
     validateToken();
   }, [toast]);
+
+  // CRITICAL: handleCancel with proper signOut
+  const handleCancel = async () => {
+    // CRÍTICO: Sempre fazer signOut antes de sair
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+    }
+    
+    // Limpa o hash da URL
+    window.location.hash = '';
+    
+    // Redireciona para login
+    window.location.href = '/auth';
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -178,11 +233,7 @@ const ResetPassword = () => {
     let passwordUpdated = false;
     
     try {
-      // CRITICAL FIX: Re-establish session before updateUser()
-      // This fixes the issue where session expires between page load and form submit
-      // Especially important on mobile where this can take longer
-      
-      // First, check if we have stored tokens to re-establish session
+      // Re-establish session before updateUser()
       if (recoveryTokens) {
         console.log('[ResetPassword] Re-establishing session from stored tokens before updateUser...');
         const { error: reSessionError } = await supabase.auth.setSession({
@@ -192,7 +243,6 @@ const ResetPassword = () => {
         
         if (reSessionError) {
           console.error('[ResetPassword] Re-session error:', reSessionError);
-          // Token might have truly expired - show friendly error
           toast({
             title: 'Sessão expirada',
             description: 'O link de recuperação expirou. Solicite um novo link.',
@@ -200,14 +250,12 @@ const ResetPassword = () => {
           });
           setStatus('error');
           setErrorMessage('O link de recuperação expirou. Solicite um novo link na página de login.');
-          // CRITICAL: Force signOut to prevent auto-login
           await supabase.auth.signOut();
           window.location.href = '/auth';
           return;
         }
         console.log('[ResetPassword] Session re-established successfully!');
       } else {
-        // No stored tokens - verify current session is valid
         console.log('[ResetPassword] No stored tokens, checking current session...');
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
@@ -220,7 +268,6 @@ const ResetPassword = () => {
           });
           setStatus('error');
           setErrorMessage('Sessão expirada. Solicite um novo link na página de login.');
-          // CRITICAL: Force signOut to prevent auto-login
           await supabase.auth.signOut();
           window.location.href = '/auth';
           return;
@@ -228,7 +275,7 @@ const ResetPassword = () => {
         console.log('[ResetPassword] Current session is valid');
       }
       
-      // Now update the password with a guaranteed valid session
+      // Now update the password
       console.log('[ResetPassword] Calling updateUser with new password...');
       const { data, error: updateError } = await supabase.auth.updateUser({
         password: formData.password
@@ -237,7 +284,6 @@ const ResetPassword = () => {
       if (updateError) {
         console.error('[ResetPassword] Update error:', updateError.message, updateError);
         
-        // Provide more specific error messages
         let errorMsg = updateError.message || 'Tente novamente.';
         if (updateError.message?.includes('session') || updateError.message?.includes('token')) {
           errorMsg = 'Sua sessão expirou. Solicite um novo link de recuperação.';
@@ -250,7 +296,6 @@ const ResetPassword = () => {
           description: errorMsg,
           variant: 'destructive'
         });
-        // CRITICAL: Force signOut to prevent auto-login after error
         await supabase.auth.signOut();
         window.location.href = '/auth';
         return;
@@ -260,7 +305,7 @@ const ResetPassword = () => {
       passwordUpdated = true;
       setStatus('success');
       
-      // CRITICAL FIX: Clear tokens and hash ONLY after successful password change
+      // Clear tokens and hash after successful password change
       setRecoveryTokens(null);
       window.history.replaceState(null, '', window.location.pathname);
       
@@ -277,8 +322,7 @@ const ResetPassword = () => {
         variant: 'destructive'
       });
     } finally {
-      // CRITICAL: ALWAYS sign out and redirect to prevent auto-login
-      // This runs whether success or failure
+      // CRITICAL: ALWAYS sign out and redirect
       console.log('[ResetPassword] Forcing signOut to prevent auto-login...');
       try {
         await supabase.auth.signOut();
@@ -286,8 +330,6 @@ const ResetPassword = () => {
         console.error('[ResetPassword] SignOut error (ignoring):', signOutError);
       }
       
-      // Redirect to auth page - use window.location.href for full page reload
-      // This ensures clean state on mobile and prevents any cached session issues
       setTimeout(() => {
         if (passwordUpdated) {
           window.location.href = '/auth?password_reset=success';
@@ -509,9 +551,9 @@ const ResetPassword = () => {
                 
                 <Button 
                   type="button" 
-                  variant="ghost" 
+                  variant="outline" 
                   className="w-full" 
-                  onClick={goToLogin}
+                  onClick={handleCancel}
                 >
                   Cancelar
                 </Button>
@@ -523,7 +565,7 @@ const ResetPassword = () => {
                 <p className="text-sm text-muted-foreground text-center">
                   Solicite um novo link de recuperação na página de login.
                 </p>
-                <Button onClick={goToLogin} className="w-full">
+                <Button onClick={handleCancel} className="w-full">
                   Voltar para Login
                 </Button>
               </div>
