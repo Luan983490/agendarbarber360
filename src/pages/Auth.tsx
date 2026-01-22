@@ -429,12 +429,6 @@ const Auth = () => {
                       )}
                     </button>
                     
-                    {isRecovering && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        💡 Dica: Abra o link de recuperação no mesmo navegador onde você está agora.
-                      </p>
-                    )}
-                    
                     <div className="text-muted-foreground">
                       Não tem uma conta?{' '}
                       <button
