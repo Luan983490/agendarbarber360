@@ -14,6 +14,6 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    flowType: 'pkce', // More secure authentication flow
+    flowType: 'implicit', // Simpler flow for password recovery
   }
 });

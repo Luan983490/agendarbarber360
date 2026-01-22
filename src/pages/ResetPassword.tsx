@@ -56,13 +56,36 @@ const ResetPassword = () => {
 
   const passwordStrength = checkPasswordStrength(formData.password);
 
+  // Proteção contra reload da página - previne login acidental
+  useEffect(() => {
+    const preventAccidentalLogin = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // Se tem sessão mas não tem tokens de recovery, faz logout
+      if (session && !recoveryTokens) {
+        console.log('[ResetPassword] Session exists but no recovery tokens, signing out to prevent accidental login...');
+        await supabase.auth.signOut();
+      }
+    };
+    
+    preventAccidentalLogin();
+  }, [recoveryTokens]);
+
   // Validate token on mount - IMMEDIATELY capture hash before it can be lost
   useEffect(() => {
     const validateToken = async () => {
       try {
         // CRITICAL: Capture hash IMMEDIATELY on page load (before any async operations)
-        // Mobile browsers (Safari, Chrome) can lose the hash during navigation
         const currentHash = window.location.hash;
+        
+        // Se não tem hash, não tenta nada
+        if (!currentHash || currentHash.length < 10) {
+          console.log('[ResetPassword] No hash found or hash too short');
+          setErrorMessage('Link de recuperação inválido ou expirado. Solicite um novo link na página de login.');
+          setStatus('error');
+          return;
+        }
+        
         const hashParams = new URLSearchParams(currentHash.substring(1));
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token') || '';
@@ -71,51 +94,52 @@ const ResetPassword = () => {
         console.log('[ResetPassword] Hash captured:', currentHash ? 'EXISTS' : 'EMPTY');
         console.log('[ResetPassword] Type:', type, 'Has access_token:', !!accessToken, 'Has refresh_token:', !!refreshToken);
         
-        // Priority 1: If we have tokens in the hash AND it's a recovery flow
-        if (type === 'recovery' && accessToken && refreshToken) {
-          console.log('[ResetPassword] Storing tokens in state for later use...');
-          
-          // CRITICAL FIX: Store tokens in state BEFORE any async operations
-          // This ensures we can re-establish session later if needed
-          setRecoveryTokens({ accessToken, refreshToken });
-          
-          // Try to establish session now
-          const { error: setSessionError } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
+        // CRÍTICO: Só prossegue se for realmente recovery
+        if (type !== 'recovery') {
+          console.log('[ResetPassword] Invalid type, not a recovery link');
+          setErrorMessage('Este não é um link de recuperação de senha válido.');
+          setStatus('error');
+          toast({
+            title: 'Link inválido',
+            description: 'Este não é um link de recuperação de senha válido.',
+            variant: 'destructive',
           });
-          
-          if (setSessionError) {
-            console.error('[ResetPassword] Set session error:', setSessionError);
-            setErrorMessage('Link de recuperação inválido ou expirado. Solicite um novo link.');
-            setStatus('error');
-            return;
-          }
-          
-          console.log('[ResetPassword] Session established successfully!');
-          // CRITICAL FIX: DON'T clear hash yet - keep tokens accessible
-          // We'll clear after successful password change
-          setStatus('ready');
           return;
         }
         
-        // Priority 2: Check for existing valid session (may have been set by Supabase SDK automatically)
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          console.error('[ResetPassword] Get session error:', sessionError);
-        }
-        
-        if (session) {
-          console.log('[ResetPassword] Found existing session, ready to reset password');
-          setStatus('ready');
+        // CRÍTICO: Tokens devem existir e ter tamanho mínimo
+        if (!accessToken || accessToken.length < 20) {
+          console.log('[ResetPassword] Invalid or missing access token');
+          setErrorMessage('Este link de recuperação expirou. Solicite um novo.');
+          setStatus('error');
+          toast({
+            title: 'Link expirado',
+            description: 'Este link de recuperação expirou. Solicite um novo.',
+            variant: 'destructive',
+          });
           return;
         }
         
-        // No valid session or token found
-        console.log('[ResetPassword] No valid session or recovery token found');
-        setErrorMessage('Link de recuperação inválido ou expirado. Solicite um novo link na página de login.');
-        setStatus('error');
+        console.log('[ResetPassword] Storing tokens in state for later use...');
+        
+        // CRITICAL FIX: Store tokens in state BEFORE any async operations
+        setRecoveryTokens({ accessToken, refreshToken });
+        
+        // Try to establish session now
+        const { error: setSessionError } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        
+        if (setSessionError) {
+          console.error('[ResetPassword] Set session error:', setSessionError);
+          setErrorMessage('Link de recuperação inválido ou expirado. Solicite um novo link.');
+          setStatus('error');
+          return;
+        }
+        
+        console.log('[ResetPassword] Session established successfully!');
+        setStatus('ready');
       } catch (err) {
         console.error('[ResetPassword] Validation error:', err);
         setErrorMessage('Erro ao validar link de recuperação. Tente novamente.');
@@ -125,7 +149,7 @@ const ResetPassword = () => {
 
     // Execute immediately
     validateToken();
-  }, []);
+  }, [toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
