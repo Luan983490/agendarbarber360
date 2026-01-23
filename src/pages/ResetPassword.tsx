@@ -28,13 +28,14 @@ const ResetPassword = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Validação do token ao montar o componente
+  // PASSO 7-8: Validação dos tokens ao montar o componente
   useEffect(() => {
     const validateRecoveryToken = async () => {
       try {
-        // Captura tokens do hash da URL
+        // PASSO 8A: Extrai tokens do hash da URL
         const hash = window.location.hash;
         
+        // Validação: Hash existe?
         if (!hash || hash.length < 10) {
           setStatus('error');
           setErrorMessage('Link inválido. Solicite um novo link de recuperação.');
@@ -46,23 +47,25 @@ const ResetPassword = () => {
         const refreshToken = params.get('refresh_token') || '';
         const type = params.get('type');
 
-        // Validações básicas
+        // PASSO 8B: Validações básicas
+        // Validação: type === 'recovery'?
         if (type !== 'recovery') {
           setStatus('error');
           setErrorMessage('Este não é um link de recuperação válido.');
           return;
         }
 
+        // Validação: accessToken válido (>20 chars)?
         if (!accessToken || accessToken.length < 20) {
           setStatus('error');
           setErrorMessage('Link inválido ou corrompido.');
           return;
         }
 
-        // Armazena tokens ANTES de tentar usar
+        // PASSO 8C: Armazena tokens em estado
         setRecoveryTokens({ accessToken, refreshToken });
 
-        // Tenta estabelecer sessão temporária para validar tokens
+        // PASSO 8D: Tenta estabelecer sessão temporária para validar tokens
         const { error } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken,
@@ -95,7 +98,7 @@ const ResetPassword = () => {
           return;
         }
 
-        // Tudo OK - pronto para redefinir senha
+        // PASSO 8E: Tudo OK - pronto para redefinir senha
         setStatus('ready');
 
       } catch (err) {
@@ -109,7 +112,7 @@ const ResetPassword = () => {
     validateRecoveryToken();
   }, []); // Roda apenas uma vez ao montar
 
-  // Handler do botão Cancelar
+  // PASSO 10a: Handler do botão Cancelar
   const handleCancel = async () => {
     try {
       // CRÍTICO: Sempre faz signOut antes de sair
@@ -118,15 +121,15 @@ const ResetPassword = () => {
       console.error('Erro ao fazer logout:', error);
     }
     
-    // Redireciona para login
-    navigate('/auth');
+    // Redireciona para login SEM estar logado
+    window.location.href = '/auth';
   };
 
-  // Handler do formulário
+  // PASSO 10b: Handler do formulário
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validações
+    // Validações: Campos preenchidos?
     if (!formData.password || !formData.confirmPassword) {
       toast({
         title: 'Campos obrigatórios',
@@ -136,6 +139,7 @@ const ResetPassword = () => {
       return;
     }
 
+    // Validações: Coincidem?
     if (formData.password !== formData.confirmPassword) {
       toast({
         title: 'Senhas não coincidem',
@@ -145,6 +149,7 @@ const ResetPassword = () => {
       return;
     }
 
+    // Validações: Min 8 chars?
     if (formData.password.length < 8) {
       toast({
         title: 'Senha muito curta',
@@ -178,7 +183,7 @@ const ResetPassword = () => {
         throw updateError;
       }
 
-      // Sucesso!
+      // PASSO 11: Sucesso!
       setStatus('success');
       
       toast({
@@ -189,19 +194,19 @@ const ResetPassword = () => {
       // CRÍTICO: Sempre faz signOut após trocar senha
       await supabase.auth.signOut();
 
-      // Aguarda 2 segundos e redireciona
+      // Aguarda 2 segundos e redireciona (PASSO 12)
       setTimeout(() => {
-        navigate('/auth');
+        window.location.href = '/auth';
       }, 2000);
 
     } catch (error: unknown) {
       console.error('Erro ao redefinir senha:', error);
       
-      const errorMessage = error instanceof Error ? error.message : 'Tente novamente ou solicite um novo link.';
+      const errorMsg = error instanceof Error ? error.message : 'Tente novamente ou solicite um novo link.';
       
       toast({
         title: 'Erro ao alterar senha',
-        description: errorMessage,
+        description: errorMsg,
         variant: 'destructive',
       });
       
@@ -213,7 +218,7 @@ const ResetPassword = () => {
     }
   };
 
-  // RENDERIZAÇÃO - Estado de Loading
+  // RENDERIZAÇÃO - PASSO 7: Estado de Loading
   if (status === 'loading') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-accent/20 flex items-center justify-center p-4">
@@ -236,7 +241,7 @@ const ResetPassword = () => {
     );
   }
 
-  // RENDERIZAÇÃO - Estado de Erro
+  // RENDERIZAÇÃO - TELA DE ERRO
   if (status === 'error') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-accent/20 flex items-center justify-center p-4">
@@ -255,13 +260,13 @@ const ResetPassword = () => {
               <CardDescription>{errorMessage}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button onClick={() => navigate('/auth')} className="w-full">
+              <Button onClick={() => window.location.href = '/auth'} className="w-full">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Voltar para Login
               </Button>
               <Button 
                 variant="outline" 
-                onClick={() => navigate('/auth')}
+                onClick={() => window.location.href = '/auth'}
                 className="w-full"
               >
                 Solicitar Novo Link
@@ -273,7 +278,7 @@ const ResetPassword = () => {
     );
   }
 
-  // RENDERIZAÇÃO - Estado de Sucesso
+  // RENDERIZAÇÃO - PASSO 11: Estado de Sucesso
   if (status === 'success') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-accent/20 flex items-center justify-center p-4">
@@ -300,7 +305,7 @@ const ResetPassword = () => {
     );
   }
 
-  // RENDERIZAÇÃO - Formulário (status === 'ready')
+  // RENDERIZAÇÃO - TELA DE FORMULÁRIO (PASSO 9)
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-accent/20 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
