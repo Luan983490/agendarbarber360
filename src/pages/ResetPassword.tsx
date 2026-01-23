@@ -55,288 +55,137 @@ const ResetPassword = () => {
 
   const passwordStrength = checkPasswordStrength(formData.password);
 
-  // CRITICAL: First useEffect - Check for valid recovery hash on mount
-  useEffect(() => {
-    const currentHash = window.location.hash;
-    
-    if (!currentHash || !currentHash.includes('type=recovery')) {
-      // Se não tem hash de recovery, força logout e volta pro login
-      const clearAndRedirect = async () => {
-        console.log('[ResetPassword] No recovery hash found, signing out and redirecting...');
-        await supabase.auth.signOut();
-        window.location.href = '/auth';
-      };
-      clearAndRedirect();
-    }
-  }, []); // Roda apenas uma vez ao montar
-
-  // Protection against page reload - prevents accidental login
-  useEffect(() => {
-    const preventAccidentalLogin = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      // Se tem sessão mas não tem tokens de recovery, faz logout
-      if (session && !recoveryTokens) {
-        console.log('[ResetPassword] Session exists but no recovery tokens, signing out to prevent accidental login...');
-        await supabase.auth.signOut();
-      }
-    };
-    
-    preventAccidentalLogin();
-  }, [recoveryTokens]);
-
-  // Validate token on mount with enhanced expiration checks
+  // Validate token on mount
   useEffect(() => {
     const validateToken = async () => {
-      try {
-        const currentHash = window.location.hash;
-        
-        // Se não tem hash, não tenta nada
-        if (!currentHash || currentHash.length < 10) {
-          console.log('[ResetPassword] No hash found or hash too short');
-          setErrorMessage('Link de recuperação inválido ou expirado. Solicite um novo link na página de login.');
-          setStatus('error');
-          return;
-        }
-        
-        const hashParams = new URLSearchParams(currentHash.substring(1));
-        const accessToken = hashParams.get('access_token');
-        const refreshToken = hashParams.get('refresh_token') || '';
-        const type = hashParams.get('type');
-        
-        console.log('[ResetPassword] Hash captured:', currentHash ? 'EXISTS' : 'EMPTY');
-        console.log('[ResetPassword] Type:', type, 'Has access_token:', !!accessToken, 'Has refresh_token:', !!refreshToken);
-        
-        // CRÍTICO: Só prossegue se for realmente recovery
-        if (type !== 'recovery') {
-          console.log('[ResetPassword] Invalid type, not a recovery link');
-          setErrorMessage('Este não é um link de recuperação de senha válido.');
-          setStatus('error');
-          toast({
-            title: 'Link inválido',
-            description: 'Este não é um link de recuperação de senha válido.',
-            variant: 'destructive',
-          });
-          await supabase.auth.signOut();
-          return;
-        }
-        
-        // CRÍTICO: Tokens devem existir e ter tamanho mínimo
-        if (!accessToken || accessToken.length < 20) {
-          console.log('[ResetPassword] Invalid or missing access token');
-          setErrorMessage('Este link de recuperação expirou. Solicite um novo.');
-          setStatus('error');
-          toast({
-            title: 'Link expirado',
-            description: 'Este link de recuperação expirou. Solicite um novo.',
-            variant: 'destructive',
-          });
-          await supabase.auth.signOut();
-          return;
-        }
-        
-        console.log('[ResetPassword] Storing tokens in state for later use...');
-        setRecoveryTokens({ accessToken, refreshToken });
-        
-        // NOVO: Tenta estabelecer sessão e verifica se está válida
-        const { data, error } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        });
-        
-        if (error) {
-          // Token expirado ou inválido
-          console.error('[ResetPassword] Set session error:', error);
-          setStatus('error');
-          setErrorMessage('Link de recuperação expirado ou inválido. Solicite um novo link.');
-          toast({
-            title: 'Link expirado ou inválido',
-            description: 'Por favor, solicite um novo link de recuperação.',
-            variant: 'destructive',
-          });
-          await supabase.auth.signOut();
-          
-          // Após 3 segundos, redireciona para login
-          setTimeout(() => {
-            window.location.href = '/auth';
-          }, 3000);
-          return;
-        }
-        
-        // Verifica se o token está realmente ativo
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          console.log('[ResetPassword] Session not valid after setSession');
-          setStatus('error');
-          setErrorMessage('Não foi possível validar o link. Tente novamente.');
-          toast({
-            title: 'Sessão inválida',
-            description: 'Não foi possível validar o link. Tente novamente.',
-            variant: 'destructive',
-          });
-          await supabase.auth.signOut();
-          return;
-        }
-        
-        console.log('[ResetPassword] Session established successfully!');
-        setStatus('ready');
-      } catch (err) {
-        console.error('[ResetPassword] Validation error:', err);
-        setErrorMessage('Erro ao validar link de recuperação. Tente novamente.');
+      const currentHash = window.location.hash;
+      
+      // Se não tem hash, não é página de reset válida
+      if (!currentHash || currentHash.length < 10) {
         setStatus('error');
+        return;
       }
+      
+      const hashParams = new URLSearchParams(currentHash.substring(1));
+      const accessToken = hashParams.get('access_token');
+      const refreshToken = hashParams.get('refresh_token') || '';
+      const type = hashParams.get('type');
+      
+      // Deve ser tipo recovery
+      if (type !== 'recovery') {
+        setStatus('error');
+        return;
+      }
+      
+      // Deve ter token válido
+      if (!accessToken || accessToken.length < 20) {
+        setStatus('error');
+        return;
+      }
+      
+      // Armazena tokens
+      setRecoveryTokens({ accessToken, refreshToken });
+      
+      // Tenta estabelecer sessão
+      const { error } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
+      
+      if (error) {
+        console.error('Erro ao estabelecer sessão:', error);
+        setStatus('error');
+        return;
+      }
+      
+      // Sucesso - pronto para trocar senha
+      setStatus('ready');
     };
-
+    
     validateToken();
-  }, [toast]);
+  }, []);
 
-  // CRITICAL: handleCancel with proper signOut
   const handleCancel = async () => {
-    // CRÍTICO: Sempre fazer signOut antes de sair
     try {
       await supabase.auth.signOut();
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
     }
     
-    // Limpa o hash da URL
-    window.location.hash = '';
-    
-    // Redireciona para login
     window.location.href = '/auth';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate passwords match
+    // Validações de senha
     if (formData.password !== formData.confirmPassword) {
       toast({
-        title: 'Erro de validação',
-        description: 'As senhas não coincidem.',
-        variant: 'destructive'
+        title: 'Senhas não coincidem',
+        description: 'As senhas digitadas não são iguais.',
+        variant: 'destructive',
       });
       return;
     }
     
-    // Validate password strength
     if (formData.password.length < 8) {
       toast({
-        title: 'Erro de validação',
+        title: 'Senha muito curta',
         description: 'A senha deve ter no mínimo 8 caracteres.',
-        variant: 'destructive'
+        variant: 'destructive',
       });
       return;
     }
     
     setStatus('submitting');
-    let passwordUpdated = false;
     
     try {
-      // Re-establish session before updateUser()
+      // Re-estabelece sessão se tiver tokens
       if (recoveryTokens) {
-        console.log('[ResetPassword] Re-establishing session from stored tokens before updateUser...');
-        const { error: reSessionError } = await supabase.auth.setSession({
+        await supabase.auth.setSession({
           access_token: recoveryTokens.accessToken,
           refresh_token: recoveryTokens.refreshToken,
         });
-        
-        if (reSessionError) {
-          console.error('[ResetPassword] Re-session error:', reSessionError);
-          toast({
-            title: 'Sessão expirada',
-            description: 'O link de recuperação expirou. Solicite um novo link.',
-            variant: 'destructive'
-          });
-          setStatus('error');
-          setErrorMessage('O link de recuperação expirou. Solicite um novo link na página de login.');
-          await supabase.auth.signOut();
-          window.location.href = '/auth';
-          return;
-        }
-        console.log('[ResetPassword] Session re-established successfully!');
-      } else {
-        console.log('[ResetPassword] No stored tokens, checking current session...');
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError || !session) {
-          console.error('[ResetPassword] No valid session for updateUser:', sessionError);
-          toast({
-            title: 'Sessão inválida',
-            description: 'Sua sessão expirou. Solicite um novo link de recuperação.',
-            variant: 'destructive'
-          });
-          setStatus('error');
-          setErrorMessage('Sessão expirada. Solicite um novo link na página de login.');
-          await supabase.auth.signOut();
-          window.location.href = '/auth';
-          return;
-        }
-        console.log('[ResetPassword] Current session is valid');
       }
       
-      // Now update the password
-      console.log('[ResetPassword] Calling updateUser with new password...');
-      const { data, error: updateError } = await supabase.auth.updateUser({
+      // Atualiza senha
+      const { error } = await supabase.auth.updateUser({
         password: formData.password
       });
       
-      if (updateError) {
-        console.error('[ResetPassword] Update error:', updateError.message, updateError);
-        
-        let errorMsg = updateError.message || 'Tente novamente.';
-        if (updateError.message?.includes('session') || updateError.message?.includes('token')) {
-          errorMsg = 'Sua sessão expirou. Solicite um novo link de recuperação.';
-        } else if (updateError.message?.includes('password')) {
-          errorMsg = 'A senha não atende aos requisitos de segurança.';
-        }
-        
+      if (error) {
         toast({
           title: 'Erro ao atualizar senha',
-          description: errorMsg,
-          variant: 'destructive'
+          description: error.message,
+          variant: 'destructive',
         });
-        await supabase.auth.signOut();
-        window.location.href = '/auth';
+        setStatus('error');
         return;
       }
       
-      console.log('[ResetPassword] Password updated successfully!', data);
-      passwordUpdated = true;
+      // Sucesso
       setStatus('success');
-      
-      // Clear tokens and hash after successful password change
-      setRecoveryTokens(null);
-      window.history.replaceState(null, '', window.location.pathname);
-      
       toast({
-        title: 'Senha atualizada com sucesso!',
-        description: 'Você será redirecionado para fazer login.',
+        title: 'Senha alterada com sucesso!',
+        description: 'Você será redirecionado para o login.',
       });
       
-    } catch (err: any) {
-      console.error('[ResetPassword] Submit error:', err?.message || err);
+      // CRÍTICO: Sempre faz signOut após trocar senha
+      await supabase.auth.signOut();
+      
+      // Aguarda 2 segundos e redireciona
+      setTimeout(() => {
+        window.location.href = '/auth';
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Erro:', error);
       toast({
         title: 'Erro inesperado',
-        description: err?.message || 'Tente novamente mais tarde.',
-        variant: 'destructive'
+        description: 'Tente novamente.',
+        variant: 'destructive',
       });
-    } finally {
-      // CRITICAL: ALWAYS sign out and redirect
-      console.log('[ResetPassword] Forcing signOut to prevent auto-login...');
-      try {
-        await supabase.auth.signOut();
-      } catch (signOutError) {
-        console.error('[ResetPassword] SignOut error (ignoring):', signOutError);
-      }
-      
-      setTimeout(() => {
-        if (passwordUpdated) {
-          window.location.href = '/auth?password_reset=success';
-        } else {
-          window.location.href = '/auth';
-        }
-      }, passwordUpdated ? 2000 : 500);
+      setStatus('error');
     }
   };
 
