@@ -1,138 +1,150 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Eye, EyeOff, KeyRound, CheckCircle, XCircle, ArrowLeft } from 'lucide-react';
 import b360Logo from '@/assets/b360-logo.png';
 
-type PageStatus = 'loading' | 'ready' | 'error';
+type PageStatus = 'loading' | 'ready' | 'error' | 'success';
+
+interface RecoveryTokens {
+  accessToken: string;
+  refreshToken: string;
+}
 
 const ResetPassword = () => {
+  const navigate = useNavigate();
   const { toast } = useToast();
   
-  // Estados principais
   const [status, setStatus] = useState<PageStatus>('loading');
-  const [errorMessage, setErrorMessage] = useState('Link inválido ou expirado. Solicite um novo link de recuperação.');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [recoveryTokens, setRecoveryTokens] = useState<RecoveryTokens | null>(null);
+  const [formData, setFormData] = useState({ password: '', confirmPassword: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
-  // Tokens de recovery armazenados em state
-  const [recoveryTokens, setRecoveryTokens] = useState<{
-    accessToken: string;
-    refreshToken: string;
-  } | null>(null);
-  
-  // Dados do formulário
-  const [formData, setFormData] = useState({
-    password: '',
-    confirmPassword: ''
-  });
 
-  // Validação do token - roda UMA vez ao montar o componente
+  // Validação do token ao montar o componente
   useEffect(() => {
     const validateRecoveryToken = async () => {
       try {
-        const currentHash = window.location.hash;
+        // Captura tokens do hash da URL
+        const hash = window.location.hash;
         
-        // Se não tem hash ou é muito curto, é inválido
-        if (!currentHash || currentHash.length < 50) {
-          console.log('[ResetPassword] Hash ausente ou inválido');
-          setErrorMessage('Link inválido ou expirado. Solicite um novo link de recuperação.');
+        if (!hash || hash.length < 10) {
           setStatus('error');
+          setErrorMessage('Link inválido. Solicite um novo link de recuperação.');
           return;
         }
-        
-        // Parse do hash
-        const hashParams = new URLSearchParams(currentHash.substring(1));
-        const accessToken = hashParams.get('access_token');
-        const refreshToken = hashParams.get('refresh_token') || '';
-        const type = hashParams.get('type');
-        
-        // Deve ser tipo recovery
+
+        const params = new URLSearchParams(hash.substring(1));
+        const accessToken = params.get('access_token');
+        const refreshToken = params.get('refresh_token') || '';
+        const type = params.get('type');
+
+        // Validações básicas
         if (type !== 'recovery') {
-          console.log('[ResetPassword] Tipo inválido:', type);
-          setErrorMessage('Este não é um link de recuperação de senha válido.');
           setStatus('error');
+          setErrorMessage('Este não é um link de recuperação válido.');
           return;
         }
-        
-        // Token deve existir e ter tamanho mínimo
+
         if (!accessToken || accessToken.length < 20) {
-          console.log('[ResetPassword] Token ausente ou inválido');
-          setErrorMessage('Link expirado. Solicite um novo link de recuperação.');
           setStatus('error');
+          setErrorMessage('Link inválido ou corrompido.');
           return;
         }
-        
-        // Armazena tokens para uso posterior
+
+        // Armazena tokens ANTES de tentar usar
         setRecoveryTokens({ accessToken, refreshToken });
-        
-        // Tenta estabelecer sessão para validar tokens
+
+        // Tenta estabelecer sessão temporária para validar tokens
         const { error } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken,
         });
-        
+
         if (error) {
-          console.error('[ResetPassword] Erro ao validar sessão:', error.message);
-          setErrorMessage('Link expirado ou inválido. Solicite um novo link de recuperação.');
-          setStatus('error');
+          console.error('Erro ao validar tokens:', error);
+          
+          // Verifica tipo de erro
+          if (error.message.includes('expired') || error.message.includes('invalid')) {
+            setStatus('error');
+            setErrorMessage('Este link expirou. Solicite um novo link de recuperação.');
+          } else {
+            setStatus('error');
+            setErrorMessage('Erro ao validar link. Tente novamente ou solicite um novo.');
+          }
+          
+          // Sempre faz signOut em caso de erro
+          await supabase.auth.signOut();
           return;
         }
+
+        // Verifica se realmente tem sessão ativa
+        const { data: { session } } = await supabase.auth.getSession();
         
-        // Tokens válidos - mostra formulário
-        console.log('[ResetPassword] Tokens válidos, pronto para redefinir senha');
+        if (!session) {
+          setStatus('error');
+          setErrorMessage('Não foi possível estabelecer sessão. Solicite um novo link.');
+          await supabase.auth.signOut();
+          return;
+        }
+
+        // Tudo OK - pronto para redefinir senha
         setStatus('ready');
-        
+
       } catch (err) {
-        console.error('[ResetPassword] Erro inesperado na validação:', err);
-        setErrorMessage('Erro ao processar link. Tente novamente.');
+        console.error('Erro inesperado na validação:', err);
         setStatus('error');
+        setErrorMessage('Erro ao processar link de recuperação.');
+        await supabase.auth.signOut();
       }
     };
-    
-    validateRecoveryToken();
-  }, []);
 
-  // Handler do botão Cancelar - SEMPRE faz signOut antes de sair
+    validateRecoveryToken();
+  }, []); // Roda apenas uma vez ao montar
+
+  // Handler do botão Cancelar
   const handleCancel = async () => {
     try {
+      // CRÍTICO: Sempre faz signOut antes de sair
       await supabase.auth.signOut();
     } catch (error) {
-      console.error('[ResetPassword] Erro ao fazer signOut no cancelar:', error);
+      console.error('Erro ao fazer logout:', error);
     }
-    window.location.href = '/auth';
+    
+    // Redireciona para login
+    navigate('/auth');
   };
 
-  // Handler do botão Voltar para Login (na tela de erro)
-  const handleBackToLogin = async () => {
-    try {
-      await supabase.auth.signOut();
-    } catch (error) {
-      console.error('[ResetPassword] Erro ao fazer signOut:', error);
-    }
-    window.location.href = '/auth';
-  };
-
-  // Handler do submit - atualiza senha
+  // Handler do formulário
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validação: senhas coincidem
-    if (formData.password !== formData.confirmPassword) {
+
+    // Validações
+    if (!formData.password || !formData.confirmPassword) {
       toast({
-        title: 'Senhas não coincidem',
-        description: 'As senhas digitadas não são iguais.',
+        title: 'Campos obrigatórios',
+        description: 'Preencha ambos os campos de senha.',
         variant: 'destructive',
       });
       return;
     }
-    
-    // Validação: mínimo 8 caracteres
+
+    if (formData.password !== formData.confirmPassword) {
+      toast({
+        title: 'Senhas não coincidem',
+        description: 'As senhas digitadas são diferentes.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (formData.password.length < 8) {
       toast({
         title: 'Senha muito curta',
@@ -141,270 +153,270 @@ const ResetPassword = () => {
       });
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
-      // Re-estabelece sessão com os tokens armazenados
+      // Re-estabelece sessão com os tokens salvos
       if (recoveryTokens) {
         const { error: sessionError } = await supabase.auth.setSession({
           access_token: recoveryTokens.accessToken,
           refresh_token: recoveryTokens.refreshToken,
         });
-        
+
         if (sessionError) {
-          console.error('[ResetPassword] Erro ao re-estabelecer sessão:', sessionError);
-          toast({
-            title: 'Link expirado',
-            description: 'Solicite um novo link de recuperação.',
-            variant: 'destructive',
-          });
-          setIsSubmitting(false);
-          return;
+          throw new Error('Erro ao restabelecer sessão. Token pode ter expirado.');
         }
       }
-      
+
       // Atualiza a senha
       const { error: updateError } = await supabase.auth.updateUser({
-        password: formData.password
+        password: formData.password,
       });
-      
+
       if (updateError) {
-        console.error('[ResetPassword] Erro ao atualizar senha:', updateError);
-        toast({
-          title: 'Erro ao atualizar senha',
-          description: updateError.message,
-          variant: 'destructive',
-        });
-        setIsSubmitting(false);
-        return;
+        throw updateError;
       }
+
+      // Sucesso!
+      setStatus('success');
       
-      // SUCESSO!
       toast({
-        title: 'Senha alterada com sucesso!',
+        title: 'Senha alterada com sucesso! ✅',
         description: 'Você será redirecionado para o login.',
       });
-      
+
       // CRÍTICO: Sempre faz signOut após trocar senha
-      try {
-        await supabase.auth.signOut();
-      } catch (signOutError) {
-        console.error('[ResetPassword] Erro no signOut após sucesso:', signOutError);
-      }
-      
-      // Limpa tokens da memória
-      setRecoveryTokens(null);
-      
+      await supabase.auth.signOut();
+
       // Aguarda 2 segundos e redireciona
       setTimeout(() => {
-        window.location.href = '/auth';
+        navigate('/auth');
       }, 2000);
+
+    } catch (error: unknown) {
+      console.error('Erro ao redefinir senha:', error);
       
-    } catch (error) {
-      console.error('[ResetPassword] Erro inesperado:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Tente novamente ou solicite um novo link.';
+      
       toast({
-        title: 'Erro inesperado',
-        description: 'Tente novamente.',
+        title: 'Erro ao alterar senha',
+        description: errorMessage,
         variant: 'destructive',
       });
+      
+      // Em caso de erro, também faz signOut
+      await supabase.auth.signOut();
+      
+    } finally {
       setIsSubmitting(false);
     }
   };
 
+  // RENDERIZAÇÃO - Estado de Loading
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-accent/20 flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center mb-4">
+              <img src={b360Logo} alt="B360" className="h-16" />
+            </div>
+          </div>
+          <Card>
+            <CardContent className="py-12">
+              <div className="flex flex-col items-center space-y-4">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                <p className="text-muted-foreground">Validando link de recuperação...</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // RENDERIZAÇÃO - Estado de Erro
+  if (status === 'error') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-accent/20 flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center mb-4">
+              <img src={b360Logo} alt="B360" className="h-16" />
+            </div>
+          </div>
+          <Card>
+            <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                <XCircle className="h-12 w-12 text-destructive" />
+              </div>
+              <CardTitle className="text-destructive">Link Inválido ou Expirado</CardTitle>
+              <CardDescription>{errorMessage}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button onClick={() => navigate('/auth')} className="w-full">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Voltar para Login
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/auth')}
+                className="w-full"
+              >
+                Solicitar Novo Link
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // RENDERIZAÇÃO - Estado de Sucesso
+  if (status === 'success') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-accent/20 flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center mb-4">
+              <img src={b360Logo} alt="B360" className="h-16" />
+            </div>
+          </div>
+          <Card>
+            <CardContent className="py-12">
+              <div className="flex flex-col items-center space-y-4">
+                <CheckCircle className="h-12 w-12 text-green-500" />
+                <div className="text-center">
+                  <h2 className="text-xl font-semibold text-green-600 mb-2">Senha Alterada! ✅</h2>
+                  <p className="text-muted-foreground">Redirecionando para o login...</p>
+                </div>
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // RENDERIZAÇÃO - Formulário (status === 'ready')
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-accent/20 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
             <img src={b360Logo} alt="B360" className="h-16" />
           </div>
         </div>
-
         <Card>
           <CardHeader className="text-center">
-            {/* Estado: Loading */}
-            {status === 'loading' && (
-              <>
-                <div className="flex justify-center mb-4">
-                  <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                </div>
-                <CardTitle>Validando link...</CardTitle>
-                <CardDescription>
-                  Por favor, aguarde enquanto verificamos seu link de recuperação.
-                </CardDescription>
-              </>
-            )}
-
-            {/* Estado: Ready - Formulário de nova senha */}
-            {status === 'ready' && !isSubmitting && (
-              <>
-                <div className="flex justify-center mb-4">
-                  <KeyRound className="h-12 w-12 text-primary" />
-                </div>
-                <CardTitle>Redefinir Senha</CardTitle>
-                <CardDescription>
-                  Digite sua nova senha abaixo.
-                </CardDescription>
-              </>
-            )}
-
-            {/* Estado: Submitting */}
-            {status === 'ready' && isSubmitting && (
-              <>
-                <div className="flex justify-center mb-4">
-                  <CheckCircle className="h-12 w-12 text-green-500" />
-                </div>
-                <CardTitle className="text-green-600">Senha Atualizada!</CardTitle>
-                <CardDescription>
-                  Sua senha foi alterada com sucesso. Redirecionando para o login...
-                </CardDescription>
-              </>
-            )}
-
-            {/* Estado: Error */}
-            {status === 'error' && (
-              <>
-                <div className="flex justify-center mb-4">
-                  <XCircle className="h-12 w-12 text-destructive" />
-                </div>
-                <CardTitle className="text-destructive">Link Inválido</CardTitle>
-                <CardDescription>
-                  {errorMessage}
-                </CardDescription>
-              </>
-            )}
+            <div className="flex justify-center mb-4">
+              <KeyRound className="h-12 w-12 text-primary" />
+            </div>
+            <CardTitle>Criar Nova Senha</CardTitle>
+            <CardDescription>Escolha uma senha forte para sua conta</CardDescription>
           </CardHeader>
 
-          <CardContent className="space-y-4">
-            {/* Formulário de nova senha */}
-            {status === 'ready' && !isSubmitting && (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Campo: Nova Senha */}
-                <div className="space-y-2">
-                  <Label htmlFor="password">Nova Senha</Label>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      type={showPassword ? 'text' : 'password'}
-                      value={formData.password}
-                      onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                      required
-                      className="pr-10"
-                      placeholder="Mínimo 8 caracteres"
-                      disabled={isSubmitting}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      tabIndex={-1}
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                  {formData.password && formData.password.length < 8 && (
-                    <p className="text-xs text-destructive">
-                      A senha deve ter no mínimo 8 caracteres
-                    </p>
-                  )}
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="password">Nova Senha</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    placeholder="Mínimo 8 caracteres"
+                    disabled={isSubmitting}
+                    required
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
-                
-                {/* Campo: Confirmar Senha */}
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirmar Senha</Label>
-                  <div className="relative">
-                    <Input
-                      id="confirmPassword"
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      value={formData.confirmPassword}
-                      onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                      required
-                      className={`pr-10 ${
-                        formData.confirmPassword && formData.password !== formData.confirmPassword 
-                          ? 'border-destructive focus-visible:ring-destructive' 
-                          : ''
-                      }`}
-                      placeholder="Repita a nova senha"
-                      disabled={isSubmitting}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      tabIndex={-1}
-                    >
-                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                  {formData.confirmPassword && formData.password !== formData.confirmPassword && (
-                    <p className="text-xs text-destructive">
-                      As senhas não coincidem
-                    </p>
-                  )}
-                  {formData.confirmPassword && formData.password === formData.confirmPassword && formData.password.length >= 8 && (
-                    <p className="text-xs text-green-600">
-                      ✓ Senhas coincidem
-                    </p>
-                  )}
+                {formData.password && formData.password.length < 8 && (
+                  <p className="text-xs text-destructive">
+                    A senha deve ter no mínimo 8 caracteres
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirmar Senha</Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={formData.confirmPassword}
+                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                    placeholder="Digite a senha novamente"
+                    disabled={isSubmitting}
+                    required
+                    className={`pr-10 ${
+                      formData.confirmPassword && formData.password !== formData.confirmPassword 
+                        ? 'border-destructive focus-visible:ring-destructive' 
+                        : ''
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    tabIndex={-1}
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
-                
-                {/* Botão: Redefinir Senha */}
+                {formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                  <p className="text-xs text-destructive">
+                    As senhas não coincidem
+                  </p>
+                )}
+                {formData.confirmPassword && formData.password === formData.confirmPassword && formData.password.length >= 8 && (
+                  <p className="text-xs text-green-600">
+                    ✓ Senhas coincidem
+                  </p>
+                )}
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={handleCancel}
+                  disabled={isSubmitting}
+                  className="flex-1"
+                >
+                  Cancelar
+                </Button>
                 <Button 
                   type="submit" 
-                  className="w-full" 
                   disabled={
                     isSubmitting ||
                     formData.password.length < 8 || 
                     formData.password !== formData.confirmPassword
                   }
+                  className="flex-1"
                 >
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Atualizando...
+                      Alterando...
                     </>
                   ) : (
                     'Redefinir Senha'
                   )}
                 </Button>
-                
-                {/* Botão: Cancelar */}
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  className="w-full" 
-                  onClick={handleCancel}
-                  disabled={isSubmitting}
-                >
-                  Cancelar
-                </Button>
-              </form>
-            )}
-
-            {/* Tela de sucesso - loading de redirecionamento */}
-            {status === 'ready' && isSubmitting && (
-              <div className="text-center py-4">
-                <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
-                <p className="text-sm text-muted-foreground mt-2">
-                  Redirecionando para o login...
-                </p>
               </div>
-            )}
-
-            {/* Tela de erro - botão voltar */}
-            {status === 'error' && (
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground text-center">
-                  Solicite um novo link de recuperação na página de login.
-                </p>
-                <Button onClick={handleBackToLogin} className="w-full">
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Voltar para Login
-                </Button>
-              </div>
-            )}
+            </form>
           </CardContent>
         </Card>
       </div>
