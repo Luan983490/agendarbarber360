@@ -87,7 +87,6 @@ export const DateTimeSelectionStep = ({
 
   // Generate 30 days from today
   const allDates = Array.from({ length: 30 }, (_, i) => addDays(today, i));
-  const visibleDatesCount = 7; // Mobile: 6, Desktop: 12+
   const visibleDates = allDates.slice(dateScrollOffset, dateScrollOffset + 14);
 
   // Filter times by period
@@ -150,36 +149,38 @@ export const DateTimeSelectionStep = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-background">
-      {/* Header with back arrow and month/year */}
-      <div className="flex items-center px-4 py-4 md:px-6">
-        <button
-          onClick={onBack}
-          className="p-1 hover:bg-muted rounded-md transition-colors"
-        >
-          <ChevronLeft className="w-6 h-6 text-foreground" />
-        </button>
-        <h2 className="flex-1 text-center text-lg md:text-xl font-bold text-foreground italic">
-          {getMonthYearTitle()}
-        </h2>
-        <div className="w-8" /> {/* Spacer for centering */}
+    <div className="flex flex-col h-full bg-background overflow-hidden">
+      {/* Header with back arrow and month/year - centered container */}
+      <div className="w-full max-w-4xl mx-auto px-4 md:px-8 py-4">
+        <div className="flex items-center">
+          <button
+            onClick={onBack}
+            className="p-2 hover:bg-muted rounded-lg transition-colors"
+          >
+            <ChevronLeft className="w-6 h-6 text-foreground" />
+          </button>
+          <h2 className="flex-1 text-center text-xl md:text-2xl font-bold text-foreground italic">
+            {getMonthYearTitle()}
+          </h2>
+          <div className="w-10" />
+        </div>
       </div>
 
       {/* Horizontal date picker */}
-      <div className="relative px-2 md:px-4">
+      <div className="w-full max-w-4xl mx-auto px-2 md:px-4">
         <div className="flex items-center">
           <button
             onClick={() => handleDateScroll("left")}
             disabled={dateScrollOffset === 0}
             className={cn(
-              "p-1.5 hover:bg-muted rounded-full transition-colors flex-shrink-0",
+              "p-2 hover:bg-muted rounded-full transition-colors flex-shrink-0",
               dateScrollOffset === 0 && "opacity-30 pointer-events-none"
             )}
           >
             <ChevronLeft className="w-5 h-5 text-foreground" />
           </button>
 
-          <div className="flex-1 flex gap-1 md:gap-2 overflow-hidden justify-center">
+          <div className="flex-1 flex gap-2 md:gap-3 overflow-hidden justify-center px-2">
             {visibleDates.map((date, index) => {
               const isPast = isBefore(startOfDay(date), startOfDay(today));
               const isSunday = date.getDay() === 0;
@@ -197,7 +198,7 @@ export const DateTimeSelectionStep = ({
                   onClick={() => !isDisabled && onDateChange(date)}
                   disabled={isDisabled}
                   className={cn(
-                    "flex flex-col items-center py-2 px-2 md:px-3 rounded-lg transition-all min-w-[44px] md:min-w-[56px]",
+                    "flex flex-col items-center py-3 px-3 md:px-4 rounded-xl transition-all min-w-[52px] md:min-w-[64px]",
                     isSelected
                       ? "bg-[#3d9a9b] text-white"
                       : "bg-card border border-border hover:bg-muted text-foreground",
@@ -207,12 +208,12 @@ export const DateTimeSelectionStep = ({
                   <span className="text-xs font-medium capitalize">
                     {dayAbbr}
                   </span>
-                  <span className="text-base md:text-lg font-bold mt-0.5">
+                  <span className="text-lg md:text-xl font-bold mt-1">
                     {format(date, "d")}
                   </span>
                   {!isDisabled && (
                     <div
-                      className="w-4 h-1 rounded-full mt-1"
+                      className="w-5 h-1.5 rounded-full mt-1.5"
                       style={{ 
                         backgroundColor: isSelected ? "white" : availabilityColor 
                       }}
@@ -227,7 +228,7 @@ export const DateTimeSelectionStep = ({
             onClick={() => handleDateScroll("right")}
             disabled={dateScrollOffset >= allDates.length - 14}
             className={cn(
-              "p-1.5 hover:bg-muted rounded-full transition-colors flex-shrink-0",
+              "p-2 hover:bg-muted rounded-full transition-colors flex-shrink-0",
               dateScrollOffset >= allDates.length - 14 && "opacity-30 pointer-events-none"
             )}
           >
@@ -237,17 +238,18 @@ export const DateTimeSelectionStep = ({
       </div>
 
       {/* Period selector - pill style */}
-      <div className="flex justify-center mt-6 px-4">
-        <div className="inline-flex rounded-full border border-border overflow-hidden">
-          {(["Manhã", "Tarde", "Noite"] as TimePeriod[]).map((period) => (
+      <div className="w-full max-w-4xl mx-auto flex justify-center mt-8 px-4">
+        <div className="inline-flex rounded-full border border-border overflow-hidden bg-card">
+          {(["Manhã", "Tarde", "Noite"] as TimePeriod[]).map((period, idx) => (
             <button
               key={period}
               onClick={() => setSelectedPeriod(period)}
               className={cn(
-                "px-6 md:px-8 py-2.5 text-sm font-medium transition-colors",
+                "px-6 md:px-10 py-3 text-sm md:text-base font-medium transition-colors",
                 selectedPeriod === period
-                  ? "bg-card text-foreground border-b-2 border-foreground"
-                  : "bg-transparent text-muted-foreground hover:text-foreground"
+                  ? "bg-background text-foreground"
+                  : "bg-transparent text-muted-foreground hover:text-foreground",
+                idx !== 0 && "border-l border-border"
               )}
             >
               {period}
@@ -257,7 +259,7 @@ export const DateTimeSelectionStep = ({
       </div>
 
       {/* Time slots - horizontal scroll with arrows */}
-      <div className="relative mt-6 px-2 md:px-4">
+      <div className="w-full max-w-4xl mx-auto mt-8 px-2 md:px-4">
         <div className="flex items-center">
           <button
             onClick={() => {
@@ -265,14 +267,14 @@ export const DateTimeSelectionStep = ({
                 timeContainerRef.current.scrollBy({ left: -200, behavior: "smooth" });
               }
             }}
-            className="p-1.5 hover:bg-muted rounded-full transition-colors flex-shrink-0"
+            className="p-2 hover:bg-muted rounded-full transition-colors flex-shrink-0"
           >
             <ChevronLeft className="w-5 h-5 text-foreground" />
           </button>
 
           <div
             ref={timeContainerRef}
-            className="flex-1 flex gap-2 md:gap-3 overflow-x-auto px-2 py-1 scrollbar-hide"
+            className="flex-1 flex gap-3 md:gap-4 overflow-x-auto px-2 py-2 scrollbar-hide"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             {filteredTimes.map((time) => {
@@ -287,7 +289,7 @@ export const DateTimeSelectionStep = ({
                   onClick={() => !isUnavailable && onTimeChange(time)}
                   disabled={isUnavailable}
                   className={cn(
-                    "px-4 md:px-5 py-2.5 rounded-full text-sm font-medium transition-all flex-shrink-0 border",
+                    "px-5 md:px-6 py-3 rounded-full text-sm md:text-base font-medium transition-all flex-shrink-0 border",
                     isSelected
                       ? "bg-[#3d9a9b] text-white border-[#3d9a9b]"
                       : isUnavailable
@@ -307,7 +309,7 @@ export const DateTimeSelectionStep = ({
                 timeContainerRef.current.scrollBy({ left: 200, behavior: "smooth" });
               }
             }}
-            className="p-1.5 hover:bg-muted rounded-full transition-colors flex-shrink-0"
+            className="p-2 hover:bg-muted rounded-full transition-colors flex-shrink-0"
           >
             <ChevronRight className="w-5 h-5 text-foreground" />
           </button>
@@ -315,87 +317,89 @@ export const DateTimeSelectionStep = ({
       </div>
 
       {/* Service summary card */}
-      <div className="flex-1 overflow-y-auto px-4 md:px-6 mt-6">
-        <div className="bg-card rounded-lg border border-border">
-          {/* Service header */}
-          <div className="flex items-start justify-between p-4">
-            <h3 className="font-semibold text-foreground text-base">
-              {currentService?.service.name}
-            </h3>
-            <div className="text-right">
-              <p className="font-bold text-foreground">
-                R$ {currentService?.service.price.toFixed(2).replace(".", ",")}
-              </p>
-              {selectedTime && (
-                <p className="text-sm text-muted-foreground">
-                  {selectedTime} - {getEndTime(selectedTime, currentService?.service.duration || 0)}
+      <div className="flex-1 overflow-y-auto mt-6">
+        <div className="w-full max-w-4xl mx-auto px-4 md:px-8">
+          <div className="bg-card rounded-xl border border-border">
+            {/* Service header */}
+            <div className="flex items-start justify-between p-4 md:p-5">
+              <h3 className="font-semibold text-foreground text-base md:text-lg">
+                {currentService?.service.name}
+              </h3>
+              <div className="text-right">
+                <p className="font-bold text-foreground text-base md:text-lg">
+                  R$ {currentService?.service.price.toFixed(2).replace(".", ",")}
                 </p>
-              )}
-            </div>
-          </div>
-
-          {/* Separator and barber */}
-          <div className="border-t border-border px-4 py-3">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Funcionário:</span>
-              <div className="flex items-center gap-2 flex-1">
-                {selectedBarberData?.image_url ? (
-                  <img
-                    src={selectedBarberData.image_url}
-                    alt={selectedBarberData.name}
-                    className="w-6 h-6 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
-                    <User className="w-3.5 h-3.5 text-muted-foreground" />
-                  </div>
+                {selectedTime && (
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    {selectedTime} - {getEndTime(selectedTime, currentService?.service.duration || 0)}
+                  </p>
                 )}
-                <select
-                  value={selectedBarber}
-                  onChange={(e) => onBarberChange(e.target.value)}
-                  className="flex-1 bg-transparent text-foreground text-sm font-medium outline-none cursor-pointer"
-                >
-                  <option value="">Qualquer profissional</option>
-                  {barbers.map((barber) => (
-                    <option key={barber.id} value={barber.id}>
-                      {barber.name}
-                    </option>
-                  ))}
-                </select>
+              </div>
+            </div>
+
+            {/* Separator and barber */}
+            <div className="border-t border-border px-4 md:px-5 py-4">
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground">Funcionário:</span>
+                <div className="flex items-center gap-2 flex-1">
+                  {selectedBarberData?.image_url ? (
+                    <img
+                      src={selectedBarberData.image_url}
+                      alt={selectedBarberData.name}
+                      className="w-7 h-7 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center">
+                      <User className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                  )}
+                  <select
+                    value={selectedBarber}
+                    onChange={(e) => onBarberChange(e.target.value)}
+                    className="flex-1 bg-transparent text-foreground text-sm font-medium outline-none cursor-pointer"
+                  >
+                    <option value="">Qualquer profissional</option>
+                    {barbers.map((barber) => (
+                      <option key={barber.id} value={barber.id}>
+                        {barber.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Add another service link */}
-        <button
-          onClick={onAddService}
-          className="mt-4 text-[#3d9a9b] hover:text-[#2d7a7b] font-medium text-sm flex items-center gap-1"
-        >
-          + Adicionar outro serviço
-        </button>
+          {/* Add another service link */}
+          <button
+            onClick={onAddService}
+            className="mt-5 text-[#3d9a9b] hover:text-[#2d8a8b] font-medium text-sm md:text-base flex items-center gap-1"
+          >
+            + Adicionar outro serviço
+          </button>
+        </div>
       </div>
 
       {/* Footer with total and continue button */}
-      <div className="border-t border-border bg-background p-4 md:p-6">
-        <div className="flex items-center justify-end gap-4 mb-4">
-          <span className="text-muted-foreground">Total :</span>
-          <div className="text-right">
-            <span className="text-2xl font-bold text-foreground">
+      <div className="border-t border-border bg-background">
+        <div className="w-full max-w-4xl mx-auto px-4 md:px-8 py-4 md:py-5">
+          <div className="flex items-center justify-end gap-4 mb-4">
+            <span className="text-muted-foreground">Total :</span>
+            <span className="text-2xl md:text-3xl font-bold text-foreground">
               R$ {totalPrice.toFixed(2).replace(".", ",")}
             </span>
+            <span className="text-muted-foreground text-sm">
+              {formatDuration(totalDuration)}
+            </span>
           </div>
-          <span className="text-muted-foreground text-sm">
-            {formatDuration(totalDuration)}
-          </span>
+          <Button
+            onClick={onContinue}
+            disabled={!selectedTime || loading}
+            className="w-full h-12 md:h-14 bg-[#3d9a9b] hover:bg-[#2d8a8b] text-white font-semibold text-base md:text-lg rounded-xl"
+          >
+            {loading ? "Agendando..." : "Continuar"}
+          </Button>
         </div>
-        <Button
-          onClick={onContinue}
-          disabled={!selectedTime || loading}
-          className="w-full h-12 bg-[#3d9a9b] hover:bg-[#2d7a7b] text-white font-semibold text-base rounded-lg"
-        >
-          {loading ? "Agendando..." : "Continuar"}
-        </Button>
       </div>
     </div>
   );
