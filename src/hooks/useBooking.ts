@@ -102,20 +102,44 @@ export function useBooking(bookingId: string | undefined) {
 
 /**
  * Hook to get available time slots
- * Optimized with 5-minute cache per barber+date combination
+ * CACHE INVALIDATION: Query key inclui barberId, date e serviceDuration
+ * para garantir que mudanças nesses parâmetros forçam nova busca
  */
 export function useAvailableSlots(params: AvailableSlotsDTO | null) {
   return useQuery({
-    queryKey: params ? bookingKeys.availableSlots(params) : ['availableSlots', 'disabled'],
+    // Query key completa com todos os parâmetros que afetam o resultado
+    queryKey: params 
+      ? ['availableSlots', params.barbershopId, params.barberId, params.date, params.serviceDuration] 
+      : ['availableSlots', 'disabled'],
     queryFn: async () => {
       if (!params) return [];
+      
+      // Log para debug: mostra quando a query é executada
+      console.log('🔄 useAvailableSlots: Executando query com params:', {
+        barbershopId: params.barbershopId,
+        barberId: params.barberId,
+        date: params.date,
+        serviceDuration: params.serviceDuration
+      });
+      
       const result = await bookingService.getAvailableSlots(params);
       if (!result.success) {
         throw new Error(getErrorMessage(result.error));
       }
+      
+      console.log('✅ useAvailableSlots: Resultado:', {
+        slotsCount: result.data?.length || 0,
+        firstSlot: result.data?.[0]?.time,
+        lastSlot: result.data?.[result.data.length - 1]?.time
+      });
+      
       return result.data;
     },
     enabled: !!params?.barbershopId && !!params?.barberId && !!params?.date,
-    ...specificQueryConfig.availableSlots,
+    // IMPORTANTE: staleTime: 0 força nova busca sempre que os parâmetros mudam
+    // Isso é necessário para refletir bloqueios e bookings recém-criados
+    staleTime: 0,
+    gcTime: 2 * 60 * 1000, // 2 minutos no garbage collector
+    refetchOnWindowFocus: true,
   });
 }

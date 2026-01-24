@@ -596,9 +596,44 @@ export class BookingService {
         return failure(ErrorCodes.DATABASE_ERROR, 'Erro ao buscar agendamentos');
       }
 
+      // ========== 🔍 DIAGNÓSTICO: LOG DE DADOS BRUTOS ==========
+      // Este log mostra exatamente o que está vindo do banco de dados
+      // Abra o Console do navegador (F12 > Console) e procure por "DADOS DO BANCO"
+      console.log('🔍 DADOS DO BANCO:', {
+        date,
+        barberId,
+        serviceDuration,
+        isToday,
+        currentMinutes,
+        dayOfWeek,
+        workingHours: workingHoursData ? {
+          is_day_off: workingHoursData.is_day_off,
+          period1: `${this.normalizeTime(workingHoursData.period1_start || '')}-${this.normalizeTime(workingHoursData.period1_end || '')}`,
+          period2: `${this.normalizeTime(workingHoursData.period2_start || '')}-${this.normalizeTime(workingHoursData.period2_end || '')}`,
+          usingOverride
+        } : null,
+        workingPeriods,
+        bookings: bookings?.map(b => ({
+          start: this.normalizeTime(b.booking_time),
+          end: this.normalizeTime(b.booking_end_time || ''),
+          startMinutes: this.timeToMinutes(b.booking_time),
+          endMinutes: this.timeToMinutes(b.booking_end_time || ''),
+          status: b.status
+        })) || [],
+        dayBlocks: dayBlocks.map(b => ({
+          start: this.normalizeTime(b.start_time),
+          end: this.normalizeTime(b.end_time),
+          startMinutes: this.timeToMinutes(b.start_time),
+          endMinutes: this.timeToMinutes(b.end_time),
+          reason: b.reason
+        })),
+        totalSlotsGenerated: allSlots.length,
+        slotsExample: allSlots.slice(0, 5).map(s => s.time)
+      });
+
       logger.debug('getAvailableSlots', 'Existing bookings', { 
         count: bookings?.length || 0,
-        bookings: bookings?.map(b => `${b.booking_time}-${b.booking_end_time} (${b.status})`)
+        bookings: bookings?.map(b => `${this.normalizeTime(b.booking_time)}-${this.normalizeTime(b.booking_end_time || '')} (${b.status})`)
       });
 
       // ========== PASSO 5: FILTRAR SLOTS DISPONÍVEIS ==========
@@ -616,40 +651,54 @@ export class BookingService {
         }
 
         // 5.1 CONFLITO COM AGENDAMENTOS: Verifica se [slotStart, slotEnd) colide com algum booking
+        // NORMALIZAÇÃO: Todos os horários são convertidos para HH:MM antes da comparação
         const conflictingBooking = bookings?.find(booking => {
-          const bookingStart = this.timeToMinutes(booking.booking_time);
+          const normalizedBookingStart = this.normalizeTime(booking.booking_time);
+          const normalizedBookingEnd = this.normalizeTime(booking.booking_end_time || '');
+          
+          const bookingStart = this.timeToMinutes(normalizedBookingStart);
           // Se não tem booking_end_time, assume 30 min de duração
-          const bookingEnd = booking.booking_end_time 
-            ? this.timeToMinutes(booking.booking_end_time)
+          const bookingEnd = normalizedBookingEnd 
+            ? this.timeToMinutes(normalizedBookingEnd)
             : bookingStart + 30;
           
           // Lógica universal de colisão: start1 < end2 && end1 > start2
-          return this.hasTimeOverlap(slotStart, slotEnd, bookingStart, bookingEnd);
+          const hasOverlap = this.hasTimeOverlap(slotStart, slotEnd, bookingStart, bookingEnd);
+          
+          // Log detalhado para cada verificação de conflito
+          if (hasOverlap) {
+            console.log(`⛔ CONFLITO BOOKING: Slot ${slot.time}-${this.minutesToTime(slotEnd)} (${slotStart}-${slotEnd}min) ⟷ Booking ${normalizedBookingStart}-${normalizedBookingEnd} (${bookingStart}-${bookingEnd}min)`);
+          }
+          
+          return hasOverlap;
         });
 
         if (conflictingBooking) {
-          logger.debug('getAvailableSlots', `Slot ${slot.time} filtered: booking conflict`, {
-            slotRange: `${slot.time}-${this.minutesToTime(slotEnd)}`,
-            bookingRange: `${conflictingBooking.booking_time}-${conflictingBooking.booking_end_time}`
-          });
           return false;
         }
 
         // 5.2 CONFLITO COM BLOQUEIOS: Verifica se [slotStart, slotEnd) colide com algum bloqueio
         // IMPORTANTE: Qualquer bloqueio é respeitado, independente da duração
+        // NORMALIZAÇÃO: Todos os horários são convertidos para HH:MM antes da comparação
         const conflictingBlock = dayBlocks.find(block => {
-          const blockStart = this.timeToMinutes(block.start_time);
-          const blockEnd = this.timeToMinutes(block.end_time);
+          const normalizedBlockStart = this.normalizeTime(block.start_time);
+          const normalizedBlockEnd = this.normalizeTime(block.end_time);
+          
+          const blockStart = this.timeToMinutes(normalizedBlockStart);
+          const blockEnd = this.timeToMinutes(normalizedBlockEnd);
           
           // Lógica universal de colisão
-          return this.hasTimeOverlap(slotStart, slotEnd, blockStart, blockEnd);
+          const hasOverlap = this.hasTimeOverlap(slotStart, slotEnd, blockStart, blockEnd);
+          
+          // Log detalhado para cada verificação de conflito
+          if (hasOverlap) {
+            console.log(`🚫 CONFLITO BLOCK: Slot ${slot.time}-${this.minutesToTime(slotEnd)} (${slotStart}-${slotEnd}min) ⟷ Block ${normalizedBlockStart}-${normalizedBlockEnd} (${blockStart}-${blockEnd}min)`);
+          }
+          
+          return hasOverlap;
         });
 
         if (conflictingBlock) {
-          logger.debug('getAvailableSlots', `Slot ${slot.time} filtered: block conflict`, {
-            slotRange: `${slot.time}-${this.minutesToTime(slotEnd)}`,
-            blockRange: `${conflictingBlock.start_time}-${conflictingBlock.end_time}`
-          });
           return false;
         }
 
