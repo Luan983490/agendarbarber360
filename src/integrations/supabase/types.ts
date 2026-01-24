@@ -1638,13 +1638,6 @@ export type Database = {
         Args: { _booking_id: string; _user_id: string }
         Returns: boolean
       }
-      debug_slots: {
-        Args: { p_barber_id: string; p_date: string; p_duration: number }
-        Returns: {
-          info: string
-          valor: string
-        }[]
-      }
       get_active_alerts: {
         Args: never
         Returns: {
