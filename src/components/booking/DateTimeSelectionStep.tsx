@@ -125,13 +125,18 @@ export const DateTimeSelectionStep = ({
   const visibleDatesCount = isMobile ? 7 : 14;
   const visibleDates = allDates.slice(dateScrollOffset, dateScrollOffset + visibleDatesCount);
 
-  // Get available times from slots - DEBUG version
-  const availableTimes = (availableSlots || []).map((slot) => slot.time);
+  // Get available times from slots - FILTER by available === true
+  const allSlotsFromApi = availableSlots || [];
+  const availableOnlySlots = allSlotsFromApi.filter((slot) => slot.available === true);
+  const availableTimes = availableOnlySlots.map((slot) => slot.time);
   
-  console.log('⏰ DateTimeSelectionStep: Horários extraídos', {
-    availableTimesCount: availableTimes.length,
+  console.log('🔍 Antes do filtro:', allSlotsFromApi.length, 'Depois do filtro:', availableOnlySlots.length);
+  console.log('⏰ DateTimeSelectionStep: Horários DISPONÍVEIS extraídos', {
+    totalFromApi: allSlotsFromApi.length,
+    availableCount: availableOnlySlots.length,
+    unavailableCount: allSlotsFromApi.length - availableOnlySlots.length,
     availableTimesFirst5: availableTimes.slice(0, 5),
-    availableTimesLast3: availableTimes.slice(-3)
+    unavailableSlots: allSlotsFromApi.filter(s => !s.available).map(s => s.time).slice(0, 10)
   });
 
   // Filter times by period - DEBUG version
