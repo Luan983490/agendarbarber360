@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,6 +67,18 @@ export const BookingFlow = ({ children, barbershop }: BookingFlowProps) => {
     "18:00", "18:20", "18:40", "19:00", "19:20", "19:40",
     "20:00", "20:20", "20:40", "21:00",
   ];
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -212,7 +223,6 @@ export const BookingFlow = ({ children, barbershop }: BookingFlowProps) => {
       const mainService = selectedServices[0].service;
       const bookingDate = selectedDate.toISOString().split("T")[0];
 
-      // Check if barber has blocks
       if (selectedBarber) {
         const { data: blocks, error: blocksError } = await supabase
           .from("barber_blocks")
@@ -237,18 +247,15 @@ export const BookingFlow = ({ children, barbershop }: BookingFlowProps) => {
         }
       }
 
-      // Get client profile
       const { data: profileData } = await supabase
         .from("profiles")
         .select("display_name")
         .eq("user_id", user.id)
         .single();
 
-      // Calculate total
       const totalPrice = selectedServices.reduce((sum, item) => sum + item.service.price, 0);
 
-      // Create booking
-      const { data: bookingData, error } = await supabase
+      const { error } = await supabase
         .from("bookings")
         .insert({
           client_id: user.id,
@@ -271,7 +278,6 @@ export const BookingFlow = ({ children, barbershop }: BookingFlowProps) => {
         description: "Seu agendamento foi criado com sucesso.",
       });
 
-      // Reset and close
       resetForm();
       setIsOpen(false);
     } catch (error: any) {
@@ -295,27 +301,29 @@ export const BookingFlow = ({ children, barbershop }: BookingFlowProps) => {
     setSelectedBarber("");
   };
 
-  const handleOpenChange = (open: boolean) => {
-    setIsOpen(open);
-    if (!open) {
-      resetForm();
-    }
-  };
+  if (!isOpen) {
+    return <div onClick={() => setIsOpen(true)}>{children}</div>;
+  }
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+    <>
       <div onClick={() => setIsOpen(true)}>{children}</div>
-      <DialogContent className="sm:max-w-[420px] p-0 gap-0 max-h-[90vh] overflow-hidden bg-background border-border">
-        {/* Close button */}
-        <button
-          onClick={() => setIsOpen(false)}
-          className="absolute right-4 top-4 z-10 p-1 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-        >
-          <X className="h-4 w-4" />
-          <span className="sr-only">Fechar</span>
-        </button>
+      
+      {/* Fullscreen overlay */}
+      <div className="fixed inset-0 z-50 bg-background">
+        {/* Header bar with close button */}
+        <div className="absolute top-0 left-0 right-0 h-12 bg-[#3d9a9b] flex items-center justify-center z-10">
+          <button
+            onClick={() => setIsOpen(false)}
+            className="absolute left-4 top-1/2 -translate-y-1/2 p-1 text-white hover:opacity-80 transition-opacity"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <span className="text-white text-sm font-medium">Powered by Barber360</span>
+        </div>
 
-        <div className="flex flex-col h-[85vh]">
+        {/* Content */}
+        <div className="pt-12 h-full overflow-hidden">
           {currentStep === "services" && (
             <ServiceSelectionStep
               barbershop={barbershop}
@@ -346,7 +354,7 @@ export const BookingFlow = ({ children, barbershop }: BookingFlowProps) => {
             />
           )}
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </>
   );
 };
