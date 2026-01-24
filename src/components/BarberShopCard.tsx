@@ -3,11 +3,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Star, MapPin, Clock, Heart, Share2, Calendar } from "lucide-react";
 import { BarberShopProfile } from "./BarberShopProfile";
-import { BookingModal } from "./BookingModal";
+import { BookingFlow } from "./booking";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
-
 interface BarberShop {
   id: string;
   name: string;
@@ -143,7 +142,14 @@ export const BarberShopCard = ({ barberShop }: BarberShopCardProps) => {
 
         {/* Actions */}
         <div className="flex space-x-2">
-          <BookingModal barberShop={barberShop}>
+          <BookingFlow 
+            barbershop={{
+              id: barberShop.id,
+              name: barberShop.name,
+              image: barberShop.image,
+              rating: barberShop.rating,
+            }}
+          >
             <Button 
               className="flex-1"
               variant="gradient"
@@ -152,7 +158,7 @@ export const BarberShopCard = ({ barberShop }: BarberShopCardProps) => {
               <Calendar className="mr-2 h-4 w-4" />
               Agendar
             </Button>
-          </BookingModal>
+          </BookingFlow>
           <BarberShopProfile barberShop={barberShop}>
             <Button variant="elegant" size="sm">
               Ver Perfil
