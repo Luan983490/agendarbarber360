@@ -432,27 +432,48 @@ export class BookingService {
         return failure(ErrorCodes.DATABASE_ERROR, 'Erro ao buscar horários disponíveis');
       }
 
-      // Log para debug
+      // Log COMPLETO para debug - mostrar TODOS os dados do banco
+      const totalFromDb = slotsFromDb?.length || 0;
+      const availableFromDb = slotsFromDb?.filter((s: { is_available: boolean }) => s.is_available === true).length || 0;
+      const unavailableFromDb = slotsFromDb?.filter((s: { is_available: boolean }) => s.is_available === false).length || 0;
+      
       console.log('🔍 DADOS DO BANCO (via RPC):', {
         date,
         barberId,
         serviceDuration,
-        totalSlots: slotsFromDb?.length || 0,
-        availableSlots: slotsFromDb?.filter((s: { is_available: boolean }) => s.is_available).length || 0,
-        sampleSlots: slotsFromDb?.slice(0, 5).map((s: { slot_time: string; is_available: boolean }) => ({
+        totalSlots: totalFromDb,
+        availableSlots: availableFromDb,
+        unavailableSlots: unavailableFromDb,
+        sampleSlots: slotsFromDb?.slice(0, 10).map((s: { slot_time: string; is_available: boolean }) => ({
           time: s.slot_time,
           available: s.is_available
         }))
       });
 
+      // CRÍTICO: Verificar se existem slots indisponíveis
+      const unavailableSlotTimes = slotsFromDb?.filter((s: { is_available: boolean }) => s.is_available === false)
+        .map((s: { slot_time: string }) => s.slot_time) || [];
+      
+      if (unavailableSlotTimes.length > 0) {
+        console.log('⚠️ SLOTS INDISPONÍVEIS ENCONTRADOS:', unavailableSlotTimes);
+      }
+
       // Converter resultado do SQL para formato TimeSlot
-      // A função SQL retorna apenas slots disponíveis (is_available = true)
+      // FILTRAR APENAS os slots onde is_available === true
       const availableSlots: TimeSlot[] = (slotsFromDb || [])
-        .filter((slot: { is_available: boolean }) => slot.is_available)
-        .map((slot: { slot_time: string }) => ({
+        .filter((slot: { is_available: boolean }) => {
+          const isAvail = slot.is_available === true;
+          if (!isAvail) {
+            console.log('❌ Slot FILTRADO (indisponível):', slot);
+          }
+          return isAvail;
+        })
+        .map((slot: { slot_time: string; is_available: boolean }) => ({
           time: this.normalizeTime(slot.slot_time),
-          available: true
+          available: true // Já sabemos que é true pelo filtro acima
         }));
+      
+      console.log('✅ SLOTS RETORNADOS PARA FRONTEND:', availableSlots.length, 'de', totalFromDb);
 
       const duration = timer();
       logger.logWithDuration('debug', 'getAvailableSlots', 'Available slots from RPC', duration, {
