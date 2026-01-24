@@ -1668,6 +1668,14 @@ export type Database = {
           origin: string
         }[]
       }
+      get_available_slots: {
+        Args: { p_barber_id: string; p_date: string; p_duration?: number }
+        Returns: {
+          is_available: boolean
+          slot_end_time: string
+          slot_time: string
+        }[]
+      }
       get_barber_advanced_metrics: {
         Args: { p_end_date: string; p_start_date: string }
         Returns: {
