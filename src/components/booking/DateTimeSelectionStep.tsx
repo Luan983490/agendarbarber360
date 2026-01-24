@@ -157,7 +157,7 @@ export const DateTimeSelectionStep = ({
     <div className="flex flex-col min-h-full bg-background">
       {/* Header with back arrow and month/year */}
       <div className="w-full px-4 py-4">
-        <div className="flex items-center max-w-4xl mx-auto">
+        <div className="flex items-center">
           <button
             onClick={onBack}
             className="p-2 hover:bg-muted rounded-lg transition-colors"
@@ -173,7 +173,7 @@ export const DateTimeSelectionStep = ({
 
       {/* Horizontal date picker */}
       <div className="w-full px-4">
-        <div className="flex items-center max-w-4xl mx-auto">
+        <div className="flex items-center">
           {/* Left arrow - hidden on mobile */}
           {!isMobile && (
             <button
@@ -278,7 +278,7 @@ export const DateTimeSelectionStep = ({
 
       {/* Time slots - horizontal scroll */}
       <div className="w-full mt-6 px-4">
-        <div className="flex items-center max-w-4xl mx-auto">
+        <div className="flex items-center">
           {/* Left arrow - hidden on mobile */}
           {!isMobile && (
             <button
@@ -345,7 +345,7 @@ export const DateTimeSelectionStep = ({
 
       {/* Service summary card */}
       <div className="flex-1 mt-6 px-4">
-        <div className="w-full max-w-4xl mx-auto">
+        <div className="w-full">
           <div className="bg-card rounded-xl border border-border">
             {/* Service header */}
             <div className="flex items-start justify-between p-4 md:p-5">
@@ -409,7 +409,7 @@ export const DateTimeSelectionStep = ({
 
       {/* Footer with total and continue button */}
       <div className="border-t border-border bg-background mt-auto">
-        <div className="w-full max-w-4xl mx-auto px-4 py-4 md:py-5">
+        <div className="w-full px-4 py-4 md:py-5">
           <div className="flex items-center justify-end gap-4 mb-4">
             <span className="text-muted-foreground">Total :</span>
             <span className="text-2xl md:text-3xl font-bold text-foreground">
