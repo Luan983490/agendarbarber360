@@ -310,20 +310,9 @@ export const BookingFlow = ({ children, barbershop }: BookingFlowProps) => {
       <div onClick={() => setIsOpen(true)}>{children}</div>
       
       {/* Fullscreen overlay */}
-      <div className="fixed inset-0 z-50 bg-background">
-        {/* Header bar with close button */}
-        <div className="absolute top-0 left-0 right-0 h-12 bg-[#3d9a9b] flex items-center justify-center z-10">
-          <button
-            onClick={() => setIsOpen(false)}
-            className="absolute left-4 top-1/2 -translate-y-1/2 p-1 text-white hover:opacity-80 transition-opacity"
-          >
-            <X className="h-5 w-5" />
-          </button>
-          <span className="text-white text-sm font-medium">Powered by Barber360</span>
-        </div>
-
-        {/* Content */}
-        <div className="pt-12 h-full overflow-hidden">
+      <div className="fixed inset-0 z-50 bg-background flex flex-col">
+        {/* Content - full height */}
+        <div className="flex-1 overflow-auto">
           {currentStep === "services" && (
             <ServiceSelectionStep
               barbershop={barbershop}
