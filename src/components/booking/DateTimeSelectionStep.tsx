@@ -1,9 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Plus, User, Clock } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { format, addDays, startOfWeek, isSameDay, isToday, isBefore, startOfDay } from "date-fns";
+import { ChevronLeft, ChevronRight, User } from "lucide-react";
+import { format, addDays, isSameDay, startOfToday, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 interface Service {
   id: string;
@@ -47,6 +47,18 @@ interface DateTimeSelectionStepProps {
 
 type TimePeriod = "Manhã" | "Tarde" | "Noite";
 
+const PERIOD_RANGES: Record<TimePeriod, { start: number; end: number }> = {
+  "Manhã": { start: 6, end: 12 },
+  "Tarde": { start: 12, end: 18 },
+  "Noite": { start: 18, end: 24 },
+};
+
+// Availability colors for demo
+const getAvailabilityColor = (dayOffset: number): string => {
+  const colors = ["#22c55e", "#22c55e", "#eab308", "#22c55e", "#22c55e", "#eab308", "#22c55e"];
+  return colors[dayOffset % colors.length];
+};
+
 export const DateTimeSelectionStep = ({
   selectedServices,
   currentServiceIndex,
@@ -65,40 +77,25 @@ export const DateTimeSelectionStep = ({
   onAddService,
   loading,
 }: DateTimeSelectionStepProps) => {
-  const [weekOffset, setWeekOffset] = useState(0);
+  const today = startOfToday();
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>("Manhã");
+  const [dateScrollOffset, setDateScrollOffset] = useState(0);
+  const timeContainerRef = useRef<HTMLDivElement>(null);
 
   const currentService = selectedServices[currentServiceIndex];
+  const selectedBarberData = barbers.find((b) => b.id === selectedBarber);
 
-  // Generate week days
-  const weekDays = useMemo(() => {
-    const today = new Date();
-    const startDate = addDays(today, weekOffset * 7);
-    return Array.from({ length: 7 }, (_, i) => addDays(startDate, i));
-  }, [weekOffset]);
-
-  // Get availability indicator color for each day
-  const getDayAvailability = (date: Date) => {
-    // For demo purposes, return random colors
-    // In real app, this would check actual availability
-    if (isBefore(startOfDay(date), startOfDay(new Date()))) return null;
-    const dayOfWeek = date.getDay();
-    if (dayOfWeek === 0) return null; // Sunday closed
-    
-    const colors = ["bg-primary", "bg-green-500", "bg-yellow-500", "bg-green-500"];
-    return colors[dayOfWeek % colors.length];
-  };
+  // Generate 30 days from today
+  const allDates = Array.from({ length: 30 }, (_, i) => addDays(today, i));
+  const visibleDatesCount = 7; // Mobile: 6, Desktop: 12+
+  const visibleDates = allDates.slice(dateScrollOffset, dateScrollOffset + 14);
 
   // Filter times by period
-  const filteredTimes = useMemo(() => {
-    return availableTimes.filter((time) => {
-      const hour = parseInt(time.split(":")[0]);
-      if (selectedPeriod === "Manhã") return hour >= 6 && hour < 12;
-      if (selectedPeriod === "Tarde") return hour >= 12 && hour < 18;
-      if (selectedPeriod === "Noite") return hour >= 18;
-      return true;
-    });
-  }, [availableTimes, selectedPeriod]);
+  const filteredTimes = availableTimes.filter((time) => {
+    const hour = parseInt(time.split(":")[0]);
+    const range = PERIOD_RANGES[selectedPeriod];
+    return hour >= range.start && hour < range.end;
+  });
 
   // Calculate end time
   const getEndTime = (startTime: string, durationMinutes: number) => {
@@ -121,45 +118,78 @@ export const DateTimeSelectionStep = ({
   const totalPrice = selectedServices.reduce((sum, item) => sum + item.service.price, 0);
   const totalDuration = selectedServices.reduce((sum, item) => sum + item.service.duration, 0);
 
-  const selectedBarberData = barbers.find((b) => b.id === selectedBarber);
+  // Month title
+  const getMonthYearTitle = () => {
+    const firstVisible = visibleDates[0];
+    const lastVisible = visibleDates[visibleDates.length - 1];
+    
+    if (!firstVisible || !lastVisible) return "";
+    
+    const firstMonth = format(firstVisible, "MMMM", { locale: ptBR });
+    const lastMonth = format(lastVisible, "MMMM", { locale: ptBR });
+    const firstYear = format(firstVisible, "yyyy");
+    const lastYear = format(lastVisible, "yyyy");
 
-  const monthYear = format(selectedDate, "MMMM yyyy", { locale: ptBR });
-  const capitalizedMonth = monthYear.charAt(0).toUpperCase() + monthYear.slice(1);
+    const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+    if (firstMonth === lastMonth && firstYear === lastYear) {
+      return `${capitalize(firstMonth)} ${firstYear}`;
+    }
+    if (firstYear === lastYear) {
+      return `${capitalize(firstMonth)} - ${capitalize(lastMonth)} ${firstYear}`;
+    }
+    return `${capitalize(firstMonth)} ${firstYear} - ${capitalize(lastMonth)} ${lastYear}`;
+  };
+
+  const handleDateScroll = (direction: "left" | "right") => {
+    if (direction === "left" && dateScrollOffset > 0) {
+      setDateScrollOffset((prev) => Math.max(0, prev - 7));
+    } else if (direction === "right" && dateScrollOffset < allDates.length - 14) {
+      setDateScrollOffset((prev) => Math.min(allDates.length - 14, prev + 7));
+    }
+  };
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Month header */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
-        <button onClick={onBack} className="p-1">
-          <ChevronLeft className="w-5 h-5 text-foreground" />
+    <div className="flex flex-col h-full bg-background">
+      {/* Header with back arrow and month/year */}
+      <div className="flex items-center px-4 py-4 md:px-6">
+        <button
+          onClick={onBack}
+          className="p-1 hover:bg-muted rounded-md transition-colors"
+        >
+          <ChevronLeft className="w-6 h-6 text-foreground" />
         </button>
-        <h2 className="text-lg font-bold text-foreground">{capitalizedMonth}</h2>
-        <div className="w-5" />
+        <h2 className="flex-1 text-center text-lg md:text-xl font-bold text-foreground italic">
+          {getMonthYearTitle()}
+        </h2>
+        <div className="w-8" /> {/* Spacer for centering */}
       </div>
 
-      {/* Week day picker */}
-      <div className="relative">
-        <div className="flex items-center px-2 py-4">
+      {/* Horizontal date picker */}
+      <div className="relative px-2 md:px-4">
+        <div className="flex items-center">
           <button
-            onClick={() => setWeekOffset((prev) => Math.max(prev - 1, 0))}
-            className="p-1 flex-shrink-0"
-            disabled={weekOffset === 0}
+            onClick={() => handleDateScroll("left")}
+            disabled={dateScrollOffset === 0}
+            className={cn(
+              "p-1.5 hover:bg-muted rounded-full transition-colors flex-shrink-0",
+              dateScrollOffset === 0 && "opacity-30 pointer-events-none"
+            )}
           >
-            <ChevronLeft
-              className={cn(
-                "w-5 h-5",
-                weekOffset === 0 ? "text-muted-foreground/30" : "text-foreground"
-              )}
-            />
+            <ChevronLeft className="w-5 h-5 text-foreground" />
           </button>
 
-          <div className="flex gap-1 overflow-x-auto flex-1 justify-center">
-            {weekDays.map((date) => {
-              const isPast = isBefore(startOfDay(date), startOfDay(new Date()));
+          <div className="flex-1 flex gap-1 md:gap-2 overflow-hidden justify-center">
+            {visibleDates.map((date, index) => {
+              const isPast = isBefore(startOfDay(date), startOfDay(today));
               const isSunday = date.getDay() === 0;
               const isSelected = isSameDay(date, selectedDate);
-              const availability = getDayAvailability(date);
               const isDisabled = isPast || isSunday;
+              const availabilityColor = getAvailabilityColor(dateScrollOffset + index);
+
+              const dayAbbr = format(date, "EEE", { locale: ptBR })
+                .replace(".", "")
+                .charAt(0).toUpperCase() + format(date, "EEE", { locale: ptBR }).replace(".", "").slice(1);
 
               return (
                 <button
@@ -167,34 +197,25 @@ export const DateTimeSelectionStep = ({
                   onClick={() => !isDisabled && onDateChange(date)}
                   disabled={isDisabled}
                   className={cn(
-                    "flex flex-col items-center py-2 px-3 rounded-lg min-w-[52px] transition-all",
-                    isSelected && "bg-primary",
-                    !isSelected && !isDisabled && "hover:bg-muted",
-                    isDisabled && "opacity-40"
+                    "flex flex-col items-center py-2 px-2 md:px-3 rounded-lg transition-all min-w-[44px] md:min-w-[56px]",
+                    isSelected
+                      ? "bg-[#3d9a9b] text-white"
+                      : "bg-card border border-border hover:bg-muted text-foreground",
+                    isDisabled && "opacity-40 pointer-events-none"
                   )}
                 >
-                  <span
-                    className={cn(
-                      "text-xs font-medium uppercase",
-                      isSelected ? "text-primary-foreground" : "text-foreground"
-                    )}
-                  >
-                    {format(date, "EEE", { locale: ptBR }).replace(".", "")}
+                  <span className="text-xs font-medium capitalize">
+                    {dayAbbr}
                   </span>
-                  <span
-                    className={cn(
-                      "text-lg font-bold",
-                      isSelected ? "text-primary-foreground" : "text-foreground"
-                    )}
-                  >
+                  <span className="text-base md:text-lg font-bold mt-0.5">
                     {format(date, "d")}
                   </span>
-                  {availability && !isDisabled && (
+                  {!isDisabled && (
                     <div
-                      className={cn(
-                        "w-4 h-1 rounded-full mt-1",
-                        isSelected ? "bg-primary-foreground" : availability
-                      )}
+                      className="w-4 h-1 rounded-full mt-1"
+                      style={{ 
+                        backgroundColor: isSelected ? "white" : availabilityColor 
+                      }}
                     />
                   )}
                 </button>
@@ -203,155 +224,175 @@ export const DateTimeSelectionStep = ({
           </div>
 
           <button
-            onClick={() => setWeekOffset((prev) => prev + 1)}
-            className="p-1 flex-shrink-0"
+            onClick={() => handleDateScroll("right")}
+            disabled={dateScrollOffset >= allDates.length - 14}
+            className={cn(
+              "p-1.5 hover:bg-muted rounded-full transition-colors flex-shrink-0",
+              dateScrollOffset >= allDates.length - 14 && "opacity-30 pointer-events-none"
+            )}
           >
             <ChevronRight className="w-5 h-5 text-foreground" />
           </button>
         </div>
       </div>
 
-      {/* Period selector */}
-      <div className="flex justify-center gap-4 py-4 border-t border-b border-border">
-        {(["Manhã", "Tarde", "Noite"] as TimePeriod[]).map((period) => (
-          <button
-            key={period}
-            onClick={() => setSelectedPeriod(period)}
-            className={cn(
-              "px-4 py-2 rounded-full text-sm font-medium transition-all",
-              selectedPeriod === period
-                ? "bg-card border border-border text-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {period}
-          </button>
-        ))}
+      {/* Period selector - pill style */}
+      <div className="flex justify-center mt-6 px-4">
+        <div className="inline-flex rounded-full border border-border overflow-hidden">
+          {(["Manhã", "Tarde", "Noite"] as TimePeriod[]).map((period) => (
+            <button
+              key={period}
+              onClick={() => setSelectedPeriod(period)}
+              className={cn(
+                "px-6 md:px-8 py-2.5 text-sm font-medium transition-colors",
+                selectedPeriod === period
+                  ? "bg-card text-foreground border-b-2 border-foreground"
+                  : "bg-transparent text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {period}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Time slots */}
-      <div className="p-4">
-        <div className="grid grid-cols-4 gap-2">
-          {filteredTimes.map((time) => {
-            const isBlocked = blockedTimes.includes(time);
-            const isBooked = bookedTimes.includes(time);
-            const isUnavailable = isBlocked || isBooked;
-            const isSelected = selectedTime === time;
+      {/* Time slots - horizontal scroll with arrows */}
+      <div className="relative mt-6 px-2 md:px-4">
+        <div className="flex items-center">
+          <button
+            onClick={() => {
+              if (timeContainerRef.current) {
+                timeContainerRef.current.scrollBy({ left: -200, behavior: "smooth" });
+              }
+            }}
+            className="p-1.5 hover:bg-muted rounded-full transition-colors flex-shrink-0"
+          >
+            <ChevronLeft className="w-5 h-5 text-foreground" />
+          </button>
 
-            return (
-              <button
-                key={time}
-                onClick={() => !isUnavailable && onTimeChange(time)}
-                disabled={isUnavailable}
-                className={cn(
-                  "py-2.5 rounded-full text-sm font-medium transition-all border",
-                  isSelected
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : isUnavailable
-                    ? "bg-muted/50 text-muted-foreground border-border opacity-50 cursor-not-allowed"
-                    : "bg-card text-foreground border-border hover:border-primary"
-                )}
-              >
-                {time}
-              </button>
-            );
-          })}
-        </div>
+          <div
+            ref={timeContainerRef}
+            className="flex-1 flex gap-2 md:gap-3 overflow-x-auto px-2 py-1 scrollbar-hide"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
+            {filteredTimes.map((time) => {
+              const isBlocked = blockedTimes.includes(time);
+              const isBooked = bookedTimes.includes(time);
+              const isUnavailable = isBlocked || isBooked;
+              const isSelected = selectedTime === time;
 
-        {filteredTimes.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">
-            Nenhum horário disponível neste período
+              return (
+                <button
+                  key={time}
+                  onClick={() => !isUnavailable && onTimeChange(time)}
+                  disabled={isUnavailable}
+                  className={cn(
+                    "px-4 md:px-5 py-2.5 rounded-full text-sm font-medium transition-all flex-shrink-0 border",
+                    isSelected
+                      ? "bg-[#3d9a9b] text-white border-[#3d9a9b]"
+                      : isUnavailable
+                      ? "bg-muted/50 text-muted-foreground border-border opacity-40 cursor-not-allowed"
+                      : "bg-card text-foreground border-border hover:border-foreground"
+                  )}
+                >
+                  {time}
+                </button>
+              );
+            })}
           </div>
-        )}
+
+          <button
+            onClick={() => {
+              if (timeContainerRef.current) {
+                timeContainerRef.current.scrollBy({ left: 200, behavior: "smooth" });
+              }
+            }}
+            className="p-1.5 hover:bg-muted rounded-full transition-colors flex-shrink-0"
+          >
+            <ChevronRight className="w-5 h-5 text-foreground" />
+          </button>
+        </div>
       </div>
 
       {/* Service summary card */}
-      <div className="flex-1 px-4 pb-4 overflow-y-auto">
-        {selectedServices.map((item, index) => (
-          <div
-            key={index}
-            className="bg-card rounded-lg p-4 mb-3 border border-border"
-          >
-            <div className="flex justify-between items-start mb-3">
-              <div>
-                <h3 className="font-medium text-foreground">{item.service.name}</h3>
-                {selectedTime && index === currentServiceIndex && (
-                  <p className="text-sm text-muted-foreground mt-0.5">
-                    {selectedTime} - {getEndTime(selectedTime, item.service.duration)}
-                  </p>
+      <div className="flex-1 overflow-y-auto px-4 md:px-6 mt-6">
+        <div className="bg-card rounded-lg border border-border">
+          {/* Service header */}
+          <div className="flex items-start justify-between p-4">
+            <h3 className="font-semibold text-foreground text-base">
+              {currentService?.service.name}
+            </h3>
+            <div className="text-right">
+              <p className="font-bold text-foreground">
+                R$ {currentService?.service.price.toFixed(2).replace(".", ",")}
+              </p>
+              {selectedTime && (
+                <p className="text-sm text-muted-foreground">
+                  {selectedTime} - {getEndTime(selectedTime, currentService?.service.duration || 0)}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Separator and barber */}
+          <div className="border-t border-border px-4 py-3">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Funcionário:</span>
+              <div className="flex items-center gap-2 flex-1">
+                {selectedBarberData?.image_url ? (
+                  <img
+                    src={selectedBarberData.image_url}
+                    alt={selectedBarberData.name}
+                    className="w-6 h-6 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
+                    <User className="w-3.5 h-3.5 text-muted-foreground" />
+                  </div>
                 )}
-              </div>
-              <div className="text-right">
-                <span className="font-semibold text-foreground">
-                  R$ {item.service.price.toFixed(2).replace(".", ",")}
-                </span>
+                <select
+                  value={selectedBarber}
+                  onChange={(e) => onBarberChange(e.target.value)}
+                  className="flex-1 bg-transparent text-foreground text-sm font-medium outline-none cursor-pointer"
+                >
+                  <option value="">Qualquer profissional</option>
+                  {barbers.map((barber) => (
+                    <option key={barber.id} value={barber.id}>
+                      {barber.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
-
-            {/* Barber selector */}
-            {barbers.length > 0 && index === currentServiceIndex && (
-              <div className="border-t border-border pt-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Funcionário:</span>
-                  <select
-                    value={selectedBarber}
-                    onChange={(e) => onBarberChange(e.target.value)}
-                    className="flex-1 bg-transparent text-foreground text-sm outline-none"
-                  >
-                    <option value="">Qualquer profissional</option>
-                    {barbers.map((barber) => (
-                      <option key={barber.id} value={barber.id}>
-                        {barber.name}
-                      </option>
-                    ))}
-                  </select>
-                  {selectedBarberData && (
-                    <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center overflow-hidden">
-                      {selectedBarberData.image_url ? (
-                        <img
-                          src={selectedBarberData.image_url}
-                          alt={selectedBarberData.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <User className="w-3 h-3 text-muted-foreground" />
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
-        ))}
+        </div>
 
-        {/* Add another service */}
+        {/* Add another service link */}
         <button
           onClick={onAddService}
-          className="flex items-center gap-2 text-primary font-medium py-2"
+          className="mt-4 text-[#3d9a9b] hover:text-[#2d7a7b] font-medium text-sm flex items-center gap-1"
         >
-          <Plus className="w-4 h-4" />
-          Adicionar outro serviço
+          + Adicionar outro serviço
         </button>
       </div>
 
       {/* Footer with total and continue button */}
-      <div className="border-t border-border p-4 bg-background">
-        <div className="flex items-center justify-between mb-4">
+      <div className="border-t border-border bg-background p-4 md:p-6">
+        <div className="flex items-center justify-end gap-4 mb-4">
           <span className="text-muted-foreground">Total :</span>
-          <div className="flex items-center gap-3">
-            <span className="text-xl font-bold text-foreground">
+          <div className="text-right">
+            <span className="text-2xl font-bold text-foreground">
               R$ {totalPrice.toFixed(2).replace(".", ",")}
             </span>
-            <span className="text-muted-foreground">
-              {formatDuration(totalDuration)}
-            </span>
           </div>
+          <span className="text-muted-foreground text-sm">
+            {formatDuration(totalDuration)}
+          </span>
         </div>
-
         <Button
           onClick={onContinue}
           disabled={!selectedTime || loading}
-          className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold py-6 text-base"
+          className="w-full h-12 bg-[#3d9a9b] hover:bg-[#2d7a7b] text-white font-semibold text-base rounded-lg"
         >
           {loading ? "Agendando..." : "Continuar"}
         </Button>
