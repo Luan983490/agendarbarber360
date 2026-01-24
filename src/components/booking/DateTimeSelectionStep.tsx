@@ -125,10 +125,20 @@ export const DateTimeSelectionStep = ({
   const visibleDatesCount = isMobile ? 7 : 14;
   const visibleDates = allDates.slice(dateScrollOffset, dateScrollOffset + visibleDatesCount);
 
-  // Get available times from slots - DEBUG version
-  const availableTimes = (availableSlots || []).map((slot) => slot.time);
+  // Get available times from slots - FIXED: using slot_time instead of slot.time
+  // Filter only available slots (is_available === true)
+  const availableTimes = (availableSlots || [])
+    .filter((slot: any) => slot.is_available === true)
+    .map((slot: any) => {
+      // Handle both formats: slot_time (from RPC) and time (from service)
+      const timeValue = slot.slot_time || slot.time;
+      // Normalize to HH:MM format (remove seconds if present)
+      return timeValue ? timeValue.substring(0, 5) : null;
+    })
+    .filter(Boolean) as string[];
   
   console.log('⏰ DateTimeSelectionStep: Horários extraídos', {
+    rawSlots: (availableSlots || []).slice(0, 3),
     availableTimesCount: availableTimes.length,
     availableTimesFirst5: availableTimes.slice(0, 5),
     availableTimesLast3: availableTimes.slice(-3)
