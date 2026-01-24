@@ -347,15 +347,99 @@ export class BookingService {
     }
 
     try {
-      // Generate time slots (every 30 minutes from 08:00 to 20:00)
-      const slots: TimeSlot[] = [];
-      const startHour = 8;
-      const endHour = 20;
+      // If barberId is specified, get working hours for the barber
+      let workingPeriods: Array<{ start: string; end: string }> = [];
+      let isDayOff = false;
 
-      for (let hour = startHour; hour < endHour; hour++) {
-        for (const minutes of [0, 30]) {
-          const time = `${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-          slots.push({ time, available: true });
+      if (data.barberId) {
+        const dateObj = new Date(data.date + 'T12:00:00');
+        const dayOfWeek = dateObj.getDay();
+
+        // Check for schedule overrides first
+        const { data: overrides } = await supabase
+          .from('barber_schedule_overrides')
+          .select('*')
+          .eq('barber_id', data.barberId)
+          .lte('start_date', data.date)
+          .gte('end_date', data.date)
+          .eq('day_of_week', dayOfWeek);
+
+        if (overrides && overrides.length > 0) {
+          const override = overrides[0];
+          isDayOff = override.is_day_off;
+          if (!isDayOff) {
+            if (override.period1_start && override.period1_end) {
+              workingPeriods.push({ 
+                start: override.period1_start.substring(0, 5), 
+                end: override.period1_end.substring(0, 5) 
+              });
+            }
+            if (override.period2_start && override.period2_end) {
+              workingPeriods.push({ 
+                start: override.period2_start.substring(0, 5), 
+                end: override.period2_end.substring(0, 5) 
+              });
+            }
+          }
+        } else {
+          // Get regular working hours
+          const { data: workingHours } = await supabase
+            .from('barber_working_hours')
+            .select('*')
+            .eq('barber_id', data.barberId)
+            .eq('day_of_week', dayOfWeek)
+            .single();
+
+          if (workingHours) {
+            isDayOff = workingHours.is_day_off;
+            if (!isDayOff) {
+              if (workingHours.period1_start && workingHours.period1_end) {
+                workingPeriods.push({ 
+                  start: workingHours.period1_start.substring(0, 5), 
+                  end: workingHours.period1_end.substring(0, 5) 
+                });
+              }
+              if (workingHours.period2_start && workingHours.period2_end) {
+                workingPeriods.push({ 
+                  start: workingHours.period2_start.substring(0, 5), 
+                  end: workingHours.period2_end.substring(0, 5) 
+                });
+              }
+            }
+          }
+        }
+      }
+
+      // If day off, return empty slots
+      if (isDayOff) {
+        return success([]);
+      }
+
+      // Generate time slots based on working periods (or default 08:00-20:00)
+      const slots: TimeSlot[] = [];
+      const slotInterval = 20; // 20 minute intervals
+
+      if (workingPeriods.length > 0) {
+        for (const period of workingPeriods) {
+          const [startH, startM] = period.start.split(':').map(Number);
+          const [endH, endM] = period.end.split(':').map(Number);
+          const startMinutes = startH * 60 + startM;
+          const endMinutes = endH * 60 + endM;
+
+          for (let m = startMinutes; m < endMinutes; m += slotInterval) {
+            const hour = Math.floor(m / 60);
+            const minutes = m % 60;
+            const time = `${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+            slots.push({ time, available: true });
+          }
+        }
+      } else {
+        // Default: 08:00 to 20:00 with 20min intervals
+        for (let hour = 8; hour < 20; hour++) {
+          for (const minutes of [0, 20, 40]) {
+            const time = `${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+            slots.push({ time, available: true });
+          }
         }
       }
 
@@ -385,9 +469,12 @@ export class BookingService {
         blocks = barberBlocks || [];
       }
 
-      // Mark unavailable slots
+      // Mark unavailable slots and filter them out
+      const availableSlots: TimeSlot[] = [];
+      
       for (const slot of slots) {
         const slotTime = slot.time;
+        let isAvailable = true;
 
         // Check bookings
         if (bookings) {
@@ -398,13 +485,12 @@ export class BookingService {
           });
 
           if (hasConflict) {
-            slot.available = false;
-            slot.reason = 'Horário ocupado';
+            isAvailable = false;
           }
         }
 
         // Check blocks
-        if (slot.available && blocks.length > 0) {
+        if (isAvailable && blocks.length > 0) {
           const isBlocked = blocks.some((block) => {
             const blockStart = block.start_time.substring(0, 5);
             const blockEnd = block.end_time.substring(0, 5);
@@ -412,19 +498,23 @@ export class BookingService {
           });
 
           if (isBlocked) {
-            slot.available = false;
-            slot.reason = 'Barbeiro bloqueado';
+            isAvailable = false;
           }
+        }
+
+        // Only add available slots
+        if (isAvailable) {
+          availableSlots.push({ time: slotTime, available: true });
         }
       }
 
       const duration = timer();
       logger.logWithDuration('debug', 'getAvailableSlots', 'Slots fetched', duration, {
         totalSlots: slots.length,
-        availableSlots: slots.filter((s) => s.available).length,
+        availableSlots: availableSlots.length,
       });
 
-      return success(slots);
+      return success(availableSlots);
     } catch (err) {
       logger.error('getAvailableSlots', 'Unexpected error', err);
       return failure(ErrorCodes.UNKNOWN_ERROR, 'Erro ao buscar horários disponíveis');

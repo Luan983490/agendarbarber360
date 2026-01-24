@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -53,20 +52,7 @@ export const BookingFlow = ({ children, barbershop }: BookingFlowProps) => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedBarber, setSelectedBarber] = useState("");
-  const [blockedTimes, setBlockedTimes] = useState<string[]>([]);
-  const [bookedTimes, setBookedTimes] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-
-  const availableTimes = [
-    "06:00", "06:20", "06:40", "07:00", "07:20", "07:40",
-    "08:00", "08:20", "08:40", "09:00", "09:20", "09:40",
-    "10:00", "10:20", "10:40", "11:00", "11:20", "11:40",
-    "12:00", "12:20", "12:40", "13:00", "13:20", "13:40",
-    "14:00", "14:20", "14:40", "15:00", "15:20", "15:40",
-    "16:00", "16:20", "16:40", "17:00", "17:20", "17:40",
-    "18:00", "18:20", "18:40", "19:00", "19:20", "19:40",
-    "20:00", "20:20", "20:40", "21:00",
-  ];
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -86,15 +72,6 @@ export const BookingFlow = ({ children, barbershop }: BookingFlowProps) => {
       fetchBarbers();
     }
   }, [isOpen, barbershop.id]);
-
-  useEffect(() => {
-    if (selectedDate && selectedBarber) {
-      fetchBlockedAndBookedTimes();
-    } else {
-      setBlockedTimes([]);
-      setBookedTimes([]);
-    }
-  }, [selectedDate, selectedBarber]);
 
   const fetchServices = async () => {
     try {
@@ -134,48 +111,6 @@ export const BookingFlow = ({ children, barbershop }: BookingFlowProps) => {
     }
   };
 
-  const fetchBlockedAndBookedTimes = async () => {
-    if (!selectedDate || !selectedBarber) return;
-
-    const bookingDate = selectedDate.toISOString().split("T")[0];
-
-    try {
-      const { data: blocks, error: blocksError } = await supabase
-        .from("barber_blocks")
-        .select("start_time, end_time")
-        .eq("barber_id", selectedBarber)
-        .eq("block_date", bookingDate);
-
-      if (blocksError) throw blocksError;
-
-      const { data: bookings, error: bookingsError } = await supabase
-        .from("bookings")
-        .select("booking_time")
-        .eq("barber_id", selectedBarber)
-        .eq("booking_date", bookingDate)
-        .in("status", ["pending", "confirmed"]);
-
-      if (bookingsError) throw bookingsError;
-
-      const blocked: string[] = [];
-      blocks?.forEach((block) => {
-        const startTime = block.start_time.substring(0, 5);
-        const endTime = block.end_time.substring(0, 5);
-        availableTimes.forEach((time) => {
-          if (time >= startTime && time < endTime) {
-            blocked.push(time);
-          }
-        });
-      });
-
-      const booked = bookings?.map((b) => b.booking_time.substring(0, 5)) || [];
-
-      setBlockedTimes(blocked);
-      setBookedTimes(booked);
-    } catch (error: any) {
-      console.error("Erro ao buscar horários indisponíveis:", error);
-    }
-  };
 
   const handleSelectService = (service: Service) => {
     setSelectedServices([{ service }]);
@@ -323,11 +258,9 @@ export const BookingFlow = ({ children, barbershop }: BookingFlowProps) => {
 
           {currentStep === "datetime" && (
             <DateTimeSelectionStep
+              barbershopId={barbershop.id}
               selectedServices={selectedServices}
               currentServiceIndex={currentServiceIndex}
-              availableTimes={availableTimes}
-              blockedTimes={blockedTimes}
-              bookedTimes={bookedTimes}
               barbers={barbers}
               selectedDate={selectedDate}
               selectedTime={selectedTime}
