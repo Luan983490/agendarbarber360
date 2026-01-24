@@ -1,10 +1,12 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, User } from "lucide-react";
+import { ChevronLeft, ChevronRight, User, Clock, AlertCircle } from "lucide-react";
 import { format, addDays, isSameDay, startOfToday, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { supabase } from "@/integrations/supabase/client";
+import { useAvailableSlots } from "@/hooks/useBooking";
 
 interface Service {
   id: string;
@@ -28,11 +30,9 @@ interface SelectedServiceItem {
 }
 
 interface DateTimeSelectionStepProps {
+  barbershopId: string;
   selectedServices: SelectedServiceItem[];
   currentServiceIndex: number;
-  availableTimes: string[];
-  blockedTimes: string[];
-  bookedTimes: string[];
   barbers: Barber[];
   selectedDate: Date;
   selectedTime: string;
@@ -54,18 +54,10 @@ const PERIOD_RANGES: Record<TimePeriod, { start: number; end: number }> = {
   "Noite": { start: 18, end: 24 },
 };
 
-// Availability colors for demo
-const getAvailabilityColor = (dayOffset: number): string => {
-  const colors = ["#22c55e", "#22c55e", "#eab308", "#22c55e", "#22c55e", "#eab308", "#22c55e"];
-  return colors[dayOffset % colors.length];
-};
-
 export const DateTimeSelectionStep = ({
+  barbershopId,
   selectedServices,
   currentServiceIndex,
-  availableTimes,
-  blockedTimes,
-  bookedTimes,
   barbers,
   selectedDate,
   selectedTime,
@@ -87,11 +79,28 @@ export const DateTimeSelectionStep = ({
 
   const currentService = selectedServices[currentServiceIndex];
   const selectedBarberData = barbers.find((b) => b.id === selectedBarber);
+  const serviceDuration = currentService?.service.duration || 30;
 
-  // Generate 60 days from today (covers 2 months)
-  const allDates = Array.from({ length: 60 }, (_, i) => addDays(today, i));
+  // Fetch available slots using the hook
+  const formattedDate = format(selectedDate, "yyyy-MM-dd");
+  const { data: availableSlots, isLoading: slotsLoading } = useAvailableSlots(
+    selectedBarber
+      ? {
+          barbershopId,
+          barberId: selectedBarber,
+          date: formattedDate,
+          serviceDuration,
+        }
+      : null
+  );
+
+  // Generate 365 days from today (full year)
+  const allDates = Array.from({ length: 365 }, (_, i) => addDays(today, i));
   const visibleDatesCount = isMobile ? 7 : 14;
   const visibleDates = allDates.slice(dateScrollOffset, dateScrollOffset + visibleDatesCount);
+
+  // Get available times from slots
+  const availableTimes = (availableSlots || []).map((slot) => slot.time);
 
   // Filter times by period
   const filteredTimes = availableTimes.filter((time) => {
@@ -99,6 +108,26 @@ export const DateTimeSelectionStep = ({
     const range = PERIOD_RANGES[selectedPeriod];
     return hour >= range.start && hour < range.end;
   });
+
+  // Auto-select period based on available times
+  useEffect(() => {
+    if (availableTimes.length > 0 && selectedBarber) {
+      const firstTime = availableTimes[0];
+      const hour = parseInt(firstTime.split(":")[0]);
+      if (hour < 12) {
+        setSelectedPeriod("Manhã");
+      } else if (hour < 18) {
+        setSelectedPeriod("Tarde");
+      } else {
+        setSelectedPeriod("Noite");
+      }
+    }
+  }, [availableTimes.length, selectedBarber]);
+
+  // Reset time when barber changes
+  useEffect(() => {
+    onTimeChange("");
+  }, [selectedBarber]);
 
   // Calculate end time
   const getEndTime = (startTime: string, durationMinutes: number) => {
@@ -153,6 +182,13 @@ export const DateTimeSelectionStep = ({
     }
   };
 
+  // Check if date has any availability (for visual indicator)
+  const getDateAvailability = (date: Date): "available" | "limited" | "unavailable" => {
+    // Sunday is always unavailable by default
+    if (date.getDay() === 0) return "unavailable";
+    return "available"; // Will be refined with real data
+  };
+
   return (
     <div className="flex flex-col h-full w-full bg-background overflow-y-auto">
       {/* Header with back arrow and month/year */}
@@ -195,7 +231,7 @@ export const DateTimeSelectionStep = ({
             const isSunday = date.getDay() === 0;
             const isSelected = isSameDay(date, selectedDate);
             const isDisabled = isPast || isSunday;
-            const availabilityColor = getAvailabilityColor(dateScrollOffset + index);
+            const availability = getDateAvailability(date);
 
             const dayAbbr = format(date, "EEE", { locale: ptBR })
               .replace(".", "")
@@ -224,7 +260,13 @@ export const DateTimeSelectionStep = ({
                   <div
                     className="w-5 h-1.5 rounded-full mt-1.5"
                     style={{ 
-                      backgroundColor: isSelected ? "white" : availabilityColor 
+                      backgroundColor: isSelected 
+                        ? "white" 
+                        : availability === "available" 
+                          ? "#22c55e" 
+                          : availability === "limited" 
+                            ? "#eab308" 
+                            : "#ef4444"
                     }}
                   />
                 )}
@@ -246,84 +288,146 @@ export const DateTimeSelectionStep = ({
         </button>
       </div>
 
-      {/* Period selector - pill style */}
-      <div className="w-full flex justify-center mt-6">
-        <div className="inline-flex rounded-full border border-border overflow-hidden bg-card">
-          {(["Manhã", "Tarde", "Noite"] as TimePeriod[]).map((period, idx) => (
+      {/* Barber selection - visible cards with photo and name */}
+      <div className="w-full mt-6 px-3">
+        <h3 className="text-sm font-medium text-muted-foreground mb-3">Escolha o profissional</h3>
+        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+          {barbers.map((barber) => (
             <button
-              key={period}
-              onClick={() => setSelectedPeriod(period)}
+              key={barber.id}
+              onClick={() => onBarberChange(barber.id)}
               className={cn(
-                "px-6 md:px-10 py-3 text-sm md:text-base font-medium transition-colors",
-                selectedPeriod === period
-                  ? "bg-background text-foreground"
-                  : "bg-transparent text-muted-foreground hover:text-foreground",
-                idx !== 0 && "border-l border-border"
+                "flex flex-col items-center p-3 rounded-xl transition-all min-w-[80px] flex-shrink-0 border",
+                selectedBarber === barber.id
+                  ? "bg-[#3d9a9b] text-white border-[#3d9a9b]"
+                  : "bg-card border-border hover:border-foreground"
               )}
             >
-              {period}
+              {barber.image_url ? (
+                <img
+                  src={barber.image_url}
+                  alt={barber.name}
+                  className="w-12 h-12 rounded-full object-cover mb-2"
+                />
+              ) : (
+                <div className={cn(
+                  "w-12 h-12 rounded-full flex items-center justify-center mb-2",
+                  selectedBarber === barber.id ? "bg-white/20" : "bg-muted"
+                )}>
+                  <User className={cn(
+                    "w-6 h-6",
+                    selectedBarber === barber.id ? "text-white" : "text-muted-foreground"
+                  )} />
+                </div>
+              )}
+              <span className={cn(
+                "text-xs font-medium text-center line-clamp-2",
+                selectedBarber === barber.id ? "text-white" : "text-foreground"
+              )}>
+                {barber.name}
+              </span>
             </button>
           ))}
         </div>
       </div>
 
-      {/* Time slots - horizontal scroll with circular arrows */}
-      <div className="w-full mt-6 flex items-center gap-1">
-        {/* Left arrow in circle */}
-        <button
-          onClick={() => {
-            if (timeContainerRef.current) {
-              timeContainerRef.current.scrollBy({ left: -200, behavior: "smooth" });
-            }
-          }}
-          className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full border border-border bg-background hover:bg-muted transition-colors flex-shrink-0"
-        >
-          <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
-        </button>
-
-        <div
-          ref={timeContainerRef}
-          className="flex-1 flex gap-3 overflow-x-auto py-2 scrollbar-hide"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-        >
-          {filteredTimes.map((time) => {
-            const isBlocked = blockedTimes.includes(time);
-            const isBooked = bookedTimes.includes(time);
-            const isUnavailable = isBlocked || isBooked;
-            const isSelected = selectedTime === time;
-
-            return (
-              <button
-                key={time}
-                onClick={() => !isUnavailable && onTimeChange(time)}
-                disabled={isUnavailable}
-                className={cn(
-                  "px-5 md:px-6 py-3 rounded-lg text-sm md:text-base font-medium transition-all flex-shrink-0 border",
-                  isSelected
-                    ? "bg-[#3d9a9b] text-white border-[#3d9a9b]"
-                    : isUnavailable
-                    ? "bg-muted/50 text-muted-foreground border-border opacity-40 cursor-not-allowed"
-                    : "bg-card text-foreground border-border hover:border-foreground"
-                )}
-              >
-                {time}
-              </button>
-            );
-          })}
+      {/* Conditional: Show message if no barber selected, or show time slots */}
+      {!selectedBarber ? (
+        <div className="w-full mt-8 px-3">
+          <div className="flex items-center gap-3 p-4 rounded-xl bg-muted/50 border border-border">
+            <AlertCircle className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+            <p className="text-sm text-muted-foreground">
+              Escolha um profissional para ver os horários disponíveis
+            </p>
+          </div>
         </div>
+      ) : (
+        <>
+          {/* Period selector - pill style */}
+          <div className="w-full flex justify-center mt-6">
+            <div className="inline-flex rounded-full border border-border overflow-hidden bg-card">
+              {(["Manhã", "Tarde", "Noite"] as TimePeriod[]).map((period, idx) => (
+                <button
+                  key={period}
+                  onClick={() => setSelectedPeriod(period)}
+                  className={cn(
+                    "px-6 md:px-10 py-3 text-sm md:text-base font-medium transition-colors",
+                    selectedPeriod === period
+                      ? "bg-background text-foreground"
+                      : "bg-transparent text-muted-foreground hover:text-foreground",
+                    idx !== 0 && "border-l border-border"
+                  )}
+                >
+                  {period}
+                </button>
+              ))}
+            </div>
+          </div>
 
-        {/* Right arrow in circle */}
-        <button
-          onClick={() => {
-            if (timeContainerRef.current) {
-              timeContainerRef.current.scrollBy({ left: 200, behavior: "smooth" });
-            }
-          }}
-          className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full border border-border bg-background hover:bg-muted transition-colors flex-shrink-0"
-        >
-          <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
-        </button>
-      </div>
+          {/* Time slots - horizontal scroll with circular arrows */}
+          <div className="w-full mt-6 flex items-center gap-1">
+            {/* Left arrow in circle */}
+            <button
+              onClick={() => {
+                if (timeContainerRef.current) {
+                  timeContainerRef.current.scrollBy({ left: -200, behavior: "smooth" });
+                }
+              }}
+              className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full border border-border bg-background hover:bg-muted transition-colors flex-shrink-0"
+            >
+              <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
+            </button>
+
+            <div
+              ref={timeContainerRef}
+              className="flex-1 flex gap-3 overflow-x-auto py-2 scrollbar-hide"
+              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            >
+              {slotsLoading ? (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Clock className="w-4 h-4 animate-pulse" />
+                  <span className="text-sm">Carregando horários...</span>
+                </div>
+              ) : filteredTimes.length === 0 ? (
+                <div className="text-sm text-muted-foreground py-3">
+                  Nenhum horário disponível neste período
+                </div>
+              ) : (
+                filteredTimes.map((time) => {
+                  const isSelected = selectedTime === time;
+
+                  return (
+                    <button
+                      key={time}
+                      onClick={() => onTimeChange(time)}
+                      className={cn(
+                        "px-5 md:px-6 py-3 rounded-lg text-sm md:text-base font-medium transition-all flex-shrink-0 border",
+                        isSelected
+                          ? "bg-[#3d9a9b] text-white border-[#3d9a9b]"
+                          : "bg-card text-foreground border-border hover:border-foreground"
+                      )}
+                    >
+                      {time}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Right arrow in circle */}
+            <button
+              onClick={() => {
+                if (timeContainerRef.current) {
+                  timeContainerRef.current.scrollBy({ left: 200, behavior: "smooth" });
+                }
+              }}
+              className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full border border-border bg-background hover:bg-muted transition-colors flex-shrink-0"
+            >
+              <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
+            </button>
+          </div>
+        </>
+      )}
 
       {/* Service summary card */}
       <div className="flex-1 mt-6 px-3">
@@ -346,37 +450,30 @@ export const DateTimeSelectionStep = ({
               </div>
             </div>
 
-            {/* Separator and barber */}
-            <div className="border-t border-border px-4 md:px-5 py-4">
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-muted-foreground">Funcionário:</span>
-                <div className="flex items-center gap-2 flex-1">
-                  {selectedBarberData?.image_url ? (
-                    <img
-                      src={selectedBarberData.image_url}
-                      alt={selectedBarberData.name}
-                      className="w-7 h-7 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center">
-                      <User className="w-4 h-4 text-muted-foreground" />
-                    </div>
-                  )}
-                  <select
-                    value={selectedBarber}
-                    onChange={(e) => onBarberChange(e.target.value)}
-                    className="flex-1 bg-transparent text-foreground text-sm font-medium outline-none cursor-pointer"
-                  >
-                    <option value="">Qualquer profissional</option>
-                    {barbers.map((barber) => (
-                      <option key={barber.id} value={barber.id}>
-                        {barber.name}
-                      </option>
-                    ))}
-                  </select>
+            {/* Selected barber display */}
+            {selectedBarberData && (
+              <div className="border-t border-border px-4 md:px-5 py-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-muted-foreground">Profissional:</span>
+                  <div className="flex items-center gap-2">
+                    {selectedBarberData.image_url ? (
+                      <img
+                        src={selectedBarberData.image_url}
+                        alt={selectedBarberData.name}
+                        className="w-7 h-7 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center">
+                        <User className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                    )}
+                    <span className="text-sm font-medium text-foreground">
+                      {selectedBarberData.name}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Add another service link */}
@@ -403,7 +500,7 @@ export const DateTimeSelectionStep = ({
           </div>
           <Button
             onClick={onContinue}
-            disabled={!selectedTime || loading}
+            disabled={!selectedTime || !selectedBarber || loading}
             className="w-full h-12 md:h-14 bg-[#3d9a9b] hover:bg-[#2d8a8b] text-white font-semibold text-base md:text-lg rounded-xl"
           >
             {loading ? "Agendando..." : "Continuar"}
