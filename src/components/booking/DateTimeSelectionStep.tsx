@@ -1,12 +1,13 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, User, Clock, AlertCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, User, Clock, AlertCircle, RefreshCw } from "lucide-react";
 import { format, addDays, isSameDay, startOfToday, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
-import { useAvailableSlots } from "@/hooks/useBooking";
+import { useAvailableSlots, bookingKeys } from "@/hooks/useBooking";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface Service {
   id: string;
@@ -76,6 +77,7 @@ export const DateTimeSelectionStep = ({
   const dateContainerRef = useRef<HTMLDivElement>(null);
   const timeContainerRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
 
   const currentService = selectedServices[currentServiceIndex];
   const selectedBarberData = barbers.find((b) => b.id === selectedBarber);
@@ -98,7 +100,7 @@ export const DateTimeSelectionStep = ({
   });
 
   // Fetch available slots using the hook
-  const { data: availableSlots, isLoading: slotsLoading, error: slotsError, isError } = useAvailableSlots(
+  const { data: availableSlots, isLoading: slotsLoading, error: slotsError, isError, refetch, isFetching } = useAvailableSlots(
     selectedBarber
       ? {
           barbershopId,
@@ -108,6 +110,25 @@ export const DateTimeSelectionStep = ({
         }
       : null
   );
+
+  // Force refetch when date or barber changes
+  useEffect(() => {
+    if (selectedBarber && formattedDate) {
+      console.log('🔄 DateTimeSelectionStep: Invalidando cache para nova data/barbeiro', {
+        barberId: selectedBarber,
+        date: formattedDate
+      });
+      // Invalidate all available slots cache and refetch
+      queryClient.invalidateQueries({ queryKey: ['availableSlots'] });
+    }
+  }, [selectedBarber, formattedDate, queryClient]);
+
+  // Manual refresh handler
+  const handleRefreshSlots = useCallback(() => {
+    console.log('🔃 DateTimeSelectionStep: Refresh manual solicitado');
+    queryClient.invalidateQueries({ queryKey: ['availableSlots'] });
+    refetch();
+  }, [queryClient, refetch]);
 
   // DEBUG: Log slots data
   console.log('📊 DateTimeSelectionStep: Dados dos slots', {
@@ -435,24 +456,39 @@ export const DateTimeSelectionStep = ({
               className="flex-1 flex gap-3 overflow-x-auto py-2 scrollbar-hide"
               style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
-              {slotsLoading ? (
+              {(slotsLoading || isFetching) ? (
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Clock className="w-4 h-4 animate-pulse" />
                   <span className="text-sm">Carregando horários...</span>
                 </div>
               ) : isError ? (
-                <div className="flex items-center gap-2 text-destructive py-3">
+                <div className="flex items-center gap-3 text-destructive py-3">
                   <AlertCircle className="w-4 h-4" />
-                  <span className="text-sm">Erro ao carregar horários. Tente novamente.</span>
+                  <span className="text-sm">Erro ao carregar horários.</span>
+                  <button
+                    onClick={handleRefreshSlots}
+                    className="flex items-center gap-1 px-3 py-1 text-xs bg-destructive/10 hover:bg-destructive/20 rounded-md transition-colors"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    Tentar novamente
+                  </button>
                 </div>
               ) : availableTimes.length === 0 ? (
-                <div className="flex items-center gap-2 text-muted-foreground py-3">
+                <div className="flex items-center gap-3 text-muted-foreground py-3">
                   <AlertCircle className="w-4 h-4" />
                   <span className="text-sm">Nenhum horário disponível para esta data</span>
+                  <button
+                    onClick={handleRefreshSlots}
+                    className="flex items-center gap-1 px-3 py-1 text-xs bg-muted hover:bg-muted/80 rounded-md transition-colors"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    Atualizar
+                  </button>
                 </div>
               ) : filteredTimes.length === 0 ? (
-                <div className="text-sm text-muted-foreground py-3">
-                  Nenhum horário disponível no período "{selectedPeriod}" ({availableTimes.length} horários em outros períodos)
+                <div className="flex items-center gap-2 text-sm text-muted-foreground py-3">
+                  <span>Nenhum horário no período "{selectedPeriod}"</span>
+                  <span className="text-xs">({availableTimes.length} em outros períodos)</span>
                 </div>
               ) : (
                 filteredTimes.map((time) => {

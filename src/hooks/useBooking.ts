@@ -105,7 +105,7 @@ export function useBooking(bookingId: string | undefined) {
  * DEBUG VERSION: Contains extensive logging to diagnose display issues
  */
 export function useAvailableSlots(params: AvailableSlotsDTO | null) {
-  // Build query key for debugging
+  // Build query key - CRITICAL: include ALL parameters that affect the result
   const queryKey = params 
     ? ['availableSlots', params.barbershopId, params.barberId, params.date, params.serviceDuration] 
     : ['availableSlots', 'disabled'];
@@ -127,7 +127,7 @@ export function useAvailableSlots(params: AvailableSlotsDTO | null) {
   return useQuery({
     queryKey,
     queryFn: async () => {
-      console.log('🔄 useAvailableSlots: queryFn EXECUTANDO', {
+      console.log('🔄 useAvailableSlots: queryFn EXECUTANDO - NOVA REQUISIÇÃO', {
         timestamp: new Date().toISOString(),
         params
       });
@@ -148,14 +148,16 @@ export function useAvailableSlots(params: AvailableSlotsDTO | null) {
       
       const result = await bookingService.getAvailableSlots(params);
       
-      // Log API response
+      // Log API response with FULL details
       console.log('📥 useAvailableSlots: Resposta da API:', {
         success: result.success,
         error: result.error,
         dataExists: !!result.data,
         dataLength: result.data?.length || 0,
-        firstSlots: result.data?.slice(0, 5)?.map(s => s.time),
-        lastSlots: result.data?.slice(-3)?.map(s => s.time)
+        firstSlots: result.data?.slice(0, 5)?.map(s => ({ time: s.time, available: s.available })),
+        lastSlots: result.data?.slice(-3)?.map(s => ({ time: s.time, available: s.available })),
+        // CRITICAL: Check if any slot is marked as unavailable (should be filtered out)
+        hasUnavailableSlots: result.data?.some(s => s.available === false)
       });
       
       if (!result.success) {
@@ -163,12 +165,15 @@ export function useAvailableSlots(params: AvailableSlotsDTO | null) {
         throw new Error(getErrorMessage(result.error));
       }
       
-      console.log('✅ useAvailableSlots: Retornando', result.data?.length, 'slots');
+      console.log('✅ useAvailableSlots: Retornando', result.data?.length, 'slots disponíveis');
       return result.data;
     },
     enabled: !!params?.barbershopId && !!params?.barberId && !!params?.date,
+    // CRITICAL: Force fresh data on every render
     staleTime: 0,
-    gcTime: 2 * 60 * 1000,
+    gcTime: 0, // Don't cache at all
     refetchOnWindowFocus: true,
+    refetchOnMount: 'always', // Always refetch when component mounts
+    refetchOnReconnect: true,
   });
 }
