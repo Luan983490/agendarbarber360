@@ -355,6 +355,9 @@ export class BookingService {
 
   /**
    * Verifica se dois intervalos de tempo se sobrepõem
+   * Lógica matemática universal de colisão de intervalos:
+   * Dois intervalos [start1, end1) e [start2, end2) se sobrepõem se e somente se:
+   * start1 < end2 AND end1 > start2
    */
   private hasTimeOverlap(
     start1: number,
@@ -362,19 +365,21 @@ export class BookingService {
     start2: number,
     end2: number
   ): boolean {
-    // Casos de sobreposição:
-    // 1. start1 está dentro do intervalo 2
-    // 2. end1 está dentro do intervalo 2  
-    // 3. intervalo 1 engloba completamente intervalo 2
-    return (
-      (start1 >= start2 && start1 < end2) ||  // início de 1 dentro de 2
-      (end1 > start2 && end1 <= end2) ||      // fim de 1 dentro de 2
-      (start1 <= start2 && end1 >= end2)      // 1 engloba 2 completamente
-    );
+    return start1 < end2 && end1 > start2;
   }
 
   /**
    * Get available time slots for a date
+   * 
+   * Lógica de disponibilidade:
+   * 1. Valida se a data não está no passado
+   * 2. Busca bloqueios manuais (barber_blocks) - qualquer bloqueio é respeitado
+   * 3. Busca horário de trabalho (overrides têm prioridade sobre working_hours)
+   * 4. Gera slots de 15 em 15 minutos dentro dos períodos de trabalho
+   * 5. Filtra slots que:
+   *    - Já passaram (se for hoje)
+   *    - Conflitam com agendamentos existentes (considerando duração do serviço)
+   *    - Conflitam com bloqueios manuais (considerando duração do serviço)
    */
   async getAvailableSlots(data: AvailableSlotsDTO): Promise<ServiceResponse<TimeSlot[]>> {
     const timer = logger.startTimer();
@@ -387,34 +392,39 @@ export class BookingService {
     try {
       const { barberId, barbershopId, date, serviceDuration = 30 } = data;
 
-      // Não permitir agendamento em datas passadas
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const selectedDate = new Date(date + 'T12:00:00'); // Use noon to avoid timezone issues
-      selectedDate.setHours(0, 0, 0, 0);
-
-      if (selectedDate < today) {
-        logger.debug('getAvailableSlots', 'Date in the past', { date });
+      // ========== VALIDAÇÃO DE DATA PASSADA (com timezone local) ==========
+      // Usar timezone local do servidor para comparação precisa
+      const now = new Date();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      
+      // Comparar strings de data para evitar problemas de timezone
+      if (date < todayStr) {
+        logger.debug('getAvailableSlots', 'Date in the past', { date, todayStr });
         return success([]);
       }
 
-      // Verificar se é hoje para filtrar horários passados
-      const now = new Date();
+      // Verificar se é hoje para filtrar horários que já passaram
+      const isToday = date === todayStr;
+      // Minutos atuais no fuso horário local (hora * 60 + minutos)
       const currentMinutes = now.getHours() * 60 + now.getMinutes();
-      const isToday = selectedDate.getTime() === today.getTime();
 
       // Determinar dia da semana (0=Domingo, 6=Sábado)
-      const dayOfWeek = new Date(date + 'T12:00:00').getDay();
+      // Usar parsing correto para evitar off-by-one em timezones
+      const [year, month, day] = date.split('-').map(Number);
+      const selectedDate = new Date(year, month - 1, day);
+      const dayOfWeek = selectedDate.getDay();
 
       logger.debug('getAvailableSlots', 'Processing request', { 
         barberId, 
         date, 
         dayOfWeek, 
         serviceDuration,
-        isToday 
+        isToday,
+        currentMinutes
       });
 
-      // ========== PASSO 1: VERIFICAR BLOQUEIOS DO DIA ==========
+      // ========== PASSO 1: BUSCAR BLOQUEIOS DO DIA ==========
+      // IMPORTANTE: Todos os bloqueios são respeitados, independente da duração
       
       let dayBlocks: Array<{ start_time: string; end_time: string; reason: string | null }> = [];
       
@@ -431,30 +441,32 @@ export class BookingService {
         }
 
         dayBlocks = barberBlocks || [];
-
-        // Verificar se existe bloqueio que cobre período de trabalho inteiro
-        // (ex: 08:00-20:00 que cobre o dia inteiro)
-        const hasDayBlocker = dayBlocks.some(block => {
-          const blockStart = this.timeToMinutes(block.start_time);
-          const blockEnd = this.timeToMinutes(block.end_time);
-          // Se bloqueio dura mais de 10 horas, considera dia bloqueado
-          return (blockEnd - blockStart) >= 600; // 10 horas = 600 minutos
+        logger.debug('getAvailableSlots', 'Blocks found', { 
+          count: dayBlocks.length,
+          blocks: dayBlocks.map(b => `${b.start_time}-${b.end_time}`)
         });
-
-        if (hasDayBlocker) {
-          logger.debug('getAvailableSlots', 'Day completely blocked', { date });
-          return success([]);
-        }
       }
 
       // ========== PASSO 2: OBTER HORÁRIOS DE TRABALHO ==========
+      // PRIORIDADE: barber_schedule_overrides > barber_working_hours
       
       if (!barberId) {
         logger.debug('getAvailableSlots', 'No barber specified');
         return success([]);
       }
 
-      // 2.1 Verificar se há override (exceção temporária) para esta data
+      let workingHoursData: {
+        is_day_off: boolean;
+        period1_start: string | null;
+        period1_end: string | null;
+        period2_start: string | null;
+        period2_end: string | null;
+      } | null = null;
+      let isDayOff = false;
+      let usingOverride = false;
+
+      // 2.1 PRIMEIRO: Verificar se há override (exceção temporária) para esta data
+      // Override tem PRIORIDADE ABSOLUTA sobre working_hours
       const { data: overrides, error: overrideError } = await supabase
         .from('barber_schedule_overrides')
         .select('*')
@@ -467,22 +479,20 @@ export class BookingService {
         logger.warn('getAvailableSlots', 'Error fetching overrides', { message: overrideError.message });
       }
 
-      let workingHoursData: {
-        is_day_off: boolean;
-        period1_start: string | null;
-        period1_end: string | null;
-        period2_start: string | null;
-        period2_end: string | null;
-      } | null = null;
-      let isDayOff = false;
-
-      // Se tem override válido, usa ele
+      // Se tem override válido, usa APENAS ele (ignora working_hours completamente)
       if (overrides && overrides.length > 0) {
         workingHoursData = overrides[0];
         isDayOff = workingHoursData.is_day_off;
-        logger.debug('getAvailableSlots', 'Using schedule override');
+        usingOverride = true;
+        logger.debug('getAvailableSlots', 'Using schedule override (priority)', {
+          override: {
+            is_day_off: isDayOff,
+            period1: `${workingHoursData.period1_start}-${workingHoursData.period1_end}`,
+            period2: `${workingHoursData.period2_start}-${workingHoursData.period2_end}`,
+          }
+        });
       } else {
-        // Senão, busca horário regular
+        // 2.2 SEGUNDO: Se não há override, busca horário regular
         const { data: regularHours, error: hoursError } = await supabase
           .from('barber_working_hours')
           .select('*')
@@ -491,13 +501,19 @@ export class BookingService {
           .single();
 
         if (hoursError || !regularHours) {
-          logger.debug('getAvailableSlots', 'No working hours configured');
+          logger.debug('getAvailableSlots', 'No working hours configured for this day', { dayOfWeek });
           return success([]);
         }
 
         workingHoursData = regularHours;
         isDayOff = regularHours.is_day_off;
-        logger.debug('getAvailableSlots', 'Using regular working hours');
+        logger.debug('getAvailableSlots', 'Using regular working hours', {
+          hours: {
+            is_day_off: isDayOff,
+            period1: `${regularHours.period1_start}-${regularHours.period1_end}`,
+            period2: `${regularHours.period2_start}-${regularHours.period2_end}`,
+          }
+        });
       }
 
       // Se é dia de folga, retorna vazio
@@ -528,9 +544,10 @@ export class BookingService {
         return success([]);
       }
 
-      logger.debug('getAvailableSlots', 'Working periods', { workingPeriods });
+      logger.debug('getAvailableSlots', 'Working periods', { workingPeriods, usingOverride });
 
-      // ========== PASSO 3: GERAR TODOS OS SLOTS POSSÍVEIS (15 MIN) ==========
+      // ========== PASSO 3: GERAR SLOTS DE 15 EM 15 MINUTOS ==========
+      // REGRA: Só adiciona slot se o SERVIÇO INTEIRO couber no período de trabalho
       
       const allSlots: TimeSlot[] = [];
       const slotInterval = 15; // minutos
@@ -545,9 +562,10 @@ export class BookingService {
           const mins = minutes % 60;
           const timeString = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
 
-          // IMPORTANTE: Só adiciona slot se o SERVIÇO INTEIRO couber no período
-          const serviceEnd = minutes + serviceDuration;
-          if (serviceEnd <= periodEnd) {
+          // VALIDAÇÃO: Serviço completo deve caber no período de trabalho
+          // Ex: Se serviço = 45min e slot = 10:00, verifica se 10:00-10:45 cabe no período
+          const serviceEndMinutes = minutes + serviceDuration;
+          if (serviceEndMinutes <= periodEnd) {
             allSlots.push({
               time: timeString,
               available: true,
@@ -556,7 +574,12 @@ export class BookingService {
         }
       }
 
-      logger.debug('getAvailableSlots', 'Slots generated', { count: allSlots.length });
+      logger.debug('getAvailableSlots', 'Slots generated within working periods', { 
+        count: allSlots.length,
+        serviceDuration,
+        firstSlot: allSlots[0]?.time,
+        lastSlot: allSlots[allSlots.length - 1]?.time
+      });
 
       // ========== PASSO 4: BUSCAR AGENDAMENTOS EXISTENTES ==========
       
@@ -573,56 +596,73 @@ export class BookingService {
         return failure(ErrorCodes.DATABASE_ERROR, 'Erro ao buscar agendamentos');
       }
 
-      logger.debug('getAvailableSlots', 'Bookings found', { count: bookings?.length || 0 });
-      logger.debug('getAvailableSlots', 'Blocks found', { count: dayBlocks.length });
+      logger.debug('getAvailableSlots', 'Existing bookings', { 
+        count: bookings?.length || 0,
+        bookings: bookings?.map(b => `${b.booking_time}-${b.booking_end_time} (${b.status})`)
+      });
 
       // ========== PASSO 5: FILTRAR SLOTS DISPONÍVEIS ==========
+      // Cada slot é verificado considerando a DURAÇÃO COMPLETA do serviço
       
       const availableSlots = allSlots.filter(slot => {
         const slotStart = this.timeToMinutes(slot.time);
-        const slotEnd = slotStart + serviceDuration;
+        const slotEnd = slotStart + serviceDuration; // Ex: 10:00 + 45min = 10:45
 
-        // 5.0 Se for hoje, não mostrar horários que já passaram
-        if (isToday && slotStart <= currentMinutes) {
+        // 5.0 HORÁRIOS PASSADOS: Se for hoje, remove slots que já passaram
+        // Adiciona margem de 5 minutos para não mostrar horário "quase passando"
+        if (isToday && slotStart <= currentMinutes + 5) {
+          logger.debug('getAvailableSlots', `Slot ${slot.time} filtered: already passed`);
           return false;
         }
 
-        // 5.1 Verificar conflito com bookings
-        const hasBookingConflict = bookings?.some(booking => {
+        // 5.1 CONFLITO COM AGENDAMENTOS: Verifica se [slotStart, slotEnd) colide com algum booking
+        const conflictingBooking = bookings?.find(booking => {
           const bookingStart = this.timeToMinutes(booking.booking_time);
+          // Se não tem booking_end_time, assume 30 min de duração
           const bookingEnd = booking.booking_end_time 
             ? this.timeToMinutes(booking.booking_end_time)
-            : bookingStart + 30; // Default 30 min if no end time
+            : bookingStart + 30;
           
+          // Lógica universal de colisão: start1 < end2 && end1 > start2
           return this.hasTimeOverlap(slotStart, slotEnd, bookingStart, bookingEnd);
-        }) || false;
+        });
 
-        if (hasBookingConflict) {
+        if (conflictingBooking) {
+          logger.debug('getAvailableSlots', `Slot ${slot.time} filtered: booking conflict`, {
+            slotRange: `${slot.time}-${this.minutesToTime(slotEnd)}`,
+            bookingRange: `${conflictingBooking.booking_time}-${conflictingBooking.booking_end_time}`
+          });
           return false;
         }
 
-        // 5.2 Verificar conflito com bloqueios
-        const hasBlockConflict = dayBlocks.some(block => {
+        // 5.2 CONFLITO COM BLOQUEIOS: Verifica se [slotStart, slotEnd) colide com algum bloqueio
+        // IMPORTANTE: Qualquer bloqueio é respeitado, independente da duração
+        const conflictingBlock = dayBlocks.find(block => {
           const blockStart = this.timeToMinutes(block.start_time);
           const blockEnd = this.timeToMinutes(block.end_time);
           
+          // Lógica universal de colisão
           return this.hasTimeOverlap(slotStart, slotEnd, blockStart, blockEnd);
         });
 
-        if (hasBlockConflict) {
+        if (conflictingBlock) {
+          logger.debug('getAvailableSlots', `Slot ${slot.time} filtered: block conflict`, {
+            slotRange: `${slot.time}-${this.minutesToTime(slotEnd)}`,
+            blockRange: `${conflictingBlock.start_time}-${conflictingBlock.end_time}`
+          });
           return false;
         }
 
-        // 5.3 Verificar se slot está dentro de algum período de trabalho
+        // 5.3 DENTRO DO PERÍODO DE TRABALHO: Verifica se slot + serviço cabem no período
+        // (já foi validado na geração, mas mantém por segurança)
         const isInWorkingPeriod = workingPeriods.some(period => {
           const periodStart = this.timeToMinutes(period.start);
           const periodEnd = this.timeToMinutes(period.end);
-          
-          // Slot E serviço completo devem caber no período
           return slotStart >= periodStart && slotEnd <= periodEnd;
         });
 
         if (!isInWorkingPeriod) {
+          logger.debug('getAvailableSlots', `Slot ${slot.time} filtered: outside working period`);
           return false;
         }
 
@@ -631,9 +671,14 @@ export class BookingService {
       });
 
       const duration = timer();
-      logger.logWithDuration('debug', 'getAvailableSlots', 'Slots fetched', duration, {
-        totalSlots: allSlots.length,
-        availableSlots: availableSlots.length,
+      logger.logWithDuration('debug', 'getAvailableSlots', 'Available slots calculated', duration, {
+        date,
+        barberId,
+        serviceDuration,
+        totalGenerated: allSlots.length,
+        availableCount: availableSlots.length,
+        blocksCount: dayBlocks.length,
+        bookingsCount: bookings?.length || 0,
       });
 
       return success(availableSlots);
@@ -641,6 +686,15 @@ export class BookingService {
       logger.error('getAvailableSlots', 'Unexpected error', err);
       return failure(ErrorCodes.UNKNOWN_ERROR, 'Erro ao buscar horários disponíveis');
     }
+  }
+
+  /**
+   * Converte minutos para string HH:MM (helper para logs)
+   */
+  private minutesToTime(minutes: number): string {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
   }
 
   /**
