@@ -417,7 +417,7 @@ export class BookingService {
 
       // Generate time slots based on working periods (or default 08:00-20:00)
       const slots: TimeSlot[] = [];
-      const slotInterval = 20; // 20 minute intervals
+      const slotInterval = 15; // 15 minute intervals as configured
 
       if (workingPeriods.length > 0) {
         for (const period of workingPeriods) {
@@ -434,9 +434,9 @@ export class BookingService {
           }
         }
       } else {
-        // Default: 08:00 to 20:00 with 20min intervals
+        // Default: 08:00 to 20:00 with 15min intervals
         for (let hour = 8; hour < 20; hour++) {
-          for (const minutes of [0, 20, 40]) {
+          for (const minutes of [0, 15, 30, 45]) {
             const time = `${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
             slots.push({ time, available: true });
           }
