@@ -432,6 +432,25 @@ export class BookingService {
         return failure(ErrorCodes.DATABASE_ERROR, 'Erro ao buscar horários disponíveis');
       }
 
+      // DEBUG CRÍTICO: Log da resposta RAW do Supabase
+      console.log('🔴 RAW DATA FROM SUPABASE RPC:', {
+        type: typeof slotsFromDb,
+        isArray: Array.isArray(slotsFromDb),
+        length: slotsFromDb?.length,
+        firstRaw: slotsFromDb?.[0],
+        firstRawKeys: slotsFromDb?.[0] ? Object.keys(slotsFromDb[0]) : [],
+        firstRawIsAvailable: slotsFromDb?.[0]?.is_available,
+        firstRawIsAvailableType: typeof slotsFromDb?.[0]?.is_available,
+        // Check all possible property names
+        sample: slotsFromDb?.slice(0, 3).map((s: Record<string, unknown>) => ({
+          ...s,
+          is_available_value: s.is_available,
+          is_available_type: typeof s.is_available,
+          is_available_strict_false: s.is_available === false,
+          is_available_strict_true: s.is_available === true,
+        }))
+      });
+
       // Log COMPLETO para debug - mostrar TODOS os dados do banco
       const totalFromDb = slotsFromDb?.length || 0;
       const availableFromDb = slotsFromDb?.filter((s: { is_available: boolean }) => s.is_available === true).length || 0;
@@ -456,6 +475,8 @@ export class BookingService {
       
       if (unavailableSlotTimes.length > 0) {
         console.log('⚠️ SLOTS INDISPONÍVEIS ENCONTRADOS:', unavailableSlotTimes);
+      } else {
+        console.log('⚠️ NENHUM SLOT INDISPONÍVEL ENCONTRADO - Verificar se o banco está retornando corretamente');
       }
 
       // Converter resultado do SQL para formato TimeSlot
