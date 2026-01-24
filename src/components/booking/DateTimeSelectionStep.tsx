@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, User } from "lucide-react";
 import { format, addDays, isSameDay, startOfToday, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Service {
   id: string;
@@ -80,14 +81,17 @@ export const DateTimeSelectionStep = ({
   const today = startOfToday();
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>("Manhã");
   const [dateScrollOffset, setDateScrollOffset] = useState(0);
+  const dateContainerRef = useRef<HTMLDivElement>(null);
   const timeContainerRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   const currentService = selectedServices[currentServiceIndex];
   const selectedBarberData = barbers.find((b) => b.id === selectedBarber);
 
-  // Generate 30 days from today
-  const allDates = Array.from({ length: 30 }, (_, i) => addDays(today, i));
-  const visibleDates = allDates.slice(dateScrollOffset, dateScrollOffset + 14);
+  // Generate 60 days from today (covers 2 months)
+  const allDates = Array.from({ length: 60 }, (_, i) => addDays(today, i));
+  const visibleDatesCount = isMobile ? 7 : 14;
+  const visibleDates = allDates.slice(dateScrollOffset, dateScrollOffset + visibleDatesCount);
 
   // Filter times by period
   const filteredTimes = availableTimes.filter((time) => {
@@ -141,18 +145,19 @@ export const DateTimeSelectionStep = ({
   };
 
   const handleDateScroll = (direction: "left" | "right") => {
+    const scrollStep = isMobile ? 7 : 7;
     if (direction === "left" && dateScrollOffset > 0) {
-      setDateScrollOffset((prev) => Math.max(0, prev - 7));
-    } else if (direction === "right" && dateScrollOffset < allDates.length - 14) {
-      setDateScrollOffset((prev) => Math.min(allDates.length - 14, prev + 7));
+      setDateScrollOffset((prev) => Math.max(0, prev - scrollStep));
+    } else if (direction === "right" && dateScrollOffset < allDates.length - visibleDatesCount) {
+      setDateScrollOffset((prev) => Math.min(allDates.length - visibleDatesCount, prev + scrollStep));
     }
   };
 
   return (
-    <div className="flex flex-col h-full bg-background overflow-hidden">
-      {/* Header with back arrow and month/year - centered container */}
-      <div className="w-full max-w-4xl mx-auto px-4 md:px-8 py-4">
-        <div className="flex items-center">
+    <div className="flex flex-col min-h-full bg-background">
+      {/* Header with back arrow and month/year */}
+      <div className="w-full px-4 py-4">
+        <div className="flex items-center max-w-4xl mx-auto">
           <button
             onClick={onBack}
             className="p-2 hover:bg-muted rounded-lg transition-colors"
@@ -167,20 +172,30 @@ export const DateTimeSelectionStep = ({
       </div>
 
       {/* Horizontal date picker */}
-      <div className="w-full max-w-4xl mx-auto px-2 md:px-4">
-        <div className="flex items-center">
-          <button
-            onClick={() => handleDateScroll("left")}
-            disabled={dateScrollOffset === 0}
-            className={cn(
-              "p-2 hover:bg-muted rounded-full transition-colors flex-shrink-0",
-              dateScrollOffset === 0 && "opacity-30 pointer-events-none"
-            )}
-          >
-            <ChevronLeft className="w-5 h-5 text-foreground" />
-          </button>
+      <div className="w-full px-4">
+        <div className="flex items-center max-w-4xl mx-auto">
+          {/* Left arrow - hidden on mobile */}
+          {!isMobile && (
+            <button
+              onClick={() => handleDateScroll("left")}
+              disabled={dateScrollOffset === 0}
+              className={cn(
+                "p-2 hover:bg-muted rounded-full transition-colors flex-shrink-0",
+                dateScrollOffset === 0 && "opacity-30 pointer-events-none"
+              )}
+            >
+              <ChevronLeft className="w-5 h-5 text-foreground" />
+            </button>
+          )}
 
-          <div className="flex-1 flex gap-2 md:gap-3 overflow-hidden justify-center px-2">
+          <div 
+            ref={dateContainerRef}
+            className={cn(
+              "flex-1 flex gap-2 overflow-x-auto scrollbar-hide py-2",
+              isMobile ? "px-0" : "px-2 justify-center"
+            )}
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
             {visibleDates.map((date, index) => {
               const isPast = isBefore(startOfDay(date), startOfDay(today));
               const isSunday = date.getDay() === 0;
@@ -198,7 +213,7 @@ export const DateTimeSelectionStep = ({
                   onClick={() => !isDisabled && onDateChange(date)}
                   disabled={isDisabled}
                   className={cn(
-                    "flex flex-col items-center py-3 px-3 md:px-4 rounded-xl transition-all min-w-[52px] md:min-w-[64px]",
+                    "flex flex-col items-center py-3 px-3 md:px-4 rounded-xl transition-all min-w-[48px] md:min-w-[60px] flex-shrink-0",
                     isSelected
                       ? "bg-[#3d9a9b] text-white"
                       : "bg-card border border-border hover:bg-muted text-foreground",
@@ -224,21 +239,24 @@ export const DateTimeSelectionStep = ({
             })}
           </div>
 
-          <button
-            onClick={() => handleDateScroll("right")}
-            disabled={dateScrollOffset >= allDates.length - 14}
-            className={cn(
-              "p-2 hover:bg-muted rounded-full transition-colors flex-shrink-0",
-              dateScrollOffset >= allDates.length - 14 && "opacity-30 pointer-events-none"
-            )}
-          >
-            <ChevronRight className="w-5 h-5 text-foreground" />
-          </button>
+          {/* Right arrow - hidden on mobile */}
+          {!isMobile && (
+            <button
+              onClick={() => handleDateScroll("right")}
+              disabled={dateScrollOffset >= allDates.length - visibleDatesCount}
+              className={cn(
+                "p-2 hover:bg-muted rounded-full transition-colors flex-shrink-0",
+                dateScrollOffset >= allDates.length - visibleDatesCount && "opacity-30 pointer-events-none"
+              )}
+            >
+              <ChevronRight className="w-5 h-5 text-foreground" />
+            </button>
+          )}
         </div>
       </div>
 
       {/* Period selector - pill style */}
-      <div className="w-full max-w-4xl mx-auto flex justify-center mt-8 px-4">
+      <div className="w-full flex justify-center mt-6 px-4">
         <div className="inline-flex rounded-full border border-border overflow-hidden bg-card">
           {(["Manhã", "Tarde", "Noite"] as TimePeriod[]).map((period, idx) => (
             <button
@@ -258,23 +276,29 @@ export const DateTimeSelectionStep = ({
         </div>
       </div>
 
-      {/* Time slots - horizontal scroll with arrows */}
-      <div className="w-full max-w-4xl mx-auto mt-8 px-2 md:px-4">
-        <div className="flex items-center">
-          <button
-            onClick={() => {
-              if (timeContainerRef.current) {
-                timeContainerRef.current.scrollBy({ left: -200, behavior: "smooth" });
-              }
-            }}
-            className="p-2 hover:bg-muted rounded-full transition-colors flex-shrink-0"
-          >
-            <ChevronLeft className="w-5 h-5 text-foreground" />
-          </button>
+      {/* Time slots - horizontal scroll */}
+      <div className="w-full mt-6 px-4">
+        <div className="flex items-center max-w-4xl mx-auto">
+          {/* Left arrow - hidden on mobile */}
+          {!isMobile && (
+            <button
+              onClick={() => {
+                if (timeContainerRef.current) {
+                  timeContainerRef.current.scrollBy({ left: -200, behavior: "smooth" });
+                }
+              }}
+              className="p-2 hover:bg-muted rounded-full transition-colors flex-shrink-0"
+            >
+              <ChevronLeft className="w-5 h-5 text-foreground" />
+            </button>
+          )}
 
           <div
             ref={timeContainerRef}
-            className="flex-1 flex gap-3 md:gap-4 overflow-x-auto px-2 py-2 scrollbar-hide"
+            className={cn(
+              "flex-1 flex gap-3 overflow-x-auto py-2 scrollbar-hide",
+              isMobile ? "px-0" : "px-2"
+            )}
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             {filteredTimes.map((time) => {
@@ -303,22 +327,25 @@ export const DateTimeSelectionStep = ({
             })}
           </div>
 
-          <button
-            onClick={() => {
-              if (timeContainerRef.current) {
-                timeContainerRef.current.scrollBy({ left: 200, behavior: "smooth" });
-              }
-            }}
-            className="p-2 hover:bg-muted rounded-full transition-colors flex-shrink-0"
-          >
-            <ChevronRight className="w-5 h-5 text-foreground" />
-          </button>
+          {/* Right arrow - hidden on mobile */}
+          {!isMobile && (
+            <button
+              onClick={() => {
+                if (timeContainerRef.current) {
+                  timeContainerRef.current.scrollBy({ left: 200, behavior: "smooth" });
+                }
+              }}
+              className="p-2 hover:bg-muted rounded-full transition-colors flex-shrink-0"
+            >
+              <ChevronRight className="w-5 h-5 text-foreground" />
+            </button>
+          )}
         </div>
       </div>
 
       {/* Service summary card */}
-      <div className="flex-1 overflow-y-auto mt-6">
-        <div className="w-full max-w-4xl mx-auto px-4 md:px-8">
+      <div className="flex-1 mt-6 px-4">
+        <div className="w-full max-w-4xl mx-auto">
           <div className="bg-card rounded-xl border border-border">
             {/* Service header */}
             <div className="flex items-start justify-between p-4 md:p-5">
@@ -381,8 +408,8 @@ export const DateTimeSelectionStep = ({
       </div>
 
       {/* Footer with total and continue button */}
-      <div className="border-t border-border bg-background">
-        <div className="w-full max-w-4xl mx-auto px-4 md:px-8 py-4 md:py-5">
+      <div className="border-t border-border bg-background mt-auto">
+        <div className="w-full max-w-4xl mx-auto px-4 py-4 md:py-5">
           <div className="flex items-center justify-end gap-4 mb-4">
             <span className="text-muted-foreground">Total :</span>
             <span className="text-2xl md:text-3xl font-bold text-foreground">
