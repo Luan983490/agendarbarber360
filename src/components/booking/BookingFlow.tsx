@@ -309,10 +309,9 @@ export const BookingFlow = ({ children, barbershop }: BookingFlowProps) => {
     <>
       <div onClick={() => setIsOpen(true)}>{children}</div>
       
-      {/* Fullscreen overlay */}
-      <div className="fixed inset-0 z-50 bg-background flex flex-col">
-        {/* Content - full height */}
-        <div className="flex-1 overflow-auto">
+      <div className="fixed inset-0 z-50 bg-background flex flex-col overflow-hidden">
+        {/* Content - full height, no scroll container */}
+        <div className="flex-1 flex flex-col overflow-hidden">
           {currentStep === "services" && (
             <ServiceSelectionStep
               barbershop={barbershop}
