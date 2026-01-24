@@ -81,9 +81,24 @@ export const DateTimeSelectionStep = ({
   const selectedBarberData = barbers.find((b) => b.id === selectedBarber);
   const serviceDuration = currentService?.service.duration || 30;
 
-  // Fetch available slots using the hook
+  // Format date as YYYY-MM-DD (strict format for PostgreSQL)
   const formattedDate = format(selectedDate, "yyyy-MM-dd");
-  const { data: availableSlots, isLoading: slotsLoading } = useAvailableSlots(
+  
+  // DEBUG: Log component state
+  console.log('🎨 DateTimeSelectionStep: Estado do componente', {
+    barbershopId,
+    selectedBarber,
+    selectedDate: selectedDate?.toISOString(),
+    formattedDate,
+    formattedDateValid: /^\d{4}-\d{2}-\d{2}$/.test(formattedDate),
+    serviceDuration,
+    currentServiceName: currentService?.service.name,
+    barbersCount: barbers.length,
+    selectedPeriod
+  });
+
+  // Fetch available slots using the hook
+  const { data: availableSlots, isLoading: slotsLoading, error: slotsError, isError } = useAvailableSlots(
     selectedBarber
       ? {
           barbershopId,
@@ -94,19 +109,46 @@ export const DateTimeSelectionStep = ({
       : null
   );
 
+  // DEBUG: Log slots data
+  console.log('📊 DateTimeSelectionStep: Dados dos slots', {
+    slotsLoading,
+    isError,
+    slotsError: slotsError?.message,
+    availableSlotsRaw: availableSlots,
+    availableSlotsCount: availableSlots?.length || 0,
+    availableSlotsType: typeof availableSlots,
+    isArray: Array.isArray(availableSlots)
+  });
+
   // Generate 365 days from today (full year)
   const allDates = Array.from({ length: 365 }, (_, i) => addDays(today, i));
   const visibleDatesCount = isMobile ? 7 : 14;
   const visibleDates = allDates.slice(dateScrollOffset, dateScrollOffset + visibleDatesCount);
 
-  // Get available times from slots
+  // Get available times from slots - DEBUG version
   const availableTimes = (availableSlots || []).map((slot) => slot.time);
+  
+  console.log('⏰ DateTimeSelectionStep: Horários extraídos', {
+    availableTimesCount: availableTimes.length,
+    availableTimesFirst5: availableTimes.slice(0, 5),
+    availableTimesLast3: availableTimes.slice(-3)
+  });
 
-  // Filter times by period
+  // Filter times by period - DEBUG version
   const filteredTimes = availableTimes.filter((time) => {
     const hour = parseInt(time.split(":")[0]);
     const range = PERIOD_RANGES[selectedPeriod];
-    return hour >= range.start && hour < range.end;
+    const passes = hour >= range.start && hour < range.end;
+    return passes;
+  });
+
+  console.log('🔍 DateTimeSelectionStep: FILTRO DE PERÍODO', {
+    selectedPeriod,
+    periodRange: PERIOD_RANGES[selectedPeriod],
+    beforeFilter: availableTimes.length,
+    afterFilter: filteredTimes.length,
+    filteredTimes: filteredTimes.slice(0, 10),
+    hoursInData: availableTimes.slice(0, 10).map(t => parseInt(t.split(":")[0]))
   });
 
   // Auto-select period based on available times
@@ -114,6 +156,11 @@ export const DateTimeSelectionStep = ({
     if (availableTimes.length > 0 && selectedBarber) {
       const firstTime = availableTimes[0];
       const hour = parseInt(firstTime.split(":")[0]);
+      console.log('🔄 DateTimeSelectionStep: Auto-selecionando período', {
+        firstTime,
+        hour,
+        newPeriod: hour < 12 ? "Manhã" : hour < 18 ? "Tarde" : "Noite"
+      });
       if (hour < 12) {
         setSelectedPeriod("Manhã");
       } else if (hour < 18) {
@@ -388,9 +435,19 @@ export const DateTimeSelectionStep = ({
                   <Clock className="w-4 h-4 animate-pulse" />
                   <span className="text-sm">Carregando horários...</span>
                 </div>
+              ) : isError ? (
+                <div className="flex items-center gap-2 text-destructive py-3">
+                  <AlertCircle className="w-4 h-4" />
+                  <span className="text-sm">Erro ao carregar horários. Tente novamente.</span>
+                </div>
+              ) : availableTimes.length === 0 ? (
+                <div className="flex items-center gap-2 text-muted-foreground py-3">
+                  <AlertCircle className="w-4 h-4" />
+                  <span className="text-sm">Nenhum horário disponível para esta data</span>
+                </div>
               ) : filteredTimes.length === 0 ? (
                 <div className="text-sm text-muted-foreground py-3">
-                  Nenhum horário disponível neste período
+                  Nenhum horário disponível no período "{selectedPeriod}" ({availableTimes.length} horários em outros períodos)
                 </div>
               ) : (
                 filteredTimes.map((time) => {
