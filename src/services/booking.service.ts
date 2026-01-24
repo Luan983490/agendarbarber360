@@ -471,17 +471,38 @@ export class BookingService {
 
       // Mark unavailable slots and filter them out
       const availableSlots: TimeSlot[] = [];
+      const serviceDuration = data.serviceDuration || 30; // Default 30 minutes
+      
+      // Helper to convert time string to minutes
+      const timeToMinutes = (time: string): number => {
+        const [h, m] = time.substring(0, 5).split(':').map(Number);
+        return h * 60 + m;
+      };
+      
+      // Helper to check if a slot + service duration conflicts with a time range
+      const hasTimeConflict = (
+        slotStart: number, 
+        slotEnd: number, 
+        rangeStart: number, 
+        rangeEnd: number
+      ): boolean => {
+        // A conflict exists if the slot period overlaps with the range
+        return slotStart < rangeEnd && slotEnd > rangeStart;
+      };
       
       for (const slot of slots) {
-        const slotTime = slot.time;
+        const slotStartMinutes = timeToMinutes(slot.time);
+        const slotEndMinutes = slotStartMinutes + serviceDuration;
         let isAvailable = true;
 
-        // Check bookings
+        // Check bookings - verify if service would conflict with any booking
         if (bookings) {
           const hasConflict = bookings.some((b) => {
-            const bookingStart = b.booking_time.substring(0, 5);
-            const bookingEnd = b.booking_end_time?.substring(0, 5) || bookingStart;
-            return slotTime >= bookingStart && slotTime < bookingEnd;
+            const bookingStart = timeToMinutes(b.booking_time);
+            const bookingEnd = b.booking_end_time 
+              ? timeToMinutes(b.booking_end_time) 
+              : bookingStart + 30; // Default 30 min if no end time
+            return hasTimeConflict(slotStartMinutes, slotEndMinutes, bookingStart, bookingEnd);
           });
 
           if (hasConflict) {
@@ -489,22 +510,35 @@ export class BookingService {
           }
         }
 
-        // Check blocks
+        // Check blocks - verify if service would conflict with any block
         if (isAvailable && blocks.length > 0) {
           const isBlocked = blocks.some((block) => {
-            const blockStart = block.start_time.substring(0, 5);
-            const blockEnd = block.end_time.substring(0, 5);
-            return slotTime >= blockStart && slotTime < blockEnd;
+            const blockStart = timeToMinutes(block.start_time);
+            const blockEnd = timeToMinutes(block.end_time);
+            return hasTimeConflict(slotStartMinutes, slotEndMinutes, blockStart, blockEnd);
           });
 
           if (isBlocked) {
             isAvailable = false;
           }
         }
+        
+        // Check if service would fit within working hours
+        if (isAvailable && workingPeriods.length > 0) {
+          const fitsInPeriod = workingPeriods.some((period) => {
+            const periodStart = timeToMinutes(period.start);
+            const periodEnd = timeToMinutes(period.end);
+            return slotStartMinutes >= periodStart && slotEndMinutes <= periodEnd;
+          });
+          
+          if (!fitsInPeriod) {
+            isAvailable = false;
+          }
+        }
 
         // Only add available slots
         if (isAvailable) {
-          availableSlots.push({ time: slotTime, available: true });
+          availableSlots.push({ time: slot.time, available: true });
         }
       }
 
