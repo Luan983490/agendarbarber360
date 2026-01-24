@@ -171,85 +171,79 @@ export const DateTimeSelectionStep = ({
         </div>
       </div>
 
-      {/* Horizontal date picker - full width */}
-      <div className="w-full">
-        <div className="flex items-center">
-          {/* Left arrow - hidden on mobile */}
-          {!isMobile && (
-            <button
-              onClick={() => handleDateScroll("left")}
-              disabled={dateScrollOffset === 0}
-              className={cn(
-                "p-2 hover:bg-muted rounded-full transition-colors flex-shrink-0",
-                dateScrollOffset === 0 && "opacity-30 pointer-events-none"
-              )}
-            >
-              <ChevronLeft className="w-5 h-5 text-foreground" />
-            </button>
+      {/* Horizontal date picker - full width with circular arrows */}
+      <div className="w-full flex items-center gap-1">
+        {/* Left arrow in circle - always visible */}
+        <button
+          onClick={() => handleDateScroll("left")}
+          disabled={dateScrollOffset === 0}
+          className={cn(
+            "w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full border border-border bg-background transition-colors flex-shrink-0",
+            dateScrollOffset === 0 ? "opacity-30 pointer-events-none" : "hover:bg-muted"
           )}
+        >
+          <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
+        </button>
 
-          <div 
-            ref={dateContainerRef}
-            className="flex-1 flex gap-2 overflow-x-auto scrollbar-hide py-2 px-1"
-            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-          >
-            {visibleDates.map((date, index) => {
-              const isPast = isBefore(startOfDay(date), startOfDay(today));
-              const isSunday = date.getDay() === 0;
-              const isSelected = isSameDay(date, selectedDate);
-              const isDisabled = isPast || isSunday;
-              const availabilityColor = getAvailabilityColor(dateScrollOffset + index);
+        <div 
+          ref={dateContainerRef}
+          className="flex-1 flex gap-2 overflow-x-auto scrollbar-hide py-2"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
+          {visibleDates.map((date, index) => {
+            const isPast = isBefore(startOfDay(date), startOfDay(today));
+            const isSunday = date.getDay() === 0;
+            const isSelected = isSameDay(date, selectedDate);
+            const isDisabled = isPast || isSunday;
+            const availabilityColor = getAvailabilityColor(dateScrollOffset + index);
 
-              const dayAbbr = format(date, "EEE", { locale: ptBR })
-                .replace(".", "")
-                .charAt(0).toUpperCase() + format(date, "EEE", { locale: ptBR }).replace(".", "").slice(1);
+            const dayAbbr = format(date, "EEE", { locale: ptBR })
+              .replace(".", "")
+              .charAt(0).toUpperCase() + format(date, "EEE", { locale: ptBR }).replace(".", "").slice(1);
 
-              return (
-                <button
-                  key={date.toISOString()}
-                  onClick={() => !isDisabled && onDateChange(date)}
-                  disabled={isDisabled}
-                  className={cn(
-                    "flex flex-col items-center py-3 px-3 md:px-4 rounded-xl transition-all min-w-[48px] md:min-w-[60px] flex-shrink-0",
-                    isSelected
-                      ? "bg-[#3d9a9b] text-white"
-                      : "bg-card border border-border hover:bg-muted text-foreground",
-                    isDisabled && "opacity-40 pointer-events-none"
-                  )}
-                >
-                  <span className="text-xs font-medium capitalize">
-                    {dayAbbr}
-                  </span>
-                  <span className="text-lg md:text-xl font-bold mt-1">
-                    {format(date, "d")}
-                  </span>
-                  {!isDisabled && (
-                    <div
-                      className="w-5 h-1.5 rounded-full mt-1.5"
-                      style={{ 
-                        backgroundColor: isSelected ? "white" : availabilityColor 
-                      }}
-                    />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Right arrow - hidden on mobile */}
-          {!isMobile && (
-            <button
-              onClick={() => handleDateScroll("right")}
-              disabled={dateScrollOffset >= allDates.length - visibleDatesCount}
-              className={cn(
-                "p-2 hover:bg-muted rounded-full transition-colors flex-shrink-0",
-                dateScrollOffset >= allDates.length - visibleDatesCount && "opacity-30 pointer-events-none"
-              )}
-            >
-              <ChevronRight className="w-5 h-5 text-foreground" />
-            </button>
-          )}
+            return (
+              <button
+                key={date.toISOString()}
+                onClick={() => !isDisabled && onDateChange(date)}
+                disabled={isDisabled}
+                className={cn(
+                  "flex flex-col items-center py-3 px-3 md:px-4 rounded-xl transition-all min-w-[48px] md:min-w-[60px] flex-shrink-0",
+                  isSelected
+                    ? "bg-[#3d9a9b] text-white"
+                    : "bg-card border border-border hover:bg-muted text-foreground",
+                  isDisabled && "opacity-40 pointer-events-none"
+                )}
+              >
+                <span className="text-xs font-medium capitalize">
+                  {dayAbbr}
+                </span>
+                <span className="text-lg md:text-xl font-bold mt-1">
+                  {format(date, "d")}
+                </span>
+                {!isDisabled && (
+                  <div
+                    className="w-5 h-1.5 rounded-full mt-1.5"
+                    style={{ 
+                      backgroundColor: isSelected ? "white" : availabilityColor 
+                    }}
+                  />
+                )}
+              </button>
+            );
+          })}
         </div>
+
+        {/* Right arrow in circle - always visible */}
+        <button
+          onClick={() => handleDateScroll("right")}
+          disabled={dateScrollOffset >= allDates.length - visibleDatesCount}
+          className={cn(
+            "w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full border border-border bg-background transition-colors flex-shrink-0",
+            dateScrollOffset >= allDates.length - visibleDatesCount ? "opacity-30 pointer-events-none" : "hover:bg-muted"
+          )}
+        >
+          <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
+        </button>
       </div>
 
       {/* Period selector - pill style */}
@@ -273,68 +267,62 @@ export const DateTimeSelectionStep = ({
         </div>
       </div>
 
-      {/* Time slots - horizontal scroll, full width */}
-      <div className="w-full mt-6">
-        <div className="flex items-center">
-          {/* Left arrow - hidden on mobile */}
-          {!isMobile && (
-            <button
-              onClick={() => {
-                if (timeContainerRef.current) {
-                  timeContainerRef.current.scrollBy({ left: -200, behavior: "smooth" });
-                }
-              }}
-              className="p-2 hover:bg-muted rounded-full transition-colors flex-shrink-0"
-            >
-              <ChevronLeft className="w-5 h-5 text-foreground" />
-            </button>
-          )}
+      {/* Time slots - horizontal scroll with circular arrows */}
+      <div className="w-full mt-6 flex items-center gap-1">
+        {/* Left arrow in circle */}
+        <button
+          onClick={() => {
+            if (timeContainerRef.current) {
+              timeContainerRef.current.scrollBy({ left: -200, behavior: "smooth" });
+            }
+          }}
+          className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full border border-border bg-background hover:bg-muted transition-colors flex-shrink-0"
+        >
+          <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
+        </button>
 
-          <div
-            ref={timeContainerRef}
-            className="flex-1 flex gap-3 overflow-x-auto py-2 px-1 scrollbar-hide"
-            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-          >
-            {filteredTimes.map((time) => {
-              const isBlocked = blockedTimes.includes(time);
-              const isBooked = bookedTimes.includes(time);
-              const isUnavailable = isBlocked || isBooked;
-              const isSelected = selectedTime === time;
+        <div
+          ref={timeContainerRef}
+          className="flex-1 flex gap-3 overflow-x-auto py-2 scrollbar-hide"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
+          {filteredTimes.map((time) => {
+            const isBlocked = blockedTimes.includes(time);
+            const isBooked = bookedTimes.includes(time);
+            const isUnavailable = isBlocked || isBooked;
+            const isSelected = selectedTime === time;
 
-              return (
-                <button
-                  key={time}
-                  onClick={() => !isUnavailable && onTimeChange(time)}
-                  disabled={isUnavailable}
-                  className={cn(
-                    "px-5 md:px-6 py-3 rounded-full text-sm md:text-base font-medium transition-all flex-shrink-0 border",
-                    isSelected
-                      ? "bg-[#3d9a9b] text-white border-[#3d9a9b]"
-                      : isUnavailable
-                      ? "bg-muted/50 text-muted-foreground border-border opacity-40 cursor-not-allowed"
-                      : "bg-card text-foreground border-border hover:border-foreground"
-                  )}
-                >
-                  {time}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Right arrow - hidden on mobile */}
-          {!isMobile && (
-            <button
-              onClick={() => {
-                if (timeContainerRef.current) {
-                  timeContainerRef.current.scrollBy({ left: 200, behavior: "smooth" });
-                }
-              }}
-              className="p-2 hover:bg-muted rounded-full transition-colors flex-shrink-0"
-            >
-              <ChevronRight className="w-5 h-5 text-foreground" />
-            </button>
-          )}
+            return (
+              <button
+                key={time}
+                onClick={() => !isUnavailable && onTimeChange(time)}
+                disabled={isUnavailable}
+                className={cn(
+                  "px-5 md:px-6 py-3 rounded-lg text-sm md:text-base font-medium transition-all flex-shrink-0 border",
+                  isSelected
+                    ? "bg-[#3d9a9b] text-white border-[#3d9a9b]"
+                    : isUnavailable
+                    ? "bg-muted/50 text-muted-foreground border-border opacity-40 cursor-not-allowed"
+                    : "bg-card text-foreground border-border hover:border-foreground"
+                )}
+              >
+                {time}
+              </button>
+            );
+          })}
         </div>
+
+        {/* Right arrow in circle */}
+        <button
+          onClick={() => {
+            if (timeContainerRef.current) {
+              timeContainerRef.current.scrollBy({ left: 200, behavior: "smooth" });
+            }
+          }}
+          className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full border border-border bg-background hover:bg-muted transition-colors flex-shrink-0"
+        >
+          <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
+        </button>
       </div>
 
       {/* Service summary card */}
