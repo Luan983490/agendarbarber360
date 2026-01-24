@@ -433,41 +433,29 @@ export class BookingService {
       }
 
       // DEBUG CRÍTICO: Log da resposta RAW do Supabase
-      console.log('🔴 RAW DATA FROM SUPABASE RPC:', {
-        type: typeof slotsFromDb,
-        isArray: Array.isArray(slotsFromDb),
-        length: slotsFromDb?.length,
-        firstRaw: slotsFromDb?.[0],
-        firstRawKeys: slotsFromDb?.[0] ? Object.keys(slotsFromDb[0]) : [],
-        firstRawIsAvailable: slotsFromDb?.[0]?.is_available,
-        firstRawIsAvailableType: typeof slotsFromDb?.[0]?.is_available,
-        // Check all possible property names
-        sample: slotsFromDb?.slice(0, 3).map((s: Record<string, unknown>) => ({
-          ...s,
-          is_available_value: s.is_available,
-          is_available_type: typeof s.is_available,
-          is_available_strict_false: s.is_available === false,
-          is_available_strict_true: s.is_available === true,
-        }))
-      });
-
-      // Log COMPLETO para debug - mostrar TODOS os dados do banco
-      const totalFromDb = slotsFromDb?.length || 0;
-      const availableFromDb = slotsFromDb?.filter((s: { is_available: boolean }) => s.is_available === true).length || 0;
-      const unavailableFromDb = slotsFromDb?.filter((s: { is_available: boolean }) => s.is_available === false).length || 0;
+      // Verificar EXATAMENTE o que o banco retorna
+      const rawSlots = slotsFromDb || [];
+      const unavailableRaw = rawSlots.filter((s: { is_available: boolean }) => s.is_available === false);
+      const availableRaw = rawSlots.filter((s: { is_available: boolean }) => s.is_available === true);
       
-      console.log('🔍 DADOS DO BANCO (via RPC):', {
-        date,
-        barberId,
-        serviceDuration,
-        totalSlots: totalFromDb,
-        availableSlots: availableFromDb,
-        unavailableSlots: unavailableFromDb,
-        sampleSlots: slotsFromDb?.slice(0, 10).map((s: { slot_time: string; is_available: boolean }) => ({
-          time: s.slot_time,
-          available: s.is_available
-        }))
-      });
+      console.log('🔴🔴🔴 DEBUG CRÍTICO - RAW DATA FROM SUPABASE 🔴🔴🔴');
+      console.log('📊 Total slots recebidos:', rawSlots.length);
+      console.log('✅ Slots com is_available=TRUE:', availableRaw.length);
+      console.log('❌ Slots com is_available=FALSE:', unavailableRaw.length);
+      
+      if (unavailableRaw.length > 0) {
+        console.log('⚠️ HORÁRIOS INDISPONÍVEIS (serão filtrados):', 
+          unavailableRaw.map((s: { slot_time: string }) => s.slot_time)
+        );
+      } else {
+        console.log('⚠️⚠️⚠️ ATENÇÃO: Banco retornou ZERO slots indisponíveis!');
+        console.log('Primeiros 10 slots RAW:', rawSlots.slice(0, 10));
+      }
+      
+      // Log COMPLETO para debug
+      const totalFromDb = rawSlots.length;
+      const availableFromDb = availableRaw.length;
+      const unavailableFromDb = unavailableRaw.length;
 
       // CRÍTICO: Verificar se existem slots indisponíveis
       const unavailableSlotTimes = slotsFromDb?.filter((s: { is_available: boolean }) => s.is_available === false)
@@ -479,22 +467,36 @@ export class BookingService {
         console.log('⚠️ NENHUM SLOT INDISPONÍVEL ENCONTRADO - Verificar se o banco está retornando corretamente');
       }
 
-      // Converter resultado do SQL para formato TimeSlot
       // FILTRAR APENAS os slots onde is_available === true
-      const availableSlots: TimeSlot[] = (slotsFromDb || [])
-        .filter((slot: { is_available: boolean }) => {
-          const isAvail = slot.is_available === true;
-          if (!isAvail) {
-            console.log('❌ Slot FILTRADO (indisponível):', slot);
-          }
-          return isAvail;
-        })
-        .map((slot: { slot_time: string; is_available: boolean }) => ({
-          time: this.normalizeTime(slot.slot_time),
-          available: true // Já sabemos que é true pelo filtro acima
-        }));
+      // CRÍTICO: Usar verificação estrita e logar cada slot filtrado
+      console.log('🔄 Iniciando filtragem de slots...');
       
-      console.log('✅ SLOTS RETORNADOS PARA FRONTEND:', availableSlots.length, 'de', totalFromDb);
+      const availableSlots: TimeSlot[] = [];
+      let filteredCount = 0;
+      
+      for (const slot of rawSlots) {
+        // Verificação explícita - aceitar apenas booleano true
+        const isAvailable = slot.is_available === true;
+        
+        if (isAvailable) {
+          availableSlots.push({
+            time: this.normalizeTime(slot.slot_time),
+            available: true
+          });
+        } else {
+          filteredCount++;
+          console.log(`❌ FILTRADO: ${slot.slot_time} (is_available=${slot.is_available}, tipo=${typeof slot.is_available})`);
+        }
+      }
+      
+      console.log('✅ RESULTADO DA FILTRAGEM:');
+      console.log(`   - Total recebido do banco: ${rawSlots.length}`);
+      console.log(`   - Filtrados (indisponíveis): ${filteredCount}`);
+      console.log(`   - Disponíveis (retornados): ${availableSlots.length}`);
+      
+      if (filteredCount === 0 && rawSlots.length > 0) {
+        console.log('⚠️⚠️⚠️ ALERTA: Nenhum slot foi filtrado! Verificar se banco retorna is_available corretamente.');
+      }
 
       const duration = timer();
       logger.logWithDuration('debug', 'getAvailableSlots', 'Available slots from RPC', duration, {
