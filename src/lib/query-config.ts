@@ -113,10 +113,11 @@ export const specificQueryConfig = {
   // User roles - changes very rarely
   roles: queryConfig.static,
   
-  // Available slots - changes frequently but can be cached
+  // Available slots - must always be fresh to reflect blocks/bookings
   availableSlots: {
-    ...queryConfig.dynamic,
-    staleTime: 5 * MINUTE,
+    ...queryConfig.fresh,
+    staleTime: 0,
+    gcTime: 2 * MINUTE,
   },
   
   // Bookings - frequently updated

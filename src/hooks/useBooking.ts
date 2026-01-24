@@ -11,7 +11,7 @@ export const bookingKeys = {
   list: (filters: Record<string, unknown>) => [...bookingKeys.lists(), filters] as const,
   details: () => [...bookingKeys.all, 'detail'] as const,
   detail: (id: string) => [...bookingKeys.details(), id] as const,
-  availableSlots: (params: AvailableSlotsDTO) => ['availableSlots', params.barbershopId, params.barberId, params.date] as const,
+  availableSlots: (params: AvailableSlotsDTO) => ['availableSlots', params.barbershopId, params.barberId, params.date, params.serviceDuration] as const,
 };
 
 /**
