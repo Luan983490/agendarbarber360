@@ -1672,7 +1672,6 @@ export type Database = {
         Args: { p_barber_id: string; p_date: string; p_duration?: number }
         Returns: {
           is_available: boolean
-          slot_end_time: string
           slot_time: string
         }[]
       }
