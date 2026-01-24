@@ -154,9 +154,9 @@ export const DateTimeSelectionStep = ({
   };
 
   return (
-    <div className="flex flex-col min-h-full bg-background">
+    <div className="flex flex-col h-full bg-background overflow-y-auto overflow-x-hidden">
       {/* Header with back arrow and month/year */}
-      <div className="w-full px-4 py-4">
+      <div className="w-full py-4 px-2 md:px-4">
         <div className="flex items-center">
           <button
             onClick={onBack}
@@ -172,7 +172,7 @@ export const DateTimeSelectionStep = ({
       </div>
 
       {/* Horizontal date picker */}
-      <div className="w-full px-4">
+      <div className="w-full px-2 md:px-4">
         <div className="flex items-center">
           {/* Left arrow - hidden on mobile */}
           {!isMobile && (
@@ -256,7 +256,7 @@ export const DateTimeSelectionStep = ({
       </div>
 
       {/* Period selector - pill style */}
-      <div className="w-full flex justify-center mt-6 px-4">
+      <div className="w-full flex justify-center mt-6 px-2 md:px-4">
         <div className="inline-flex rounded-full border border-border overflow-hidden bg-card">
           {(["Manhã", "Tarde", "Noite"] as TimePeriod[]).map((period, idx) => (
             <button
@@ -277,7 +277,7 @@ export const DateTimeSelectionStep = ({
       </div>
 
       {/* Time slots - horizontal scroll */}
-      <div className="w-full mt-6 px-4">
+      <div className="w-full mt-6 px-2 md:px-4">
         <div className="flex items-center">
           {/* Left arrow - hidden on mobile */}
           {!isMobile && (
@@ -344,7 +344,7 @@ export const DateTimeSelectionStep = ({
       </div>
 
       {/* Service summary card */}
-      <div className="flex-1 mt-6 px-4">
+      <div className="flex-1 mt-6 px-2 md:px-4">
         <div className="w-full">
           <div className="bg-card rounded-xl border border-border">
             {/* Service header */}
@@ -408,8 +408,8 @@ export const DateTimeSelectionStep = ({
       </div>
 
       {/* Footer with total and continue button */}
-      <div className="border-t border-border bg-background mt-auto">
-        <div className="w-full px-4 py-4 md:py-5">
+      <div className="border-t border-border bg-background mt-auto flex-shrink-0">
+        <div className="w-full px-2 md:px-4 py-4 md:py-5">
           <div className="flex items-center justify-end gap-4 mb-4">
             <span className="text-muted-foreground">Total :</span>
             <span className="text-2xl md:text-3xl font-bold text-foreground">
