@@ -19,6 +19,7 @@ interface BarberShop {
   specialties: string[];
   nextAvailable: string;
   promotions: string[];
+  address?: string | null;
 }
 
 interface BarberShopCardProps {
@@ -103,22 +104,31 @@ export const BarberShopCard = ({ barberShop }: BarberShopCardProps) => {
           </span>
         </div>
 
+        {/* Address */}
+        {barberShop.address && (
+          <p className="text-xs text-muted-foreground mb-2 line-clamp-1">
+            {barberShop.address}
+          </p>
+        )}
+
         {/* Rating and Distance */}
         <div className="flex items-center space-x-3 mb-2">
           <div className="flex items-center space-x-1">
             <Star className="h-3.5 w-3.5 text-primary fill-current" />
             <span className="text-xs font-medium text-foreground">
-              {barberShop.rating}
+              {barberShop.rating.toFixed(1)}
             </span>
             <span className="text-xs text-muted-foreground">
               ({barberShop.reviewCount})
             </span>
           </div>
           
-          <div className="flex items-center space-x-1 text-muted-foreground">
-            <MapPin className="h-3.5 w-3.5" />
-            <span className="text-xs">{barberShop.distance}</span>
-          </div>
+          {barberShop.distance && barberShop.distance !== "--" && (
+            <div className="flex items-center space-x-1 text-muted-foreground">
+              <MapPin className="h-3.5 w-3.5" />
+              <span className="text-xs font-medium">{barberShop.distance}</span>
+            </div>
+          )}
         </div>
 
         {/* Specialties */}

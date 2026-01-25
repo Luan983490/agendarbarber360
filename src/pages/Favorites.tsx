@@ -77,12 +77,13 @@ const Favorites = () => {
                   image: shop.image_url || "/placeholder.svg",
                   rating: shop.rating || 0,
                   reviewCount: shop.total_reviews || 0,
-                  distance: "-- km",
+                  distance: "--",
                   isOpen: true,
                   priceRange: "$$",
                   specialties: ["Corte", "Barba"],
                   nextAvailable: "Disponível",
-                  promotions: []
+                  promotions: [],
+                  address: shop.address,
                 }}
               />
             ))}
