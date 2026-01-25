@@ -31,6 +31,7 @@ interface BarberShop {
   promotions: string[];
   city?: string | null;
   state?: string | null;
+  address?: string | null;
 }
 
 interface DbBarbershop {
@@ -43,6 +44,7 @@ interface DbBarbershop {
   state: string | null;
   latitude: number | null;
   longitude: number | null;
+  address: string | null;
 }
 
 export const BarberShopGrid = ({ 
@@ -85,7 +87,7 @@ export const BarberShopGrid = ({
     try {
       let query = supabase
         .from('barbershops')
-        .select('id, name, image_url, rating, total_reviews, city, state, latitude, longitude');
+        .select('id, name, image_url, rating, total_reviews, city, state, latitude, longitude, address');
 
       // Filter by city if selected
       if (searchType === 'city' && selectedCity) {
@@ -140,6 +142,7 @@ export const BarberShopGrid = ({
           promotions: [],
           city: shop.city,
           state: shop.state,
+          address: shop.address,
         };
       });
 
