@@ -2,8 +2,20 @@ import { MapPin, Clock, Phone, MessageCircle, CreditCard, Banknote, QrCode, Inst
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+
+interface BarberWorkingHours {
+  day_of_week: number;
+  is_day_off: boolean;
+  period1_start: string | null;
+  period1_end: string | null;
+  period2_start: string | null;
+  period2_end: string | null;
+}
 
 interface BarbershopDetailsSectionProps {
+  barbershopId: string;
   barbershop: {
     address?: string;
     street_number?: string;
@@ -22,7 +34,45 @@ interface BarbershopDetailsSectionProps {
   };
 }
 
-export const BarbershopDetailsSection = ({ barbershop }: BarbershopDetailsSectionProps) => {
+export const BarbershopDetailsSection = ({ barbershopId, barbershop }: BarbershopDetailsSectionProps) => {
+  const [workingHours, setWorkingHours] = useState<BarberWorkingHours[] | null>(null);
+  const [loadingHours, setLoadingHours] = useState(false);
+
+  // Fetch working hours from barber_working_hours table
+  useEffect(() => {
+    const fetchWorkingHours = async () => {
+      if (!barbershopId) return;
+      
+      setLoadingHours(true);
+      try {
+        // First get the barbers for this barbershop
+        const { data: barbers } = await supabase
+          .from("barbers")
+          .select("id")
+          .eq("barbershop_id", barbershopId)
+          .eq("is_active", true)
+          .limit(1);
+        
+        if (barbers && barbers.length > 0) {
+          // Get working hours from the first barber (as representative)
+          const { data: hours } = await supabase
+            .from("barber_working_hours")
+            .select("day_of_week, is_day_off, period1_start, period1_end, period2_start, period2_end")
+            .eq("barber_id", barbers[0].id)
+            .order("day_of_week");
+          
+          setWorkingHours(hours);
+        }
+      } catch (error) {
+        console.error("Error fetching working hours:", error);
+      } finally {
+        setLoadingHours(false);
+      }
+    };
+    
+    fetchWorkingHours();
+  }, [barbershopId]);
+
   // Build complete address
   const buildFullAddress = () => {
     const parts: string[] = [];
@@ -85,77 +135,40 @@ export const BarbershopDetailsSection = ({ barbershop }: BarbershopDetailsSectio
     }
   };
 
-  // Parse opening hours for display
+  // Format time string (remove seconds if present)
+  const formatTime = (time: string | null) => {
+    if (!time) return null;
+    // Remove seconds if present (e.g., "09:00:00" -> "09:00")
+    return time.substring(0, 5);
+  };
+
+  // Parse opening hours from barber_working_hours table
   const formatOpeningHours = () => {
-    if (!barbershop.opening_hours) return null;
+    if (!workingHours || workingHours.length === 0) return null;
     
-    const hours = barbershop.opening_hours;
+    const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
     
-    // Day mapping for the object format with English day names
-    const dayKeyMap: Record<string, string> = {
-      sunday: "Domingo",
-      monday: "Segunda",
-      tuesday: "Terça",
-      wednesday: "Quarta",
-      thursday: "Quinta",
-      friday: "Sexta",
-      saturday: "Sábado",
-    };
-    
-    // Order of days (Sunday first)
-    const dayOrder = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
-    
-    // If it's an array format (by day of week)
-    if (Array.isArray(hours)) {
-      const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-      return hours.map((day: any, index: number) => ({
-        day: dayNames[index],
-        periods: day.is_day_off 
-          ? null 
-          : [
-              day.period1_start && day.period1_end ? `${day.period1_start} - ${day.period1_end}` : null,
-              day.period2_start && day.period2_end ? `${day.period2_start} - ${day.period2_end}` : null,
-            ].filter(Boolean)
-      }));
-    }
-    
-    // If it's an object format with day names as keys (e.g., { monday: { open: "09:00", close: "18:00" } })
-    if (typeof hours === "object") {
-      return dayOrder.map((dayKey) => {
-        const dayData = hours[dayKey];
-        const displayName = dayKeyMap[dayKey];
-        
-        if (!dayData) {
-          return { day: displayName, periods: null };
-        }
-        
-        // Handle "Fechado" format
-        if (dayData.open === "Fechado" || dayData.close === "Fechado") {
-          return { day: displayName, periods: null };
-        }
-        
-        // Handle open/close format
-        if (dayData.open && dayData.close) {
-          return {
-            day: displayName,
-            periods: [`${dayData.open} - ${dayData.close}`]
-          };
-        }
-        
-        // Handle period1/period2 format
-        const periods = [
-          dayData.period1_start && dayData.period1_end ? `${dayData.period1_start} - ${dayData.period1_end}` : null,
-          dayData.period2_start && dayData.period2_end ? `${dayData.period2_start} - ${dayData.period2_end}` : null,
-        ].filter(Boolean);
-        
-        return {
-          day: displayName,
-          periods: periods.length > 0 ? periods : null
-        };
-      });
-    }
-    
-    return null;
+    return workingHours.map((day) => {
+      const displayName = dayNames[day.day_of_week];
+      
+      if (day.is_day_off) {
+        return { day: displayName, periods: null };
+      }
+      
+      const periods = [
+        day.period1_start && day.period1_end 
+          ? `${formatTime(day.period1_start)} - ${formatTime(day.period1_end)}` 
+          : null,
+        day.period2_start && day.period2_end 
+          ? `${formatTime(day.period2_start)} - ${formatTime(day.period2_end)}` 
+          : null,
+      ].filter(Boolean);
+      
+      return {
+        day: displayName,
+        periods: periods.length > 0 ? periods : null
+      };
+    });
   };
 
   // Payment methods mapping
