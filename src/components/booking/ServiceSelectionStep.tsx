@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { BarbersTab } from "./BarbersTab";
 import { BarbershopInfoTab } from "./BarbershopInfoTab";
+import { BarbershopDetailsSection } from "./BarbershopDetailsSection";
 import { ReviewsTab } from "./ReviewsTab";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useAuth } from "@/hooks/useAuth";
@@ -41,6 +42,17 @@ interface BarbershopDetails {
   address?: string;
   opening_hours?: any;
   amenities?: string[];
+  postal_code?: string;
+  neighborhood?: string;
+  street_number?: string;
+  city?: string;
+  state?: string;
+  latitude?: number;
+  longitude?: number;
+  whatsapp?: string;
+  instagram_url?: string;
+  facebook_url?: string;
+  payment_methods?: string[];
 }
 
 interface ServiceSelectionStepProps {
@@ -176,7 +188,7 @@ export const ServiceSelectionStep = ({
       try {
         const { data } = await supabase
           .from("barbershops")
-          .select("description, phone, email, address, opening_hours, amenities")
+          .select("description, phone, email, address, opening_hours, amenities, postal_code, neighborhood, street_number, city, state, latitude, longitude, whatsapp, instagram_url, facebook_url, payment_methods")
           .eq("id", barbershop.id)
           .single();
         setBarbershopDetails(data);
@@ -469,6 +481,26 @@ export const ServiceSelectionStep = ({
                 )}
               </div>
             )}
+
+            {/* Barbershop Details Section - Below Services */}
+            <BarbershopDetailsSection
+              barbershop={{
+                address: barbershopDetails?.address || barbershop.address,
+                street_number: barbershopDetails?.street_number,
+                neighborhood: barbershopDetails?.neighborhood,
+                city: barbershopDetails?.city,
+                state: barbershopDetails?.state,
+                postal_code: barbershopDetails?.postal_code,
+                latitude: barbershopDetails?.latitude,
+                longitude: barbershopDetails?.longitude,
+                phone: barbershopDetails?.phone,
+                whatsapp: barbershopDetails?.whatsapp,
+                opening_hours: barbershopDetails?.opening_hours,
+                payment_methods: barbershopDetails?.payment_methods,
+                instagram_url: barbershopDetails?.instagram_url,
+                facebook_url: barbershopDetails?.facebook_url,
+              }}
+            />
           </TabsContent>
 
           {/* Barbers Tab Content */}

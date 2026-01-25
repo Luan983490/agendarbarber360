@@ -316,18 +316,25 @@ export type Database = {
           created_at: string
           description: string | null
           email: string | null
+          facebook_url: string | null
           id: string
           image_url: string | null
+          instagram_url: string | null
           latitude: number | null
           longitude: number | null
           name: string
+          neighborhood: string | null
           opening_hours: Json | null
           owner_id: string
+          payment_methods: string[] | null
           phone: string | null
+          postal_code: string | null
           rating: number | null
           state: string | null
+          street_number: string | null
           total_reviews: number | null
           updated_at: string
+          whatsapp: string | null
         }
         Insert: {
           address: string
@@ -336,18 +343,25 @@ export type Database = {
           created_at?: string
           description?: string | null
           email?: string | null
+          facebook_url?: string | null
           id?: string
           image_url?: string | null
+          instagram_url?: string | null
           latitude?: number | null
           longitude?: number | null
           name: string
+          neighborhood?: string | null
           opening_hours?: Json | null
           owner_id: string
+          payment_methods?: string[] | null
           phone?: string | null
+          postal_code?: string | null
           rating?: number | null
           state?: string | null
+          street_number?: string | null
           total_reviews?: number | null
           updated_at?: string
+          whatsapp?: string | null
         }
         Update: {
           address?: string
@@ -356,18 +370,25 @@ export type Database = {
           created_at?: string
           description?: string | null
           email?: string | null
+          facebook_url?: string | null
           id?: string
           image_url?: string | null
+          instagram_url?: string | null
           latitude?: number | null
           longitude?: number | null
           name?: string
+          neighborhood?: string | null
           opening_hours?: Json | null
           owner_id?: string
+          payment_methods?: string[] | null
           phone?: string | null
+          postal_code?: string | null
           rating?: number | null
           state?: string | null
+          street_number?: string | null
           total_reviews?: number | null
           updated_at?: string
+          whatsapp?: string | null
         }
         Relationships: [
           {
