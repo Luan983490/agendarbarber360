@@ -254,27 +254,35 @@ export const ServiceSelectionStep = ({
                 </p>
               )}
               {/* Rating - smaller, below name */}
-              {barbershop.rating && (
-                <div className="flex items-center gap-1.5 mt-1">
-                  <div className="flex gap-0.5">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={cn(
-                          "w-3 h-3",
-                          i < Math.floor(barbershop.rating || 0)
-                            ? "text-amber-500 fill-amber-500"
-                            : "text-muted-foreground"
-                        )}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-xs font-medium text-foreground">
-                    {barbershop.rating.toFixed(1).replace(".", ",")}
-                  </span>
-                  <span className="text-xs text-muted-foreground">/5</span>
-                </div>
-              )}
+              <div className="flex items-center gap-1.5 mt-1">
+                {barbershop.rating && barbershop.rating > 0 ? (
+                  <>
+                    <div className="flex gap-0.5">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={cn(
+                            "w-3 h-3",
+                            i < Math.floor(barbershop.rating || 0)
+                              ? "text-amber-500 fill-amber-500"
+                              : "text-muted-foreground"
+                          )}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-xs font-medium text-foreground">
+                      {barbershop.rating.toFixed(1).replace(".", ",")}
+                    </span>
+                    <span className="text-xs text-muted-foreground">/5</span>
+                  </>
+                ) : (
+                  <>
+                    <Star className="w-3 h-3 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">0/0</span>
+                    <span className="text-xs text-muted-foreground">· Sem Avaliações</span>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
