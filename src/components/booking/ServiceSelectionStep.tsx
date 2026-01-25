@@ -405,103 +405,137 @@ export const ServiceSelectionStep = ({
 
           {/* Services Tab Content */}
           <TabsContent value="services" className="mt-4">
-            {/* Search bar */}
-            <div className="pb-4">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  placeholder="Busca por serviço"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-12 h-12 bg-card border-border text-foreground placeholder:text-muted-foreground rounded-lg"
-                />
-              </div>
-            </div>
-
-            {/* Collapsible header */}
-            <button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="flex items-center gap-3 w-full py-4"
-            >
-              {isExpanded ? (
-                <ChevronDown className="w-5 h-5 text-foreground" strokeWidth={1.5} />
-              ) : (
-                <ChevronRight className="w-5 h-5 text-foreground" strokeWidth={1.5} />
-              )}
-              <span className="text-lg md:text-xl font-bold text-foreground">
-                Serviços populares
-              </span>
-              <Badge
-                variant="secondary"
-                className="bg-muted text-muted-foreground rounded-full px-3 py-1 text-xs font-normal"
-              >
-                {filteredServices.length} serviços
-              </Badge>
-            </button>
-
-            {/* Services list */}
-            {isExpanded && (
-              <div className="divide-y divide-border">
-                {filteredServices.map((service) => (
-                  <div
-                    key={service.id}
-                    className="flex items-center justify-between py-5 gap-4"
-                  >
-                    {/* Service name - left aligned, takes available space */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-foreground text-base md:text-lg">
-                        {service.name}
-                      </h3>
-                    </div>
-
-                    {/* Price + Duration + Button - right aligned */}
-                    <div className="flex items-center gap-4 md:gap-6 flex-shrink-0">
-                      <div className="text-right">
-                        <p className="font-semibold text-foreground text-base md:text-lg">
-                          R$ {service.price.toFixed(2).replace(".", ",")}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {formatDuration(service.duration)}
-                        </p>
-                      </div>
-                      <Button
-                        onClick={() => onSelectService(service)}
-                        className="bg-[#3d9a9b] hover:bg-[#2d8a8b] text-white font-medium px-5 md:px-6 h-10 rounded-md"
-                      >
-                        Reservar
-                      </Button>
-                    </div>
+            {/* Desktop: Two columns layout | Mobile: Single column */}
+            <div className="lg:flex lg:gap-8">
+              {/* Left column: Services list */}
+              <div className="lg:flex-1 lg:min-w-0">
+                {/* Search bar */}
+                <div className="pb-4">
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <Input
+                      placeholder="Busca por serviço"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-12 h-12 bg-card border-border text-foreground placeholder:text-muted-foreground rounded-lg"
+                    />
                   </div>
-                ))}
+                </div>
 
-                {filteredServices.length === 0 && (
-                  <div className="text-center py-12 text-muted-foreground">
-                    Nenhum serviço encontrado
+                {/* Collapsible header */}
+                <button
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="flex items-center gap-3 w-full py-4"
+                >
+                  {isExpanded ? (
+                    <ChevronDown className="w-5 h-5 text-foreground" strokeWidth={1.5} />
+                  ) : (
+                    <ChevronRight className="w-5 h-5 text-foreground" strokeWidth={1.5} />
+                  )}
+                  <span className="text-lg md:text-xl font-bold text-foreground">
+                    Serviços populares
+                  </span>
+                  <Badge
+                    variant="secondary"
+                    className="bg-muted text-muted-foreground rounded-full px-3 py-1 text-xs font-normal"
+                  >
+                    {filteredServices.length} serviços
+                  </Badge>
+                </button>
+
+                {/* Services list */}
+                {isExpanded && (
+                  <div className="divide-y divide-border">
+                    {filteredServices.map((service) => (
+                      <div
+                        key={service.id}
+                        className="flex items-center justify-between py-5 gap-4"
+                      >
+                        {/* Service name - left aligned, takes available space */}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-foreground text-base md:text-lg">
+                            {service.name}
+                          </h3>
+                        </div>
+
+                        {/* Price + Duration + Button - right aligned */}
+                        <div className="flex items-center gap-4 md:gap-6 flex-shrink-0">
+                          <div className="text-right">
+                            <p className="font-semibold text-foreground text-base md:text-lg">
+                              R$ {service.price.toFixed(2).replace(".", ",")}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {formatDuration(service.duration)}
+                            </p>
+                          </div>
+                          <Button
+                            onClick={() => onSelectService(service)}
+                            className="bg-[#3d9a9b] hover:bg-[#2d8a8b] text-white font-medium px-5 md:px-6 h-10 rounded-md"
+                          >
+                            Reservar
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+
+                    {filteredServices.length === 0 && (
+                      <div className="text-center py-12 text-muted-foreground">
+                        Nenhum serviço encontrado
+                      </div>
+                    )}
                   </div>
                 )}
-              </div>
-            )}
 
-            {/* Barbershop Details Section - Below Services */}
-            <BarbershopDetailsSection
-              barbershopId={barbershop.id}
-              barbershop={{
-                address: barbershopDetails?.address || barbershop.address,
-                street_number: barbershopDetails?.street_number,
-                neighborhood: barbershopDetails?.neighborhood,
-                city: barbershopDetails?.city,
-                state: barbershopDetails?.state,
-                postal_code: barbershopDetails?.postal_code,
-                latitude: barbershopDetails?.latitude,
-                longitude: barbershopDetails?.longitude,
-                phone: barbershopDetails?.phone,
-                whatsapp: barbershopDetails?.whatsapp,
-                opening_hours: barbershopDetails?.opening_hours,
-                payment_methods: barbershopDetails?.payment_methods,
-                instagram_url: barbershopDetails?.instagram_url,
-                facebook_url: barbershopDetails?.facebook_url,
-              }}
-            />
+                {/* Mobile/Tablet: Show details below services */}
+                <div className="lg:hidden">
+                  <BarbershopDetailsSection
+                    barbershopId={barbershop.id}
+                    barbershop={{
+                      address: barbershopDetails?.address || barbershop.address,
+                      street_number: barbershopDetails?.street_number,
+                      neighborhood: barbershopDetails?.neighborhood,
+                      city: barbershopDetails?.city,
+                      state: barbershopDetails?.state,
+                      postal_code: barbershopDetails?.postal_code,
+                      latitude: barbershopDetails?.latitude,
+                      longitude: barbershopDetails?.longitude,
+                      phone: barbershopDetails?.phone,
+                      whatsapp: barbershopDetails?.whatsapp,
+                      opening_hours: barbershopDetails?.opening_hours,
+                      payment_methods: barbershopDetails?.payment_methods,
+                      instagram_url: barbershopDetails?.instagram_url,
+                      facebook_url: barbershopDetails?.facebook_url,
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Right column: Details (Desktop only) */}
+              <div className="hidden lg:block lg:w-80 lg:flex-shrink-0">
+                <div className="sticky top-4 bg-card border border-border rounded-lg p-5">
+                  <BarbershopDetailsSection
+                    barbershopId={barbershop.id}
+                    compact
+                    barbershop={{
+                      address: barbershopDetails?.address || barbershop.address,
+                      street_number: barbershopDetails?.street_number,
+                      neighborhood: barbershopDetails?.neighborhood,
+                      city: barbershopDetails?.city,
+                      state: barbershopDetails?.state,
+                      postal_code: barbershopDetails?.postal_code,
+                      latitude: barbershopDetails?.latitude,
+                      longitude: barbershopDetails?.longitude,
+                      phone: barbershopDetails?.phone,
+                      whatsapp: barbershopDetails?.whatsapp,
+                      opening_hours: barbershopDetails?.opening_hours,
+                      payment_methods: barbershopDetails?.payment_methods,
+                      instagram_url: barbershopDetails?.instagram_url,
+                      facebook_url: barbershopDetails?.facebook_url,
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
           </TabsContent>
 
           {/* Barbers Tab Content */}
