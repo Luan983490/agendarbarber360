@@ -35,6 +35,7 @@ interface BarbershopDetails {
   email?: string;
   address?: string;
   opening_hours?: any;
+  amenities?: string[];
 }
 
 interface ServiceSelectionStepProps {
@@ -105,9 +106,27 @@ export const ServiceSelectionStep = ({
     return mins > 0 ? `${hours}h${mins}min` : `${hours}h`;
   };
 
-  // Fetch barbers and barbershop details when tab changes
+  // Fetch barbershop details (description and amenities) on mount
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchBarbershopDetails = async () => {
+      try {
+        const { data } = await supabase
+          .from("barbershops")
+          .select("description, phone, email, address, opening_hours, amenities")
+          .eq("id", barbershop.id)
+          .single();
+        setBarbershopDetails(data);
+      } catch (error) {
+        console.error("Error fetching barbershop details:", error);
+      }
+    };
+    
+    fetchBarbershopDetails();
+  }, [barbershop.id]);
+
+  // Fetch barbers when tab changes
+  useEffect(() => {
+    const fetchBarbers = async () => {
       if (activeTab === "barbers" && barbers.length === 0) {
         setLoadingBarbers(true);
         try {
@@ -123,23 +142,10 @@ export const ServiceSelectionStep = ({
           setLoadingBarbers(false);
         }
       }
-
-      if (activeTab === "info" && !barbershopDetails) {
-        try {
-          const { data } = await supabase
-            .from("barbershops")
-            .select("description, phone, email, address, opening_hours")
-            .eq("id", barbershop.id)
-            .single();
-          setBarbershopDetails(data);
-        } catch (error) {
-          console.error("Error fetching barbershop details:", error);
-        }
-      }
     };
 
-    fetchData();
-  }, [activeTab, barbershop.id, barbers.length, barbershopDetails]);
+    fetchBarbers();
+  }, [activeTab, barbershop.id, barbers.length]);
 
   return (
     <div className="flex flex-col h-full bg-background overflow-hidden">
@@ -378,6 +384,39 @@ export const ServiceSelectionStep = ({
             <ReviewsTab barbershopId={barbershop.id} />
           </TabsContent>
         </Tabs>
+
+        {/* Barbershop Description & Amenities - Always visible below tabs */}
+        {(barbershopDetails?.description || (barbershopDetails?.amenities && barbershopDetails.amenities.length > 0)) && (
+          <div className="mt-6 pt-6 border-t border-border space-y-4">
+            {/* Description */}
+            {barbershopDetails?.description && (
+              <div>
+                <h3 className="text-sm font-semibold text-foreground mb-2">Sobre</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {barbershopDetails.description}
+                </p>
+              </div>
+            )}
+
+            {/* Amenities */}
+            {barbershopDetails?.amenities && barbershopDetails.amenities.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-foreground mb-2">Comodidades</h3>
+                <div className="flex flex-wrap gap-2">
+                  {barbershopDetails.amenities.map((amenity, index) => (
+                    <Badge
+                      key={index}
+                      variant="secondary"
+                      className="bg-muted text-muted-foreground rounded-full px-3 py-1 text-xs font-normal"
+                    >
+                      {amenity}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Scrollable area for tab content */}
