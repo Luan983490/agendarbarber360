@@ -224,7 +224,7 @@ export const ServiceSelectionStep = ({
   }, [activeTab, barbershop.id, barbers.length]);
 
   return (
-    <div className="flex flex-col min-h-full bg-background">
+    <div className="flex flex-col min-h-full bg-background overflow-y-auto">
       {/* Back button */}
       <div className="w-full px-4 md:px-8 lg:px-12 pt-4">
         <button
