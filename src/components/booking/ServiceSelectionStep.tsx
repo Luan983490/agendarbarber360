@@ -312,32 +312,35 @@ export const ServiceSelectionStep = ({
       {/* Tabs */}
       <div className="w-full max-w-4xl mx-auto px-4 md:px-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-muted/50 p-1 rounded-lg h-auto">
-            <TabsTrigger
-              value="services"
-              className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md py-2 text-sm font-medium"
-            >
-              Serviços
-            </TabsTrigger>
-            <TabsTrigger
-              value="barbers"
-              className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md py-2 text-sm font-medium"
-            >
-              Barbeiros
-            </TabsTrigger>
-            <TabsTrigger
-              value="info"
-              className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md py-2 text-sm font-medium"
-            >
-              Informações
-            </TabsTrigger>
-            <TabsTrigger
-              value="reviews"
-              className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md py-2 text-sm font-medium"
-            >
-              Avaliações
-            </TabsTrigger>
-          </TabsList>
+          {/* Scrollable tabs container for mobile */}
+          <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+            <TabsList className="inline-flex w-auto min-w-full md:grid md:grid-cols-4 bg-muted/50 p-1 rounded-lg h-auto gap-1">
+              <TabsTrigger
+                value="services"
+                className="flex-shrink-0 px-4 py-2 text-sm font-medium whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md"
+              >
+                Serviços
+              </TabsTrigger>
+              <TabsTrigger
+                value="barbers"
+                className="flex-shrink-0 px-4 py-2 text-sm font-medium whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md"
+              >
+                Barbeiros
+              </TabsTrigger>
+              <TabsTrigger
+                value="info"
+                className="flex-shrink-0 px-4 py-2 text-sm font-medium whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md"
+              >
+                Informações
+              </TabsTrigger>
+              <TabsTrigger
+                value="reviews"
+                className="flex-shrink-0 px-4 py-2 text-sm font-medium whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md"
+              >
+                Avaliações
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* Barbershop Description & Amenities - Right below tabs menu */}
           {(barbershopDetails?.description || (barbershopDetails?.amenities && barbershopDetails.amenities.length > 0)) && (
