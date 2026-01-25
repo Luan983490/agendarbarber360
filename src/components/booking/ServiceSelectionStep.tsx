@@ -357,28 +357,31 @@ export const ServiceSelectionStep = ({
 
               {/* Amenities with icons */}
               {barbershopDetails?.amenities && barbershopDetails.amenities.length > 0 && (
-                <TooltipProvider delayDuration={100}>
-                  <div className="flex flex-wrap gap-3">
-                    {barbershopDetails.amenities.map((amenity, index) => {
-                      const IconComponent = getAmenityIcon(amenity);
-                      return (
-                        <Tooltip key={index}>
-                          <TooltipTrigger asChild>
-                            <button
-                              type="button"
-                              className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-accent transition-colors"
-                            >
-                              <IconComponent className="w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent side="bottom">
-                            <p>{amenity}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      );
-                    })}
-                  </div>
-                </TooltipProvider>
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground mb-2">Comodidades</h3>
+                  <TooltipProvider delayDuration={100}>
+                    <div className="flex flex-wrap gap-3">
+                      {barbershopDetails.amenities.map((amenity, index) => {
+                        const IconComponent = getAmenityIcon(amenity);
+                        return (
+                          <Tooltip key={index}>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-accent transition-colors"
+                              >
+                                <IconComponent className="w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom">
+                              <p>{amenity}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        );
+                      })}
+                    </div>
+                  </TooltipProvider>
+                </div>
               )}
             </div>
           )}
