@@ -226,7 +226,7 @@ export const ServiceSelectionStep = ({
   return (
     <div className="flex flex-col min-h-full bg-background overflow-y-auto">
       {/* Back button */}
-      <div className="w-full max-w-4xl mx-auto px-4 md:px-8 pt-4">
+      <div className="w-full px-4 md:px-8 lg:px-12 pt-4">
         <button
           onClick={onBack}
           className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
@@ -236,8 +236,8 @@ export const ServiceSelectionStep = ({
         </button>
       </div>
 
-      {/* Header with barbershop info - max width container for desktop */}
-      <div className="w-full max-w-4xl mx-auto px-4 md:px-8 pt-4 pb-4">
+      {/* Header with barbershop info */}
+      <div className="w-full px-4 md:px-8 lg:px-12 pt-4 pb-4">
         <div className="flex items-start justify-between gap-3">
           {/* Left: Logo + Name + Address + Rating */}
           <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -330,7 +330,7 @@ export const ServiceSelectionStep = ({
       </div>
 
       {/* Tabs */}
-      <div className="w-full max-w-4xl mx-auto px-4 md:px-8">
+      <div className="w-full px-4 md:px-8 lg:px-12">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           {/* Scrollable tabs container for mobile */}
           <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
@@ -405,10 +405,10 @@ export const ServiceSelectionStep = ({
 
           {/* Services Tab Content */}
           <TabsContent value="services" className="mt-4">
-            {/* Desktop: Two columns layout | Mobile: Single column */}
-            <div className="lg:flex lg:gap-8">
-              {/* Left column: Services list */}
-              <div className="lg:flex-1 lg:min-w-0">
+            {/* Desktop: Two columns side by side | Mobile: Single column */}
+            <div className="flex flex-col lg:flex-row lg:gap-10">
+              {/* Left column: Services list - takes most space */}
+              <div className="flex-1 min-w-0 lg:max-w-2xl">
                 {/* Search bar */}
                 <div className="pb-4">
                   <div className="relative">
@@ -510,8 +510,8 @@ export const ServiceSelectionStep = ({
                 </div>
               </div>
 
-              {/* Right column: Details (Desktop only) */}
-              <div className="hidden lg:block lg:w-80 lg:flex-shrink-0">
+              {/* Right column: Details sidebar (Desktop only) */}
+              <div className="hidden lg:block lg:w-80 xl:w-96 flex-shrink-0">
                 <div className="sticky top-4 bg-card border border-border rounded-lg p-5">
                   <BarbershopDetailsSection
                     barbershopId={barbershop.id}
