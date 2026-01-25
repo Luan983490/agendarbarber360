@@ -1,9 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, ChevronDown, ChevronRight, Star, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { BarbersTab } from "./BarbersTab";
+import { BarbershopInfoTab } from "./BarbershopInfoTab";
+import { ReviewsTab } from "./ReviewsTab";
 
 interface Service {
   id: string;
@@ -11,6 +16,22 @@ interface Service {
   price: number;
   duration: number;
   description?: string;
+}
+
+interface Barber {
+  id: string;
+  name: string;
+  specialty?: string;
+  phone?: string;
+  image_url?: string;
+}
+
+interface BarbershopDetails {
+  description?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  opening_hours?: any;
 }
 
 interface ServiceSelectionStepProps {
@@ -34,6 +55,10 @@ export const ServiceSelectionStep = ({
 }: ServiceSelectionStepProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isExpanded, setIsExpanded] = useState(true);
+  const [activeTab, setActiveTab] = useState("services");
+  const [barbers, setBarbers] = useState<Barber[]>([]);
+  const [barbershopDetails, setBarbershopDetails] = useState<BarbershopDetails | null>(null);
+  const [loadingBarbers, setLoadingBarbers] = useState(false);
 
   const filteredServices = services.filter((service) =>
     service.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -45,6 +70,42 @@ export const ServiceSelectionStep = ({
     const mins = minutes % 60;
     return mins > 0 ? `${hours}h${mins}min` : `${hours}h`;
   };
+
+  // Fetch barbers and barbershop details when tab changes
+  useEffect(() => {
+    const fetchData = async () => {
+      if (activeTab === "barbers" && barbers.length === 0) {
+        setLoadingBarbers(true);
+        try {
+          const { data } = await supabase
+            .from("barbers")
+            .select("id, name, specialty, phone, image_url")
+            .eq("barbershop_id", barbershop.id)
+            .eq("is_active", true);
+          setBarbers(data || []);
+        } catch (error) {
+          console.error("Error fetching barbers:", error);
+        } finally {
+          setLoadingBarbers(false);
+        }
+      }
+
+      if (activeTab === "info" && !barbershopDetails) {
+        try {
+          const { data } = await supabase
+            .from("barbershops")
+            .select("description, phone, email, address, opening_hours")
+            .eq("id", barbershop.id)
+            .single();
+          setBarbershopDetails(data);
+        } catch (error) {
+          console.error("Error fetching barbershop details:", error);
+        }
+      }
+    };
+
+    fetchData();
+  }, [activeTab, barbershop.id, barbers.length, barbershopDetails]);
 
   return (
     <div className="flex flex-col h-full bg-background overflow-hidden">
@@ -118,87 +179,143 @@ export const ServiceSelectionStep = ({
         </div>
       </div>
 
-      {/* Search bar */}
-      <div className="w-full max-w-4xl mx-auto px-4 md:px-8 pb-6">
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-          <Input
-            placeholder="Busca por serviço"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-12 h-12 bg-card border-border text-foreground placeholder:text-muted-foreground rounded-lg"
-          />
-        </div>
-      </div>
-
-      {/* Services section */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="w-full max-w-4xl mx-auto px-4 md:px-8">
-          {/* Collapsible header */}
-          <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center gap-3 w-full py-4"
-          >
-            {isExpanded ? (
-              <ChevronDown className="w-5 h-5 text-foreground" />
-            ) : (
-              <ChevronRight className="w-5 h-5 text-foreground" />
-            )}
-            <span className="text-lg md:text-xl font-bold text-foreground">
-              Serviços populares
-            </span>
-            <Badge
-              variant="secondary"
-              className="bg-muted text-muted-foreground rounded-full px-3 py-1 text-xs font-normal"
+      {/* Tabs */}
+      <div className="w-full max-w-4xl mx-auto px-4 md:px-8">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-4 bg-muted/50 p-1 rounded-lg h-auto">
+            <TabsTrigger
+              value="services"
+              className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md py-2 text-sm font-medium"
             >
-              {filteredServices.length} serviços
-            </Badge>
-          </button>
+              Serviços
+            </TabsTrigger>
+            <TabsTrigger
+              value="barbers"
+              className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md py-2 text-sm font-medium"
+            >
+              Barbeiros
+            </TabsTrigger>
+            <TabsTrigger
+              value="info"
+              className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md py-2 text-sm font-medium"
+            >
+              Informações
+            </TabsTrigger>
+            <TabsTrigger
+              value="reviews"
+              className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md py-2 text-sm font-medium"
+            >
+              Avaliações
+            </TabsTrigger>
+          </TabsList>
 
-          {/* Services list */}
-          {isExpanded && (
-            <div className="divide-y divide-border">
-              {filteredServices.map((service) => (
-                <div
-                  key={service.id}
-                  className="flex items-center justify-between py-5 gap-4"
-                >
-                  {/* Service name - left aligned, takes available space */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-foreground text-base md:text-lg">
-                      {service.name}
-                    </h3>
-                  </div>
-
-                  {/* Price + Duration + Button - right aligned */}
-                  <div className="flex items-center gap-4 md:gap-6 flex-shrink-0">
-                    <div className="text-right">
-                      <p className="font-semibold text-foreground text-base md:text-lg">
-                        R$ {service.price.toFixed(2).replace(".", ",")}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {formatDuration(service.duration)}
-                      </p>
-                    </div>
-                    <Button
-                      onClick={() => onSelectService(service)}
-                      className="bg-[#3d9a9b] hover:bg-[#2d8a8b] text-white font-medium px-5 md:px-6 h-10 rounded-md"
-                    >
-                      Reservar
-                    </Button>
-                  </div>
-                </div>
-              ))}
-
-              {filteredServices.length === 0 && (
-                <div className="text-center py-12 text-muted-foreground">
-                  Nenhum serviço encontrado
-                </div>
-              )}
+          {/* Services Tab Content */}
+          <TabsContent value="services" className="mt-4">
+            {/* Search bar */}
+            <div className="pb-4">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Input
+                  placeholder="Busca por serviço"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-12 h-12 bg-card border-border text-foreground placeholder:text-muted-foreground rounded-lg"
+                />
+              </div>
             </div>
-          )}
-        </div>
+
+            {/* Collapsible header */}
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="flex items-center gap-3 w-full py-4"
+            >
+              {isExpanded ? (
+                <ChevronDown className="w-5 h-5 text-foreground" strokeWidth={1.5} />
+              ) : (
+                <ChevronRight className="w-5 h-5 text-foreground" strokeWidth={1.5} />
+              )}
+              <span className="text-lg md:text-xl font-bold text-foreground">
+                Serviços populares
+              </span>
+              <Badge
+                variant="secondary"
+                className="bg-muted text-muted-foreground rounded-full px-3 py-1 text-xs font-normal"
+              >
+                {filteredServices.length} serviços
+              </Badge>
+            </button>
+
+            {/* Services list */}
+            {isExpanded && (
+              <div className="divide-y divide-border">
+                {filteredServices.map((service) => (
+                  <div
+                    key={service.id}
+                    className="flex items-center justify-between py-5 gap-4"
+                  >
+                    {/* Service name - left aligned, takes available space */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-foreground text-base md:text-lg">
+                        {service.name}
+                      </h3>
+                    </div>
+
+                    {/* Price + Duration + Button - right aligned */}
+                    <div className="flex items-center gap-4 md:gap-6 flex-shrink-0">
+                      <div className="text-right">
+                        <p className="font-semibold text-foreground text-base md:text-lg">
+                          R$ {service.price.toFixed(2).replace(".", ",")}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {formatDuration(service.duration)}
+                        </p>
+                      </div>
+                      <Button
+                        onClick={() => onSelectService(service)}
+                        className="bg-[#3d9a9b] hover:bg-[#2d8a8b] text-white font-medium px-5 md:px-6 h-10 rounded-md"
+                      >
+                        Reservar
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+
+                {filteredServices.length === 0 && (
+                  <div className="text-center py-12 text-muted-foreground">
+                    Nenhum serviço encontrado
+                  </div>
+                )}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Barbers Tab Content */}
+          <TabsContent value="barbers" className="mt-4">
+            <BarbersTab barbers={barbers} loading={loadingBarbers} />
+          </TabsContent>
+
+          {/* Info Tab Content */}
+          <TabsContent value="info" className="mt-4">
+            <BarbershopInfoTab
+              barbershop={{
+                description: barbershopDetails?.description,
+                phone: barbershopDetails?.phone,
+                email: barbershopDetails?.email,
+                address: barbershop.address || barbershopDetails?.address,
+                opening_hours: barbershopDetails?.opening_hours,
+              }}
+            />
+          </TabsContent>
+
+          {/* Reviews Tab Content */}
+          <TabsContent value="reviews" className="mt-4">
+            <ReviewsTab barbershopId={barbershop.id} />
+          </TabsContent>
+        </Tabs>
       </div>
+
+      {/* Scrollable area for tab content */}
+      <div className="flex-1 overflow-y-auto pb-8" />
     </div>
   );
 };
