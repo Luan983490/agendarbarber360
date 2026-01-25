@@ -484,6 +484,7 @@ export const ServiceSelectionStep = ({
 
             {/* Barbershop Details Section - Below Services */}
             <BarbershopDetailsSection
+              barbershopId={barbershop.id}
               barbershop={{
                 address: barbershopDetails?.address || barbershop.address,
                 street_number: barbershopDetails?.street_number,
