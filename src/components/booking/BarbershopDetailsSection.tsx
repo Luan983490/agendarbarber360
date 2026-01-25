@@ -90,10 +90,24 @@ export const BarbershopDetailsSection = ({ barbershop }: BarbershopDetailsSectio
     if (!barbershop.opening_hours) return null;
     
     const hours = barbershop.opening_hours;
-    const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+    
+    // Day mapping for the object format with English day names
+    const dayKeyMap: Record<string, string> = {
+      sunday: "Domingo",
+      monday: "Segunda",
+      tuesday: "Terça",
+      wednesday: "Quarta",
+      thursday: "Quinta",
+      friday: "Sexta",
+      saturday: "Sábado",
+    };
+    
+    // Order of days (Sunday first)
+    const dayOrder = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
     
     // If it's an array format (by day of week)
     if (Array.isArray(hours)) {
+      const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
       return hours.map((day: any, index: number) => ({
         day: dayNames[index],
         periods: day.is_day_off 
@@ -105,20 +119,38 @@ export const BarbershopDetailsSection = ({ barbershop }: BarbershopDetailsSectio
       }));
     }
     
-    // If it's an object format with day keys
+    // If it's an object format with day names as keys (e.g., { monday: { open: "09:00", close: "18:00" } })
     if (typeof hours === "object") {
-      return dayNames.map((dayName, index) => {
-        const dayData = hours[index] || hours[dayName.toLowerCase()];
-        if (!dayData) return { day: dayName, periods: null };
+      return dayOrder.map((dayKey) => {
+        const dayData = hours[dayKey];
+        const displayName = dayKeyMap[dayKey];
+        
+        if (!dayData) {
+          return { day: displayName, periods: null };
+        }
+        
+        // Handle "Fechado" format
+        if (dayData.open === "Fechado" || dayData.close === "Fechado") {
+          return { day: displayName, periods: null };
+        }
+        
+        // Handle open/close format
+        if (dayData.open && dayData.close) {
+          return {
+            day: displayName,
+            periods: [`${dayData.open} - ${dayData.close}`]
+          };
+        }
+        
+        // Handle period1/period2 format
+        const periods = [
+          dayData.period1_start && dayData.period1_end ? `${dayData.period1_start} - ${dayData.period1_end}` : null,
+          dayData.period2_start && dayData.period2_end ? `${dayData.period2_start} - ${dayData.period2_end}` : null,
+        ].filter(Boolean);
         
         return {
-          day: dayName,
-          periods: dayData.is_day_off 
-            ? null 
-            : [
-                dayData.period1_start && dayData.period1_end ? `${dayData.period1_start} - ${dayData.period1_end}` : null,
-                dayData.period2_start && dayData.period2_end ? `${dayData.period2_start} - ${dayData.period2_end}` : null,
-              ].filter(Boolean)
+          day: displayName,
+          periods: periods.length > 0 ? periods : null
         };
       });
     }
