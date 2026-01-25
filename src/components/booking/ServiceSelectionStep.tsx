@@ -3,12 +3,15 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, ChevronDown, ChevronRight, Star, ArrowLeft } from "lucide-react";
+import { Search, ChevronDown, ChevronRight, Star, ArrowLeft, Heart, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { BarbersTab } from "./BarbersTab";
 import { BarbershopInfoTab } from "./BarbershopInfoTab";
 import { ReviewsTab } from "./ReviewsTab";
+import { useFavorites } from "@/hooks/useFavorites";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 interface Service {
   id: string;
@@ -53,12 +56,43 @@ export const ServiceSelectionStep = ({
   onSelectService,
   onBack,
 }: ServiceSelectionStepProps) => {
+  const { user } = useAuth();
+  const { isFavorited, toggleFavorite } = useFavorites(user?.id);
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [isExpanded, setIsExpanded] = useState(true);
   const [activeTab, setActiveTab] = useState("services");
   const [barbers, setBarbers] = useState<Barber[]>([]);
   const [barbershopDetails, setBarbershopDetails] = useState<BarbershopDetails | null>(null);
   const [loadingBarbers, setLoadingBarbers] = useState(false);
+
+  const isFav = isFavorited(barbershop.id);
+
+  const handleToggleFavorite = () => {
+    toggleFavorite(barbershop.id);
+  };
+
+  const handleShare = async () => {
+    const shareData = {
+      title: barbershop.name,
+      text: `Confira ${barbershop.name}!`,
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        toast({
+          title: "Link copiado!",
+          description: "O link foi copiado para a área de transferência.",
+        });
+      }
+    } catch (error) {
+      console.error("Error sharing:", error);
+    }
+  };
 
   const filteredServices = services.filter((service) =>
     service.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -152,30 +186,62 @@ export const ServiceSelectionStep = ({
             </div>
           </div>
 
-          {/* Right: Rating */}
-          {barbershop.rating && (
-            <div className="flex flex-col items-end flex-shrink-0 pt-1">
-              <div className="flex items-baseline gap-0.5">
-                <span className="text-2xl md:text-3xl font-bold text-foreground">
-                  {barbershop.rating.toFixed(1).replace(".", ",")}
-                </span>
-                <span className="text-sm text-muted-foreground">/5</span>
-              </div>
-              <div className="flex gap-0.5 mt-1">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={cn(
-                      "w-4 h-4",
-                      i < Math.floor(barbershop.rating || 0)
-                        ? "text-amber-500 fill-amber-500"
-                        : "text-muted-foreground"
-                    )}
-                  />
-                ))}
-              </div>
+          {/* Right: Rating + Actions */}
+          <div className="flex items-start gap-3 flex-shrink-0 pt-1">
+            {/* Favorite & Share Buttons */}
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  "h-10 w-10 rounded-full border border-border bg-card hover:bg-accent transition-colors",
+                  isFav && "bg-red-500/10 border-red-500/30 hover:bg-red-500/20"
+                )}
+                onClick={handleToggleFavorite}
+              >
+                <Heart
+                  className={cn(
+                    "h-5 w-5 transition-all",
+                    isFav ? "fill-red-500 text-red-500" : "text-muted-foreground"
+                  )}
+                  strokeWidth={1.5}
+                />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 rounded-full border border-border bg-card hover:bg-accent transition-colors"
+                onClick={handleShare}
+              >
+                <Share2 className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
+              </Button>
             </div>
-          )}
+
+            {/* Rating */}
+            {barbershop.rating && (
+              <div className="flex flex-col items-end">
+                <div className="flex items-baseline gap-0.5">
+                  <span className="text-2xl md:text-3xl font-bold text-foreground">
+                    {barbershop.rating.toFixed(1).replace(".", ",")}
+                  </span>
+                  <span className="text-sm text-muted-foreground">/5</span>
+                </div>
+                <div className="flex gap-0.5 mt-1">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className={cn(
+                        "w-4 h-4",
+                        i < Math.floor(barbershop.rating || 0)
+                          ? "text-amber-500 fill-amber-500"
+                          : "text-muted-foreground"
+                      )}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

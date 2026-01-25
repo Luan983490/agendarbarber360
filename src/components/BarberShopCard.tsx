@@ -159,11 +159,6 @@ export const BarberShopCard = ({ barberShop }: BarberShopCardProps) => {
               Agendar
             </Button>
           </BookingFlow>
-          <BarberShopProfile barberShop={barberShop}>
-            <Button variant="elegant" size="sm">
-              Ver Perfil
-            </Button>
-          </BarberShopProfile>
         </div>
       </CardContent>
     </Card>
