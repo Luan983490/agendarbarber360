@@ -224,7 +224,7 @@ export const ServiceSelectionStep = ({
   }, [activeTab, barbershop.id, barbers.length]);
 
   return (
-    <div className="flex flex-col h-full bg-background overflow-hidden">
+    <div className="flex flex-col min-h-full bg-background overflow-y-auto">
       {/* Back button */}
       <div className="w-full max-w-4xl mx-auto px-4 md:px-8 pt-4">
         <button
@@ -528,8 +528,8 @@ export const ServiceSelectionStep = ({
         </Tabs>
       </div>
 
-      {/* Scrollable area for tab content */}
-      <div className="flex-1 overflow-y-auto pb-8" />
+      {/* Bottom padding for scroll */}
+      <div className="pb-8" />
     </div>
   );
 };
