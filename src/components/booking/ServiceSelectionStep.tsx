@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, ChevronDown, ChevronRight, Star } from "lucide-react";
+import { Search, ChevronDown, ChevronRight, Star, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Service {
@@ -30,6 +30,7 @@ export const ServiceSelectionStep = ({
   barbershop,
   services,
   onSelectService,
+  onBack,
 }: ServiceSelectionStepProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isExpanded, setIsExpanded] = useState(true);
@@ -47,8 +48,19 @@ export const ServiceSelectionStep = ({
 
   return (
     <div className="flex flex-col h-full bg-background overflow-hidden">
+      {/* Back button */}
+      <div className="w-full max-w-4xl mx-auto px-4 md:px-8 pt-4">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
+          <span className="text-sm">Voltar</span>
+        </button>
+      </div>
+
       {/* Header with barbershop info - max width container for desktop */}
-      <div className="w-full max-w-4xl mx-auto px-4 md:px-8 pt-6 pb-4">
+      <div className="w-full max-w-4xl mx-auto px-4 md:px-8 pt-4 pb-4">
         <div className="flex items-start justify-between gap-4">
           {/* Left: Logo + Name + Address */}
           <div className="flex items-start gap-4 flex-1 min-w-0">
