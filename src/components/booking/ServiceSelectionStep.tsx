@@ -3,7 +3,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, ChevronDown, ChevronRight, Star, ArrowLeft, Heart, Share2 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { 
+  Search, ChevronDown, ChevronRight, Star, ArrowLeft, Heart, Share2,
+  Wifi, Car, Wind, Tv, Coffee, Beer, CreditCard, Calendar, Accessibility, Baby,
+  Music, Cigarette, Dog, Gamepad2, Newspaper, Armchair, Sparkles, Scissors
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { BarbersTab } from "./BarbersTab";
@@ -104,6 +109,65 @@ export const ServiceSelectionStep = ({
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     return mins > 0 ? `${hours}h${mins}min` : `${hours}h`;
+  };
+
+  // Map amenity names to icons
+  const getAmenityIcon = (amenity: string) => {
+    const lowerAmenity = amenity.toLowerCase();
+    
+    if (lowerAmenity.includes("wifi") || lowerAmenity.includes("wi-fi") || lowerAmenity.includes("internet")) {
+      return Wifi;
+    }
+    if (lowerAmenity.includes("estacionamento") || lowerAmenity.includes("parking") || lowerAmenity.includes("garagem")) {
+      return Car;
+    }
+    if (lowerAmenity.includes("ar") || lowerAmenity.includes("climatiz") || lowerAmenity.includes("air")) {
+      return Wind;
+    }
+    if (lowerAmenity.includes("tv") || lowerAmenity.includes("televisão") || lowerAmenity.includes("television")) {
+      return Tv;
+    }
+    if (lowerAmenity.includes("café") || lowerAmenity.includes("coffee") || lowerAmenity.includes("cafe")) {
+      return Coffee;
+    }
+    if (lowerAmenity.includes("cerveja") || lowerAmenity.includes("beer") || lowerAmenity.includes("bebida") || lowerAmenity.includes("bar")) {
+      return Beer;
+    }
+    if (lowerAmenity.includes("cartão") || lowerAmenity.includes("card") || lowerAmenity.includes("crédito") || lowerAmenity.includes("débito") || lowerAmenity.includes("pix")) {
+      return CreditCard;
+    }
+    if (lowerAmenity.includes("agendamento") || lowerAmenity.includes("online") || lowerAmenity.includes("reserva")) {
+      return Calendar;
+    }
+    if (lowerAmenity.includes("acessib") || lowerAmenity.includes("cadeirante") || lowerAmenity.includes("wheelchair")) {
+      return Accessibility;
+    }
+    if (lowerAmenity.includes("infantil") || lowerAmenity.includes("criança") || lowerAmenity.includes("kids") || lowerAmenity.includes("child")) {
+      return Baby;
+    }
+    if (lowerAmenity.includes("música") || lowerAmenity.includes("music") || lowerAmenity.includes("som")) {
+      return Music;
+    }
+    if (lowerAmenity.includes("fumo") || lowerAmenity.includes("cigarro") || lowerAmenity.includes("smoke")) {
+      return Cigarette;
+    }
+    if (lowerAmenity.includes("pet") || lowerAmenity.includes("cachorro") || lowerAmenity.includes("dog") || lowerAmenity.includes("animal")) {
+      return Dog;
+    }
+    if (lowerAmenity.includes("game") || lowerAmenity.includes("jogo") || lowerAmenity.includes("videogame") || lowerAmenity.includes("playstation") || lowerAmenity.includes("xbox")) {
+      return Gamepad2;
+    }
+    if (lowerAmenity.includes("revista") || lowerAmenity.includes("jornal") || lowerAmenity.includes("magazine")) {
+      return Newspaper;
+    }
+    if (lowerAmenity.includes("sofá") || lowerAmenity.includes("espera") || lowerAmenity.includes("lounge") || lowerAmenity.includes("confort")) {
+      return Armchair;
+    }
+    if (lowerAmenity.includes("premium") || lowerAmenity.includes("vip") || lowerAmenity.includes("luxo")) {
+      return Sparkles;
+    }
+    // Default icon
+    return Scissors;
   };
 
   // Fetch barbershop details (description and amenities) on mount
@@ -281,6 +345,44 @@ export const ServiceSelectionStep = ({
             </TabsTrigger>
           </TabsList>
 
+          {/* Barbershop Description & Amenities - Right below tabs menu */}
+          {(barbershopDetails?.description || (barbershopDetails?.amenities && barbershopDetails.amenities.length > 0)) && (
+            <div className="mt-4 space-y-3">
+              {/* Description - no title */}
+              {barbershopDetails?.description && (
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {barbershopDetails.description}
+                </p>
+              )}
+
+              {/* Amenities with icons */}
+              {barbershopDetails?.amenities && barbershopDetails.amenities.length > 0 && (
+                <TooltipProvider delayDuration={100}>
+                  <div className="flex flex-wrap gap-3">
+                    {barbershopDetails.amenities.map((amenity, index) => {
+                      const IconComponent = getAmenityIcon(amenity);
+                      return (
+                        <Tooltip key={index}>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-accent transition-colors"
+                            >
+                              <IconComponent className="w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom">
+                            <p>{amenity}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    })}
+                  </div>
+                </TooltipProvider>
+              )}
+            </div>
+          )}
+
           {/* Services Tab Content */}
           <TabsContent value="services" className="mt-4">
             {/* Search bar */}
@@ -384,39 +486,6 @@ export const ServiceSelectionStep = ({
             <ReviewsTab barbershopId={barbershop.id} />
           </TabsContent>
         </Tabs>
-
-        {/* Barbershop Description & Amenities - Always visible below tabs */}
-        {(barbershopDetails?.description || (barbershopDetails?.amenities && barbershopDetails.amenities.length > 0)) && (
-          <div className="mt-6 pt-6 border-t border-border space-y-4">
-            {/* Description */}
-            {barbershopDetails?.description && (
-              <div>
-                <h3 className="text-sm font-semibold text-foreground mb-2">Sobre</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {barbershopDetails.description}
-                </p>
-              </div>
-            )}
-
-            {/* Amenities */}
-            {barbershopDetails?.amenities && barbershopDetails.amenities.length > 0 && (
-              <div>
-                <h3 className="text-sm font-semibold text-foreground mb-2">Comodidades</h3>
-                <div className="flex flex-wrap gap-2">
-                  {barbershopDetails.amenities.map((amenity, index) => (
-                    <Badge
-                      key={index}
-                      variant="secondary"
-                      className="bg-muted text-muted-foreground rounded-full px-3 py-1 text-xs font-normal"
-                    >
-                      {amenity}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Scrollable area for tab content */}
