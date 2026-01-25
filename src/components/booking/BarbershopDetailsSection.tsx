@@ -32,9 +32,11 @@ interface BarbershopDetailsSectionProps {
     instagram_url?: string;
     facebook_url?: string;
   };
+  /** Compact mode: removes top separator and vertical padding (for desktop sidebar) */
+  compact?: boolean;
 }
 
-export const BarbershopDetailsSection = ({ barbershopId, barbershop }: BarbershopDetailsSectionProps) => {
+export const BarbershopDetailsSection = ({ barbershopId, barbershop, compact = false }: BarbershopDetailsSectionProps) => {
   const [workingHours, setWorkingHours] = useState<BarberWorkingHours[] | null>(null);
   const [loadingHours, setLoadingHours] = useState(false);
 
@@ -191,8 +193,8 @@ export const BarbershopDetailsSection = ({ barbershopId, barbershop }: Barbersho
   }
 
   return (
-    <div className="space-y-6 py-6">
-      <Separator />
+    <div className={cn("space-y-6", compact ? "py-0" : "py-6")}>
+      {!compact && <Separator />}
       
       {/* Location Section */}
       {hasLocation && (
