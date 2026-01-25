@@ -67,7 +67,7 @@ const Favorites = () => {
         </div>
 
         {favorites.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
             {favorites.map((shop) => (
               <BarberShopCard
                 key={shop.id}
