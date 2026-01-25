@@ -226,11 +226,11 @@ export const ServiceSelectionStep = ({
 
       {/* Header with barbershop info - max width container for desktop */}
       <div className="w-full max-w-4xl mx-auto px-4 md:px-8 pt-4 pb-4">
-        <div className="flex items-start justify-between gap-4">
-          {/* Left: Logo + Name + Address */}
-          <div className="flex items-start gap-4 flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-3">
+          {/* Left: Logo + Name + Address + Rating */}
+          <div className="flex items-start gap-3 flex-1 min-w-0">
             {/* Logo */}
-            <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-card border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
+            <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-card border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
               {barbershop.image ? (
                 <img
                   src={barbershop.image}
@@ -238,79 +238,73 @@ export const ServiceSelectionStep = ({
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <span className="text-xl md:text-2xl font-bold text-foreground">
+                <span className="text-lg md:text-xl font-bold text-foreground">
                   {barbershop.name.charAt(0).toUpperCase()}
                 </span>
               )}
             </div>
-            {/* Name and address */}
-            <div className="flex-1 min-w-0 pt-1">
-              <h2 className="text-xl md:text-2xl font-bold text-foreground">
+            {/* Name, address and rating */}
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg md:text-xl font-bold text-foreground leading-tight">
                 {barbershop.name}
               </h2>
               {barbershop.address && (
-                <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
                   {barbershop.address}
                 </p>
+              )}
+              {/* Rating - smaller, below name */}
+              {barbershop.rating && (
+                <div className="flex items-center gap-1.5 mt-1">
+                  <div className="flex gap-0.5">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={cn(
+                          "w-3 h-3",
+                          i < Math.floor(barbershop.rating || 0)
+                            ? "text-amber-500 fill-amber-500"
+                            : "text-muted-foreground"
+                        )}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-xs font-medium text-foreground">
+                    {barbershop.rating.toFixed(1).replace(".", ",")}
+                  </span>
+                  <span className="text-xs text-muted-foreground">/5</span>
+                </div>
               )}
             </div>
           </div>
 
-          {/* Right: Rating + Actions */}
-          <div className="flex items-start gap-3 flex-shrink-0 pt-1">
-            {/* Favorite & Share Buttons */}
-            <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
+          {/* Right: Favorite & Share Buttons */}
+          <div className="flex gap-2 flex-shrink-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                "h-9 w-9 rounded-full border border-border bg-card hover:bg-accent transition-colors",
+                isFav && "bg-red-500/10 border-red-500/30 hover:bg-red-500/20"
+              )}
+              onClick={handleToggleFavorite}
+            >
+              <Heart
                 className={cn(
-                  "h-10 w-10 rounded-full border border-border bg-card hover:bg-accent transition-colors",
-                  isFav && "bg-red-500/10 border-red-500/30 hover:bg-red-500/20"
+                  "h-4 w-4 transition-all",
+                  isFav ? "fill-red-500 text-red-500" : "text-muted-foreground"
                 )}
-                onClick={handleToggleFavorite}
-              >
-                <Heart
-                  className={cn(
-                    "h-5 w-5 transition-all",
-                    isFav ? "fill-red-500 text-red-500" : "text-muted-foreground"
-                  )}
-                  strokeWidth={1.5}
-                />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-10 w-10 rounded-full border border-border bg-card hover:bg-accent transition-colors"
-                onClick={handleShare}
-              >
-                <Share2 className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
-              </Button>
-            </div>
-
-            {/* Rating */}
-            {barbershop.rating && (
-              <div className="flex flex-col items-end">
-                <div className="flex items-baseline gap-0.5">
-                  <span className="text-2xl md:text-3xl font-bold text-foreground">
-                    {barbershop.rating.toFixed(1).replace(".", ",")}
-                  </span>
-                  <span className="text-sm text-muted-foreground">/5</span>
-                </div>
-                <div className="flex gap-0.5 mt-1">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={cn(
-                        "w-4 h-4",
-                        i < Math.floor(barbershop.rating || 0)
-                          ? "text-amber-500 fill-amber-500"
-                          : "text-muted-foreground"
-                      )}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
+                strokeWidth={1.5}
+              />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-full border border-border bg-card hover:bg-accent transition-colors"
+              onClick={handleShare}
+            >
+              <Share2 className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
+            </Button>
           </div>
         </div>
       </div>
