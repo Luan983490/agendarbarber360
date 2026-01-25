@@ -39,7 +39,7 @@ export const BarberShopCard = ({ barberShop }: BarberShopCardProps) => {
     <Card className="group hover:shadow-elegant transition-all duration-300 bg-gradient-card border-border overflow-hidden">
       <div className="relative">
         {/* Image - reduced aspect ratio */}
-        <div className="aspect-[16/8] bg-muted relative overflow-hidden">
+        <div className="aspect-[4/3] bg-muted relative overflow-hidden">
           <img 
             src={barberShop.image} 
             alt={barberShop.name}
