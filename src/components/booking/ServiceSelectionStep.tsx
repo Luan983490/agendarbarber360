@@ -278,7 +278,7 @@ export const ServiceSelectionStep = ({
                 ) : (
                   <>
                     <Star className="w-3 h-3 text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground">0/0</span>
+                    <span className="text-xs text-muted-foreground">0/5</span>
                     <span className="text-xs text-muted-foreground">· Sem Avaliações</span>
                   </>
                 )}
