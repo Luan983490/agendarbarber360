@@ -31,6 +31,9 @@ import AuthCallback from "./pages/AuthCallback";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
+// Dev tools (lazy load)
+const DevAssistant = lazy(() => import("./pages/DevAssistant"));
+
 // Admin pages (lazy load - heavy components)
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 
@@ -70,6 +73,7 @@ const AppContent = () => {
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/dev-assistant" element={<DevAssistant />} />
             
             {/* Admin Routes (Owner only) */}
             <Route 
