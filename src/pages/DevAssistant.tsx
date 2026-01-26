@@ -98,19 +98,33 @@ const RealtimeDevAssistant = () => {
       if (response.ok) {
         setApiTestResult('success');
         addLog('✅ Conexão com Claude estabelecida com sucesso!', 'success');
-      } else if (response.status === 401) {
-        setApiTestResult('error');
-        addLog('❌ API Key inválida. Verifique sua chave.', 'error');
-      } else if (response.status === 429) {
-        setApiTestResult('error');
-        addLog('⚠️ Rate limit atingido. Tente novamente em alguns segundos.', 'warning');
       } else {
+        const errorData = await response.json().catch(() => ({}));
+        let errorMessage = `Erro ${response.status}: ${errorData.error?.message || 'Erro desconhecido'}`;
+
+        if (response.status === 401) {
+          errorMessage = 'API Key inválida. Verifique sua chave.';
+        } else if (response.status === 429) {
+          errorMessage = 'Limite de requisições excedido. Aguarde alguns minutos.';
+        } else if (response.status === 529) {
+          errorMessage = 'API sobrecarregada. Tente novamente em alguns minutos.';
+        }
+        
         setApiTestResult('error');
-        addLog(`❌ Erro na API: ${response.status}`, 'error');
+        addLog(`❌ ${errorMessage}`, 'error');
       }
     } catch (error: any) {
       setApiTestResult('error');
-      addLog(`❌ Erro de conexão: ${error.message}`, 'error');
+      console.error('Erro detalhado:', error);
+      
+      // Check if it's a network/CORS error
+      if (!navigator.onLine) {
+        addLog('❌ Erro de rede. Verifique sua conexão com a internet.', 'error');
+      } else if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
+        addLog('❌ Erro de CORS: A API da Anthropic não permite chamadas diretas do navegador. É necessário usar um backend/proxy.', 'error');
+      } else {
+        addLog(`❌ Erro de conexão: ${error.message}`, 'error');
+      }
     } finally {
       setTestingApi(false);
     }
@@ -122,6 +136,8 @@ const RealtimeDevAssistant = () => {
     if (!savedKey) {
       throw new Error('API Key não configurada');
     }
+
+    addLog('Enviando pergunta para Claude...', 'info');
 
     // Build context with analysis results and logs
     const contextParts: string[] = [];
@@ -171,39 +187,64 @@ INSTRUÇÕES:
 5. Considere sempre as melhores práticas do Supabase
 6. Se não souber algo específico do sistema, pergunte ao usuário`;
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': savedKey,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
-        max_tokens: 2000,
-        system: systemPrompt,
-        messages: [
-          ...chatMessages.map(msg => ({
-            role: msg.role,
-            content: msg.content
-          })),
-          { role: 'user', content: userMessage }
-        ]
-      })
-    });
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': savedKey,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'claude-3-5-sonnet-20241022',
+          max_tokens: 2000,
+          system: systemPrompt,
+          messages: [
+            ...chatMessages.map(msg => ({
+              role: msg.role,
+              content: msg.content
+            })),
+            { role: 'user', content: userMessage }
+          ]
+        })
+      });
 
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error('API Key inválida');
-      } else if (response.status === 429) {
-        throw new Error('Rate limit atingido. Aguarde alguns segundos.');
-      } else {
-        throw new Error(`Erro na API: ${response.status}`);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        let errorMessage = `Erro ${response.status}: ${errorData.error?.message || 'Erro desconhecido'}`;
+
+        if (response.status === 401) {
+          errorMessage = 'API Key inválida';
+        } else if (response.status === 429) {
+          errorMessage = 'Limite de requisições excedido. Aguarde alguns minutos.';
+        } else if (response.status === 529) {
+          errorMessage = 'API sobrecarregada, tente novamente em alguns minutos.';
+        }
+
+        addLog('Erro: ' + errorMessage, 'error');
+        throw new Error(errorMessage);
       }
-    }
 
-    const data = await response.json();
-    return data.content[0].text;
+      const data = await response.json();
+      addLog('✅ Resposta recebida do Claude', 'success');
+      return data.content[0].text;
+    } catch (error: any) {
+      console.error('Erro detalhado:', error);
+      
+      // Check if it's a network/CORS error
+      if (!navigator.onLine) {
+        const msg = 'Erro de rede. Verifique sua conexão com a internet.';
+        addLog('Erro: ' + msg, 'error');
+        throw new Error(msg);
+      } else if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
+        const msg = 'Erro de CORS: A API da Anthropic não permite chamadas diretas do navegador. Para resolver, você precisa usar um backend/proxy (como uma Edge Function do Supabase).';
+        addLog('Erro: ' + msg, 'error');
+        throw new Error(msg);
+      }
+      
+      addLog('Erro: ' + error.message, 'error');
+      throw error;
+    }
   };
 
   // Send message to Claude
