@@ -1784,6 +1784,15 @@ export type Database = {
         }
         Returns: Json
       }
+      get_indexes_info: {
+        Args: never
+        Returns: {
+          indexdef: string
+          indexname: string
+          schemaname: string
+          tablename: string
+        }[]
+      }
       get_monthly_comparison_report: {
         Args: {
           p_barber_filter?: string
@@ -1816,6 +1825,19 @@ export type Database = {
           total_revenue: number
         }[]
       }
+      get_rls_policies_info: {
+        Args: never
+        Returns: {
+          cmd: string
+          permissive: string
+          policyname: string
+          qual: string
+          roles: string[]
+          schemaname: string
+          tablename: string
+          with_check: string
+        }[]
+      }
       get_schedule_occupancy_report: {
         Args: {
           p_barber_filter?: string
@@ -1828,6 +1850,13 @@ export type Database = {
           barber_name: string
           occupancy_rate: number
           occupied_hours: number
+        }[]
+      }
+      get_tables_without_rls: {
+        Args: never
+        Returns: {
+          has_rls: boolean
+          table_name: string
         }[]
       }
       get_top_clients_and_profitable_hours: {
@@ -1854,6 +1883,17 @@ export type Database = {
           service_name: string
           total_bookings: number
           total_revenue: number
+        }[]
+      }
+      get_triggers_info: {
+        Args: never
+        Returns: {
+          action_statement: string
+          action_timing: string
+          event_manipulation: string
+          event_object_schema: string
+          event_object_table: string
+          trigger_name: string
         }[]
       }
       get_user_role: {
