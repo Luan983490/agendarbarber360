@@ -317,9 +317,11 @@ export type Database = {
           description: string | null
           email: string | null
           facebook_url: string | null
+          has_active_barbers: boolean
           id: string
           image_url: string | null
           instagram_url: string | null
+          is_public: boolean
           latitude: number | null
           longitude: number | null
           name: string
@@ -344,9 +346,11 @@ export type Database = {
           description?: string | null
           email?: string | null
           facebook_url?: string | null
+          has_active_barbers?: boolean
           id?: string
           image_url?: string | null
           instagram_url?: string | null
+          is_public?: boolean
           latitude?: number | null
           longitude?: number | null
           name: string
@@ -371,9 +375,11 @@ export type Database = {
           description?: string | null
           email?: string | null
           facebook_url?: string | null
+          has_active_barbers?: boolean
           id?: string
           image_url?: string | null
           instagram_url?: string | null
+          is_public?: boolean
           latitude?: number | null
           longitude?: number | null
           name?: string
