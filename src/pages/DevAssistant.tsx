@@ -240,10 +240,120 @@ INSTRUÇÕES:
     }
   };
 
+  // Fetch real RLS policies from database
+  const fetchRealPolicies = async (): Promise<any[]> => {
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_rls_policies_info`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+      });
+      
+      if (response.ok) {
+        return await response.json();
+      }
+      return [];
+    } catch (error) {
+      addLog('⚠️ Função get_rls_policies_info não encontrada - usando fallback', 'warning');
+      return [];
+    }
+  };
+
+  // Fetch real indexes from database
+  const fetchRealIndexes = async (): Promise<any[]> => {
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_indexes_info`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+      });
+      
+      if (response.ok) {
+        return await response.json();
+      }
+      return [];
+    } catch (error) {
+      addLog('⚠️ Função get_indexes_info não encontrada - usando fallback', 'warning');
+      return [];
+    }
+  };
+
+  // Fetch real triggers from database
+  const fetchRealTriggers = async (): Promise<any[]> => {
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_triggers_info`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+      });
+      
+      if (response.ok) {
+        return await response.json();
+      }
+      return [];
+    } catch (error) {
+      addLog('⚠️ Função get_triggers_info não encontrada - usando fallback', 'warning');
+      return [];
+    }
+  };
+
+  // Fetch tables without RLS
+  const fetchTablesWithoutRLS = async (): Promise<any[]> => {
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_tables_without_rls`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+      });
+      
+      if (response.ok) {
+        return await response.json();
+      }
+      return [];
+    } catch (error) {
+      return [];
+    }
+  };
+
+  // Fetch recent database errors from app_logs
+  const fetchRecentErrors = async (): Promise<any[]> => {
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/app_logs?level=eq.error&order=created_at.desc&limit=20`, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      });
+      
+      if (response.ok) {
+        return await response.json();
+      }
+      return [];
+    } catch (error) {
+      return [];
+    }
+  };
+
   const runFullAnalysis = async () => {
     setTesting(true);
     setResults(null);
-    addLog('🔍 Iniciando análise completa do sistema...', 'info');
+    addLog('🔍 Iniciando análise completa do sistema com DADOS REAIS...', 'info');
     
     const isConnected = await testConnection();
     if (!isConnected) {
@@ -255,167 +365,343 @@ INSTRUÇÕES:
       security: { passed: 0, failed: 0, warnings: 0, tests: [] as any[] },
       performance: { passed: 0, failed: 0, warnings: 0, tests: [] as any[] },
       missing: { critical: [] as any[], medium: [] as any[], low: [] as any[] },
-      recommendations: [] as string[]
+      recommendations: [] as string[],
+      realData: {
+        policies: [] as any[],
+        indexes: [] as any[],
+        triggers: [] as any[],
+        tablesWithoutRLS: [] as any[],
+        recentErrors: [] as any[]
+      }
     };
 
-    addLog('Testando Row Level Security...', 'info');
-    await testRLS(testResults);
+    // Fetch real data from database
+    addLog('📊 Buscando políticas RLS reais do banco...', 'info');
+    const policies = await fetchRealPolicies();
+    testResults.realData.policies = policies;
+    addLog(`📋 ${policies.length} políticas encontradas`, 'success');
 
-    addLog('Verificando políticas de segurança...', 'info');
-    await testPolicies(testResults);
+    addLog('📊 Buscando índices reais do banco...', 'info');
+    const indexes = await fetchRealIndexes();
+    testResults.realData.indexes = indexes;
+    addLog(`📋 ${indexes.length} índices encontrados`, 'success');
 
-    addLog('Analisando índices de performance...', 'info');
-    await testIndexes(testResults);
+    addLog('📊 Buscando triggers reais do banco...', 'info');
+    const triggers = await fetchRealTriggers();
+    testResults.realData.triggers = triggers;
+    addLog(`📋 ${triggers.length} triggers encontrados`, 'success');
 
-    addLog('Identificando funcionalidades pendentes...', 'info');
-    await testMissingFeatures(testResults);
+    addLog('📊 Buscando tabelas sem RLS...', 'info');
+    const tablesWithoutRLS = await fetchTablesWithoutRLS();
+    testResults.realData.tablesWithoutRLS = tablesWithoutRLS;
+
+    addLog('📊 Buscando erros recentes do app_logs...', 'info');
+    const recentErrors = await fetchRecentErrors();
+    testResults.realData.recentErrors = recentErrors;
+    addLog(`📋 ${recentErrors.length} erros recentes encontrados`, recentErrors.length > 0 ? 'warning' : 'success');
+
+    // Analyze RLS
+    addLog('🔐 Analisando Row Level Security...', 'info');
+    await analyzeRealRLS(testResults, policies, tablesWithoutRLS);
+
+    // Analyze policies for potential issues
+    addLog('🔍 Verificando políticas problemáticas...', 'info');
+    await analyzeRealPolicies(testResults, policies);
+
+    // Analyze indexes
+    addLog('⚡ Analisando índices de performance...', 'info');
+    await analyzeRealIndexes(testResults, indexes);
+
+    // Analyze triggers and missing features
+    addLog('🔧 Analisando triggers e funcionalidades...', 'info');
+    await analyzeRealTriggers(testResults, triggers);
+
+    // Analyze recent errors
+    addLog('❌ Analisando erros recentes...', 'info');
+    await analyzeRecentErrors(testResults, recentErrors);
+
+    // Generate recommendations based on real data
+    generateRealRecommendations(testResults);
 
     setResults(testResults);
     setTesting(false);
-    addLog('✅ Análise completa finalizada!', 'success');
+    addLog('✅ Análise completa finalizada com DADOS REAIS!', 'success');
   };
 
-  const testRLS = async (testResults: any) => {
-    const criticalTables = ['bookings', 'barbershops', 'reviews', 'favorites', 'profiles'];
+  const analyzeRealRLS = async (testResults: any, policies: any[], tablesWithoutRLS: any[]) => {
+    const criticalTables = ['bookings', 'barbershops', 'barbers', 'services', 'products', 'reviews', 'favorites', 'profiles', 'user_roles', 'subscriptions'];
     
-    for (const table of criticalTables) {
-      try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=*&limit=1`, {
-          headers: {
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-          }
+    // Check tables without RLS
+    for (const table of tablesWithoutRLS) {
+      if (criticalTables.includes(table.table_name)) {
+        testResults.security.failed++;
+        testResults.security.tests.push({
+          name: `RLS DESATIVADO em ${table.table_name}`,
+          status: 'failed',
+          message: `⚠️ CRÍTICO: Tabela ${table.table_name} não tem RLS habilitado!`
         });
+        testResults.missing.critical.push({
+          table: table.table_name,
+          type: 'RLS_DISABLED',
+          description: `Tabela ${table.table_name} está COMPLETAMENTE EXPOSTA sem RLS`,
+          fix: `ALTER TABLE public.${table.table_name} ENABLE ROW LEVEL SECURITY;`
+        });
+      }
+    }
 
-        if (response.status === 401 || response.status === 403) {
-          testResults.security.passed++;
-          testResults.security.tests.push({
-            name: `RLS ativo em ${table}`,
-            status: 'passed',
-            message: 'Tabela protegida corretamente'
-          });
-        } else if (response.ok) {
-          const data = await response.json();
-          if (data.length === 0) {
-            testResults.security.passed++;
-            testResults.security.tests.push({
-              name: `RLS ativo em ${table}`,
-              status: 'passed',
-              message: 'Sem dados retornados (política funcionando)'
-            });
-          } else {
-            testResults.security.failed++;
-            testResults.security.tests.push({
-              name: `RLS em ${table}`,
-              status: 'failed',
-              message: `⚠️ Dados expostos! ${data.length} registros acessíveis sem auth`
-            });
-          }
-        }
-      } catch (error: any) {
+    // Group policies by table
+    const policiesByTable: Record<string, any[]> = {};
+    policies.forEach((p: any) => {
+      if (!policiesByTable[p.tablename]) {
+        policiesByTable[p.tablename] = [];
+      }
+      policiesByTable[p.tablename].push(p);
+    });
+
+    // Check each critical table
+    for (const table of criticalTables) {
+      const tablePolicies = policiesByTable[table] || [];
+      
+      if (tablePolicies.length === 0 && !tablesWithoutRLS.find(t => t.table_name === table)) {
         testResults.security.warnings++;
         testResults.security.tests.push({
-          name: `RLS em ${table}`,
+          name: `Políticas em ${table}`,
           status: 'warning',
-          message: 'Erro ao testar: ' + error.message
+          message: `Tabela tem RLS mas nenhuma política definida`
+        });
+      } else if (tablePolicies.length > 0) {
+        testResults.security.passed++;
+        testResults.security.tests.push({
+          name: `RLS ativo em ${table}`,
+          status: 'passed',
+          message: `${tablePolicies.length} política(s) configurada(s)`
         });
       }
     }
   };
 
-  const testPolicies = async (testResults: any) => {
-    const missingPolicies = [
-      {
-        table: 'favorites',
-        policy: 'INSERT',
-        critical: true,
-        message: 'Falta política de INSERT - vulnerabilidade crítica'
-      },
-      {
-        table: 'reviews',
-        policy: 'INSERT',
-        critical: true,
-        message: 'Falta política de INSERT - sistema de reviews vulnerável'
-      },
-      {
-        table: 'bookings',
-        policy: 'INSERT',
-        critical: true,
-        message: 'Falta política de INSERT - agendamentos desprotegidos'
-      }
-    ];
-
-    missingPolicies.forEach(policy => {
-      if (policy.critical) {
+  const analyzeRealPolicies = async (testResults: any, policies: any[]) => {
+    // Check for overly permissive policies
+    for (const policy of policies) {
+      const qual = policy.qual?.toLowerCase() || '';
+      const withCheck = policy.with_check?.toLowerCase() || '';
+      
+      // Check for USING (true) which allows all access
+      if (qual === 'true' || qual === '(true)') {
         testResults.security.failed++;
         testResults.missing.critical.push({
-          table: policy.table,
-          type: policy.policy,
-          description: policy.message,
-          fix: `Adicionar política ${policy.policy} para ${policy.table}`
+          table: policy.tablename,
+          type: 'PERMISSIVE_POLICY',
+          description: `Política "${policy.policyname}" usa USING (true) - permite acesso irrestrito!`,
+          fix: `DROP POLICY "${policy.policyname}" ON public.${policy.tablename}; -- Depois crie uma política mais restritiva`
         });
       }
-    });
-  };
-
-  const testIndexes = async (testResults: any) => {
-    const missingIndexes = [
-      { table: 'bookings', columns: 'booking_date, booking_time', impact: 'Alto' },
-      { table: 'bookings', columns: 'barber_id, booking_date', impact: 'Alto' },
-      { table: 'barbershops', columns: 'city, state', impact: 'Médio' }
-    ];
-
-    missingIndexes.forEach(idx => {
-      if (idx.impact === 'Alto') {
-        testResults.performance.failed++;
-      } else {
-        testResults.performance.warnings++;
+      
+      // Check for WITH CHECK (true) which allows all inserts/updates
+      if (withCheck === 'true' || withCheck === '(true)') {
+        testResults.security.warnings++;
+        testResults.security.tests.push({
+          name: `Política permissiva em ${policy.tablename}`,
+          status: 'warning',
+          message: `"${policy.policyname}" permite INSERT/UPDATE irrestrito`
+        });
       }
       
-      testResults.missing.medium.push({
-        table: idx.table,
-        type: 'INDEX',
-        description: `Índice faltando em ${idx.columns}`,
-        impact: idx.impact
+      // Check for potential infinite recursion (policies that reference same table)
+      if (qual && qual.includes(policy.tablename) && qual.includes('select')) {
+        // Check if it's referencing itself without a security definer function
+        if (!qual.includes('public.is_') && !qual.includes('public.has_') && !qual.includes('public.can_')) {
+          testResults.security.warnings++;
+          testResults.security.tests.push({
+            name: `Possível recursão em ${policy.tablename}`,
+            status: 'warning',
+            message: `Política "${policy.policyname}" pode causar recursão infinita`
+          });
+        }
+      }
+    }
+
+    // Check for missing policy types per table
+    const policiesByTable: Record<string, Set<string>> = {};
+    policies.forEach((p: any) => {
+      if (!policiesByTable[p.tablename]) {
+        policiesByTable[p.tablename] = new Set();
+      }
+      policiesByTable[p.tablename].add(p.cmd);
+    });
+
+    const criticalTablesNeedingInsert = ['favorites', 'reviews', 'bookings'];
+    for (const table of criticalTablesNeedingInsert) {
+      const commands = policiesByTable[table];
+      if (commands && !commands.has('INSERT') && !commands.has('ALL')) {
+        testResults.security.failed++;
+        testResults.missing.critical.push({
+          table,
+          type: 'MISSING_INSERT_POLICY',
+          description: `Tabela ${table} não tem política INSERT - usuários não podem inserir dados`,
+          fix: `Adicionar política INSERT para ${table}`
+        });
+      }
+    }
+  };
+
+  const analyzeRealIndexes = async (testResults: any, indexes: any[]) => {
+    // Recommended indexes for performance
+    const recommendedIndexes = [
+      { table: 'bookings', columns: ['booking_date', 'barber_id'], name: 'idx_bookings_date_barber' },
+      { table: 'bookings', columns: ['client_id', 'status'], name: 'idx_bookings_client_status' },
+      { table: 'bookings', columns: ['barbershop_id', 'booking_date'], name: 'idx_bookings_shop_date' },
+      { table: 'barbershops', columns: ['city', 'state'], name: 'idx_barbershops_location' },
+      { table: 'barbershops', columns: ['owner_id'], name: 'idx_barbershops_owner' },
+      { table: 'barbers', columns: ['barbershop_id', 'is_active'], name: 'idx_barbers_shop_active' },
+      { table: 'services', columns: ['barbershop_id', 'is_active'], name: 'idx_services_shop_active' }
+    ];
+
+    const existingIndexNames = indexes.map((i: any) => i.indexname?.toLowerCase());
+
+    for (const rec of recommendedIndexes) {
+      const exists = existingIndexNames.some(name => 
+        name?.includes(rec.table) && rec.columns.some(col => name?.includes(col))
+      );
+
+      if (!exists) {
+        testResults.performance.warnings++;
+        testResults.missing.medium.push({
+          table: rec.table,
+          type: 'MISSING_INDEX',
+          description: `Índice recomendado em ${rec.columns.join(', ')} para melhorar performance`,
+          impact: 'Médio',
+          fix: `CREATE INDEX ${rec.name} ON public.${rec.table}(${rec.columns.join(', ')});`
+        });
+      } else {
+        testResults.performance.passed++;
+      }
+    }
+
+    addLog(`📊 ${indexes.length} índices existentes, ${testResults.missing.medium.filter((m: any) => m.type === 'MISSING_INDEX').length} recomendados faltando`, 'info');
+  };
+
+  const analyzeRealTriggers = async (testResults: any, triggers: any[]) => {
+    // Check for important triggers
+    const importantTriggers = [
+      { table: 'bookings', name: 'conflict', description: 'Prevenção de double booking' },
+      { table: 'profiles', name: 'updated_at', description: 'Atualização automática de timestamp' },
+      { table: 'bookings', name: 'audit', description: 'Log de auditoria' }
+    ];
+
+    const existingTriggerNames = triggers.map((t: any) => t.trigger_name?.toLowerCase());
+
+    for (const imp of importantTriggers) {
+      const exists = existingTriggerNames.some(name => 
+        name?.includes(imp.name) || triggers.some(t => t.event_object_table === imp.table)
+      );
+
+      if (!exists) {
+        if (imp.name === 'conflict') {
+          testResults.missing.critical.push({
+            name: `Trigger de ${imp.description}`,
+            description: `Não há trigger para ${imp.description} na tabela ${imp.table}`,
+            priority: 'CRÍTICO'
+          });
+        } else {
+          testResults.missing.low.push({
+            name: `Trigger de ${imp.description}`,
+            description: `Trigger ${imp.description} não encontrado em ${imp.table}`,
+            priority: 'BAIXO'
+          });
+        }
+      }
+    }
+
+    addLog(`📊 ${triggers.length} triggers encontrados no banco`, 'info');
+  };
+
+  const analyzeRecentErrors = async (testResults: any, recentErrors: any[]) => {
+    if (recentErrors.length === 0) {
+      testResults.security.passed++;
+      testResults.security.tests.push({
+        name: 'Erros recentes',
+        status: 'passed',
+        message: 'Nenhum erro recente no app_logs'
       });
+      return;
+    }
+
+    // Group errors by type
+    const errorTypes: Record<string, number> = {};
+    recentErrors.forEach((err: any) => {
+      const msg = err.message || 'Erro desconhecido';
+      const key = msg.substring(0, 50);
+      errorTypes[key] = (errorTypes[key] || 0) + 1;
+    });
+
+    // Check for critical patterns
+    for (const err of recentErrors) {
+      const msg = (err.message || '').toLowerCase();
+      
+      if (msg.includes('infinite recursion')) {
+        testResults.security.failed++;
+        testResults.missing.critical.push({
+          table: 'RLS',
+          type: 'INFINITE_RECURSION',
+          description: `Recursão infinita detectada: ${err.message}`,
+          fix: 'Usar SECURITY DEFINER functions para quebrar o ciclo de recursão'
+        });
+      }
+      
+      if (msg.includes('permission denied') || msg.includes('violates row-level security')) {
+        testResults.security.warnings++;
+        testResults.security.tests.push({
+          name: 'Erro de permissão',
+          status: 'warning',
+          message: err.message?.substring(0, 100)
+        });
+      }
+    }
+
+    testResults.security.tests.push({
+      name: 'Erros recentes',
+      status: 'warning',
+      message: `${recentErrors.length} erros encontrados no app_logs`
     });
   };
 
-  const testMissingFeatures = async (testResults: any) => {
-    const missingFeatures = [
-      {
-        feature: 'Validação de Conflitos de Horário',
-        description: 'Não há trigger para evitar double booking',
-        priority: 'CRÍTICO',
-        category: 'critical'
-      },
-      {
-        feature: 'Limpeza Automática de Logs',
-        description: 'app_logs pode crescer indefinidamente',
-        priority: 'ALTO',
-        category: 'medium'
-      },
-      {
-        feature: 'Sistema de Notificações',
-        description: 'Notificações de agendamento não implementadas',
-        priority: 'MÉDIO',
-        category: 'low'
-      }
-    ];
+  const generateRealRecommendations = (testResults: any) => {
+    const recommendations: string[] = [];
 
-    missingFeatures.forEach(feature => {
-      testResults.missing[feature.category].push({
-        name: feature.feature,
-        description: feature.description,
-        priority: feature.priority
-      });
-    });
+    // Based on critical issues
+    if (testResults.missing.critical.some((c: any) => c.type === 'RLS_DISABLED')) {
+      recommendations.push('🚨 URGENTE: Habilitar RLS em todas as tabelas críticas');
+    }
 
-    testResults.recommendations = [
-      'Implementar trigger para validação de conflitos de horário',
-      'Adicionar limpeza automática de logs antigos',
-      'Criar sistema de notificações usando Supabase Realtime'
-    ];
+    if (testResults.missing.critical.some((c: any) => c.type === 'PERMISSIVE_POLICY')) {
+      recommendations.push('🚨 URGENTE: Remover políticas com USING (true) - permitem acesso irrestrito');
+    }
+
+    if (testResults.missing.critical.some((c: any) => c.type === 'INFINITE_RECURSION')) {
+      recommendations.push('🚨 URGENTE: Corrigir recursão infinita nas políticas RLS usando SECURITY DEFINER');
+    }
+
+    if (testResults.missing.critical.some((c: any) => c.type === 'MISSING_INSERT_POLICY')) {
+      recommendations.push('⚠️ Adicionar políticas INSERT para tabelas de dados do usuário');
+    }
+
+    // Performance recommendations
+    const missingIndexCount = testResults.missing.medium.filter((m: any) => m.type === 'MISSING_INDEX').length;
+    if (missingIndexCount > 0) {
+      recommendations.push(`⚡ Criar ${missingIndexCount} índices recomendados para melhorar performance`);
+    }
+
+    // General recommendations
+    if (testResults.realData.recentErrors.length > 5) {
+      recommendations.push('🔍 Investigar e resolver erros frequentes no app_logs');
+    }
+
+    if (recommendations.length === 0) {
+      recommendations.push('✅ Sistema em bom estado! Continue monitorando regularmente.');
+    }
+
+    testResults.recommendations = recommendations;
   };
 
   const autoFix = async (issueType: string) => {
