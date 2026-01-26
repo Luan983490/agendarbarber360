@@ -1684,6 +1684,14 @@ export type Database = {
           threshold: number
         }[]
       }
+      get_all_tables_info: {
+        Args: never
+        Returns: {
+          has_rls: boolean
+          row_count: number
+          table_name: string
+        }[]
+      }
       get_audit_timeline: {
         Args: {
           p_booking_id?: string
@@ -1776,6 +1784,15 @@ export type Database = {
         Args: { p_client_id: string }
         Returns: string
       }
+      get_database_functions_info: {
+        Args: never
+        Returns: {
+          argument_types: string
+          function_name: string
+          function_type: string
+          return_type: string
+        }[]
+      }
       get_exportable_report_data: {
         Args: {
           p_end_date: string
@@ -1783,6 +1800,16 @@ export type Database = {
           p_start_date: string
         }
         Returns: Json
+      }
+      get_foreign_keys_info: {
+        Args: never
+        Returns: {
+          column_name: string
+          constraint_name: string
+          foreign_column: string
+          foreign_table: string
+          table_name: string
+        }[]
       }
       get_indexes_info: {
         Args: never
@@ -1850,6 +1877,16 @@ export type Database = {
           barber_name: string
           occupancy_rate: number
           occupied_hours: number
+        }[]
+      }
+      get_tables_schema_info: {
+        Args: never
+        Returns: {
+          column_default: string
+          column_name: string
+          data_type: string
+          is_nullable: boolean
+          table_name: string
         }[]
       }
       get_tables_without_rls: {
