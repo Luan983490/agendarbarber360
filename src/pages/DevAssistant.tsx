@@ -83,63 +83,120 @@ const RealtimeDevAssistant = () => {
 
   // Call Claude API (via Edge Function)
   const callClaudeAPI = async (userMessage: string): Promise<string> => {
-    addLog('Enviando pergunta para Claude...', 'info');
+    addLog('Enviando pergunta para Claude com contexto do banco...', 'info');
 
-    // Build context with analysis results and logs
+    // Build comprehensive context with ALL database information
     const contextParts: string[] = [];
     
     if (results) {
-      // Add real database structure info
+      // Add COMPLETE database structure info
       if (results.realData?.allTables?.length > 0) {
         const tablesList = results.realData.allTables.map((t: any) => 
-          `  - ${t.table_name} (RLS: ${t.has_rls ? 'Sim' : 'NÃO'}, ~${t.row_count} linhas)`
+          `  - ${t.table_name} (RLS: ${t.has_rls ? 'Ativo' : 'DESATIVADO'}, ~${t.row_count >= 0 ? t.row_count : '?'} registros)`
         ).join('\n');
         contextParts.push(`
-TABELAS DO BANCO DE DADOS (${results.realData.allTables.length} tabelas):
+=== ESTRUTURA COMPLETA DO BANCO DE DADOS ===
+Total de tabelas: ${results.realData.allTables.length}
+
+LISTA DE TODAS AS TABELAS:
 ${tablesList}
         `);
       }
 
-      // Add database functions
+      // Add detailed schema info (columns)
+      if (results.realData?.tablesSchema?.length > 0) {
+        const schemaByTable: Record<string, string[]> = {};
+        results.realData.tablesSchema.forEach((col: any) => {
+          if (!schemaByTable[col.table_name]) schemaByTable[col.table_name] = [];
+          schemaByTable[col.table_name].push(`${col.column_name}: ${col.data_type}${col.is_nullable ? '' : ' NOT NULL'}`);
+        });
+        const schemaInfo = Object.entries(schemaByTable).map(([table, cols]) => 
+          `\n${table}:\n  ${cols.join('\n  ')}`
+        ).join('');
+        contextParts.push(`
+=== SCHEMA DETALHADO (COLUNAS) ===
+${schemaInfo}
+        `);
+      }
+
+      // Add foreign keys
+      if (results.realData?.foreignKeys?.length > 0) {
+        const fkList = results.realData.foreignKeys.map((fk: any) => 
+          `  - ${fk.table_name}.${fk.column_name} -> ${fk.foreign_table}.${fk.foreign_column}`
+        ).join('\n');
+        contextParts.push(`
+=== FOREIGN KEYS (${results.realData.foreignKeys.length}) ===
+${fkList}
+        `);
+      }
+
+      // Add ALL database functions
       if (results.realData?.databaseFunctions?.length > 0) {
-        const funcsList = results.realData.databaseFunctions.slice(0, 30).map((f: any) => 
+        const funcsList = results.realData.databaseFunctions.map((f: any) => 
           `  - ${f.function_name}(${f.argument_types || ''}) -> ${f.return_type}`
         ).join('\n');
         contextParts.push(`
-FUNÇÕES DO BANCO (${results.realData.databaseFunctions.length} total):
+=== FUNÇÕES DO BANCO (${results.realData.databaseFunctions.length}) ===
 ${funcsList}
         `);
       }
 
-      // Add policies info
+      // Add ALL policies info with details
       if (results.realData?.policies?.length > 0) {
         const policiesByTable: Record<string, string[]> = {};
         results.realData.policies.forEach((p: any) => {
           if (!policiesByTable[p.tablename]) policiesByTable[p.tablename] = [];
-          policiesByTable[p.tablename].push(`${p.policyname} (${p.cmd})`);
+          policiesByTable[p.tablename].push(`${p.policyname} (${p.cmd}, ${p.permissive})`);
         });
         const policiesInfo = Object.entries(policiesByTable).map(([table, policies]) => 
-          `  - ${table}: ${policies.length} políticas`
-        ).join('\n');
+          `\n${table} (${policies.length} políticas):\n  ${policies.join('\n  ')}`
+        ).join('');
         contextParts.push(`
-POLÍTICAS RLS (${results.realData.policies.length} total):
+=== POLÍTICAS RLS (${results.realData.policies.length} total) ===
 ${policiesInfo}
         `);
       }
 
+      // Add indexes
+      if (results.realData?.indexes?.length > 0) {
+        const indexList = results.realData.indexes.slice(0, 50).map((idx: any) => 
+          `  - ${idx.indexname} em ${idx.tablename}`
+        ).join('\n');
+        contextParts.push(`
+=== ÍNDICES (${results.realData.indexes.length}) ===
+${indexList}
+        `);
+      }
+
+      // Add triggers
+      if (results.realData?.triggers?.length > 0) {
+        const triggerList = results.realData.triggers.map((t: any) => 
+          `  - ${t.trigger_name} em ${t.event_object_table} (${t.event_manipulation})`
+        ).join('\n');
+        contextParts.push(`
+=== TRIGGERS (${results.realData.triggers.length}) ===
+${triggerList}
+        `);
+      }
+
       contextParts.push(`
-RESULTADOS DA ÚLTIMA ANÁLISE:
+=== ANÁLISE DE SEGURANÇA ===
 - Testes de Segurança: ${results.security.passed} passaram, ${results.security.failed} falharam, ${results.security.warnings} avisos
 - Performance: ${results.performance.passed} passaram, ${results.performance.failed} falharam
 - Problemas Críticos: ${results.missing.critical.length}
 - Problemas Médios: ${results.missing.medium.length}
 - Problemas Baixos: ${results.missing.low.length}
 
-Detalhes dos problemas críticos:
-${results.missing.critical.map((issue: any) => `- ${issue.table || issue.name}: ${issue.description}`).join('\n')}
+Problemas Críticos Detectados:
+${results.missing.critical.length > 0 ? results.missing.critical.map((issue: any) => `- ${issue.table || issue.name}: ${issue.description}`).join('\n') : 'Nenhum'}
 
 Recomendações:
-${results.recommendations.join('\n- ')}
+${results.recommendations.length > 0 ? results.recommendations.join('\n- ') : 'Nenhuma'}
+      `);
+    } else {
+      contextParts.push(`
+ATENÇÃO: O usuário ainda não executou a análise do banco de dados.
+Sugira que ele clique em "Executar Análise" para obter informações completas do banco.
       `);
     }
 
@@ -1131,11 +1188,97 @@ FOR EACH ROW EXECUTE FUNCTION check_booking_conflicts();`
                 </div>
               )}
 
+              {/* Database Schema Overview */}
+              {results && results.realData?.allTables?.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-lg md:text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <Database className="w-5 h-5 text-indigo-300" />
+                    Estrutura do Banco de Dados ({results.realData.allTables.length} tabelas)
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-80 overflow-y-auto">
+                    {results.realData.allTables.map((table: any, idx: number) => (
+                      <div 
+                        key={idx} 
+                        className={`p-3 rounded-lg border ${
+                          table.has_rls 
+                            ? 'bg-green-500/10 border-green-500/30' 
+                            : 'bg-red-500/10 border-red-500/30'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-white font-medium text-sm">{table.table_name}</span>
+                          <span className={`text-xs px-2 py-1 rounded ${
+                            table.has_rls 
+                              ? 'bg-green-500/20 text-green-300' 
+                              : 'bg-red-500/20 text-red-300'
+                          }`}>
+                            {table.has_rls ? 'RLS ✓' : 'SEM RLS'}
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          ~{table.row_count >= 0 ? table.row_count : '?'} registros
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Database Functions Overview */}
+              {results && results.realData?.databaseFunctions?.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-lg md:text-xl font-bold text-white mb-4">
+                    Funções do Banco ({results.realData.databaseFunctions.length})
+                  </h3>
+                  <div className="bg-slate-800/50 rounded-xl p-4 max-h-48 overflow-y-auto">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 font-mono text-xs">
+                      {results.realData.databaseFunctions.slice(0, 20).map((func: any, idx: number) => (
+                        <div key={idx} className="text-indigo-200">
+                          {func.function_name}()
+                        </div>
+                      ))}
+                      {results.realData.databaseFunctions.length > 20 && (
+                        <div className="text-gray-400 col-span-2">
+                          ... e mais {results.realData.databaseFunctions.length - 20} funções
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Policies Overview */}
+              {results && results.realData?.policies?.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-lg md:text-xl font-bold text-white mb-4">
+                    Políticas RLS ({results.realData.policies.length})
+                  </h3>
+                  <div className="bg-slate-800/50 rounded-xl p-4 max-h-48 overflow-y-auto">
+                    {(() => {
+                      const policiesByTable: Record<string, number> = {};
+                      results.realData.policies.forEach((p: any) => {
+                        policiesByTable[p.tablename] = (policiesByTable[p.tablename] || 0) + 1;
+                      });
+                      return (
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                          {Object.entries(policiesByTable).map(([table, count], idx) => (
+                            <div key={idx} className="bg-indigo-500/10 rounded-lg p-2 text-center">
+                              <div className="text-white text-sm font-medium">{table}</div>
+                              <div className="text-indigo-300 text-xs">{count} políticas</div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              )}
+
               {!results && !testing && (
                 <div className="text-center py-12">
                   <Database className="w-16 h-16 text-indigo-300 mx-auto mb-4" />
                   <p className="text-white text-lg mb-2">Clique em Executar Análise</p>
-                  <p className="text-indigo-300">para testar o sistema completo</p>
+                  <p className="text-indigo-300">para ver dados REAIS do banco de dados</p>
                 </div>
               )}
             </div>
