@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Shield, Zap, Database, AlertTriangle, CheckCircle, RefreshCw, Play, Bug, Wrench, ListChecks, MessageCircle, Send, Trash2, User, Bot, Key, Eye, EyeOff } from 'lucide-react';
+import { Shield, Zap, Database, AlertTriangle, CheckCircle, RefreshCw, Play, Bug, Wrench, ListChecks, MessageCircle, Send, Trash2, User, Bot } from 'lucide-react';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -15,9 +15,6 @@ const RealtimeDevAssistant = () => {
   const [logs, setLogs] = useState<Array<{timestamp: string; message: string; type: string}>>([]);
   
   // Claude API states
-  const [apiKey, setApiKey] = useState('');
-  const [apiKeyConfigured, setApiKeyConfigured] = useState(false);
-  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [testingApi, setTestingApi] = useState(false);
   const [apiTestResult, setApiTestResult] = useState<'success' | 'error' | null>(null);
   
@@ -30,12 +27,8 @@ const RealtimeDevAssistant = () => {
   const SUPABASE_URL = 'https://ppmiandwpebzsfqqhhws.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwbWlhbmR3cGVienNmcXFoaHdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzOTIyMDQsImV4cCI6MjA3Mzk2ODIwNH0.7CXM6HqUQXfWCXYIO4VcGnqPttnqlSzm7RYnen8IY5M';
 
-  // Check if API key exists on mount
+  // Test connection on mount
   useEffect(() => {
-    const savedKey = localStorage.getItem('anthropic_api_key');
-    if (savedKey) {
-      setApiKeyConfigured(true);
-    }
     testConnection();
   }, []);
 
@@ -49,49 +42,23 @@ const RealtimeDevAssistant = () => {
     setLogs(prev => [...prev, { timestamp, message, type }]);
   };
 
-  // Save API Key
-  const saveApiKey = () => {
-    if (apiKey.trim()) {
-      localStorage.setItem('anthropic_api_key', apiKey.trim());
-      setApiKeyConfigured(true);
-      setShowApiKeyInput(false);
-      setApiKey('');
-      addLog('✅ API Key da Anthropic salva com sucesso!', 'success');
-    }
-  };
 
-  // Remove API Key
-  const removeApiKey = () => {
-    localStorage.removeItem('anthropic_api_key');
-    setApiKeyConfigured(false);
-    setApiTestResult(null);
-    addLog('🗑️ API Key removida', 'info');
-  };
-
-  // Test Claude API Connection
+  // Test Claude API Connection (via Edge Function)
   const testClaudeConnection = async () => {
-    const savedKey = localStorage.getItem('anthropic_api_key');
-    if (!savedKey) {
-      addLog('❌ Nenhuma API Key configurada', 'error');
-      return;
-    }
-
     setTestingApi(true);
     setApiTestResult(null);
-    addLog('🔍 Testando conexão com Claude...', 'info');
+    addLog('🔍 Testando conexão com Claude via Edge Function...', 'info');
 
     try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/claude-proxy`, {
         method: 'POST',
         headers: {
-          'x-api-key': savedKey,
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
         },
         body: JSON.stringify({
-          model: 'claude-3-5-sonnet-20241022',
-          max_tokens: 10,
-          messages: [{ role: 'user', content: 'Teste de conexão. Responda apenas: OK' }]
+          messages: [{ role: 'user', content: 'Teste de conexão. Responda apenas: OK' }],
+          max_tokens: 10
         })
       });
 
@@ -100,15 +67,7 @@ const RealtimeDevAssistant = () => {
         addLog('✅ Conexão com Claude estabelecida com sucesso!', 'success');
       } else {
         const errorData = await response.json().catch(() => ({}));
-        let errorMessage = `Erro ${response.status}: ${errorData.error?.message || 'Erro desconhecido'}`;
-
-        if (response.status === 401) {
-          errorMessage = 'API Key inválida. Verifique sua chave.';
-        } else if (response.status === 429) {
-          errorMessage = 'Limite de requisições excedido. Aguarde alguns minutos.';
-        } else if (response.status === 529) {
-          errorMessage = 'API sobrecarregada. Tente novamente em alguns minutos.';
-        }
+        let errorMessage = errorData.error || `Erro ${response.status}`;
         
         setApiTestResult('error');
         addLog(`❌ ${errorMessage}`, 'error');
@@ -116,27 +75,14 @@ const RealtimeDevAssistant = () => {
     } catch (error: any) {
       setApiTestResult('error');
       console.error('Erro detalhado:', error);
-      
-      // Check if it's a network/CORS error
-      if (!navigator.onLine) {
-        addLog('❌ Erro de rede. Verifique sua conexão com a internet.', 'error');
-      } else if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
-        addLog('❌ Erro de CORS: A API da Anthropic não permite chamadas diretas do navegador. É necessário usar um backend/proxy.', 'error');
-      } else {
-        addLog(`❌ Erro de conexão: ${error.message}`, 'error');
-      }
+      addLog(`❌ Erro de conexão: ${error.message}`, 'error');
     } finally {
       setTestingApi(false);
     }
   };
 
-  // Call Claude API
+  // Call Claude API (via Edge Function)
   const callClaudeAPI = async (userMessage: string): Promise<string> => {
-    const savedKey = localStorage.getItem('anthropic_api_key');
-    if (!savedKey) {
-      throw new Error('API Key não configurada');
-    }
-
     addLog('Enviando pergunta para Claude...', 'info');
 
     // Build context with analysis results and logs
@@ -188,16 +134,13 @@ INSTRUÇÕES:
 6. Se não souber algo específico do sistema, pergunte ao usuário`;
 
     try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/claude-proxy`, {
         method: 'POST',
         headers: {
-          'x-api-key': savedKey,
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
         },
         body: JSON.stringify({
-          model: 'claude-3-5-sonnet-20241022',
-          max_tokens: 2000,
           system: systemPrompt,
           messages: [
             ...chatMessages.map(msg => ({
@@ -205,22 +148,14 @@ INSTRUÇÕES:
               content: msg.content
             })),
             { role: 'user', content: userMessage }
-          ]
+          ],
+          max_tokens: 2000
         })
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        let errorMessage = `Erro ${response.status}: ${errorData.error?.message || 'Erro desconhecido'}`;
-
-        if (response.status === 401) {
-          errorMessage = 'API Key inválida';
-        } else if (response.status === 429) {
-          errorMessage = 'Limite de requisições excedido. Aguarde alguns minutos.';
-        } else if (response.status === 529) {
-          errorMessage = 'API sobrecarregada, tente novamente em alguns minutos.';
-        }
-
+        const errorMessage = errorData.error || `Erro ${response.status}`;
         addLog('Erro: ' + errorMessage, 'error');
         throw new Error(errorMessage);
       }
@@ -230,18 +165,6 @@ INSTRUÇÕES:
       return data.content[0].text;
     } catch (error: any) {
       console.error('Erro detalhado:', error);
-      
-      // Check if it's a network/CORS error
-      if (!navigator.onLine) {
-        const msg = 'Erro de rede. Verifique sua conexão com a internet.';
-        addLog('Erro: ' + msg, 'error');
-        throw new Error(msg);
-      } else if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
-        const msg = 'Erro de CORS: A API da Anthropic não permite chamadas diretas do navegador. Para resolver, você precisa usar um backend/proxy (como uma Edge Function do Supabase).';
-        addLog('Erro: ' + msg, 'error');
-        throw new Error(msg);
-      }
-      
       addLog('Erro: ' + error.message, 'error');
       throw error;
     }
@@ -581,105 +504,46 @@ FOR EACH ROW EXECUTE FUNCTION check_booking_conflicts();`
           </div>
         </div>
 
-        {/* API Key Configuration Card */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 mb-6 border border-white/20">
+        {/* Claude API Config - Simplified (Edge Function handles the key) */}
+        <div className="bg-gradient-to-r from-indigo-800/50 to-purple-800/50 rounded-xl p-4 mb-6 border border-indigo-500/30">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3">
-              <Key className="w-6 h-6 text-amber-300" />
+              <div className="w-10 h-10 bg-indigo-500/20 rounded-lg flex items-center justify-center">
+                <Bot className="w-5 h-5 text-indigo-300" />
+              </div>
               <div>
                 <h3 className="text-white font-semibold">API Claude (Anthropic)</h3>
-                <p className="text-indigo-200 text-sm">Necessário para o chat inteligente</p>
+                <p className="text-indigo-200 text-sm">Configurada via Edge Function do servidor</p>
               </div>
             </div>
             
             <div className="flex items-center gap-3 flex-wrap">
-              {apiKeyConfigured ? (
-                <>
-                  <div className="flex items-center gap-2 px-3 py-2 bg-green-500/20 rounded-lg">
-                    <span className="text-lg">🟢</span>
-                    <span className="text-green-300 text-sm font-medium">API Configurada</span>
-                  </div>
-                  <button
-                    onClick={testClaudeConnection}
-                    disabled={testingApi}
-                    className="px-4 py-2 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 rounded-lg text-sm font-medium transition-all flex items-center gap-2"
-                  >
-                    {testingApi ? (
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Play className="w-4 h-4" />
-                    )}
-                    Testar Conexão
-                  </button>
-                  <button
-                    onClick={() => setShowApiKeyInput(true)}
-                    className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm transition-all"
-                  >
-                    Alterar
-                  </button>
-                  <button
-                    onClick={removeApiKey}
-                    className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg text-sm transition-all"
-                  >
-                    Remover
-                  </button>
-                  {apiTestResult === 'success' && (
-                    <CheckCircle className="w-5 h-5 text-green-400" />
-                  )}
-                  {apiTestResult === 'error' && (
-                    <AlertTriangle className="w-5 h-5 text-red-400" />
-                  )}
-                </>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">🔴</span>
-                  <span className="text-red-300 text-sm font-medium">API Não Configurada</span>
-                  <button
-                    onClick={() => setShowApiKeyInput(true)}
-                    className="px-4 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg text-sm font-medium transition-all"
-                  >
-                    Configurar
-                  </button>
+              <button
+                onClick={testClaudeConnection}
+                disabled={testingApi}
+                className="px-4 py-2 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 rounded-lg text-sm font-medium transition-all flex items-center gap-2"
+              >
+                {testingApi ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Play className="w-4 h-4" />
+                )}
+                Testar Conexão
+              </button>
+              {apiTestResult === 'success' && (
+                <div className="flex items-center gap-2 px-3 py-2 bg-green-500/20 rounded-lg">
+                  <CheckCircle className="w-5 h-5 text-green-400" />
+                  <span className="text-green-300 text-sm">Conectado</span>
+                </div>
+              )}
+              {apiTestResult === 'error' && (
+                <div className="flex items-center gap-2 px-3 py-2 bg-red-500/20 rounded-lg">
+                  <AlertTriangle className="w-5 h-5 text-red-400" />
+                  <span className="text-red-300 text-sm">Erro</span>
                 </div>
               )}
             </div>
           </div>
-
-          {/* API Key Input */}
-          {showApiKeyInput && (
-            <div className="mt-4 pt-4 border-t border-white/10">
-              <div className="flex items-center gap-3 flex-wrap">
-                <div className="flex-1 min-w-[300px]">
-                  <input
-                    type="password"
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                    placeholder="Cole sua API Key da Anthropic aqui (sk-ant-...)"
-                    className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-                <button
-                  onClick={saveApiKey}
-                  disabled={!apiKey.trim()}
-                  className="px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-300 rounded-lg text-sm font-medium transition-all disabled:opacity-50"
-                >
-                  Salvar API Key
-                </button>
-                <button
-                  onClick={() => {
-                    setShowApiKeyInput(false);
-                    setApiKey('');
-                  }}
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm transition-all"
-                >
-                  Cancelar
-                </button>
-              </div>
-              <p className="text-xs text-gray-400 mt-2">
-                💡 Obtenha sua API Key em: <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" className="text-indigo-300 hover:underline">console.anthropic.com</a>
-              </p>
-            </div>
-          )}
         </div>
 
         {/* Tabs */}
@@ -1018,115 +882,95 @@ FOR EACH ROW EXECUTE FUNCTION check_booking_conflicts();`
                 </button>
               </div>
 
-              {!apiKeyConfigured && (
-                <div className="flex-1 flex items-center justify-center">
-                  <div className="text-center">
-                    <Key className="w-16 h-16 text-amber-300 mx-auto mb-4" />
-                    <p className="text-white text-lg mb-2">API Key não configurada</p>
-                    <p className="text-indigo-300 mb-4">Configure sua API Key da Anthropic para usar o chat</p>
-                    <button
-                      onClick={() => setShowApiKeyInput(true)}
-                      className="px-6 py-3 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-xl font-medium transition-all"
-                    >
-                      Configurar API Key
-                    </button>
+              {/* Chat Messages */}
+              <div className="flex-1 overflow-y-auto bg-slate-800/30 rounded-xl p-4 mb-4">
+                {chatMessages.length === 0 ? (
+                  <div className="h-full flex items-center justify-center text-center">
+                    <div>
+                      <Bot className="w-16 h-16 text-indigo-300 mx-auto mb-4" />
+                      <p className="text-white text-lg mb-2">Olá! Sou seu assistente de desenvolvimento.</p>
+                      <p className="text-indigo-300 text-sm">
+                        Pergunte sobre Supabase, PostgreSQL, RLS, ou qualquer questão do sistema.
+                      </p>
+                    </div>
                   </div>
-                </div>
-              )}
-
-              {apiKeyConfigured && (
-                <>
-                  {/* Chat Messages */}
-                  <div className="flex-1 overflow-y-auto bg-slate-800/30 rounded-xl p-4 mb-4">
-                    {chatMessages.length === 0 ? (
-                      <div className="h-full flex items-center justify-center text-center">
-                        <div>
-                          <Bot className="w-16 h-16 text-indigo-300 mx-auto mb-4" />
-                          <p className="text-white text-lg mb-2">Olá! Sou seu assistente de desenvolvimento.</p>
-                          <p className="text-indigo-300 text-sm">
-                            Pergunte sobre Supabase, PostgreSQL, RLS, ou qualquer questão do sistema.
-                          </p>
+                ) : (
+                  <div className="space-y-4">
+                    {chatMessages.map((msg, idx) => (
+                      <div
+                        key={idx}
+                        className={`flex items-start gap-3 ${
+                          msg.role === 'user' ? 'flex-row-reverse' : ''
+                        }`}
+                      >
+                        <div
+                          className={`p-2 rounded-full ${
+                            msg.role === 'user'
+                              ? 'bg-blue-500/20'
+                              : 'bg-indigo-500/20'
+                          }`}
+                        >
+                          {msg.role === 'user' ? (
+                            <User className="w-5 h-5 text-blue-300" />
+                          ) : (
+                            <Bot className="w-5 h-5 text-indigo-300" />
+                          )}
                         </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {chatMessages.map((msg, idx) => (
+                        <div
+                          className={`max-w-[80%] p-4 rounded-2xl ${
+                            msg.role === 'user'
+                              ? 'bg-blue-500/20 text-blue-100'
+                              : 'bg-gray-700/50 text-gray-100'
+                          }`}
+                        >
+                          <div className="whitespace-pre-wrap text-sm">{msg.content}</div>
                           <div
-                            key={idx}
-                            className={`flex items-start gap-3 ${
-                              msg.role === 'user' ? 'flex-row-reverse' : ''
+                            className={`text-xs mt-2 ${
+                              msg.role === 'user' ? 'text-blue-400' : 'text-gray-400'
                             }`}
                           >
-                            <div
-                              className={`p-2 rounded-full ${
-                                msg.role === 'user'
-                                  ? 'bg-blue-500/20'
-                                  : 'bg-indigo-500/20'
-                              }`}
-                            >
-                              {msg.role === 'user' ? (
-                                <User className="w-5 h-5 text-blue-300" />
-                              ) : (
-                                <Bot className="w-5 h-5 text-indigo-300" />
-                              )}
-                            </div>
-                            <div
-                              className={`max-w-[80%] p-4 rounded-2xl ${
-                                msg.role === 'user'
-                                  ? 'bg-blue-500/20 text-blue-100'
-                                  : 'bg-gray-700/50 text-gray-100'
-                              }`}
-                            >
-                              <div className="whitespace-pre-wrap text-sm">{msg.content}</div>
-                              <div
-                                className={`text-xs mt-2 ${
-                                  msg.role === 'user' ? 'text-blue-400' : 'text-gray-400'
-                                }`}
-                              >
-                                {msg.timestamp}
-                              </div>
-                            </div>
+                            {msg.timestamp}
                           </div>
-                        ))}
-                        {sendingMessage && (
-                          <div className="flex items-start gap-3">
-                            <div className="p-2 rounded-full bg-indigo-500/20">
-                              <Bot className="w-5 h-5 text-indigo-300" />
-                            </div>
-                            <div className="bg-gray-700/50 p-4 rounded-2xl">
-                              <div className="flex items-center gap-2">
-                                <RefreshCw className="w-4 h-4 animate-spin text-indigo-300" />
-                                <span className="text-gray-300 text-sm">Claude está pensando...</span>
-                              </div>
-                            </div>
+                        </div>
+                      </div>
+                    ))}
+                    {sendingMessage && (
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 rounded-full bg-indigo-500/20">
+                          <Bot className="w-5 h-5 text-indigo-300" />
+                        </div>
+                        <div className="bg-gray-700/50 p-4 rounded-2xl">
+                          <div className="flex items-center gap-2">
+                            <RefreshCw className="w-4 h-4 animate-spin text-indigo-300" />
+                            <span className="text-gray-300 text-sm">Claude está pensando...</span>
                           </div>
-                        )}
-                        <div ref={chatEndRef} />
+                        </div>
                       </div>
                     )}
+                    <div ref={chatEndRef} />
                   </div>
+                )}
+              </div>
 
-                  {/* Chat Input */}
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="text"
-                      value={chatInput}
-                      onChange={(e) => setChatInput(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                      placeholder="Digite sua mensagem..."
-                      disabled={sendingMessage}
-                      className="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
-                    />
-                    <button
-                      onClick={sendMessage}
-                      disabled={!chatInput.trim() || sendingMessage}
-                      className="p-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <Send className="w-5 h-5" />
-                    </button>
-                  </div>
-                </>
-              )}
+              {/* Chat Input */}
+              <div className="flex items-center gap-3">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                  placeholder="Digite sua mensagem..."
+                  disabled={sendingMessage}
+                  className="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+                />
+                <button
+                  onClick={sendMessage}
+                  disabled={!chatInput.trim() || sendingMessage}
+                  className="p-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Send className="w-5 h-5" />
+                </button>
+              </div>
             </div>
           )}
         </div>
