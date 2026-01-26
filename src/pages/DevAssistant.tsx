@@ -89,6 +89,44 @@ const RealtimeDevAssistant = () => {
     const contextParts: string[] = [];
     
     if (results) {
+      // Add real database structure info
+      if (results.realData?.allTables?.length > 0) {
+        const tablesList = results.realData.allTables.map((t: any) => 
+          `  - ${t.table_name} (RLS: ${t.has_rls ? 'Sim' : 'NÃO'}, ~${t.row_count} linhas)`
+        ).join('\n');
+        contextParts.push(`
+TABELAS DO BANCO DE DADOS (${results.realData.allTables.length} tabelas):
+${tablesList}
+        `);
+      }
+
+      // Add database functions
+      if (results.realData?.databaseFunctions?.length > 0) {
+        const funcsList = results.realData.databaseFunctions.slice(0, 30).map((f: any) => 
+          `  - ${f.function_name}(${f.argument_types || ''}) -> ${f.return_type}`
+        ).join('\n');
+        contextParts.push(`
+FUNÇÕES DO BANCO (${results.realData.databaseFunctions.length} total):
+${funcsList}
+        `);
+      }
+
+      // Add policies info
+      if (results.realData?.policies?.length > 0) {
+        const policiesByTable: Record<string, string[]> = {};
+        results.realData.policies.forEach((p: any) => {
+          if (!policiesByTable[p.tablename]) policiesByTable[p.tablename] = [];
+          policiesByTable[p.tablename].push(`${p.policyname} (${p.cmd})`);
+        });
+        const policiesInfo = Object.entries(policiesByTable).map(([table, policies]) => 
+          `  - ${table}: ${policies.length} políticas`
+        ).join('\n');
+        contextParts.push(`
+POLÍTICAS RLS (${results.realData.policies.length} total):
+${policiesInfo}
+        `);
+      }
+
       contextParts.push(`
 RESULTADOS DA ÚLTIMA ANÁLISE:
 - Testes de Segurança: ${results.security.passed} passaram, ${results.security.failed} falharam, ${results.security.warnings} avisos
@@ -114,10 +152,15 @@ ${recentLogs.map(log => `[${log.timestamp}] [${log.type.toUpperCase()}] ${log.me
       `);
     }
 
+    // Build system prompt with real data context
+    const tablesContext = results?.realData?.allTables?.length > 0 
+      ? `O banco possui ${results.realData.allTables.length} tabelas: ${results.realData.allTables.map((t: any) => t.table_name).join(', ')}`
+      : 'Tabelas principais: bookings, barbershops, barbers, services, products, reviews, favorites, profiles, user_roles, subscriptions';
+
     const systemPrompt = `Você é um assistente especializado em Supabase, PostgreSQL e sistemas de agendamento para barbearias.
 
 CONTEXTO DO SISTEMA:
-- Tabelas principais: bookings, barbershops, barbers, services, products, reviews, favorites, profiles, user_roles, subscriptions
+- ${tablesContext}
 - O sistema usa Row Level Security (RLS) para proteger dados
 - Tecnologias: React, TypeScript, Supabase, Tailwind CSS
 - Sistema de autenticação via Supabase Auth
@@ -131,7 +174,8 @@ INSTRUÇÕES:
 3. Quando sugerir SQL, formate como código
 4. Se detectar problemas de segurança, alerte imediatamente
 5. Considere sempre as melhores práticas do Supabase
-6. Se não souber algo específico do sistema, pergunte ao usuário`;
+6. Se não souber algo específico do sistema, pergunte ao usuário
+7. Use os dados REAIS do banco de dados quando disponíveis`;
 
     try {
       const response = await fetch(`${SUPABASE_URL}/functions/v1/claude-proxy`, {
@@ -331,6 +375,95 @@ INSTRUÇÕES:
     }
   };
 
+  // Fetch ALL tables from database
+  const fetchAllTables = async (): Promise<any[]> => {
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_all_tables_info`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+      });
+      
+      if (response.ok) {
+        return await response.json();
+      }
+      return [];
+    } catch (error) {
+      addLog('⚠️ Função get_all_tables_info não encontrada', 'warning');
+      return [];
+    }
+  };
+
+  // Fetch tables schema (columns, types)
+  const fetchTablesSchema = async (): Promise<any[]> => {
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_tables_schema_info`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+      });
+      
+      if (response.ok) {
+        return await response.json();
+      }
+      return [];
+    } catch (error) {
+      return [];
+    }
+  };
+
+  // Fetch foreign keys
+  const fetchForeignKeys = async (): Promise<any[]> => {
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_foreign_keys_info`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+      });
+      
+      if (response.ok) {
+        return await response.json();
+      }
+      return [];
+    } catch (error) {
+      return [];
+    }
+  };
+
+  // Fetch database functions
+  const fetchDatabaseFunctions = async (): Promise<any[]> => {
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_database_functions_info`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+      });
+      
+      if (response.ok) {
+        return await response.json();
+      }
+      return [];
+    } catch (error) {
+      return [];
+    }
+  };
+
   // Fetch recent database errors from app_logs
   const fetchRecentErrors = async (): Promise<any[]> => {
     try {
@@ -371,7 +504,11 @@ INSTRUÇÕES:
         indexes: [] as any[],
         triggers: [] as any[],
         tablesWithoutRLS: [] as any[],
-        recentErrors: [] as any[]
+        recentErrors: [] as any[],
+        allTables: [] as any[],
+        tablesSchema: [] as any[],
+        foreignKeys: [] as any[],
+        databaseFunctions: [] as any[]
       }
     };
 
@@ -394,6 +531,26 @@ INSTRUÇÕES:
     addLog('📊 Buscando tabelas sem RLS...', 'info');
     const tablesWithoutRLS = await fetchTablesWithoutRLS();
     testResults.realData.tablesWithoutRLS = tablesWithoutRLS;
+
+    addLog('📊 Buscando TODAS as tabelas do banco...', 'info');
+    const allTables = await fetchAllTables();
+    testResults.realData.allTables = allTables;
+    addLog(`📋 ${allTables.length} tabelas encontradas no banco`, 'success');
+
+    addLog('📊 Buscando schema das tabelas...', 'info');
+    const tablesSchema = await fetchTablesSchema();
+    testResults.realData.tablesSchema = tablesSchema;
+    addLog(`📋 ${tablesSchema.length} colunas encontradas`, 'success');
+
+    addLog('📊 Buscando foreign keys...', 'info');
+    const foreignKeys = await fetchForeignKeys();
+    testResults.realData.foreignKeys = foreignKeys;
+    addLog(`📋 ${foreignKeys.length} foreign keys encontradas`, 'success');
+
+    addLog('📊 Buscando funções do banco...', 'info');
+    const databaseFunctions = await fetchDatabaseFunctions();
+    testResults.realData.databaseFunctions = databaseFunctions;
+    addLog(`📋 ${databaseFunctions.length} funções encontradas`, 'success');
 
     addLog('📊 Buscando erros recentes do app_logs...', 'info');
     const recentErrors = await fetchRecentErrors();
