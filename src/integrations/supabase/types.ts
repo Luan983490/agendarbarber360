@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_config: {
+        Row: {
+          created_at: string | null
+          key: string
+          value: string
+        }
+        Insert: {
+          created_at?: string | null
+          key: string
+          value: string
+        }
+        Update: {
+          created_at?: string | null
+          key?: string
+          value?: string
+        }
+        Relationships: []
+      }
       app_logs: {
         Row: {
           barbershop_id: string | null
@@ -1191,6 +1209,7 @@ export type Database = {
           gender: string | null
           id: string
           phone: string | null
+          phone_encrypted: string | null
           updated_at: string
           user_id: string
           user_type: string | null
@@ -1204,6 +1223,7 @@ export type Database = {
           gender?: string | null
           id?: string
           phone?: string | null
+          phone_encrypted?: string | null
           updated_at?: string
           user_id: string
           user_type?: string | null
@@ -1217,8 +1237,51 @@ export type Database = {
           gender?: string | null
           id?: string
           phone?: string | null
+          phone_encrypted?: string | null
           updated_at?: string
           user_id?: string
+          user_type?: string | null
+        }
+        Relationships: []
+      }
+      profiles_backup: {
+        Row: {
+          address: Json | null
+          avatar_url: string | null
+          birth_date: string | null
+          created_at: string | null
+          display_name: string | null
+          gender: string | null
+          id: string | null
+          phone: string | null
+          updated_at: string | null
+          user_id: string | null
+          user_type: string | null
+        }
+        Insert: {
+          address?: Json | null
+          avatar_url?: string | null
+          birth_date?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          gender?: string | null
+          id?: string | null
+          phone?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          user_type?: string | null
+        }
+        Update: {
+          address?: Json | null
+          avatar_url?: string | null
+          birth_date?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          gender?: string | null
+          id?: string | null
+          phone?: string | null
+          updated_at?: string | null
+          user_id?: string | null
           user_type?: string | null
         }
         Relationships: []
@@ -1672,6 +1735,7 @@ export type Database = {
           valor: string
         }[]
       }
+      decrypt_phone: { Args: { encrypted_phone: string }; Returns: string }
       get_active_alerts: {
         Args: never
         Returns: {
@@ -1754,6 +1818,10 @@ export type Database = {
           state: string
         }[]
       }
+      get_barbershop_favorites_count: {
+        Args: { p_barbershop_id: string }
+        Returns: number
+      }
       get_bookings_report: {
         Args: {
           p_barber_filter?: string
@@ -1793,6 +1861,11 @@ export type Database = {
           return_type: string
         }[]
       }
+      get_decrypted_phone: {
+        Args: { profile_user_id: string }
+        Returns: string
+      }
+      get_encryption_key: { Args: never; Returns: string }
       get_exportable_report_data: {
         Args: {
           p_end_date: string
@@ -1980,6 +2053,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      sanitize_input: { Args: { input_text: string }; Returns: string }
       search_barbershops_by_proximity: {
         Args: { max_distance_km?: number; user_lat: number; user_lon: number }
         Returns: {
