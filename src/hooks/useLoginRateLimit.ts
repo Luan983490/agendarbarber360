@@ -116,17 +116,30 @@ export function useLoginRateLimit(): UseLoginRateLimitResult {
     }
   }, [data.blockedUntil, isBlocked]);
 
-  // Carregar dados ao montar
+  // Carregar dados ao montar - CRÍTICO para persistência após F5
   useEffect(() => {
-    const stored = getStoredData();
+    const loadStoredState = () => {
+      const stored = getStoredData();
+      const now = Date.now();
+      
+      // Verificar se o bloqueio expirou
+      if (stored.blockedUntil && now >= stored.blockedUntil) {
+        // Bloqueio expirou - limpar apenas o bloqueio, manter contagem
+        stored.blockedUntil = null;
+        setStoredData(stored);
+      }
+      
+      // Atualizar estado com dados do localStorage
+      setData(stored);
+      
+      // Se ainda está bloqueado, calcular segundos restantes imediatamente
+      if (stored.blockedUntil && now < stored.blockedUntil) {
+        const remaining = Math.ceil((stored.blockedUntil - now) / 1000);
+        setRemainingSeconds(remaining);
+      }
+    };
     
-    // Verificar se o bloqueio expirou
-    if (stored.blockedUntil && Date.now() >= stored.blockedUntil) {
-      stored.blockedUntil = null;
-      setStoredData(stored);
-    }
-    
-    setData(stored);
+    loadStoredState();
   }, []);
 
   const recordFailedAttempt = useCallback(() => {

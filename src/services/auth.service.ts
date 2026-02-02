@@ -186,7 +186,8 @@ export class AuthService {
     };
 
     const timer = logger.startTimer();
-    logger.info('signIn', 'Starting sign in', { email: sanitizedData.email });
+    // Usar console.log em vez de logger para evitar erro 401 em app_logs
+    console.log('[AuthService.signIn] Starting sign in:', sanitizedData.email);
 
     // Rate limit check
     try {
@@ -203,7 +204,7 @@ export class AuthService {
     // Validate input
     const validation = this.validateSignIn(sanitizedData);
     if (!validation.valid) {
-      logger.warn('signIn', 'Validation failed', { errors: validation.errors });
+      console.warn('[AuthService.signIn] Validation failed:', validation.errors);
       return failure(
         ErrorCodes.VALIDATION_ERROR,
         'Dados inválidos',
@@ -218,7 +219,8 @@ export class AuthService {
       });
 
       if (error) {
-        logger.error('signIn', 'Supabase auth error', error);
+        // CRÍTICO: Usar console em vez de logger para evitar erro 401 em app_logs
+        console.error('[AuthService.signIn] Supabase auth error:', error.message);
 
         if (error.message.includes('Invalid login credentials')) {
           return failure(ErrorCodes.AUTH_INVALID_CREDENTIALS, 'Email ou senha incorretos');
@@ -250,11 +252,13 @@ export class AuthService {
       };
 
       const duration = timer();
+      // Log de sucesso com logger (usuário agora está autenticado)
       logger.logWithDuration('info', 'signIn', 'User signed in successfully', duration, { userId: session.user.id });
 
       return success(session);
     } catch (err) {
-      logger.error('signIn', 'Unexpected error', err);
+      // Usar console para erros de login para evitar erro 401
+      console.error('[AuthService.signIn] Unexpected error:', err);
       return failure(ErrorCodes.UNKNOWN_ERROR, 'Erro inesperado ao fazer login');
     }
   }
