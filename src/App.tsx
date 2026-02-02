@@ -5,16 +5,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { defaultQueryClientConfig } from "@/lib/query-config";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { AuthProvider } from "@/hooks/useAuth";
 import { useSupabasePing } from "@/hooks/use-supabase-ping";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
-import { MFAChallengeModal } from "@/components/mfa";
-import { useProvisionalAccess } from "@/hooks/useProvisionalAccess";
-import { ProvisionalAccessBanner } from "@/components/ProvisionalAccessBanner";
-import { ProvisionalAccessExpired } from "@/components/ProvisionalAccessExpired";
 
 // Loading fallback component
 import b360Logo from '@/assets/b360-logo.png';
@@ -61,57 +57,6 @@ const Cards = lazy(() => import("./pages/Cards"));
 
 const queryClient = new QueryClient(defaultQueryClientConfig);
 
-// Global guards component that handles MFA and provisional access
-const GlobalGuards = ({ children }: { children: React.ReactNode }) => {
-  const { user } = useAuth();
-  const provisionalAccess = useProvisionalAccess(user);
-  
-  // Don't show anything special if not logged in - just render children
-  if (!user) return <>{children}</>;
-  
-  // Show expired overlay if provisional access has expired
-  if (!provisionalAccess.isEmailConfirmed && provisionalAccess.isExpired && !provisionalAccess.isLoading) {
-    return (
-      <>
-        {children}
-        <ProvisionalAccessExpired
-          email={user.email || ''}
-          onResend={provisionalAccess.resendConfirmationEmail}
-          onRefresh={provisionalAccess.refreshSession}
-          isResending={provisionalAccess.isResending}
-        />
-      </>
-    );
-  }
-  
-  const showBanner = !provisionalAccess.isEmailConfirmed && !provisionalAccess.isExpired && !provisionalAccess.isLoading;
-  
-  return (
-    <>
-      {/* MFA Challenge Modal */}
-      <MFAChallengeModal />
-      
-      {/* Provisional Access Banner - only if email not confirmed and not expired */}
-      {showBanner && (
-        <div className="fixed top-0 left-0 right-0 z-50">
-          <ProvisionalAccessBanner
-            minutesRemaining={provisionalAccess.minutesRemaining}
-            secondsRemaining={provisionalAccess.secondsRemaining}
-            onResend={provisionalAccess.resendConfirmationEmail}
-            onRefresh={provisionalAccess.refreshSession}
-            isResending={provisionalAccess.isResending}
-          />
-        </div>
-      )}
-      
-      {/* Add padding when banner is visible */}
-      <div className={showBanner ? "pt-14" : ""}>
-        {children}
-      </div>
-    </>
-  );
-};
-
 const AppContent = () => {
   useSupabasePing();
   
@@ -121,147 +66,145 @@ const AppContent = () => {
       <Sonner />
       <PWAInstallPrompt />
       <BrowserRouter>
-        <GlobalGuards>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/auth/callback" element={<AuthCallback />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/dev-assistant" element={<DevAssistant />} />
-              
-              {/* Admin Routes (Owner only) */}
-              <Route 
-                path="/admin/dashboard" 
-                element={
-                  <ProtectedRoute allowedRoles={['owner']}>
-                    <Dashboard />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/dashboard" 
-                element={
-                  <ProtectedRoute allowedRoles={['owner']}>
-                    <Dashboard />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Barber Routes */}
-              <Route 
-                path="/barber/hoje" 
-                element={
-                  <ProtectedRoute allowedRoles={['barber']}>
-                    <BarberHoje />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/barber/agenda" 
-                element={
-                  <ProtectedRoute allowedRoles={['barber']}>
-                    <BarberAgenda />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/barber/performance" 
-                element={
-                  <ProtectedRoute allowedRoles={['barber']}>
-                    <BarberPerformance />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Legacy barber route - redirect to new */}
-              <Route 
-                path="/barber-dashboard" 
-                element={<Navigate to="/barber/hoje" replace />} 
-              />
-              
-              {/* Attendant Routes */}
-              <Route 
-                path="/attendant/dashboard" 
-                element={
-                  <ProtectedRoute allowedRoles={['attendant']}>
-                    <AttendantDashboard />
-                  </ProtectedRoute>
-                } 
-              />
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/dev-assistant" element={<DevAssistant />} />
+            
+            {/* Admin Routes (Owner only) */}
+            <Route 
+              path="/admin/dashboard" 
+              element={
+                <ProtectedRoute allowedRoles={['owner']}>
+                  <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard" 
+              element={
+                <ProtectedRoute allowedRoles={['owner']}>
+                  <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Barber Routes */}
+            <Route 
+              path="/barber/hoje" 
+              element={
+                <ProtectedRoute allowedRoles={['barber']}>
+                  <BarberHoje />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/barber/agenda" 
+              element={
+                <ProtectedRoute allowedRoles={['barber']}>
+                  <BarberAgenda />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/barber/performance" 
+              element={
+                <ProtectedRoute allowedRoles={['barber']}>
+                  <BarberPerformance />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Legacy barber route - redirect to new */}
+            <Route 
+              path="/barber-dashboard" 
+              element={<Navigate to="/barber/hoje" replace />} 
+            />
+            
+            {/* Attendant Routes */}
+            <Route 
+              path="/attendant/dashboard" 
+              element={
+                <ProtectedRoute allowedRoles={['attendant']}>
+                  <AttendantDashboard />
+                </ProtectedRoute>
+              } 
+            />
 
-              {/* Legacy attendant route - redirect to new */}
-              <Route 
-                path="/attendant-dashboard" 
-                element={<Navigate to="/attendant/dashboard" replace />} 
-              />
-              
-              {/* Client Routes (client only) */}
-              <Route 
-                path="/my-bookings" 
-                element={
-                  <ProtectedRoute allowedRoles={['client']}>
-                    <MyBookings />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/historico" 
-                element={
-                  <ProtectedRoute allowedRoles={['client']}>
-                    <BookingsHistory />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/favoritos" 
-                element={
-                  <ProtectedRoute allowedRoles={['client']}>
-                    <Favorites />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/perfil" 
-                element={
-                  <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Legacy client routes - kept for backwards compatibility */}
-              <Route 
-                path="/pacotes" 
-                element={
-                  <ProtectedRoute allowedRoles={['client']}>
-                    <Packages />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/assinaturas" 
-                element={
-                  <ProtectedRoute allowedRoles={['client']}>
-                    <Subscriptions />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/cartoes" 
-                element={
-                  <ProtectedRoute allowedRoles={['client']}>
-                    <Cards />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Catch-all */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </GlobalGuards>
+            {/* Legacy attendant route - redirect to new */}
+            <Route 
+              path="/attendant-dashboard" 
+              element={<Navigate to="/attendant/dashboard" replace />} 
+            />
+            
+            {/* Client Routes (client only) */}
+            <Route 
+              path="/my-bookings" 
+              element={
+                <ProtectedRoute allowedRoles={['client']}>
+                  <MyBookings />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/historico" 
+              element={
+                <ProtectedRoute allowedRoles={['client']}>
+                  <BookingsHistory />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/favoritos" 
+              element={
+                <ProtectedRoute allowedRoles={['client']}>
+                  <Favorites />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/perfil" 
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Legacy client routes - kept for backwards compatibility */}
+            <Route 
+              path="/pacotes" 
+              element={
+                <ProtectedRoute allowedRoles={['client']}>
+                  <Packages />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/assinaturas" 
+              element={
+                <ProtectedRoute allowedRoles={['client']}>
+                  <Subscriptions />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/cartoes" 
+              element={
+                <ProtectedRoute allowedRoles={['client']}>
+                  <Cards />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Catch-all */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </>
   );

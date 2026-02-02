@@ -174,19 +174,8 @@ const Auth = () => {
         return;
       }
     } else {
-      // Signup successful - check if user has session (auto-login) or needs confirmation
-      // Store email for resend functionality
-      setSignupEmail(signupData.email.trim().toLowerCase());
-      
-      // Show success screen with resend option
-      // The user might be auto-logged in (if confirm email is disabled in Supabase)
-      // or might need to confirm email first
+      setSignupEmail(signupData.email);
       setSignupSuccess(true);
-      
-      toast({
-        title: 'Conta criada com sucesso!',
-        description: 'Verifique seu e-mail para confirmar sua conta e acessar o sistema.',
-      });
     }
   };
 

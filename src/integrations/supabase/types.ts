@@ -1728,15 +1728,6 @@ export type Database = {
         Args: { _booking_id: string; _user_id: string }
         Returns: boolean
       }
-      current_user_verified: {
-        Args: never
-        Returns: {
-          email: string
-          email_confirmed: boolean
-          email_confirmed_at: string
-          user_id: string
-        }[]
-      }
       debug_slots: {
         Args: { p_barber_id: string; p_date: string; p_duration: number }
         Returns: {
@@ -1745,8 +1736,6 @@ export type Database = {
         }[]
       }
       decrypt_phone: { Args: { encrypted_phone: string }; Returns: string }
-      decrypt_sensitive: { Args: { encrypted_data: string }; Returns: string }
-      encrypt_sensitive: { Args: { data: string }; Returns: string }
       get_active_alerts: {
         Args: never
         Returns: {
@@ -2045,7 +2034,6 @@ export type Database = {
         }
         Returns: string
       }
-      is_admin_with_mfa: { Args: never; Returns: boolean }
       is_barbershop_owner: {
         Args: { _barbershop_id: string; _user_id: string }
         Returns: boolean
@@ -2058,8 +2046,6 @@ export type Database = {
         Args: { _booking_id: string; _user_id: string }
         Returns: boolean
       }
-      is_email_verified: { Args: never; Returns: boolean }
-      is_user_in_grace_period: { Args: never; Returns: boolean }
       reset_rate_limit: {
         Args: {
           p_action_type: Database["public"]["Enums"]["rate_limit_action"]
