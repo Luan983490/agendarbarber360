@@ -43,8 +43,11 @@ interface UseLoginRateLimitResult {
 const getStoredData = (): RateLimitData => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
+    console.log('[LoginRateLimit] Lendo do localStorage:', stored);
     if (stored) {
-      return JSON.parse(stored);
+      const parsed = JSON.parse(stored);
+      console.log('[LoginRateLimit] Dados parseados:', parsed);
+      return parsed;
     }
   } catch (e) {
     console.error('[LoginRateLimit] Error reading localStorage:', e);
@@ -58,6 +61,7 @@ const getStoredData = (): RateLimitData => {
 
 const setStoredData = (data: RateLimitData): void => {
   try {
+    console.log('--- TENTATIVA REGISTRADA NO LOCALSTORAGE ---', data);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch (e) {
     console.error('[LoginRateLimit] Error writing localStorage:', e);
@@ -73,13 +77,26 @@ const clearStoredData = (): void => {
 };
 
 export function useLoginRateLimit(): UseLoginRateLimitResult {
-  const [data, setData] = useState<RateLimitData>(getStoredData);
+  // CRÍTICO: Inicializar estado diretamente do localStorage
+  const [data, setData] = useState<RateLimitData>(() => {
+    const initial = getStoredData();
+    console.log('[LoginRateLimit] Estado inicial do hook:', initial);
+    return initial;
+  });
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const [captchaVerified, setCaptchaVerifiedState] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Calcular se está bloqueado
-  const isBlocked = data.blockedUntil !== null && Date.now() < data.blockedUntil;
+  // Calcular se está bloqueado - VERIFICAÇÃO DUPLA
+  const now = Date.now();
+  const isBlocked = data.blockedUntil !== null && now < data.blockedUntil;
+  
+  console.log('[LoginRateLimit] Cálculo isBlocked:', {
+    blockedUntil: data.blockedUntil,
+    now,
+    isBlocked,
+    failedAttempts: data.failedAttempts
+  });
 
   // Calcular se precisa de captcha
   const requiresCaptcha = data.failedAttempts >= ATTEMPTS_FOR_CAPTCHA;
@@ -143,39 +160,48 @@ export function useLoginRateLimit(): UseLoginRateLimitResult {
   }, []);
 
   const recordFailedAttempt = useCallback(() => {
-    const newAttempts = data.failedAttempts + 1;
-    const now = Date.now();
-    
-    // DEBUG: Log de tentativa falha
-    console.log('--- REGISTRANDO FALHA ---', newAttempts);
+    // CRÍTICO: Usar função para garantir estado mais recente
+    setData(prevData => {
+      const newAttempts = prevData.failedAttempts + 1;
+      const now = Date.now();
+      
+      console.log('--- REGISTRANDO FALHA ---', {
+        anterior: prevData.failedAttempts,
+        novo: newAttempts
+      });
 
-    let blockedUntil = data.blockedUntil;
+      let blockedUntil = prevData.blockedUntil;
 
-    // Bloquear após 3 tentativas
-    if (newAttempts >= ATTEMPTS_FOR_BLOCK && !blockedUntil) {
-      blockedUntil = now + BLOCK_DURATION_SECONDS * 1000;
-    }
+      // Bloquear após 3 tentativas
+      if (newAttempts >= ATTEMPTS_FOR_BLOCK && !blockedUntil) {
+        blockedUntil = now + BLOCK_DURATION_SECONDS * 1000;
+        console.log('[LoginRateLimit] BLOQUEANDO até:', new Date(blockedUntil).toISOString());
+      }
 
-    const newData: RateLimitData = {
-      failedAttempts: newAttempts,
-      blockedUntil,
-      lastAttempt: now,
-    };
+      const newData: RateLimitData = {
+        failedAttempts: newAttempts,
+        blockedUntil,
+        lastAttempt: now,
+      };
 
-    setData(newData);
-    setStoredData(newData);
+      // Salvar IMEDIATAMENTE no localStorage
+      setStoredData(newData);
 
-    // Resetar captcha quando bloquear (forçar reverificação)
-    if (newAttempts >= ATTEMPTS_FOR_CAPTCHA) {
-      setCaptchaVerifiedState(false);
-    }
+      // Resetar captcha quando bloquear (forçar reverificação)
+      if (newAttempts >= ATTEMPTS_FOR_CAPTCHA) {
+        setCaptchaVerifiedState(false);
+      }
 
-    console.log('[LoginRateLimit] Failed attempt recorded:', {
-      attempts: newAttempts,
-      blocked: !!blockedUntil,
-      requiresCaptcha: newAttempts >= ATTEMPTS_FOR_CAPTCHA,
+      console.log('[LoginRateLimit] Failed attempt recorded:', {
+        attempts: newAttempts,
+        blocked: !!blockedUntil,
+        blockedUntil: blockedUntil ? new Date(blockedUntil).toISOString() : null,
+        requiresCaptcha: newAttempts >= ATTEMPTS_FOR_CAPTCHA,
+      });
+
+      return newData;
     });
-  }, [data]);
+  }, []);
 
   const resetOnSuccess = useCallback(() => {
     clearStoredData();
