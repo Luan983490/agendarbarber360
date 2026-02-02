@@ -145,6 +145,9 @@ export function useLoginRateLimit(): UseLoginRateLimitResult {
   const recordFailedAttempt = useCallback(() => {
     const newAttempts = data.failedAttempts + 1;
     const now = Date.now();
+    
+    // DEBUG: Log de tentativa falha
+    console.log('--- REGISTRANDO FALHA ---', newAttempts);
 
     let blockedUntil = data.blockedUntil;
 

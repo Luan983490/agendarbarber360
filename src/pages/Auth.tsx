@@ -66,6 +66,10 @@ const Auth = () => {
     canAttemptLogin,
   } = useLoginRateLimit();
   
+  // DEBUG: Log do estado atual de rate limiting
+  console.log('Estado atual de tentativas:', failedAttempts);
+  console.log('isBlocked vale:', isBlocked);
+  
   const [loginData, setLoginData] = useState({
     email: '',
     password: ''
@@ -228,6 +232,8 @@ const Auth = () => {
           errorMessage.includes('inválid');
         
         if (isInvalidCredentials) {
+          // DEBUG: Alert para confirmar que o código está chegando aqui
+          alert('Falha detectada no login');
           recordFailedAttempt();
           
           // Mostrar mensagem apropriada baseada no número de tentativas
