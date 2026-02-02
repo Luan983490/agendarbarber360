@@ -5,12 +5,13 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { defaultQueryClientConfig } from "@/lib/query-config";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/hooks/useAuth";
+import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useSupabasePing } from "@/hooks/use-supabase-ping";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
+import { MFAChallengeModal } from "@/components/mfa";
 
 // Loading fallback component
 import b360Logo from '@/assets/b360-logo.png';
@@ -57,6 +58,15 @@ const Cards = lazy(() => import("./pages/Cards"));
 
 const queryClient = new QueryClient(defaultQueryClientConfig);
 
+const MFAGuard = () => {
+  const { user } = useAuth();
+  
+  // Only show MFA challenge modal when user is logged in
+  if (!user) return null;
+  
+  return <MFAChallengeModal />;
+};
+
 const AppContent = () => {
   useSupabasePing();
   
@@ -65,6 +75,7 @@ const AppContent = () => {
       <Toaster />
       <Sonner />
       <PWAInstallPrompt />
+      <MFAGuard />
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
           <Routes>

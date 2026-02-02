@@ -10,8 +10,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/Header';
-import { User, MapPin, Lock, Key } from 'lucide-react';
+import { User, MapPin, Lock, Key, Shield } from 'lucide-react';
 import { profileUpdateSchema, validateWithSchema, formatValidationErrors, sanitizeString } from '@/lib/validation-schemas';
+import { MFAEnrollment } from '@/components/mfa';
 
 interface Profile {
   display_name: string;
@@ -432,7 +433,10 @@ const Profile = () => {
 
           {activeTab === 'security' && (
             <div className="space-y-6">
-              <div>
+              {/* MFA Enrollment Component */}
+              <MFAEnrollment />
+
+              <div className="pt-6 border-t">
                 <Label>Senha</Label>
                 <Button variant="outline" className="w-full mt-2 justify-start" onClick={() => {
                   toast({
