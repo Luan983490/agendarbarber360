@@ -282,9 +282,6 @@ const Auth = () => {
         });
       }
       
-      // Sincronizar com o hook
-      recordFailedAttempt();
-      
     } finally {
       setLoading(false);
     }
