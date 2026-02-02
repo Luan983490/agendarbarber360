@@ -174,8 +174,13 @@ const Auth = () => {
         return;
       }
     } else {
-      setSignupEmail(signupData.email);
-      setSignupSuccess(true);
+      // Signup successful - with email confirmation disabled, user is auto-logged in
+      // Show toast about provisional access and email confirmation
+      toast({
+        title: 'Conta criada com sucesso!',
+        description: 'Você tem 60 minutos de acesso provisório. Confirme seu e-mail para acesso completo.',
+      });
+      // The useAuth hook will automatically detect the session and trigger redirect
     }
   };
 
