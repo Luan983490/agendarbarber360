@@ -62,7 +62,7 @@ export const ProvisionalAccessBanner = ({
           className="text-xs"
         >
           <Mail className="h-3 w-3 mr-1" />
-          {isResending ? "Enviando..." : "Reenviar link"}
+          {isResending ? "Enviando..." : "Não recebeu o e-mail? Reenviar agora"}
         </Button>
       </div>
     </div>

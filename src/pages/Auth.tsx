@@ -174,13 +174,19 @@ const Auth = () => {
         return;
       }
     } else {
-      // Signup successful - with email confirmation disabled, user is auto-logged in
-      // Show toast about provisional access and email confirmation
+      // Signup successful - check if user has session (auto-login) or needs confirmation
+      // Store email for resend functionality
+      setSignupEmail(signupData.email.trim().toLowerCase());
+      
+      // Show success screen with resend option
+      // The user might be auto-logged in (if confirm email is disabled in Supabase)
+      // or might need to confirm email first
+      setSignupSuccess(true);
+      
       toast({
         title: 'Conta criada com sucesso!',
-        description: 'Você tem 60 minutos de acesso provisório. Confirme seu e-mail para acesso completo.',
+        description: 'Verifique seu e-mail para confirmar sua conta e acessar o sistema.',
       });
-      // The useAuth hook will automatically detect the session and trigger redirect
     }
   };
 
