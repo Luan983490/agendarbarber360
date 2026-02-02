@@ -171,21 +171,44 @@ const Auth = () => {
     e.preventDefault();
     setServerRateLimited(false);
     
-    // Verificar bloqueio local
-    if (!canAttemptLogin) {
-      if (isBlocked) {
-        toast({
-          title: 'Muitas tentativas',
-          description: `Aguarde ${formatRemainingTime(remainingSeconds)} para tentar novamente.`,
-          variant: 'destructive',
-        });
-      } else if (requiresCaptcha && !captchaVerified) {
-        toast({
-          title: 'Verificação necessária',
-          description: 'Complete a verificação de segurança para continuar.',
-          variant: 'destructive',
-        });
-      }
+    // ===== BLOQUEIO DE EMERGÊNCIA - DIRETO NO LOCALSTORAGE =====
+    const currentAttempts = Number(localStorage.getItem('login-attempts') || 0);
+    const blockedUntilStr = localStorage.getItem('login-blocked-until');
+    const blockedUntil = blockedUntilStr ? Number(blockedUntilStr) : 0;
+    const now = Date.now();
+    
+    console.log('[Auth] Estado do localStorage:', { currentAttempts, blockedUntil, now });
+    
+    // Se está bloqueado e o tempo não passou
+    if (blockedUntil > 0 && now < blockedUntil) {
+      const remainingSecs = Math.ceil((blockedUntil - now) / 1000);
+      toast({
+        title: 'Bloqueado!',
+        description: `Aguarde ${remainingSecs} segundos para tentar novamente.`,
+        variant: 'destructive',
+      });
+      alert('BLOQUEADO! Tentativas: ' + currentAttempts + ' | Restam: ' + remainingSecs + 's');
+      return;
+    }
+    
+    // Se o bloqueio expirou, resetar
+    if (blockedUntil > 0 && now >= blockedUntil) {
+      console.log('[Auth] Bloqueio expirou, resetando...');
+      localStorage.removeItem('login-blocked-until');
+      // Manter as tentativas para exigir captcha se >= 5
+    }
+    
+    // Verificar bloqueio por tentativas (>= 3)
+    if (currentAttempts >= 3 && blockedUntil === 0) {
+      // Primeira vez atingindo 3 tentativas - aplicar bloqueio
+      const newBlockedUntil = now + 60000; // 60 segundos
+      localStorage.setItem('login-blocked-until', newBlockedUntil.toString());
+      toast({
+        title: 'Bloqueado!',
+        description: 'Muitas tentativas. Aguarde 60 segundos.',
+        variant: 'destructive',
+      });
+      alert('BLOQUEANDO AGORA! Tentativas: ' + currentAttempts);
       return;
     }
     
@@ -232,12 +255,19 @@ const Auth = () => {
           errorMessage.includes('inválid');
         
         if (isInvalidCredentials) {
-          // DEBUG: Alert para confirmar que o código está chegando aqui
-          alert('Falha detectada no login');
+          // ===== FORÇAR INCREMENTO NO LOCALSTORAGE =====
+          const prevAttempts = Number(localStorage.getItem('login-attempts') || 0);
+          const newAttempts = prevAttempts + 1;
+          localStorage.setItem('login-attempts', newAttempts.toString());
+          
+          // DEBUG DE MARTELO
+          alert('INCREMENTANDO LOCALSTORAGE PARA: ' + newAttempts);
+          console.log('--- TENTATIVA REGISTRADA NO LOCALSTORAGE ---', newAttempts);
+          
+          // Também chamar o hook para manter sincronizado
           recordFailedAttempt();
           
-          // Mostrar mensagem apropriada baseada no número de tentativas
-          const newAttempts = failedAttempts + 1;
+          // Mostrar mensagem apropriada
           if (newAttempts >= 5) {
             toast({
               title: 'Credenciais inválidas',
@@ -245,16 +275,28 @@ const Auth = () => {
               variant: 'destructive',
             });
           } else if (newAttempts >= 3) {
+            // Aplicar bloqueio imediatamente
+            const blockTime = Date.now() + 60000;
+            localStorage.setItem('login-blocked-until', blockTime.toString());
             toast({
               title: 'Credenciais inválidas',
-              description: `Muitas tentativas. Aguarde ${formatRemainingTime(60)} segundos.`,
+              description: 'Muitas tentativas. Bloqueado por 60 segundos.',
+              variant: 'destructive',
+            });
+          } else {
+            toast({
+              title: 'Credenciais inválidas',
+              description: `Tentativa ${newAttempts}/3. Email ou senha incorretos.`,
               variant: 'destructive',
             });
           }
         }
       } else {
-        // Login bem-sucedido - resetar rate limit
+        // Login bem-sucedido - resetar TUDO
+        localStorage.removeItem('login-attempts');
+        localStorage.removeItem('login-blocked-until');
         resetOnSuccess();
+        console.log('[Auth] Login bem-sucedido, localStorage limpo');
       }
     } catch (err: any) {
       // Tratar erro 429 que pode vir como exceção
