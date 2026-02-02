@@ -172,45 +172,30 @@ const Auth = () => {
     e.preventDefault();
     setServerRateLimited(false);
     
-    // ===== BLOQUEIO DE EMERGÊNCIA - DIRETO NO LOCALSTORAGE =====
-    const currentAttempts = Number(localStorage.getItem('login-attempts') || 0);
-    const blockedUntilStr = localStorage.getItem('login-blocked-until');
-    const blockedUntil = blockedUntilStr ? Number(blockedUntilStr) : 0;
-    const now = Date.now();
+    // ===== LÓGICA DE EMERGÊNCIA - CHAVE ÚNICA 'auth_failures' =====
+    const attempts = Number(localStorage.getItem('auth_failures') || '0');
+    const blockedUntil = Number(localStorage.getItem('auth_blocked_until') || '0');
     
     console.log('[Auth] === INÍCIO DO LOGIN ===');
-    console.log('[Auth] Estado do localStorage:', { currentAttempts, blockedUntil, now });
+    console.log('[Auth] auth_failures:', attempts, '| auth_blocked_until:', blockedUntil);
     
-    // Se está bloqueado e o tempo não passou
-    if (blockedUntil > 0 && now < blockedUntil) {
-      const remainingSecs = Math.ceil((blockedUntil - now) / 1000);
-      toast({
-        title: 'Bloqueado!',
-        description: `Aguarde ${remainingSecs} segundos para tentar novamente.`,
-        variant: 'destructive',
-      });
-      window.alert('BLOQUEADO! Tentativas: ' + currentAttempts + ' | Restam: ' + remainingSecs + 's');
-      return;
-    }
-    
-    // Se o bloqueio expirou, resetar apenas o bloqueio (manter tentativas)
-    if (blockedUntil > 0 && now >= blockedUntil) {
-      console.log('[Auth] Bloqueio expirou, removendo...');
-      localStorage.removeItem('login-blocked-until');
-    }
-    
-    // Verificar se já atingiu 3 tentativas SEM estar bloqueado
-    if (currentAttempts >= 3) {
-      const newBlockedUntil = now + 60000;
-      localStorage.setItem('login-blocked-until', newBlockedUntil.toString());
-      setForceUpdate(prev => prev + 1);
-      toast({
-        title: 'Bloqueado!',
-        description: 'Muitas tentativas. Aguarde 60 segundos.',
-        variant: 'destructive',
-      });
-      window.alert('BLOQUEANDO AGORA! Tentativas: ' + currentAttempts);
-      return;
+    // Verificar bloqueio ativo
+    if (attempts >= 3) {
+      if (Date.now() < blockedUntil) {
+        const remainingSecs = Math.ceil((blockedUntil - Date.now()) / 1000);
+        toast({
+          title: 'Sistema bloqueado',
+          description: `Aguarde ${remainingSecs} segundos para tentar novamente.`,
+          variant: 'destructive',
+        });
+        window.alert('SISTEMA BLOQUEADO POR 60s! Restam: ' + remainingSecs + 's');
+        return;
+      } else {
+        // Tempo de bloqueio passou - resetar contador
+        console.log('[Auth] Bloqueio expirou, resetando contador...');
+        localStorage.setItem('auth_failures', '0');
+        localStorage.removeItem('auth_blocked_until');
+      }
     }
     
     // Validação com Zod
@@ -226,93 +211,81 @@ const Auth = () => {
     
     setLoading(true);
     
+    // ===== CAPTURA REAL DO ERRO - CHAMADA DIRETA AO SUPABASE =====
     try {
-      console.log('[Auth] Chamando signIn...');
-      const { error } = await signIn(loginData.email.trim().toLowerCase(), loginData.password);
+      console.log('[Auth] Chamando supabase.auth.signInWithPassword diretamente...');
       
-      console.log('[Auth] Resultado do signIn:', { error: error ? error.message : null });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: loginData.email.trim().toLowerCase(),
+        password: loginData.password,
+      });
       
-      // ===== QUALQUER ERRO = INCREMENTAR CONTADOR =====
       if (error) {
-        console.log('[Auth] ERRO DETECTADO! Incrementando contador...');
-        
-        // Verificar se é erro de rate limit do servidor (429)
-        const errorMessage = error.message?.toLowerCase() || '';
-        const isRateLimitError = 
-          error.status === 429 || 
-          errorMessage.includes('too many requests') ||
-          errorMessage.includes('rate limit');
-        
-        if (isRateLimitError) {
-          setServerRateLimited(true);
-          toast({
-            title: 'Sistema protegido',
-            description: 'Muitas tentativas detectadas. Aguarde alguns minutos.',
-            variant: 'destructive',
-          });
-          setLoading(false);
-          return;
-        }
-        
-        // ===== INCREMENTO FORÇADO NO LOCALSTORAGE =====
-        const prevAttempts = Number(localStorage.getItem('login-attempts') || 0);
-        const newAttempts = prevAttempts + 1;
-        localStorage.setItem('login-attempts', newAttempts.toString());
-        
-        // DEBUG DE MARTELO
-        window.alert('CONTADOR MANUAL: ' + newAttempts);
-        console.log('--- TENTATIVA REGISTRADA NO LOCALSTORAGE ---', newAttempts);
-        
-        // Forçar re-render
-        setForceUpdate(prev => prev + 1);
-        
-        // Aplicar bloqueio se atingiu 3 tentativas
-        if (newAttempts >= 3) {
-          const blockTime = Date.now() + 60000;
-          localStorage.setItem('login-blocked-until', blockTime.toString());
-          toast({
-            title: 'Bloqueado!',
-            description: 'Muitas tentativas. Bloqueado por 60 segundos.',
-            variant: 'destructive',
-          });
-        } else {
-          toast({
-            title: 'Credenciais inválidas',
-            description: `Tentativa ${newAttempts}/3. Email ou senha incorretos.`,
-            variant: 'destructive',
-          });
-        }
-        
-        // Também chamar o hook para manter sincronizado
-        recordFailedAttempt();
-        
-      } else {
-        // Login bem-sucedido - resetar TUDO
-        console.log('[Auth] Login bem-sucedido! Limpando localStorage...');
-        localStorage.removeItem('login-attempts');
-        localStorage.removeItem('login-blocked-until');
-        resetOnSuccess();
+        console.log('[Auth] ERRO DO SUPABASE:', error.message);
+        throw error; // Força ir para o catch
       }
+      
+      // Login bem-sucedido
+      console.log('[Auth] Login bem-sucedido! Limpando localStorage...');
+      localStorage.setItem('auth_failures', '0');
+      localStorage.removeItem('auth_blocked_until');
+      resetOnSuccess();
+      
+      toast({
+        title: 'Login realizado!',
+        description: 'Bem-vindo de volta.',
+      });
+      
     } catch (err: any) {
-      console.log('[Auth] EXCEÇÃO CAPTURADA:', err);
+      console.log('[Auth] EXCEÇÃO CAPTURADA:', err?.message || err);
       
-      // ===== QUALQUER EXCEÇÃO = INCREMENTAR CONTADOR =====
-      const prevAttempts = Number(localStorage.getItem('login-attempts') || 0);
-      const newAttempts = prevAttempts + 1;
-      localStorage.setItem('login-attempts', newAttempts.toString());
+      // ===== INCREMENTAR CONTADOR NO LOCALSTORAGE =====
+      const currentCount = Number(localStorage.getItem('auth_failures') || '0');
+      const newCount = currentCount + 1;
+      localStorage.setItem('auth_failures', newCount.toString());
       
-      window.alert('EXCEÇÃO! CONTADOR: ' + newAttempts);
+      console.log('[Auth] auth_failures incrementado para:', newCount);
+      
+      // Aplicar bloqueio se atingiu 3 tentativas
+      if (newCount >= 3) {
+        const blockTime = Date.now() + 60000; // 60 segundos
+        localStorage.setItem('auth_blocked_until', blockTime.toString());
+        console.log('[Auth] BLOQUEIO APLICADO até:', new Date(blockTime).toISOString());
+      }
+      
+      // DEBUG DE MARTELO - DEVE APARECER NA TELA
+      window.alert('ERRO REGISTRADO: ' + newCount + (newCount >= 3 ? ' (BLOQUEADO!)' : ''));
+      
+      // Forçar re-render
       setForceUpdate(prev => prev + 1);
       
-      // Tratar erro 429
-      if (err?.status === 429 || err?.message?.includes('429')) {
+      // Verificar tipo de erro
+      const errorMessage = err?.message?.toLowerCase() || '';
+      
+      if (err?.status === 429 || errorMessage.includes('too many requests')) {
         setServerRateLimited(true);
         toast({
           title: 'Sistema protegido',
-          description: 'Muitas tentativas detectadas.',
+          description: 'Muitas tentativas detectadas pelo servidor.',
+          variant: 'destructive',
+        });
+      } else if (newCount >= 3) {
+        toast({
+          title: 'Conta bloqueada temporariamente',
+          description: 'Muitas tentativas. Aguarde 60 segundos.',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Credenciais inválidas',
+          description: `Tentativa ${newCount}/3. Email ou senha incorretos.`,
           variant: 'destructive',
         });
       }
+      
+      // Também chamar o hook para manter sincronizado (opcional)
+      recordFailedAttempt();
+      
     } finally {
       setLoading(false);
     }
