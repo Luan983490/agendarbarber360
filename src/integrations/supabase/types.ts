@@ -2059,6 +2059,7 @@ export type Database = {
         Returns: boolean
       }
       is_email_verified: { Args: never; Returns: boolean }
+      is_user_in_grace_period: { Args: never; Returns: boolean }
       reset_rate_limit: {
         Args: {
           p_action_type: Database["public"]["Enums"]["rate_limit_action"]
