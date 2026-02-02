@@ -4,20 +4,19 @@
  * - Contagem de falhas no localStorage
  * - Bloqueio temporário após 3 tentativas
  * - Flag para exibir captcha após 5 tentativas
+ * 
+ * CHAVES DO LOCALSTORAGE:
+ * - 'auth_failures': número de tentativas falhas (string)
+ * - 'auth_blocked_until': timestamp de quando o bloqueio expira (string)
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 
-const STORAGE_KEY = 'login_rate_limit';
-const BLOCK_DURATION_SECONDS = 60;
+const FAILURES_KEY = 'auth_failures';
+const BLOCKED_KEY = 'auth_blocked_until';
+const BLOCK_DURATION_MS = 60000; // 60 segundos
 const ATTEMPTS_FOR_BLOCK = 3;
 const ATTEMPTS_FOR_CAPTCHA = 5;
-
-interface RateLimitData {
-  failedAttempts: number;
-  blockedUntil: number | null; // timestamp
-  lastAttempt: number; // timestamp
-}
 
 interface UseLoginRateLimitResult {
   /** Número de tentativas falhas */
@@ -40,82 +39,81 @@ interface UseLoginRateLimitResult {
   canAttemptLogin: boolean;
 }
 
-const getStoredData = (): RateLimitData => {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    console.log('[LoginRateLimit] Lendo do localStorage:', stored);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      console.log('[LoginRateLimit] Dados parseados:', parsed);
-      return parsed;
-    }
-  } catch (e) {
-    console.error('[LoginRateLimit] Error reading localStorage:', e);
-  }
-  return {
-    failedAttempts: 0,
-    blockedUntil: null,
-    lastAttempt: 0,
-  };
+// Funções utilitárias simples para localStorage
+const getFailures = (): number => {
+  const val = localStorage.getItem(FAILURES_KEY);
+  return val ? Number(val) : 0;
 };
 
-const setStoredData = (data: RateLimitData): void => {
-  try {
-    console.log('--- TENTATIVA REGISTRADA NO LOCALSTORAGE ---', data);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  } catch (e) {
-    console.error('[LoginRateLimit] Error writing localStorage:', e);
-  }
+const getBlockedUntil = (): number => {
+  const val = localStorage.getItem(BLOCKED_KEY);
+  return val ? Number(val) : 0;
 };
 
-const clearStoredData = (): void => {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch (e) {
-    console.error('[LoginRateLimit] Error clearing localStorage:', e);
-  }
+const setFailures = (count: number): void => {
+  localStorage.setItem(FAILURES_KEY, count.toString());
+  console.log('[RateLimit] auth_failures =', count);
+};
+
+const setBlockedUntil = (timestamp: number): void => {
+  localStorage.setItem(BLOCKED_KEY, timestamp.toString());
+  console.log('[RateLimit] auth_blocked_until =', new Date(timestamp).toISOString());
+};
+
+const clearAll = (): void => {
+  localStorage.setItem(FAILURES_KEY, '0');
+  localStorage.removeItem(BLOCKED_KEY);
+  console.log('[RateLimit] Cleared all');
 };
 
 export function useLoginRateLimit(): UseLoginRateLimitResult {
-  // CRÍTICO: Inicializar estado diretamente do localStorage
-  const [data, setData] = useState<RateLimitData>(() => {
-    const initial = getStoredData();
-    console.log('[LoginRateLimit] Estado inicial do hook:', initial);
-    return initial;
-  });
+  // Estado local para forçar re-renders
+  const [failedAttempts, setFailedAttempts] = useState(() => getFailures());
+  const [blockedUntil, setBlockedUntilState] = useState(() => getBlockedUntil());
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const [captchaVerified, setCaptchaVerifiedState] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Calcular se está bloqueado - VERIFICAÇÃO DUPLA
+  // Calcular se está bloqueado
   const now = Date.now();
-  const isBlocked = data.blockedUntil !== null && now < data.blockedUntil;
-  
-  console.log('[LoginRateLimit] Cálculo isBlocked:', {
-    blockedUntil: data.blockedUntil,
-    now,
-    isBlocked,
-    failedAttempts: data.failedAttempts
-  });
+  const isBlocked = blockedUntil > 0 && now < blockedUntil;
+  const requiresCaptcha = failedAttempts >= ATTEMPTS_FOR_CAPTCHA;
 
-  // Calcular se precisa de captcha
-  const requiresCaptcha = data.failedAttempts >= ATTEMPTS_FOR_CAPTCHA;
-
-  // Atualizar contador de segundos restantes
+  // Carregar estado do localStorage ao montar
   useEffect(() => {
-    if (isBlocked && data.blockedUntil) {
+    const failures = getFailures();
+    const blocked = getBlockedUntil();
+    
+    console.log('[RateLimit] Carregando estado:', { failures, blocked });
+    
+    setFailedAttempts(failures);
+    setBlockedUntilState(blocked);
+    
+    // Se está bloqueado mas o tempo passou, resetar
+    if (failures >= ATTEMPTS_FOR_BLOCK && blocked > 0 && Date.now() >= blocked) {
+      console.log('[RateLimit] Bloqueio expirou, resetando...');
+      clearAll();
+      setFailedAttempts(0);
+      setBlockedUntilState(0);
+    }
+  }, []);
+
+  // Timer para atualizar contador de segundos restantes
+  useEffect(() => {
+    if (isBlocked && blockedUntil > 0) {
       const updateRemaining = () => {
-        const remaining = Math.max(0, Math.ceil((data.blockedUntil! - Date.now()) / 1000));
+        const remaining = Math.max(0, Math.ceil((blockedUntil - Date.now()) / 1000));
         setRemainingSeconds(remaining);
 
-        // Se o bloqueio expirou, limpar
-        if (remaining <= 0 && intervalRef.current) {
-          clearInterval(intervalRef.current);
-          intervalRef.current = null;
-          // Atualizar estado mas manter contagem de falhas
-          const newData = { ...data, blockedUntil: null };
-          setData(newData);
-          setStoredData(newData);
+        if (remaining <= 0) {
+          // Bloqueio expirou
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
+          clearAll();
+          setFailedAttempts(0);
+          setBlockedUntilState(0);
         }
       };
 
@@ -131,99 +129,51 @@ export function useLoginRateLimit(): UseLoginRateLimitResult {
     } else {
       setRemainingSeconds(0);
     }
-  }, [data.blockedUntil, isBlocked]);
-
-  // Carregar dados ao montar - CRÍTICO para persistência após F5
-  useEffect(() => {
-    const loadStoredState = () => {
-      const stored = getStoredData();
-      const now = Date.now();
-      
-      // Verificar se o bloqueio expirou
-      if (stored.blockedUntil && now >= stored.blockedUntil) {
-        // Bloqueio expirou - limpar apenas o bloqueio, manter contagem
-        stored.blockedUntil = null;
-        setStoredData(stored);
-      }
-      
-      // Atualizar estado com dados do localStorage
-      setData(stored);
-      
-      // Se ainda está bloqueado, calcular segundos restantes imediatamente
-      if (stored.blockedUntil && now < stored.blockedUntil) {
-        const remaining = Math.ceil((stored.blockedUntil - now) / 1000);
-        setRemainingSeconds(remaining);
-      }
-    };
-    
-    loadStoredState();
-  }, []);
+  }, [blockedUntil, isBlocked]);
 
   const recordFailedAttempt = useCallback(() => {
-    // CRÍTICO: Usar função para garantir estado mais recente
-    setData(prevData => {
-      const newAttempts = prevData.failedAttempts + 1;
-      const now = Date.now();
-      
-      console.log('--- REGISTRANDO FALHA ---', {
-        anterior: prevData.failedAttempts,
-        novo: newAttempts
-      });
-
-      let blockedUntil = prevData.blockedUntil;
-
-      // Bloquear após 3 tentativas
-      if (newAttempts >= ATTEMPTS_FOR_BLOCK && !blockedUntil) {
-        blockedUntil = now + BLOCK_DURATION_SECONDS * 1000;
-        console.log('[LoginRateLimit] BLOQUEANDO até:', new Date(blockedUntil).toISOString());
-      }
-
-      const newData: RateLimitData = {
-        failedAttempts: newAttempts,
-        blockedUntil,
-        lastAttempt: now,
-      };
-
-      // Salvar IMEDIATAMENTE no localStorage
-      setStoredData(newData);
-
-      // Resetar captcha quando bloquear (forçar reverificação)
-      if (newAttempts >= ATTEMPTS_FOR_CAPTCHA) {
-        setCaptchaVerifiedState(false);
-      }
-
-      console.log('[LoginRateLimit] Failed attempt recorded:', {
-        attempts: newAttempts,
-        blocked: !!blockedUntil,
-        blockedUntil: blockedUntil ? new Date(blockedUntil).toISOString() : null,
-        requiresCaptcha: newAttempts >= ATTEMPTS_FOR_CAPTCHA,
-      });
-
-      return newData;
-    });
+    const currentFailures = getFailures();
+    const newCount = currentFailures + 1;
+    
+    console.log('[RateLimit] recordFailedAttempt:', { anterior: currentFailures, novo: newCount });
+    
+    // Salvar no localStorage
+    setFailures(newCount);
+    
+    // Aplicar bloqueio se atingiu limite
+    if (newCount >= ATTEMPTS_FOR_BLOCK) {
+      const blockTime = Date.now() + BLOCK_DURATION_MS;
+      setBlockedUntil(blockTime);
+      setBlockedUntilState(blockTime);
+    }
+    
+    // Atualizar estado React
+    setFailedAttempts(newCount);
+    
+    // Resetar captcha se necessário
+    if (newCount >= ATTEMPTS_FOR_CAPTCHA) {
+      setCaptchaVerifiedState(false);
+    }
   }, []);
 
   const resetOnSuccess = useCallback(() => {
-    clearStoredData();
-    setData({
-      failedAttempts: 0,
-      blockedUntil: null,
-      lastAttempt: 0,
-    });
+    console.log('[RateLimit] resetOnSuccess');
+    clearAll();
+    setFailedAttempts(0);
+    setBlockedUntilState(0);
     setCaptchaVerifiedState(false);
-    console.log('[LoginRateLimit] Reset on successful login');
   }, []);
 
   const setCaptchaVerified = useCallback((verified: boolean) => {
     setCaptchaVerifiedState(verified);
-    console.log('[LoginRateLimit] Captcha verified:', verified);
+    console.log('[RateLimit] captchaVerified =', verified);
   }, []);
 
   // Pode tentar login se não estiver bloqueado E (não precisa de captcha OU captcha verificado)
   const canAttemptLogin = !isBlocked && (!requiresCaptcha || captchaVerified);
 
   return {
-    failedAttempts: data.failedAttempts,
+    failedAttempts,
     isBlocked,
     remainingSeconds,
     requiresCaptcha,
