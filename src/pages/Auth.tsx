@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Navigate, useNavigate, Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,13 +7,15 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Progress } from '@/components/ui/progress';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/hooks/useAuth';
+import { useLoginRateLimit } from '@/hooks/useLoginRateLimit';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { User, Store, Check, X, Eye, EyeOff, Loader2, Mail, AlertCircle, LogIn } from 'lucide-react';
+import { User, Store, Check, X, Eye, EyeOff, Loader2, Mail, AlertCircle, LogIn, Shield, Clock } from 'lucide-react';
 import { loginSchema, signUpSchema, validateWithSchema, formatValidationErrors } from '@/lib/validation-schemas';
+import { TurnstileCaptcha } from '@/components/TurnstileCaptcha';
 import b360Logo from '@/assets/b360-logo.png';
-
 // Password strength checker
 const checkPasswordStrength = (password: string) => {
   const checks = {
@@ -48,7 +50,21 @@ const Auth = () => {
   const [emailAlreadyExists, setEmailAlreadyExists] = useState(false);
   const [activeTab, setActiveTab] = useState('login');
   const [isRecovering, setIsRecovering] = useState(false);
+  const [serverRateLimited, setServerRateLimited] = useState(false);
   const tabsRef = useRef<HTMLDivElement>(null);
+  
+  // Rate Limiting Hook
+  const {
+    failedAttempts,
+    isBlocked,
+    remainingSeconds,
+    requiresCaptcha,
+    captchaVerified,
+    recordFailedAttempt,
+    resetOnSuccess,
+    setCaptchaVerified,
+    canAttemptLogin,
+  } = useLoginRateLimit();
   
   const [loginData, setLoginData] = useState({
     email: '',
@@ -65,6 +81,35 @@ const Auth = () => {
     checkPasswordStrength(signupData.password),
     [signupData.password]
   );
+  
+  // Formatar tempo restante do bloqueio
+  const formatRemainingTime = useCallback((seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return mins > 0 
+      ? `${mins}:${secs.toString().padStart(2, '0')}`
+      : `00:${secs.toString().padStart(2, '0')}`;
+  }, []);
+  
+  // Handler para verificação do captcha
+  const handleCaptchaVerify = useCallback((token: string) => {
+    console.log('[Auth] Captcha verified with token');
+    setCaptchaVerified(true);
+  }, [setCaptchaVerified]);
+  
+  const handleCaptchaError = useCallback((error: Error) => {
+    console.error('[Auth] Captcha error:', error);
+    toast({
+      title: 'Erro na verificação',
+      description: 'Não foi possível verificar o captcha. Tente novamente.',
+      variant: 'destructive',
+    });
+  }, [toast]);
+  
+  const handleCaptchaExpire = useCallback(() => {
+    console.log('[Auth] Captcha expired');
+    setCaptchaVerified(false);
+  }, [setCaptchaVerified]);
 
   useEffect(() => {
     if (user && !authLoading) {
@@ -120,6 +165,25 @@ const Auth = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setServerRateLimited(false);
+    
+    // Verificar bloqueio local
+    if (!canAttemptLogin) {
+      if (isBlocked) {
+        toast({
+          title: 'Muitas tentativas',
+          description: `Aguarde ${formatRemainingTime(remainingSeconds)} para tentar novamente.`,
+          variant: 'destructive',
+        });
+      } else if (requiresCaptcha && !captchaVerified) {
+        toast({
+          title: 'Verificação necessária',
+          description: 'Complete a verificação de segurança para continuar.',
+          variant: 'destructive',
+        });
+      }
+      return;
+    }
     
     // Validação com Zod
     const validation = validateWithSchema(loginSchema, loginData);
@@ -133,8 +197,72 @@ const Auth = () => {
     }
     
     setLoading(true);
-    const { error } = await signIn(loginData.email.trim().toLowerCase(), loginData.password);
-    setLoading(false);
+    
+    try {
+      const { error } = await signIn(loginData.email.trim().toLowerCase(), loginData.password);
+      
+      if (error) {
+        // Verificar se é erro de rate limit do servidor (429)
+        const errorMessage = error.message?.toLowerCase() || '';
+        const isRateLimitError = 
+          error.status === 429 || 
+          errorMessage.includes('too many requests') ||
+          errorMessage.includes('rate limit') ||
+          errorMessage.includes('limite de tentativas');
+        
+        if (isRateLimitError) {
+          setServerRateLimited(true);
+          toast({
+            title: 'Sistema protegido',
+            description: 'Muitas tentativas detectadas. Por favor, aguarde alguns minutos antes de tentar novamente.',
+            variant: 'destructive',
+          });
+          return;
+        }
+        
+        // Verificar se é erro de credenciais inválidas
+        const isInvalidCredentials = 
+          errorMessage.includes('invalid') ||
+          errorMessage.includes('credentials') ||
+          errorMessage.includes('incorreta') ||
+          errorMessage.includes('inválid');
+        
+        if (isInvalidCredentials) {
+          recordFailedAttempt();
+          
+          // Mostrar mensagem apropriada baseada no número de tentativas
+          const newAttempts = failedAttempts + 1;
+          if (newAttempts >= 5) {
+            toast({
+              title: 'Credenciais inválidas',
+              description: 'Complete a verificação de segurança para continuar.',
+              variant: 'destructive',
+            });
+          } else if (newAttempts >= 3) {
+            toast({
+              title: 'Credenciais inválidas',
+              description: `Muitas tentativas. Aguarde ${formatRemainingTime(60)} segundos.`,
+              variant: 'destructive',
+            });
+          }
+        }
+      } else {
+        // Login bem-sucedido - resetar rate limit
+        resetOnSuccess();
+      }
+    } catch (err: any) {
+      // Tratar erro 429 que pode vir como exceção
+      if (err?.status === 429 || err?.message?.includes('429')) {
+        setServerRateLimited(true);
+        toast({
+          title: 'Sistema protegido',
+          description: 'Muitas tentativas detectadas. Por favor, aguarde alguns minutos.',
+          variant: 'destructive',
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -305,7 +433,7 @@ const Auth = () => {
               <div className="flex justify-center mb-4">
                 <Mail className="h-12 w-12 text-primary" />
               </div>
-              <CardTitle className="text-green-600">Cadastro Realizado!</CardTitle>
+              <CardTitle className="text-success">Cadastro Realizado!</CardTitle>
               <CardDescription>
                 Enviamos um email de confirmação para <strong>{signupEmail}</strong>
               </CardDescription>
@@ -371,6 +499,34 @@ const Auth = () => {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleLogin} className="space-y-4">
+                  {/* Alerta de Rate Limit do Servidor (429) */}
+                  {serverRateLimited && (
+                    <Alert variant="destructive">
+                      <Shield className="h-4 w-4" />
+                      <AlertDescription>
+                        Sistema protegido contra ataques. Aguarde alguns minutos antes de tentar novamente.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  
+                  {/* Alerta de Bloqueio Temporário */}
+                  {isBlocked && (
+                    <Alert className="border-warning bg-warning/10">
+                      <Clock className="h-4 w-4 text-warning" />
+                      <AlertDescription className="text-warning-foreground">
+                        Muitas tentativas. Tente novamente em{' '}
+                        <span className="font-mono font-bold">{formatRemainingTime(remainingSeconds)}</span>
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  
+                  {/* Indicador de tentativas falhas */}
+                  {failedAttempts > 0 && failedAttempts < 3 && !isBlocked && (
+                    <div className="text-sm text-muted-foreground text-center">
+                      Tentativas: {failedAttempts}/3
+                    </div>
+                  )}
+                  
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
                     <Input
@@ -379,6 +535,7 @@ const Auth = () => {
                       value={loginData.email}
                       onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
                       required
+                      disabled={isBlocked}
                     />
                   </div>
                   <div className="space-y-2">
@@ -391,6 +548,7 @@ const Auth = () => {
                         onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
                         required
                         className="pr-10"
+                        disabled={isBlocked}
                       />
                       <button
                         type="button"
@@ -401,11 +559,38 @@ const Auth = () => {
                       </button>
                     </div>
                   </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
+                  
+                  {/* Captcha após 5 tentativas */}
+                  {requiresCaptcha && !isBlocked && (
+                    <div className="py-2">
+                      <TurnstileCaptcha
+                        onVerify={handleCaptchaVerify}
+                        onError={handleCaptchaError}
+                        onExpire={handleCaptchaExpire}
+                      />
+                      {captchaVerified && (
+                        <div className="flex items-center justify-center gap-2 text-sm text-success mt-2">
+                          <Check className="h-4 w-4" />
+                          Verificação concluída
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    disabled={loading || isBlocked || (requiresCaptcha && !captchaVerified) || serverRateLimited}
+                  >
                     {loading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Entrando...
+                      </>
+                    ) : isBlocked ? (
+                      <>
+                        <Clock className="mr-2 h-4 w-4" />
+                        Aguarde {formatRemainingTime(remainingSeconds)}
                       </>
                     ) : (
                       'Entrar'
@@ -621,7 +806,7 @@ const Auth = () => {
                       </p>
                     )}
                     {signupData.confirmPassword && signupData.password === signupData.confirmPassword && (
-                      <p className="text-xs text-green-600 flex items-center gap-1">
+                      <p className="text-xs text-success flex items-center gap-1">
                         <Check className="h-3 w-3" />
                         Senhas conferem
                       </p>
