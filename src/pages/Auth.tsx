@@ -10,11 +10,13 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/hooks/useAuth';
 import { useLoginRateLimit } from '@/hooks/useLoginRateLimit';
+import { useMFA } from '@/hooks/useMFA';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { User, Store, Check, X, Eye, EyeOff, Loader2, Mail, AlertCircle, LogIn, Shield, Clock } from 'lucide-react';
 import { loginSchema, signUpSchema, validateWithSchema, formatValidationErrors } from '@/lib/validation-schemas';
 import { TurnstileCaptcha } from '@/components/TurnstileCaptcha';
+import { MFAVerificationModal } from '@/components/MFAVerificationModal';
 import b360Logo from '@/assets/b360-logo.png';
 // Password strength checker
 const checkPasswordStrength = (password: string) => {
@@ -52,6 +54,8 @@ const Auth = () => {
   const [isRecovering, setIsRecovering] = useState(false);
   const [serverRateLimited, setServerRateLimited] = useState(false);
   const [forceUpdate, setForceUpdate] = useState(0); // Para forçar re-render
+  const [showMFAVerification, setShowMFAVerification] = useState(false);
+  const [pendingMFAUser, setPendingMFAUser] = useState<any>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
   
   // Rate Limiting Hook
@@ -228,7 +232,24 @@ const Auth = () => {
         throw error;
       }
       
-      // Login bem-sucedido - gravar log de auditoria
+      // Verificar se usuário tem MFA habilitado
+      const { data: factorsData } = await supabase.auth.mfa.listFactors();
+      const verifiedFactors = factorsData?.totp?.filter(f => f.status === 'verified') || [];
+      
+      if (verifiedFactors.length > 0) {
+        // Usuário tem MFA - verificar AAL
+        const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+        
+        if (aalData?.currentLevel === 'aal1' && aalData?.nextLevel === 'aal2') {
+          // Precisa verificar MFA
+          setPendingMFAUser(data.user);
+          setShowMFAVerification(true);
+          setLoading(false);
+          return; // Não continuar - aguardar verificação MFA
+        }
+      }
+      
+      // Login bem-sucedido (sem MFA ou já verificado) - gravar log de auditoria
       logAuthEvent('auth_success', emailUsed);
       
       localStorage.setItem('auth_failures', '0');
@@ -872,6 +893,41 @@ const Auth = () => {
           </Tabs>
         </Card>
       </div>
+      
+      {/* MFA Verification Modal */}
+      <MFAVerificationModal
+        open={showMFAVerification}
+        onOpenChange={(open) => {
+          setShowMFAVerification(open);
+          if (!open && !pendingMFAUser) {
+            // Usuário cancelou - fazer logout parcial
+            supabase.auth.signOut();
+          }
+        }}
+        onSuccess={() => {
+          // MFA verificado com sucesso
+          logAuthEvent('auth_success', loginData.email);
+          localStorage.setItem('auth_failures', '0');
+          localStorage.removeItem('auth_blocked_until');
+          resetOnSuccess();
+          setShowMFAVerification(false);
+          setPendingMFAUser(null);
+          toast({
+            title: 'Login realizado!',
+            description: 'Verificação de segurança concluída.',
+          });
+        }}
+        onCancel={() => {
+          // Usuário cancelou verificação MFA
+          supabase.auth.signOut();
+          setPendingMFAUser(null);
+          toast({
+            title: 'Login cancelado',
+            description: 'Verificação de segurança é necessária para acessar.',
+            variant: 'destructive',
+          });
+        }}
+      />
     </div>
   );
 };

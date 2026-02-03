@@ -93,6 +93,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
+          {
+            foreignKeyName: "app_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "vw_mfa_status"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       auth_failures: {
@@ -345,6 +352,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
+          {
+            foreignKeyName: "barbers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "vw_mfa_status"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       barbershops: {
@@ -443,6 +457,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
+          {
+            foreignKeyName: "barbershops_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "vw_mfa_status"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       blocked_ips: {
@@ -482,6 +503,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "blocked_ips_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "vw_mfa_status"
             referencedColumns: ["user_id"]
           },
         ]
@@ -541,6 +569,13 @@ export type Database = {
             columns: ["actor_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "booking_audit_logs_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
+            referencedRelation: "vw_mfa_status"
             referencedColumns: ["user_id"]
           },
           {
@@ -718,6 +753,13 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
           {
+            foreignKeyName: "bookings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "vw_mfa_status"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "bookings_service_id_fkey"
             columns: ["service_id"]
             isOneToOne: false
@@ -767,6 +809,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "client_loyalty_points_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "vw_mfa_status"
             referencedColumns: ["user_id"]
           },
         ]
@@ -824,6 +873,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "client_packages_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "vw_mfa_status"
             referencedColumns: ["user_id"]
           },
           {
@@ -897,6 +953,13 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
           {
+            foreignKeyName: "client_subscriptions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "vw_mfa_status"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "client_subscriptions_plan_id_fkey"
             columns: ["plan_id"]
             isOneToOne: false
@@ -937,6 +1000,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "favorites_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "vw_mfa_status"
             referencedColumns: ["user_id"]
           },
         ]
@@ -1074,6 +1144,13 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
           {
+            foreignKeyName: "loyalty_transactions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "vw_mfa_status"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "loyalty_transactions_reward_id_fkey"
             columns: ["reward_id"]
             isOneToOne: false
@@ -1174,6 +1251,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
+          {
+            foreignKeyName: "payment_cards_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "vw_mfa_status"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       products: {
@@ -1229,6 +1313,7 @@ export type Database = {
           display_name: string | null
           gender: string | null
           id: string
+          mfa_required: boolean | null
           phone: string | null
           phone_encrypted: string | null
           updated_at: string
@@ -1243,6 +1328,7 @@ export type Database = {
           display_name?: string | null
           gender?: string | null
           id?: string
+          mfa_required?: boolean | null
           phone?: string | null
           phone_encrypted?: string | null
           updated_at?: string
@@ -1257,6 +1343,7 @@ export type Database = {
           display_name?: string | null
           gender?: string | null
           id?: string
+          mfa_required?: boolean | null
           phone?: string | null
           phone_encrypted?: string | null
           updated_at?: string
@@ -1347,6 +1434,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "rate_limits_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "vw_mfa_status"
             referencedColumns: ["user_id"]
           },
         ]
@@ -1446,6 +1540,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "reviews_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "vw_mfa_status"
             referencedColumns: ["user_id"]
           },
         ]
@@ -1619,6 +1720,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
+          {
+            foreignKeyName: "user_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "vw_mfa_status"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
     }
@@ -1678,6 +1786,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
+          {
+            foreignKeyName: "app_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "vw_mfa_status"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       slow_operations: {
@@ -1691,6 +1806,28 @@ export type Database = {
           service: string | null
         }
         Relationships: []
+      }
+      vw_mfa_status: {
+        Row: {
+          barbershop_id: string | null
+          barbershop_name: string | null
+          display_name: string | null
+          has_mfa_configured: boolean | null
+          mfa_required: boolean | null
+          mfa_status: string | null
+          role_display: string | null
+          user_id: string | null
+          user_type: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
@@ -1720,6 +1857,7 @@ export type Database = {
         Returns: boolean
       }
       check_and_trigger_alerts: { Args: never; Returns: number }
+      check_mfa_requirement: { Args: { p_user_id: string }; Returns: boolean }
       check_rate_limit: {
         Args: {
           p_action_type: Database["public"]["Enums"]["rate_limit_action"]
