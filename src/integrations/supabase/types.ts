@@ -2205,6 +2205,10 @@ export type Database = {
         Returns: string
       }
       is_admin_with_mfa: { Args: never; Returns: boolean }
+      is_barber_at_barbershop: {
+        Args: { p_barbershop_id: string; p_user_id: string }
+        Returns: boolean
+      }
       is_barbershop_owner: {
         Args: { _barbershop_id: string; _user_id: string }
         Returns: boolean
@@ -2243,6 +2247,15 @@ export type Database = {
           total_reviews: number
         }[]
       }
+      user_has_role_at: {
+        Args: { p_barbershop_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      user_is_owner_of: {
+        Args: { p_barbershop_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      user_owns_barbershop: { Args: { p_user_id: string }; Returns: string }
     }
     Enums: {
       app_role: "owner" | "barber" | "attendant"
