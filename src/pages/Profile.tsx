@@ -10,8 +10,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/Header';
-import { User, MapPin, Lock, Key } from 'lucide-react';
+import { User, MapPin, Lock, Key, Shield } from 'lucide-react';
 import { profileUpdateSchema, validateWithSchema, formatValidationErrors, sanitizeString } from '@/lib/validation-schemas';
+import { MFASettings } from '@/components/MFASettings';
 
 interface Profile {
   display_name: string;
@@ -432,6 +433,9 @@ const Profile = () => {
 
           {activeTab === 'security' && (
             <div className="space-y-6">
+              {/* MFA Settings */}
+              <MFASettings />
+              
               <div>
                 <Label>Senha</Label>
                 <Button variant="outline" className="w-full mt-2 justify-start" onClick={() => {

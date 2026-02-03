@@ -11,6 +11,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
+import { MFAGuard } from "@/components/MFAGuard";
 
 // Loading fallback component
 import b360Logo from '@/assets/b360-logo.png';
@@ -65,6 +66,7 @@ const AppContent = () => {
       <Toaster />
       <Sonner />
       <PWAInstallPrompt />
+      <MFAGuard>
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
           <Routes>
@@ -206,6 +208,7 @@ const AppContent = () => {
           </Routes>
         </Suspense>
       </BrowserRouter>
+      </MFAGuard>
     </>
   );
 };
