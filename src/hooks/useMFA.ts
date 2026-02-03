@@ -68,10 +68,21 @@ export const useMFA = () => {
         friendlyName: 'Authenticator App'
       });
 
+      // DEBUG: Log completo da resposta do Supabase
+      console.log('========== DEBUG MFA ENROLL ==========');
+      console.log('RESPOSTA COMPLETA DO MFA:', JSON.stringify(data, null, 2));
+      console.log('DATA KEYS:', data ? Object.keys(data) : 'null');
+      console.log('TOTP OBJECT:', data?.totp ? JSON.stringify(data.totp, null, 2) : 'null');
+      console.log('TOTP KEYS:', data?.totp ? Object.keys(data.totp) : 'null');
+      console.log('RECOVERY CODES (data.recovery_codes):', (data as any)?.recovery_codes);
+      console.log('RECOVERY CODES (data.totp.recovery_codes):', (data?.totp as any)?.recovery_codes);
+      console.log('=======================================');
+
       if (error) throw error;
 
       // Extract recovery codes if available
       const recoveryCodes = (data as any).recovery_codes || (data.totp as any).recovery_codes;
+      console.log('RECOVERY CODES EXTRAÍDOS:', recoveryCodes);
       
       const enrollment: EnrollmentData = {
         id: data.id,
