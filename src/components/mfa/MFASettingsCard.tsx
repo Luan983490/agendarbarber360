@@ -11,7 +11,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export const MFASettingsCard = () => {
-  const { factors, loading, isMFAEnabled, unenroll } = useMFA();
+  const { factors, loading, isMFAEnabled, fetchFactors } = useMFA();
   const [showEnrollDialog, setShowEnrollDialog] = useState(false);
   const [showDisableDialog, setShowDisableDialog] = useState(false);
 
@@ -25,11 +25,10 @@ export const MFASettingsCard = () => {
     }
   };
 
-  const handleDisable = async () => {
-    if (verifiedFactor) {
-      await unenroll(verifiedFactor.id);
-      setShowDisableDialog(false);
-    }
+  const handleDisableSuccess = () => {
+    setShowDisableDialog(false);
+    // Refetch factors to update UI
+    fetchFactors();
   };
 
   if (loading) {
@@ -142,11 +141,14 @@ export const MFASettingsCard = () => {
         onOpenChange={setShowEnrollDialog}
       />
 
-      <MFADisableDialog
-        open={showDisableDialog}
-        onOpenChange={setShowDisableDialog}
-        onConfirm={handleDisable}
-      />
+      {verifiedFactor && (
+        <MFADisableDialog
+          open={showDisableDialog}
+          onOpenChange={setShowDisableDialog}
+          factorId={verifiedFactor.id}
+          onSuccess={handleDisableSuccess}
+        />
+      )}
     </>
   );
 };
