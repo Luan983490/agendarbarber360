@@ -27,6 +27,7 @@ export const MFAEnrollmentDialog = ({ open, onOpenChange }: MFAEnrollmentDialogP
   const [verificationCode, setVerificationCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [backupConfirmed, setBackupConfirmed] = useState(false);
+  const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
   const { startEnrollment, verifyEnrollment, cancelEnrollment } = useMFA();
   const { toast } = useToast();
 
@@ -36,6 +37,7 @@ export const MFAEnrollmentDialog = ({ open, onOpenChange }: MFAEnrollmentDialogP
       setEnrollment(null);
       setVerificationCode('');
       setBackupConfirmed(false);
+      setRecoveryCodes([]);
     }
   }, [open]);
 
@@ -53,8 +55,14 @@ export const MFAEnrollmentDialog = ({ open, onOpenChange }: MFAEnrollmentDialogP
     if (!enrollment || verificationCode.length !== 6) return;
 
     setLoading(true);
-    const success = await verifyEnrollment(enrollment.id, verificationCode);
-    if (success) {
+    const codes = await verifyEnrollment(enrollment.id, verificationCode);
+    if (codes && codes.length > 0) {
+      setRecoveryCodes(codes);
+      setStep('recovery');
+    } else if (codes === null) {
+      // Verification failed, stay on verify step
+    } else {
+      // Verification succeeded but no recovery codes - show secret as fallback
       setStep('recovery');
     }
     setLoading(false);
@@ -84,8 +92,7 @@ export const MFAEnrollmentDialog = ({ open, onOpenChange }: MFAEnrollmentDialogP
     }
   };
 
-  // Get recovery codes from enrollment or use empty array
-  const recoveryCodes = enrollment?.recovery_codes || [];
+  // Use recovery codes from verify response, fallback to enrollment data
   const hasRecoveryCodes = recoveryCodes.length > 0;
 
   const copyRecoveryCodes = () => {
