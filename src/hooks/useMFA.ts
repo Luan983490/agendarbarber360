@@ -20,6 +20,7 @@ export interface EnrollmentData {
     secret: string;
     uri: string;
   };
+  recovery_codes?: string[];
 }
 
 export const useMFA = () => {
@@ -69,6 +70,9 @@ export const useMFA = () => {
 
       if (error) throw error;
 
+      // Extract recovery codes if available
+      const recoveryCodes = (data as any).recovery_codes || (data.totp as any).recovery_codes;
+      
       const enrollment: EnrollmentData = {
         id: data.id,
         type: data.type as 'totp',
@@ -76,7 +80,8 @@ export const useMFA = () => {
           qr_code: data.totp.qr_code,
           secret: data.totp.secret,
           uri: data.totp.uri
-        }
+        },
+        recovery_codes: recoveryCodes
       };
 
       setEnrollmentData(enrollment);
