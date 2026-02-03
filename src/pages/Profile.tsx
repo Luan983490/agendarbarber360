@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/Header';
 import { User, MapPin, Lock, Key } from 'lucide-react';
 import { profileUpdateSchema, validateWithSchema, formatValidationErrors, sanitizeString } from '@/lib/validation-schemas';
+import { MFASettingsCard } from '@/components/mfa';
 
 interface Profile {
   display_name: string;
@@ -432,6 +433,9 @@ const Profile = () => {
 
           {activeTab === 'security' && (
             <div className="space-y-6">
+              {/* MFA Settings Card */}
+              <MFASettingsCard />
+              
               <div>
                 <Label>Senha</Label>
                 <Button variant="outline" className="w-full mt-2 justify-start" onClick={() => {

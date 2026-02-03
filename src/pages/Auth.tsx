@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { User, Store, Check, X, Eye, EyeOff, Loader2, Mail, AlertCircle, LogIn, Shield, Clock } from 'lucide-react';
 import { loginSchema, signUpSchema, validateWithSchema, formatValidationErrors } from '@/lib/validation-schemas';
 import { TurnstileCaptcha } from '@/components/TurnstileCaptcha';
+import { MFAVerificationDialog } from '@/components/mfa';
 import b360Logo from '@/assets/b360-logo.png';
 // Password strength checker
 const checkPasswordStrength = (password: string) => {
@@ -51,7 +52,12 @@ const Auth = () => {
   const [activeTab, setActiveTab] = useState('login');
   const [isRecovering, setIsRecovering] = useState(false);
   const [serverRateLimited, setServerRateLimited] = useState(false);
-  const [forceUpdate, setForceUpdate] = useState(0); // Para forçar re-render
+  const [forceUpdate, setForceUpdate] = useState(0);
+  
+  // MFA State
+  const [showMFADialog, setShowMFADialog] = useState(false);
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
+  
   const tabsRef = useRef<HTMLDivElement>(null);
   
   // Rate Limiting Hook
@@ -226,6 +232,22 @@ const Auth = () => {
       
       if (error) {
         throw error;
+      }
+      
+      // Check if MFA is required
+      const { data: mfaData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      
+      if (mfaData && mfaData.currentLevel === 'aal1' && mfaData.nextLevel === 'aal2') {
+        // MFA is required - get the factor and show verification dialog
+        const { data: factorsData } = await supabase.auth.mfa.listFactors();
+        const verifiedFactor = factorsData?.totp?.find(f => f.status === 'verified');
+        
+        if (verifiedFactor) {
+          setMfaFactorId(verifiedFactor.id);
+          setShowMFADialog(true);
+          setLoading(false);
+          return; // Don't complete login yet, wait for MFA
+        }
       }
       
       // Login bem-sucedido - gravar log de auditoria
@@ -437,6 +459,30 @@ const Auth = () => {
       case 'fair': return 'Regular';
       default: return 'Fraca';
     }
+  };
+
+  // MFA Handlers
+  const handleMFASuccess = () => {
+    setShowMFADialog(false);
+    setMfaFactorId(null);
+    
+    // Login completo com MFA
+    logAuthEvent('auth_success', loginData.email.trim().toLowerCase());
+    
+    localStorage.setItem('auth_failures', '0');
+    localStorage.removeItem('auth_blocked_until');
+    resetOnSuccess();
+    
+    toast({
+      title: 'Login realizado!',
+      description: 'Verificação de dois fatores concluída.',
+    });
+  };
+
+  const handleMFACancel = () => {
+    setShowMFADialog(false);
+    setMfaFactorId(null);
+    navigate('/auth');
   };
 
   // Show success message after signup
@@ -871,6 +917,17 @@ const Auth = () => {
             </TabsContent>
           </Tabs>
         </Card>
+        
+        {/* MFA Verification Dialog */}
+        {mfaFactorId && (
+          <MFAVerificationDialog
+            open={showMFADialog}
+            onOpenChange={setShowMFADialog}
+            factorId={mfaFactorId}
+            onSuccess={handleMFASuccess}
+            onCancel={handleMFACancel}
+          />
+        )}
       </div>
     </div>
   );
