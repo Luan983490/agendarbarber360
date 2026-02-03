@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Smartphone, QrCode, CheckCircle, Copy, Download, AlertTriangle, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Loader2, Smartphone, QrCode, CheckCircle, Copy, Download, AlertTriangle, ArrowRight, ArrowLeft, ShieldAlert } from 'lucide-react';
 import { useMFA, EnrollmentData } from '@/hooks/useMFA';
 import { useToast } from '@/hooks/use-toast';
 
@@ -19,23 +19,14 @@ interface MFAEnrollmentDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-type Step = 'intro' | 'qrcode' | 'verify' | 'recovery' | 'complete';
+type Step = 'intro' | 'qrcode' | 'verify' | 'backup' | 'complete';
 
 export const MFAEnrollmentDialog = ({ open, onOpenChange }: MFAEnrollmentDialogProps) => {
   const [step, setStep] = useState<Step>('intro');
   const [enrollment, setEnrollment] = useState<EnrollmentData | null>(null);
   const [verificationCode, setVerificationCode] = useState('');
   const [loading, setLoading] = useState(false);
-  const [recoveryCodes] = useState<string[]>([
-    'XXXX-XXXX-XXXX',
-    'XXXX-XXXX-XXXX',
-    'XXXX-XXXX-XXXX',
-    'XXXX-XXXX-XXXX',
-    'XXXX-XXXX-XXXX',
-    'XXXX-XXXX-XXXX',
-    'XXXX-XXXX-XXXX',
-    'XXXX-XXXX-XXXX',
-  ]);
+  const [backupConfirmed, setBackupConfirmed] = useState(false);
   const { startEnrollment, verifyEnrollment, cancelEnrollment } = useMFA();
   const { toast } = useToast();
 
@@ -44,6 +35,7 @@ export const MFAEnrollmentDialog = ({ open, onOpenChange }: MFAEnrollmentDialogP
       setStep('intro');
       setEnrollment(null);
       setVerificationCode('');
+      setBackupConfirmed(false);
     }
   }, [open]);
 
@@ -63,7 +55,7 @@ export const MFAEnrollmentDialog = ({ open, onOpenChange }: MFAEnrollmentDialogP
     setLoading(true);
     const success = await verifyEnrollment(enrollment.id, verificationCode);
     if (success) {
-      setStep('recovery');
+      setStep('backup');
     }
     setLoading(false);
   };
@@ -92,27 +84,59 @@ export const MFAEnrollmentDialog = ({ open, onOpenChange }: MFAEnrollmentDialogP
     }
   };
 
-  const copyRecoveryCodes = () => {
-    navigator.clipboard.writeText(recoveryCodes.join('\n'));
-    toast({
-      title: 'Códigos copiados!',
-      description: 'Guarde em um local seguro.'
-    });
+  const copyBackupSecret = () => {
+    if (enrollment?.totp.secret) {
+      const backupContent = `CÓDIGO DE BACKUP - Barber360\n\nGuarde este código em local seguro para recuperar o MFA se trocar de celular.\n\nCódigo secreto: ${enrollment.totp.secret}\n\nInstruções:\n1. Abra seu novo app autenticador\n2. Adicione uma conta manualmente\n3. Cole este código secreto\n\nGerado em: ${new Date().toLocaleString('pt-BR')}`;
+      navigator.clipboard.writeText(backupContent);
+      toast({
+        title: 'Código de backup copiado!',
+        description: 'Guarde em um local seguro.'
+      });
+    }
   };
 
-  const downloadRecoveryCodes = () => {
-    const content = `CÓDIGOS DE RECUPERAÇÃO - Barber360\n\nGuarde estes códigos em local seguro. Cada código só pode ser usado uma vez.\n\n${recoveryCodes.join('\n')}\n\nGerado em: ${new Date().toLocaleString('pt-BR')}`;
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'barber360-recovery-codes.txt';
-    a.click();
-    URL.revokeObjectURL(url);
-    toast({
-      title: 'Download iniciado',
-      description: 'Guarde o arquivo em local seguro.'
-    });
+  const downloadBackupSecret = () => {
+    if (enrollment?.totp.secret) {
+      const content = `CÓDIGO DE BACKUP - Barber360
+=====================================
+
+⚠️ GUARDE ESTE ARQUIVO EM LOCAL SEGURO!
+⚠️ NÃO COMPARTILHE COM NINGUÉM!
+
+Este código permite recuperar o acesso ao MFA se você:
+- Trocar de celular
+- Perder acesso ao app autenticador
+- Desinstalar o app por engano
+
+=====================================
+CÓDIGO SECRETO:
+${enrollment.totp.secret}
+=====================================
+
+COMO USAR:
+1. Instale um app autenticador (Google Authenticator, Authy, etc.)
+2. Escolha "Adicionar conta manualmente" ou "Inserir chave"
+3. Digite o código secreto acima
+4. O app começará a gerar códigos de 6 dígitos
+
+=====================================
+Conta: Barber360
+Gerado em: ${new Date().toLocaleString('pt-BR')}
+
+ATENÇÃO: Este código só pode ser usado uma vez para configurar o autenticador.
+`;
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'barber360-mfa-backup.txt';
+      a.click();
+      URL.revokeObjectURL(url);
+      toast({
+        title: 'Download iniciado',
+        description: 'Guarde o arquivo em local seguro.'
+      });
+    }
   };
 
   return (
@@ -196,7 +220,7 @@ export const MFAEnrollmentDialog = ({ open, onOpenChange }: MFAEnrollmentDialogP
                   Ou insira o código manualmente:
                 </p>
                 <div className="flex items-center justify-center gap-2">
-                  <code className="px-3 py-1.5 bg-muted rounded font-mono text-sm">
+                  <code className="px-3 py-1.5 bg-muted rounded font-mono text-sm break-all">
                     {enrollment.totp.secret}
                   </code>
                   <Button variant="ghost" size="icon" onClick={copySecret}>
@@ -264,45 +288,68 @@ export const MFAEnrollmentDialog = ({ open, onOpenChange }: MFAEnrollmentDialogP
           </>
         )}
 
-        {step === 'recovery' && (
+        {step === 'backup' && enrollment && (
           <>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-yellow-500" />
-                Códigos de Recuperação
+                <ShieldAlert className="h-5 w-5 text-amber-500" />
+                Salve seu Código de Backup
               </DialogTitle>
               <DialogDescription>
-                Guarde estes códigos em local seguro. Você precisará deles se perder acesso ao app autenticador.
+                Guarde este código para recuperar o acesso se perder seu celular
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
-              <Alert variant="destructive" className="bg-yellow-500/10 border-yellow-500/50 text-yellow-700">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  Cada código só pode ser usado uma vez. Guarde-os em local seguro!
+              <Alert className="border-amber-500/50 bg-amber-500/10">
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+                <AlertDescription className="text-amber-700 dark:text-amber-400">
+                  <strong>⚠️ IMPORTANTE:</strong> Este é o único momento em que você verá este código. 
+                  Salve-o agora em local seguro!
                 </AlertDescription>
               </Alert>
 
-              <div className="grid grid-cols-2 gap-2 p-4 bg-muted rounded-lg">
-                {recoveryCodes.map((code, index) => (
-                  <code key={index} className="text-sm font-mono text-center py-1">
-                    {code}
+              <div className="p-4 bg-muted rounded-lg space-y-3">
+                <p className="text-sm font-medium text-center">Seu código secreto de backup:</p>
+                <div className="p-3 bg-background rounded border">
+                  <code className="text-sm font-mono break-all block text-center">
+                    {enrollment.totp.secret}
                   </code>
-                ))}
+                </div>
+                <p className="text-xs text-muted-foreground text-center">
+                  Use este código para adicionar manualmente em um novo app autenticador
+                </p>
               </div>
 
               <div className="flex gap-2">
-                <Button variant="outline" onClick={copyRecoveryCodes} className="flex-1">
+                <Button variant="outline" onClick={copyBackupSecret} className="flex-1">
                   <Copy className="h-4 w-4 mr-2" />
                   Copiar
                 </Button>
-                <Button variant="outline" onClick={downloadRecoveryCodes} className="flex-1">
+                <Button variant="outline" onClick={downloadBackupSecret} className="flex-1">
                   <Download className="h-4 w-4 mr-2" />
-                  Baixar
+                  Baixar .txt
                 </Button>
               </div>
 
-              <Button onClick={handleComplete} className="w-full">
+              <div className="flex items-start gap-2 pt-2">
+                <input
+                  type="checkbox"
+                  id="backup-confirm"
+                  checked={backupConfirmed}
+                  onChange={(e) => setBackupConfirmed(e.target.checked)}
+                  className="mt-1"
+                />
+                <label htmlFor="backup-confirm" className="text-sm text-muted-foreground">
+                  Confirmo que salvei o código de backup em local seguro e entendo que não poderei 
+                  visualizá-lo novamente.
+                </label>
+              </div>
+
+              <Button 
+                onClick={handleComplete} 
+                className="w-full"
+                disabled={!backupConfirmed}
+              >
                 <CheckCircle className="h-4 w-4 mr-2" />
                 Concluir Configuração
               </Button>
