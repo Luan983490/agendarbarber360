@@ -234,21 +234,29 @@ const Auth = () => {
         throw error;
       }
       
-      // Check if MFA is required
-      const { data: mfaData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      console.log('✅ Login com senha OK');
       
-      if (mfaData && mfaData.currentLevel === 'aal1' && mfaData.nextLevel === 'aal2') {
-        // MFA is required - get the factor and show verification dialog
-        const { data: factorsData } = await supabase.auth.mfa.listFactors();
-        const verifiedFactor = factorsData?.totp?.find(f => f.status === 'verified');
-        
-        if (verifiedFactor) {
-          setMfaFactorId(verifiedFactor.id);
-          setShowMFADialog(true);
-          setLoading(false);
-          return; // Don't complete login yet, wait for MFA
-        }
+      // VERIFICAR SE USUÁRIO TEM MFA ATIVO
+      const { data: factorsData } = await supabase.auth.mfa.listFactors();
+      console.log('🔒 MFA Factors:', factorsData);
+      
+      // Procurar por factor TOTP verificado (pode estar em totp ou all)
+      const allFactors = factorsData?.all || factorsData?.totp || [];
+      const activeMFAFactor = allFactors.find(
+        (factor: any) => factor.status === 'verified' && factor.factor_type === 'totp'
+      );
+      
+      console.log('🔐 Active MFA Factor:', activeMFAFactor);
+      
+      if (activeMFAFactor) {
+        console.log('🔐 Usuário tem MFA ativo! Solicitando código...');
+        setMfaFactorId(activeMFAFactor.id);
+        setShowMFADialog(true);
+        setLoading(false);
+        return; // NÃO completar login ainda, aguardar MFA
       }
+      
+      console.log('✅ Login completo (sem MFA)');
       
       // Login bem-sucedido - gravar log de auditoria
       logAuthEvent('auth_success', emailUsed);
