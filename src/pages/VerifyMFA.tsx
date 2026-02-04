@@ -109,39 +109,36 @@ const VerifyMFA = () => {
 
     setLoading(true);
     try {
-      console.log('[VerifyMFA] Verificando código de recuperação...');
+      console.log('[VerifyMFA] Verificando código de recuperação via RPC...');
       
-      // Buscar código de recuperação válido
-      const { data: recoveryCode, error: fetchError } = await supabase
-        .from('mfa_recovery_codes')
-        .select('*')
-        .eq('user_id', challengeData.userId)
-        .eq('code', code.toUpperCase())
-        .eq('used', false)
-        .single();
+      // Usar função RPC que verifica hash e marca como usado automaticamente
+      const { data: result, error: rpcError } = await supabase.rpc('verify_recovery_code', {
+        p_user_id: challengeData.userId,
+        p_code: code.toUpperCase().replace(/-/g, '')
+      }) as { data: { success: boolean; error?: string } | null; error: any };
 
-      if (fetchError || !recoveryCode) {
-        console.error('[VerifyMFA] Código de recuperação inválido:', fetchError);
+      console.log('🔑 Resultado verificação:', result);
+
+      if (rpcError) {
+        console.error('[VerifyMFA] Erro RPC:', rpcError);
         toast({
-          title: 'Código inválido',
-          description: 'Este código de recuperação não existe ou já foi usado.',
+          title: 'Erro na verificação',
+          description: 'Erro ao verificar código. Tente novamente.',
           variant: 'destructive'
         });
         setCode('');
         return;
       }
 
-      // Marcar como usado
-      const { error: updateError } = await supabase
-        .from('mfa_recovery_codes')
-        .update({ 
-          used: true, 
-          used_at: new Date().toISOString() 
-        })
-        .eq('id', recoveryCode.id);
-
-      if (updateError) {
-        console.error('[VerifyMFA] Erro ao marcar código como usado:', updateError);
+      if (!result?.success) {
+        console.error('[VerifyMFA] ❌ Recovery code inválido:', result?.error);
+        toast({
+          title: 'Código inválido',
+          description: result?.error || 'Este código de recuperação não existe ou já foi usado.',
+          variant: 'destructive'
+        });
+        setCode('');
+        return;
       }
 
       console.log('[VerifyMFA] ✅ Código de recuperação verificado!');
