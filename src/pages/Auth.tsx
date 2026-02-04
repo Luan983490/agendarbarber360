@@ -57,6 +57,7 @@ const Auth = () => {
   // MFA State
   const [showMFADialog, setShowMFADialog] = useState(false);
   const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
+  const [mfaPending, setMfaPending] = useState(false); // Flag para bloquear redirect
   
   const tabsRef = useRef<HTMLDivElement>(null);
   
@@ -134,10 +135,16 @@ const Auth = () => {
   }, [setCaptchaVerified]);
 
   useEffect(() => {
+    // NÃO redirecionar se MFA está pendente
+    if (mfaPending) {
+      console.log('[Auth] MFA pendente - bloqueando redirect automático');
+      return;
+    }
+    
     if (user && !authLoading) {
       checkUserProfileAndRedirect();
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, mfaPending]);
 
   const checkUserProfileAndRedirect = async () => {
     if (!user) return;
@@ -249,11 +256,16 @@ const Auth = () => {
       console.log('🔐 Active MFA Factor:', activeMFAFactor);
       
       if (activeMFAFactor) {
-        console.log('🔐 Usuário tem MFA ativo! Solicitando código...');
+        console.log('🔐 MFA ATIVO - BLOQUEANDO REDIRECT');
+        
+        // CRITICAL: Setar flag ANTES de mostrar dialog para bloquear redirect
+        setMfaPending(true);
         setMfaFactorId(activeMFAFactor.id);
         setShowMFADialog(true);
         setLoading(false);
-        return; // NÃO completar login ainda, aguardar MFA
+        
+        // PARAR COMPLETAMENTE - não continuar execução
+        return;
       }
       
       console.log('✅ Login completo (sem MFA)');
@@ -471,6 +483,10 @@ const Auth = () => {
 
   // MFA Handlers
   const handleMFASuccess = () => {
+    console.log('✅ MFA verificado com sucesso - liberando redirect');
+    
+    // Limpar flags de MFA
+    setMfaPending(false);
     setShowMFADialog(false);
     setMfaFactorId(null);
     
@@ -485,12 +501,21 @@ const Auth = () => {
       title: 'Login realizado!',
       description: 'Verificação de dois fatores concluída.',
     });
+    
+    // Agora sim, redirecionar manualmente
+    checkUserProfileAndRedirect();
   };
 
-  const handleMFACancel = () => {
+  const handleMFACancel = async () => {
+    console.log('❌ MFA cancelado - fazendo logout');
+    
+    // Fazer logout para limpar sessão parcial
+    await supabase.auth.signOut();
+    
+    // Limpar flags
+    setMfaPending(false);
     setShowMFADialog(false);
     setMfaFactorId(null);
-    navigate('/auth');
   };
 
   // Show success message after signup
