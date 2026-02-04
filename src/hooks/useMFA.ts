@@ -107,7 +107,7 @@ export const useMFA = () => {
     }
   };
 
-  const verifyEnrollment = async (factorId: string, code: string): Promise<string[] | null> => {
+  const verifyEnrollment = async (factorId: string, code: string): Promise<{ success: boolean }> => {
     try {
       const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
         factorId
@@ -115,28 +115,11 @@ export const useMFA = () => {
 
       if (challengeError) throw challengeError;
 
-      const { data: verifyData, error: verifyError } = await supabase.auth.mfa.verify({
+      const { error: verifyError } = await supabase.auth.mfa.verify({
         factorId,
         challengeId: challengeData.id,
         code
       });
-
-      // DEBUG: Log completo da resposta do verify
-      console.log('========== DEBUG MFA VERIFY ==========');
-      console.log('VERIFY DATA COMPLETO:', JSON.stringify(verifyData, null, 2));
-      console.log('VERIFY DATA KEYS:', verifyData ? Object.keys(verifyData) : 'null');
-      console.log('USER OBJECT:', verifyData?.user ? 'exists' : 'null');
-      console.log('RECOVERY CODES (verifyData.recovery_codes):', (verifyData as any)?.recovery_codes);
-      console.log('USER FACTORS:', (verifyData?.user as any)?.factors);
-      
-      // Check for recovery codes in different locations
-      const recoveryCodes = 
-        (verifyData as any)?.recovery_codes ||
-        (verifyData?.user as any)?.recovery_codes ||
-        (verifyData?.user?.factors?.find((f: any) => f.id === factorId) as any)?.recovery_codes;
-      
-      console.log('RECOVERY CODES EXTRAÍDOS:', recoveryCodes);
-      console.log('=======================================');
 
       if (verifyError) throw verifyError;
 
@@ -147,14 +130,14 @@ export const useMFA = () => {
         description: 'Autenticação de dois fatores configurada com sucesso.'
       });
 
-      return recoveryCodes || null;
+      return { success: true };
     } catch (error: any) {
       toast({
         title: 'Código inválido',
         description: 'Verifique o código e tente novamente.',
         variant: 'destructive'
       });
-      return null;
+      return { success: false };
     }
   };
 

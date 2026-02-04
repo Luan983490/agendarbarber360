@@ -56,55 +56,71 @@ export const MFAEnrollmentDialog = ({ open, onOpenChange }: MFAEnrollmentDialogP
     if (!enrollment || verificationCode.length !== 6) return;
 
     setLoading(true);
-    const verifyResult = await verifyEnrollment(enrollment.id, verificationCode);
+    const result = await verifyEnrollment(enrollment.id, verificationCode);
     
-    // verifyResult can be recovery codes from Supabase or null
-    // Either way, if verification succeeded (didn't throw), we generate our own codes
-    if (verifyResult !== null || verifyResult === null) {
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
+    // Only proceed if verification was successful
+    if (!result.success) {
+      setLoading(false);
+      return;
+    }
+
+    // MFA activated successfully! Now generate and save recovery codes
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      console.error('No user found after MFA verification');
+      setStep('recovery');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Delete any existing recovery codes for this user
+      const { error: deleteError } = await supabase
+        .from('mfa_recovery_codes')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (deleteError) {
+        console.error('Error deleting old recovery codes:', deleteError);
+      }
+
+      // Generate new recovery codes
+      const codes = generateRecoveryCodes();
       
-      if (user) {
-        try {
-          // Delete any existing recovery codes for this user
-          await supabase
-            .from('mfa_recovery_codes')
-            .delete()
-            .eq('user_id', user.id);
+      // Save ALL codes to database
+      const { error: insertError } = await supabase
+        .from('mfa_recovery_codes')
+        .insert(
+          codes.map(code => ({
+            user_id: user.id,
+            code: code,
+            used: false
+          }))
+        );
 
-          // Generate new recovery codes
-          const codes = generateRecoveryCodes();
-          
-          // Save to database
-          const { error: insertError } = await supabase
-            .from('mfa_recovery_codes')
-            .insert(
-              codes.map(code => ({
-                user_id: user.id,
-                code: code,
-                used: false
-              }))
-            );
-
-          if (insertError) {
-            console.error('Error saving recovery codes:', insertError);
-            toast({
-              title: 'Aviso',
-              description: 'MFA ativado, mas houve erro ao gerar códigos de recuperação.',
-              variant: 'destructive'
-            });
-          } else {
-            setRecoveryCodes(codes);
-          }
-          
-          setStep('recovery');
-        } catch (err) {
-          console.error('Error generating recovery codes:', err);
-          setStep('recovery');
-        }
+      if (insertError) {
+        console.error('Error saving recovery codes:', insertError);
+        toast({
+          title: 'Aviso',
+          description: 'MFA ativado, mas houve erro ao salvar códigos de recuperação.',
+          variant: 'destructive'
+        });
+        // Still show recovery step but with empty codes
+        setStep('recovery');
       } else {
+        console.log('Recovery codes saved successfully:', codes.length, 'codes');
+        setRecoveryCodes(codes);
         setStep('recovery');
       }
+    } catch (err) {
+      console.error('Error in recovery codes flow:', err);
+      toast({
+        title: 'Erro',
+        description: 'Ocorreu um erro ao gerar códigos de recuperação.',
+        variant: 'destructive'
+      });
+      setStep('recovery');
     }
     
     setLoading(false);
