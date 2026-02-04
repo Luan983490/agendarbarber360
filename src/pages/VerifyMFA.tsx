@@ -48,9 +48,33 @@ const VerifyMFA = () => {
 
     setLoading(true);
     try {
+      // 1. VERIFICAR RATE LIMIT
+      console.log('[VerifyMFA] Verificando rate limit...');
+      const { data: rateLimitCheck, error: rateLimitError } = await supabase.rpc('check_mfa_rate_limit', {
+        p_user_id: challengeData.userId
+      }) as { data: { allowed: boolean; blocked_until?: string; failed_attempts?: number } | null; error: any };
+
+      console.log('🚦 Rate limit check:', rateLimitCheck);
+
+      if (rateLimitError) {
+        console.warn('[VerifyMFA] Erro ao verificar rate limit:', rateLimitError);
+        // Continuar mesmo com erro (fail open)
+      } else if (rateLimitCheck && !rateLimitCheck.allowed) {
+        const blockedUntil = new Date(rateLimitCheck.blocked_until!);
+        const minutesLeft = Math.ceil((blockedUntil.getTime() - Date.now()) / 60000);
+        
+        toast({
+          title: 'Muitas tentativas falhadas',
+          description: `Tente novamente em ${minutesLeft} minuto${minutesLeft > 1 ? 's' : ''}.`,
+          variant: 'destructive'
+        });
+        setLoading(false);
+        return;
+      }
+
       console.log('[VerifyMFA] Criando challenge TOTP...');
       
-      // Criar challenge
+      // 2. Criar challenge
       const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({
         factorId: challengeData.factorId
       });
@@ -62,11 +86,22 @@ const VerifyMFA = () => {
 
       console.log('[VerifyMFA] Verificando código...');
       
-      // Verificar código
+      // 3. Verificar código
       const { error: verifyError } = await supabase.auth.mfa.verify({
         factorId: challengeData.factorId,
         challengeId: challenge.id,
         code: code
+      });
+
+      const verifySuccess = !verifyError;
+
+      // 4. REGISTRAR TENTATIVA
+      console.log('[VerifyMFA] Registrando tentativa MFA...');
+      await supabase.rpc('log_mfa_attempt', {
+        p_user_id: challengeData.userId,
+        p_attempt_type: 'totp',
+        p_success: verifySuccess,
+        p_ip_address: null
       });
 
       if (verifyError) {
@@ -109,15 +144,50 @@ const VerifyMFA = () => {
 
     setLoading(true);
     try {
+      // 1. VERIFICAR RATE LIMIT
+      console.log('[VerifyMFA] Verificando rate limit...');
+      const { data: rateLimitCheck, error: rateLimitError } = await supabase.rpc('check_mfa_rate_limit', {
+        p_user_id: challengeData.userId
+      }) as { data: { allowed: boolean; blocked_until?: string; failed_attempts?: number } | null; error: any };
+
+      console.log('🚦 Rate limit check:', rateLimitCheck);
+
+      if (rateLimitError) {
+        console.warn('[VerifyMFA] Erro ao verificar rate limit:', rateLimitError);
+        // Continuar mesmo com erro (fail open)
+      } else if (rateLimitCheck && !rateLimitCheck.allowed) {
+        const blockedUntil = new Date(rateLimitCheck.blocked_until!);
+        const minutesLeft = Math.ceil((blockedUntil.getTime() - Date.now()) / 60000);
+        
+        toast({
+          title: 'Muitas tentativas falhadas',
+          description: `Tente novamente em ${minutesLeft} minuto${minutesLeft > 1 ? 's' : ''}.`,
+          variant: 'destructive'
+        });
+        setLoading(false);
+        return;
+      }
+
       console.log('[VerifyMFA] Verificando código de recuperação via RPC...');
       
-      // Usar função RPC que verifica hash e marca como usado automaticamente
+      // 2. Usar função RPC que verifica hash e marca como usado automaticamente
       const { data: result, error: rpcError } = await supabase.rpc('verify_recovery_code', {
         p_user_id: challengeData.userId,
         p_code: code.toUpperCase().replace(/-/g, '')
       }) as { data: { success: boolean; error?: string } | null; error: any };
 
       console.log('🔑 Resultado verificação:', result);
+
+      const verifySuccess = result?.success || false;
+
+      // 3. REGISTRAR TENTATIVA
+      console.log('[VerifyMFA] Registrando tentativa recovery...');
+      await supabase.rpc('log_mfa_attempt', {
+        p_user_id: challengeData.userId,
+        p_attempt_type: 'recovery',
+        p_success: verifySuccess,
+        p_ip_address: null
+      });
 
       if (rpcError) {
         console.error('[VerifyMFA] Erro RPC:', rpcError);
@@ -130,7 +200,7 @@ const VerifyMFA = () => {
         return;
       }
 
-      if (!result?.success) {
+      if (!verifySuccess) {
         console.error('[VerifyMFA] ❌ Recovery code inválido:', result?.error);
         toast({
           title: 'Código inválido',

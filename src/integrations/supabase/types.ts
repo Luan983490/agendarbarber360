@@ -1159,9 +1159,35 @@ export type Database = {
           },
         ]
       }
+      mfa_attempts: {
+        Row: {
+          attempt_type: string
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          success: boolean
+          user_id: string
+        }
+        Insert: {
+          attempt_type: string
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          success: boolean
+          user_id: string
+        }
+        Update: {
+          attempt_type?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          success?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       mfa_recovery_codes: {
         Row: {
-          code: string
           code_hash: string | null
           created_at: string | null
           id: string
@@ -1170,7 +1196,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          code: string
           code_hash?: string | null
           created_at?: string | null
           id?: string
@@ -1179,7 +1204,6 @@ export type Database = {
           user_id: string
         }
         Update: {
-          code?: string
           code_hash?: string | null
           created_at?: string | null
           id?: string
@@ -1887,6 +1911,7 @@ export type Database = {
         Returns: boolean
       }
       check_and_trigger_alerts: { Args: never; Returns: number }
+      check_mfa_rate_limit: { Args: { p_user_id: string }; Returns: Json }
       check_mfa_requirement: { Args: { p_user_id: string }; Returns: boolean }
       check_rate_limit: {
         Args: {
@@ -2253,6 +2278,15 @@ export type Database = {
       }
       is_email_verified: { Args: never; Returns: boolean }
       is_user_in_grace_period: { Args: never; Returns: boolean }
+      log_mfa_attempt: {
+        Args: {
+          p_attempt_type: string
+          p_ip_address?: string
+          p_success: boolean
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       reset_rate_limit: {
         Args: {
           p_action_type: Database["public"]["Enums"]["rate_limit_action"]
