@@ -102,7 +102,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signOut = async () => {
-    await authService.signOut();
+    try {
+      // Limpar estado local ANTES de fazer signOut no Supabase
+      // Isso garante que a UI responde mesmo se o signOut falhar
+      setUser(null);
+      setSession(null);
+      
+      // Tentar fazer signOut no Supabase (pode falhar se sessão já expirou)
+      await authService.signOut();
+    } catch (error) {
+      console.error('[Auth] Erro no signOut:', error);
+      // Ignorar erro - estado local já foi limpo
+    }
+    
     toast({
       title: "Logout realizado",
       description: "Você foi desconectado com sucesso."
