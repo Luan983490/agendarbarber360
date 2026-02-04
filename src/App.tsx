@@ -34,6 +34,9 @@ import NotFound from "./pages/NotFound";
 // Dev tools (lazy load)
 const DevAssistant = lazy(() => import("./pages/DevAssistant"));
 
+// MFA verification page (lazy load)
+const VerifyMFA = lazy(() => import("./pages/VerifyMFA"));
+
 // Admin pages (lazy load - heavy components)
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 
@@ -74,6 +77,7 @@ const AppContent = () => {
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/dev-assistant" element={<DevAssistant />} />
+            <Route path="/verify-mfa" element={<VerifyMFA />} />
             
             {/* Admin Routes (Owner only) */}
             <Route 
