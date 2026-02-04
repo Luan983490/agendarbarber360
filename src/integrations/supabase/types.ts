@@ -1159,6 +1159,33 @@ export type Database = {
           },
         ]
       }
+      mfa_recovery_codes: {
+        Row: {
+          code: string
+          created_at: string | null
+          id: string
+          used: boolean | null
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          id?: string
+          used?: boolean | null
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          id?: string
+          used?: boolean | null
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       packages: {
         Row: {
           barbershop_id: string
