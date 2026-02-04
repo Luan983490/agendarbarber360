@@ -53,33 +53,27 @@ export const RecoveryCodeLogin = ({
     setError('');
 
     try {
-      // Check if code exists and is not used
-      const { data: recoveryCode, error: fetchError } = await supabase
-        .from('mfa_recovery_codes')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('code', formattedCode)
-        .eq('used', false)
-        .maybeSingle();
+      // Usar função RPC que verifica hash e marca como usado automaticamente
+      const { data: result, error: rpcError } = await supabase.rpc('verify_recovery_code', {
+        p_user_id: userId,
+        p_code: formattedCode.replace(/-/g, '')
+      }) as { data: { success: boolean; error?: string } | null; error: any };
 
-      if (fetchError) throw fetchError;
+      if (rpcError) throw rpcError;
 
-      if (!recoveryCode) {
-        setError('Código inválido ou já utilizado.');
+      if (!result?.success) {
+        setError(result?.error || 'Código inválido ou já utilizado.');
         setLoading(false);
         return;
       }
 
-      // Mark code as used
-      const { error: updateError } = await supabase
-        .from('mfa_recovery_codes')
-        .update({
-          used: true,
-          used_at: new Date().toISOString()
-        })
-        .eq('id', recoveryCode.id);
-
-      if (updateError) throw updateError;
+      // Registrar tentativa bem-sucedida
+      await supabase.rpc('log_mfa_attempt', {
+        p_user_id: userId,
+        p_attempt_type: 'recovery',
+        p_success: true,
+        p_ip_address: null
+      });
 
       toast({
         title: 'Login realizado!',
@@ -91,6 +85,14 @@ export const RecoveryCodeLogin = ({
     } catch (err: any) {
       console.error('Error using recovery code:', err);
       setError('Erro ao validar código. Tente novamente.');
+      
+      // Registrar tentativa falhada
+      await supabase.rpc('log_mfa_attempt', {
+        p_user_id: userId,
+        p_attempt_type: 'recovery',
+        p_success: false,
+        p_ip_address: null
+      });
     } finally {
       setLoading(false);
     }
