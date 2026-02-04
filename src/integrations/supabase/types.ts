@@ -1162,6 +1162,7 @@ export type Database = {
       mfa_recovery_codes: {
         Row: {
           code: string
+          code_hash: string | null
           created_at: string | null
           id: string
           used: boolean | null
@@ -1170,6 +1171,7 @@ export type Database = {
         }
         Insert: {
           code: string
+          code_hash?: string | null
           created_at?: string | null
           id?: string
           used?: boolean | null
@@ -1178,6 +1180,7 @@ export type Database = {
         }
         Update: {
           code?: string
+          code_hash?: string | null
           created_at?: string | null
           id?: string
           used?: boolean | null
@@ -2287,6 +2290,10 @@ export type Database = {
         Returns: boolean
       }
       user_owns_barbershop: { Args: { p_user_id: string }; Returns: string }
+      verify_recovery_code: {
+        Args: { p_code: string; p_user_id: string }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "owner" | "barber" | "attendant"
