@@ -15,7 +15,6 @@ import { useToast } from '@/hooks/use-toast';
 import { User, Store, Check, X, Eye, EyeOff, Loader2, Mail, AlertCircle, LogIn, Shield, Clock } from 'lucide-react';
 import { loginSchema, signUpSchema, validateWithSchema, formatValidationErrors } from '@/lib/validation-schemas';
 import { TurnstileCaptcha } from '@/components/TurnstileCaptcha';
-import { MFAVerificationDialog } from '@/components/mfa';
 import b360Logo from '@/assets/b360-logo.png';
 // Password strength checker
 const checkPasswordStrength = (password: string) => {
@@ -54,10 +53,8 @@ const Auth = () => {
   const [serverRateLimited, setServerRateLimited] = useState(false);
   const [forceUpdate, setForceUpdate] = useState(0);
   
-  // MFA State
-  const [showMFADialog, setShowMFADialog] = useState(false);
-  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
-  const [mfaPending, setMfaPending] = useState(false); // Flag para bloquear redirect
+  // MFA State (apenas para controle - dialog agora é página separada)
+  const [mfaPending, setMfaPending] = useState(false);
   
   const tabsRef = useRef<HTMLDivElement>(null);
   
@@ -256,15 +253,18 @@ const Auth = () => {
       console.log('🔐 Active MFA Factor:', activeMFAFactor);
       
       if (activeMFAFactor) {
-        console.log('🔐 MFA ATIVO - BLOQUEANDO REDIRECT');
+        console.log('🔐 MFA ATIVO - REDIRECIONANDO PARA VERIFICAÇÃO');
         
-        // CRITICAL: Setar flag ANTES de mostrar dialog para bloquear redirect
-        setMfaPending(true);
-        setMfaFactorId(activeMFAFactor.id);
-        setShowMFADialog(true);
+        // Salvar dados necessários no sessionStorage
+        sessionStorage.setItem('mfa_challenge', JSON.stringify({
+          factorId: activeMFAFactor.id,
+          userId: data.user.id
+        }));
+        
         setLoading(false);
         
-        // PARAR COMPLETAMENTE - não continuar execução
+        // Redirecionar para página dedicada de verificação MFA
+        navigate('/verify-mfa', { replace: true });
         return;
       }
       
@@ -481,42 +481,7 @@ const Auth = () => {
     }
   };
 
-  // MFA Handlers
-  const handleMFASuccess = () => {
-    console.log('✅ MFA verificado com sucesso - liberando redirect');
-    
-    // Limpar flags de MFA
-    setMfaPending(false);
-    setShowMFADialog(false);
-    setMfaFactorId(null);
-    
-    // Login completo com MFA
-    logAuthEvent('auth_success', loginData.email.trim().toLowerCase());
-    
-    localStorage.setItem('auth_failures', '0');
-    localStorage.removeItem('auth_blocked_until');
-    resetOnSuccess();
-    
-    toast({
-      title: 'Login realizado!',
-      description: 'Verificação de dois fatores concluída.',
-    });
-    
-    // Agora sim, redirecionar manualmente
-    checkUserProfileAndRedirect();
-  };
-
-  const handleMFACancel = async () => {
-    console.log('❌ MFA cancelado - fazendo logout');
-    
-    // Fazer logout para limpar sessão parcial
-    await supabase.auth.signOut();
-    
-    // Limpar flags
-    setMfaPending(false);
-    setShowMFADialog(false);
-    setMfaFactorId(null);
-  };
+  // MFA agora é tratado na página /verify-mfa - handlers removidos
 
   // Show success message after signup
   if (signupSuccess) {
@@ -951,16 +916,6 @@ const Auth = () => {
           </Tabs>
         </Card>
         
-        {/* MFA Verification Dialog */}
-        {mfaFactorId && (
-          <MFAVerificationDialog
-            open={showMFADialog}
-            onOpenChange={setShowMFADialog}
-            factorId={mfaFactorId}
-            onSuccess={handleMFASuccess}
-            onCancel={handleMFACancel}
-          />
-        )}
       </div>
     </div>
   );
