@@ -33,12 +33,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        // CRITICAL: Ignore auth events when on reset-password page
-        // This prevents auto-login during password recovery flow
-        const isOnResetPassword = window.location.pathname === '/reset-password';
+        // CRITICAL: Ignore auth events when on special pages
+        // This prevents auto-login during password recovery and MFA verification flows
+        const currentPath = window.location.pathname;
+        const isSpecialPage = currentPath === '/reset-password' || currentPath === '/verify-mfa';
         
-        if (isOnResetPassword) {
-          console.log('[Auth] Ignoring auth event on reset-password page:', event);
+        if (isSpecialPage && event === 'SIGNED_IN') {
+          console.log('[Auth] Ignoring SIGNED_IN on special page:', currentPath);
+          // Ainda atualiza o estado, mas não dispara redirects
+          setSession(session);
+          setUser(session?.user ?? null);
           setLoading(false);
           return;
         }
@@ -50,9 +54,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     );
 
-    // Get initial session - also ignore on reset-password page
-    const isOnResetPassword = window.location.pathname === '/reset-password';
-    if (!isOnResetPassword) {
+    // Get initial session - also ignore on special pages
+    const currentPath = window.location.pathname;
+    const isSpecialPage = currentPath === '/reset-password' || currentPath === '/verify-mfa';
+    if (!isSpecialPage) {
       supabase.auth.getSession().then(({ data: { session } }) => {
         setSession(session);
         setUser(session?.user ?? null);

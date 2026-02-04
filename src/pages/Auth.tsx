@@ -132,9 +132,16 @@ const Auth = () => {
   }, [setCaptchaVerified]);
 
   useEffect(() => {
-    // NÃO redirecionar se MFA está pendente
+    // Verificar se há MFA challenge pendente no sessionStorage
+    const mfaChallenge = sessionStorage.getItem('mfa_challenge');
+    if (mfaChallenge) {
+      console.log('[Auth] MFA challenge pendente - bloqueando redirect automático');
+      return;
+    }
+    
+    // NÃO redirecionar se MFA está pendente (flag local)
     if (mfaPending) {
-      console.log('[Auth] MFA pendente - bloqueando redirect automático');
+      console.log('[Auth] MFA pendente (flag) - bloqueando redirect automático');
       return;
     }
     
