@@ -1,19 +1,32 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Shield, ShieldCheck, ShieldOff, Loader2, Smartphone, Key } from 'lucide-react';
+import { Shield, ShieldCheck, ShieldOff, Loader2, Smartphone } from 'lucide-react';
 import { useMFA } from '@/hooks/useMFA';
 import { MFAEnrollmentDialog } from './MFAEnrollmentDialog';
 import { MFADisableDialog } from './MFADisableDialog';
+import { RecoveryCodesManagement } from './RecoveryCodesManagement';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { supabase } from '@/integrations/supabase/client';
 
 export const MFASettingsCard = () => {
   const { factors, loading, isMFAEnabled, fetchFactors } = useMFA();
   const [showEnrollDialog, setShowEnrollDialog] = useState(false);
   const [showDisableDialog, setShowDisableDialog] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+    getUser();
+  }, []);
 
   const verifiedFactor = factors.find(f => f.status === 'verified');
 
@@ -27,8 +40,15 @@ export const MFASettingsCard = () => {
 
   const handleDisableSuccess = () => {
     setShowDisableDialog(false);
-    // Refetch factors to update UI
     fetchFactors();
+  };
+
+  const handleEnrollClose = (open: boolean) => {
+    setShowEnrollDialog(open);
+    if (!open) {
+      // Refetch factors when dialog closes
+      fetchFactors();
+    }
   };
 
   if (loading) {
@@ -104,41 +124,44 @@ export const MFASettingsCard = () => {
                 )}
               </div>
 
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => setShowDisableDialog(true)}
-                >
-                  <ShieldOff className="h-4 w-4 mr-2" />
-                  Desativar MFA
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => setShowDisableDialog(true)}
+              >
+                <ShieldOff className="h-4 w-4 mr-2" />
+                Desativar MFA
+              </Button>
             </div>
           )}
 
           {!isMFAEnabled && (
             <div className="p-4 border border-dashed rounded-lg bg-muted/30">
-              <div className="flex items-start gap-3">
-                <Key className="h-5 w-5 text-muted-foreground mt-0.5" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Por que ativar o MFA?</p>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>• Proteção extra contra acessos não autorizados</li>
-                    <li>• Mesmo que alguém descubra sua senha, não conseguirá acessar</li>
-                    <li>• Recomendado para contas com dados sensíveis</li>
-                  </ul>
-                </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Por que ativar o MFA?</p>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• Proteção extra contra acessos não autorizados</li>
+                  <li>• Mesmo que alguém descubra sua senha, não conseguirá acessar</li>
+                  <li>• Recomendado para contas com dados sensíveis</li>
+                </ul>
               </div>
             </div>
           )}
         </CardContent>
       </Card>
 
+      {/* Recovery Codes Management - shown when MFA is enabled */}
+      {isMFAEnabled && userId && (
+        <RecoveryCodesManagement
+          userId={userId}
+          isMFAEnabled={isMFAEnabled}
+        />
+      )}
+
       <MFAEnrollmentDialog
         open={showEnrollDialog}
-        onOpenChange={setShowEnrollDialog}
+        onOpenChange={handleEnrollClose}
       />
 
       {verifiedFactor && (

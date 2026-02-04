@@ -10,9 +10,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Smartphone, QrCode, CheckCircle, Copy, Download, AlertTriangle, ArrowRight, ArrowLeft, Key } from 'lucide-react';
+import { Loader2, Smartphone, QrCode, CheckCircle, Copy, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useMFA, EnrollmentData } from '@/hooks/useMFA';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { generateRecoveryCodes } from '@/lib/recovery-codes';
+import { RecoveryCodesDisplay } from './RecoveryCodesDisplay';
 
 interface MFAEnrollmentDialogProps {
   open: boolean;
@@ -26,7 +29,6 @@ export const MFAEnrollmentDialog = ({ open, onOpenChange }: MFAEnrollmentDialogP
   const [enrollment, setEnrollment] = useState<EnrollmentData | null>(null);
   const [verificationCode, setVerificationCode] = useState('');
   const [loading, setLoading] = useState(false);
-  const [backupConfirmed, setBackupConfirmed] = useState(false);
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
   const { startEnrollment, verifyEnrollment, cancelEnrollment } = useMFA();
   const { toast } = useToast();
@@ -36,7 +38,6 @@ export const MFAEnrollmentDialog = ({ open, onOpenChange }: MFAEnrollmentDialogP
       setStep('intro');
       setEnrollment(null);
       setVerificationCode('');
-      setBackupConfirmed(false);
       setRecoveryCodes([]);
     }
   }, [open]);
@@ -55,21 +56,62 @@ export const MFAEnrollmentDialog = ({ open, onOpenChange }: MFAEnrollmentDialogP
     if (!enrollment || verificationCode.length !== 6) return;
 
     setLoading(true);
-    const codes = await verifyEnrollment(enrollment.id, verificationCode);
-    if (codes && codes.length > 0) {
-      setRecoveryCodes(codes);
-      setStep('recovery');
-    } else if (codes === null) {
-      // Verification failed, stay on verify step
-    } else {
-      // Verification succeeded but no recovery codes - show secret as fallback
-      setStep('recovery');
+    const verifyResult = await verifyEnrollment(enrollment.id, verificationCode);
+    
+    // verifyResult can be recovery codes from Supabase or null
+    // Either way, if verification succeeded (didn't throw), we generate our own codes
+    if (verifyResult !== null || verifyResult === null) {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        try {
+          // Delete any existing recovery codes for this user
+          await supabase
+            .from('mfa_recovery_codes')
+            .delete()
+            .eq('user_id', user.id);
+
+          // Generate new recovery codes
+          const codes = generateRecoveryCodes();
+          
+          // Save to database
+          const { error: insertError } = await supabase
+            .from('mfa_recovery_codes')
+            .insert(
+              codes.map(code => ({
+                user_id: user.id,
+                code: code,
+                used: false
+              }))
+            );
+
+          if (insertError) {
+            console.error('Error saving recovery codes:', insertError);
+            toast({
+              title: 'Aviso',
+              description: 'MFA ativado, mas houve erro ao gerar códigos de recuperação.',
+              variant: 'destructive'
+            });
+          } else {
+            setRecoveryCodes(codes);
+          }
+          
+          setStep('recovery');
+        } catch (err) {
+          console.error('Error generating recovery codes:', err);
+          setStep('recovery');
+        }
+      } else {
+        setStep('recovery');
+      }
     }
+    
     setLoading(false);
   };
 
   const handleClose = async () => {
-    if (step !== 'complete' && enrollment) {
+    if (step !== 'complete' && step !== 'recovery' && enrollment) {
       await cancelEnrollment();
     }
     onOpenChange(false);
@@ -90,99 +132,6 @@ export const MFAEnrollmentDialog = ({ open, onOpenChange }: MFAEnrollmentDialogP
         description: 'Cole no seu app autenticador.'
       });
     }
-  };
-
-  // Use recovery codes from verify response, fallback to enrollment data
-  const hasRecoveryCodes = recoveryCodes.length > 0;
-
-  const copyRecoveryCodes = () => {
-    if (hasRecoveryCodes) {
-      navigator.clipboard.writeText(recoveryCodes.join('\n'));
-      toast({
-        title: 'Códigos copiados!',
-        description: 'Guarde em um local seguro.'
-      });
-    } else if (enrollment?.totp.secret) {
-      // Fallback: copy secret if no recovery codes
-      navigator.clipboard.writeText(enrollment.totp.secret);
-      toast({
-        title: 'Código de backup copiado!',
-        description: 'Guarde em um local seguro.'
-      });
-    }
-  };
-
-  const downloadRecoveryCodes = () => {
-    let content: string;
-    
-    if (hasRecoveryCodes) {
-      content = `CÓDIGOS DE RECUPERAÇÃO - Barber360
-=====================================
-
-⚠️ GUARDE ESTE ARQUIVO EM LOCAL SEGURO!
-⚠️ NÃO COMPARTILHE COM NINGUÉM!
-
-Use estes códigos se perder acesso ao app autenticador.
-Cada código funciona apenas UMA VEZ.
-
-=====================================
-SEUS CÓDIGOS DE RECUPERAÇÃO:
-
-${recoveryCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}
-
-=====================================
-
-COMO USAR:
-1. Na tela de login, após digitar email e senha
-2. Clique em "Usar código de recuperação"
-3. Digite um dos códigos acima
-4. Após usar, o código será invalidado
-
-=====================================
-Gerado em: ${new Date().toLocaleString('pt-BR')}
-Conta: Barber360
-`;
-    } else {
-      // Fallback content with secret
-      content = `CÓDIGO DE BACKUP - Barber360
-=====================================
-
-⚠️ GUARDE ESTE ARQUIVO EM LOCAL SEGURO!
-⚠️ NÃO COMPARTILHE COM NINGUÉM!
-
-Este código permite recuperar o acesso ao MFA se você:
-- Trocar de celular
-- Perder acesso ao app autenticador
-- Desinstalar o app por engano
-
-=====================================
-CÓDIGO SECRETO:
-${enrollment?.totp.secret}
-=====================================
-
-COMO USAR:
-1. Instale um app autenticador (Google Authenticator, Authy, etc.)
-2. Escolha "Adicionar conta manualmente" ou "Inserir chave"
-3. Digite o código secreto acima
-4. O app começará a gerar códigos de 6 dígitos
-
-=====================================
-Gerado em: ${new Date().toLocaleString('pt-BR')}
-Conta: Barber360
-`;
-    }
-
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'barber360-recovery-codes.txt';
-    a.click();
-    URL.revokeObjectURL(url);
-    toast({
-      title: 'Download iniciado',
-      description: 'Guarde o arquivo em local seguro.'
-    });
   };
 
   return (
@@ -337,78 +286,30 @@ Conta: Barber360
         {step === 'recovery' && (
           <>
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Key className="h-5 w-5 text-amber-500" />
-                Códigos de Recuperação
-              </DialogTitle>
+              <DialogTitle>Códigos de Recuperação</DialogTitle>
               <DialogDescription>
-                Use estes códigos se perder acesso ao app autenticador. Cada código funciona apenas uma vez.
+                Salve esses códigos em local seguro. Eles permitem login caso você perca o app autenticador.
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 py-4">
-              <Alert className="border-amber-500/50 bg-amber-500/10">
-                <AlertTriangle className="h-4 w-4 text-amber-600" />
-                <AlertDescription className="text-amber-700 dark:text-amber-400">
-                  <strong>⚠️ IMPORTANTE:</strong> Guarde estes códigos em local seguro. 
-                  Eles não serão mostrados novamente!
-                </AlertDescription>
-              </Alert>
-
-              {hasRecoveryCodes ? (
-                <div className="grid grid-cols-2 gap-2 p-4 bg-muted rounded-lg">
-                  {recoveryCodes.map((code, index) => (
-                    <code key={index} className="text-sm font-mono text-center py-1.5 px-2 bg-background rounded border">
-                      {code}
-                    </code>
-                  ))}
-                </div>
+            <div className="py-4">
+              {recoveryCodes.length > 0 ? (
+                <RecoveryCodesDisplay
+                  codes={recoveryCodes}
+                  onConfirm={handleComplete}
+                />
               ) : (
-                <div className="p-4 bg-muted rounded-lg space-y-3">
-                  <p className="text-sm font-medium text-center">Seu código de backup:</p>
-                  <div className="p-3 bg-background rounded border">
-                    <code className="text-sm font-mono break-all block text-center">
-                      {enrollment?.totp.secret}
-                    </code>
-                  </div>
-                  <p className="text-xs text-muted-foreground text-center">
-                    Use este código para adicionar manualmente em um novo app autenticador
-                  </p>
+                <div className="space-y-4">
+                  <Alert>
+                    <AlertDescription>
+                      MFA ativado com sucesso! Você pode gerar códigos de recuperação na página de segurança.
+                    </AlertDescription>
+                  </Alert>
+                  <Button onClick={handleComplete} className="w-full">
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Concluir
+                  </Button>
                 </div>
               )}
-
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={copyRecoveryCodes} className="flex-1">
-                  <Copy className="h-4 w-4 mr-2" />
-                  Copiar todos
-                </Button>
-                <Button variant="outline" onClick={downloadRecoveryCodes} className="flex-1">
-                  <Download className="h-4 w-4 mr-2" />
-                  Baixar .txt
-                </Button>
-              </div>
-
-              <div className="flex items-start gap-2 pt-2">
-                <input
-                  type="checkbox"
-                  id="backup-confirm"
-                  checked={backupConfirmed}
-                  onChange={(e) => setBackupConfirmed(e.target.checked)}
-                  className="mt-1"
-                />
-                <label htmlFor="backup-confirm" className="text-sm text-muted-foreground">
-                  Confirmo que salvei os códigos de recuperação em local seguro e entendo que não poderei 
-                  visualizá-los novamente.
-                </label>
-              </div>
-
-              <Button 
-                onClick={handleComplete} 
-                className="w-full"
-                disabled={!backupConfirmed}
-              >
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Concluir Configuração
-              </Button>
             </div>
           </>
         )}
