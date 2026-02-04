@@ -75,41 +75,31 @@ export const MFAEnrollmentDialog = ({ open, onOpenChange }: MFAEnrollmentDialogP
     }
 
     try {
-      // Delete any existing recovery codes for this user
-      const { error: deleteError } = await supabase
-        .from('mfa_recovery_codes')
-        .delete()
-        .eq('user_id', user.id);
-
-      if (deleteError) {
-        console.error('Error deleting old recovery codes:', deleteError);
-      }
-
       // Generate new recovery codes
       const codes = generateRecoveryCodes();
-      
-      // Save ALL codes to database
-      const { error: insertError } = await supabase
-        .from('mfa_recovery_codes')
-        .insert(
-          codes.map(code => ({
-            user_id: user.id,
-            code: code,
-            used: false
-          }))
-        );
+      console.log('🔑 Códigos gerados:', codes);
 
-      if (insertError) {
-        console.error('Error saving recovery codes:', insertError);
+      // Use database RPC function to save codes
+      const { data: saveResult, error: saveError } = await supabase.rpc(
+        'save_recovery_codes',
+        {
+          p_user_id: user.id,
+          p_codes: codes
+        }
+      ) as { data: { success: boolean; count?: number; error?: string } | null; error: any };
+
+      console.log('📦 Resultado do salvamento:', saveResult);
+
+      if (saveError || (saveResult && !saveResult.success)) {
+        console.error('❌ ERRO:', saveError || saveResult);
         toast({
-          title: 'Aviso',
-          description: 'MFA ativado, mas houve erro ao salvar códigos de recuperação.',
+          title: 'Erro',
+          description: 'Erro ao salvar códigos de recuperação: ' + (saveError?.message || saveResult?.error),
           variant: 'destructive'
         });
-        // Still show recovery step but with empty codes
         setStep('recovery');
       } else {
-        console.log('Recovery codes saved successfully:', codes.length, 'codes');
+        console.log('✅ Recovery codes salvos! Total:', saveResult?.count || codes.length);
         setRecoveryCodes(codes);
         setStep('recovery');
       }

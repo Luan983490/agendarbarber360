@@ -2258,6 +2258,10 @@ export type Database = {
         Returns: undefined
       }
       sanitize_input: { Args: { input_text: string }; Returns: string }
+      save_recovery_codes: {
+        Args: { p_codes: string[]; p_user_id: string }
+        Returns: Json
+      }
       search_barbershops_by_proximity: {
         Args: { max_distance_km?: number; user_lat: number; user_lon: number }
         Returns: {
