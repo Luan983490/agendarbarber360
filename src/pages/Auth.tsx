@@ -136,6 +136,8 @@ const Auth = () => {
     const mfaChallenge = sessionStorage.getItem('mfa_challenge');
     if (mfaChallenge) {
       console.log('[Auth] MFA challenge pendente - bloqueando redirect automático');
+      // Redirecionar para página de verificação MFA
+      navigate('/verify-mfa', { replace: true });
       return;
     }
     
@@ -148,7 +150,7 @@ const Auth = () => {
     if (user && !authLoading) {
       checkUserProfileAndRedirect();
     }
-  }, [user, authLoading, mfaPending]);
+  }, [user, authLoading, mfaPending, navigate]);
 
   const checkUserProfileAndRedirect = async () => {
     if (!user) return;
