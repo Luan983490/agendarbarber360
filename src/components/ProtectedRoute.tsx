@@ -3,6 +3,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUserAccess } from '@/hooks/useUserAccess';
 import b360Logo from '@/assets/b360-logo.png';
 
+// Check if MFA verification is pending
+const hasMFAPending = () => {
+  const mfaChallenge = sessionStorage.getItem('mfa_challenge');
+  return !!mfaChallenge;
+};
+
 type AllowedRole = 'owner' | 'barber' | 'attendant' | 'client';
 
 interface ProtectedRouteProps {
@@ -24,6 +30,12 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
         </div>
       </div>
     );
+  }
+
+  // CRITICAL: If MFA is pending, redirect to verification page
+  if (hasMFAPending()) {
+    console.log('[ProtectedRoute] MFA pending - redirecting to /verify-mfa');
+    return <Navigate to="/verify-mfa" replace />;
   }
 
   // Redirect to login if not authenticated

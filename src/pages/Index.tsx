@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { BarberShopGrid } from "@/components/BarberShopGrid";
@@ -22,8 +22,22 @@ const Index = () => {
   const { role, loading } = useUserAccess();
   const navigate = useNavigate();
 
+  // Check if there's a pending MFA challenge
+  const hasMFAPending = useMemo(() => {
+    const mfaChallenge = sessionStorage.getItem('mfa_challenge');
+    return !!mfaChallenge;
+  }, []);
+
   // Redirect users with internal roles to their dashboards
+  // BUT only if there's no pending MFA verification
   useEffect(() => {
+    // CRITICAL: Don't redirect if MFA is pending
+    if (hasMFAPending) {
+      console.log('[Index] MFA pending - blocking auto-redirect to dashboard');
+      navigate('/verify-mfa', { replace: true });
+      return;
+    }
+    
     if (!loading && user && (role === 'owner' || role === 'barber' || role === 'attendant')) {
       if (role === 'owner') {
         navigate('/dashboard', { replace: true });
@@ -33,7 +47,7 @@ const Index = () => {
         navigate('/attendant/dashboard', { replace: true });
       }
     }
-  }, [user, role, loading, navigate]);
+  }, [user, role, loading, navigate, hasMFAPending]);
 
   // Handle proximity search
   const handleProximitySearch = useCallback((lat: number, lng: number) => {
