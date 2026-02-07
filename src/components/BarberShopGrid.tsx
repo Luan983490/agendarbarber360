@@ -47,6 +47,11 @@ interface DbBarbershop {
   address: string | null;
 }
 
+// Minimum characters to trigger name search
+const MIN_SEARCH_CHARS = 3;
+// Maximum distance for proximity search (in km)
+const MAX_PROXIMITY_DISTANCE_KM = 40;
+
 export const BarberShopGrid = ({ 
   searchQuery, 
   activeFilters, 
@@ -60,9 +65,9 @@ export const BarberShopGrid = ({
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
-  // Check if there's an active search
+  // Check if there's an active search (name search requires 3+ characters)
   const isSearchActive = useMemo(() => {
-    if (searchType === 'name' && searchQuery && searchQuery.trim().length > 0) {
+    if (searchType === 'name' && searchQuery && searchQuery.trim().length >= MIN_SEARCH_CHARS) {
       return true;
     }
     if (searchType === 'city' && selectedCity) {
@@ -146,10 +151,10 @@ export const BarberShopGrid = ({
         };
       });
 
-      // Sort by distance if proximity search is active
+      // Filter by max distance and sort if proximity search is active
       if (searchType === 'proximity' && userLatitude && userLongitude) {
         transformedData = transformedData
-          .filter(shop => shop.distanceKm !== null)
+          .filter(shop => shop.distanceKm !== null && shop.distanceKm <= MAX_PROXIMITY_DISTANCE_KM)
           .sort((a, b) => (a.distanceKm || 0) - (b.distanceKm || 0));
       }
 
@@ -215,13 +220,16 @@ export const BarberShopGrid = ({
 
   const getEmptyMessage = () => {
     if (searchType === 'name' && searchQuery) {
+      if (searchQuery.trim().length < MIN_SEARCH_CHARS) {
+        return `Digite pelo menos ${MIN_SEARCH_CHARS} letras para buscar`;
+      }
       return `Nenhuma barbearia encontrada com "${searchQuery}"`;
     }
     if (searchType === 'city' && selectedCity) {
       return `Nenhuma barbearia encontrada em ${selectedCity}`;
     }
     if (searchType === 'proximity') {
-      return 'Nenhuma barbearia cadastrou coordenadas geográficas ainda';
+      return `Nenhuma barbearia encontrada em um raio de ${MAX_PROXIMITY_DISTANCE_KM}km`;
     }
     return 'Nenhuma barbearia cadastrada ainda';
   };
@@ -237,7 +245,7 @@ export const BarberShopGrid = ({
           Encontre sua barbearia ideal
         </h3>
         <p className="text-muted-foreground max-w-md mx-auto">
-          Use os filtros acima para buscar por nome, cidade ou encontrar as barbearias mais próximas de você.
+          Use os filtros acima para buscar por nome (mínimo {MIN_SEARCH_CHARS} letras), cidade ou encontrar as barbearias mais próximas de você (até {MAX_PROXIMITY_DISTANCE_KM}km).
         </p>
       </div>
     );
@@ -274,7 +282,7 @@ export const BarberShopGrid = ({
           {searchType === 'proximity' && userLatitude && (
             <Badge variant="outline" className="text-primary border-primary">
               <Navigation className="h-3 w-3 mr-1" />
-              Ordenado por distância
+              Até {MAX_PROXIMITY_DISTANCE_KM}km · Por distância
             </Badge>
           )}
           {searchType !== 'proximity' && filteredShops.length > 0 && (
@@ -306,8 +314,10 @@ export const BarberShopGrid = ({
             <p className="text-lg font-medium">{getEmptyMessage()}</p>
             <p className="text-sm mt-2">
               {searchType === 'proximity' 
-                ? 'As barbearias precisam cadastrar seu endereço completo para aparecerem aqui.'
-                : 'Tente ajustar os filtros ou fazer uma busca diferente.'}
+                ? `As barbearias precisam estar em um raio de ${MAX_PROXIMITY_DISTANCE_KM}km e ter coordenadas cadastradas.`
+                : searchType === 'name' && searchQuery.trim().length < MIN_SEARCH_CHARS
+                  ? ''
+                  : 'Tente ajustar os filtros ou fazer uma busca diferente.'}
             </p>
           </div>
         </div>
