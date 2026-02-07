@@ -66,6 +66,9 @@ export const AdvancedSearch = ({
   const [citySearchQuery, setCitySearchQuery] = useState("");
   const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
   
+  // Minimum characters to trigger search
+  const MIN_SEARCH_CHARS = 3;
+  
   const geolocation = useGeolocation();
   
   // Debounce the search query (500ms)
@@ -83,59 +86,54 @@ export const AdvancedSearch = ({
     }
   }, [searchQuery]);
 
-  // Fetch cities from database
+  // Debounce city search query
+  const debouncedCitySearchQuery = useDebounce(citySearchQuery, 300);
+
+  // Fetch cities from database only when 3+ characters are typed
   useEffect(() => {
+    // Only search when we have at least MIN_SEARCH_CHARS characters
+    if (debouncedCitySearchQuery.length < MIN_SEARCH_CHARS) {
+      setCities([]);
+      return;
+    }
+
     const fetchCities = async () => {
       setLoadingCities(true);
       try {
-        // Try the RPC function first
-        const { data, error } = await supabase.rpc('get_barbershop_cities');
+        // Fallback: fetch unique cities directly with filter
+        const { data } = await supabase
+          .from('barbershops')
+          .select('city, state')
+          .not('city', 'is', null)
+          .not('state', 'is', null)
+          .or(`city.ilike.%${debouncedCitySearchQuery}%,state.ilike.%${debouncedCitySearchQuery}%`)
+          .order('city');
         
-        if (error) throw error;
-        setCities(data || []);
-      } catch (error) {
-        console.error('Erro ao carregar cidades via RPC:', error);
-        // Fallback: fetch unique cities directly
-        try {
-          const { data } = await supabase
-            .from('barbershops')
-            .select('city, state')
-            .not('city', 'is', null)
-            .not('state', 'is', null)
-            .order('city');
-          
-          if (data) {
-            const uniqueCities = data.reduce((acc: City[], curr) => {
-              const existing = acc.find(c => c.city === curr.city && c.state === curr.state);
-              if (existing) {
-                existing.barbershop_count++;
-              } else if (curr.city && curr.state) {
-                acc.push({ city: curr.city, state: curr.state, barbershop_count: 1 });
-              }
-              return acc;
-            }, []);
-            setCities(uniqueCities);
-          }
-        } catch {
-          console.error('Fallback city fetch failed');
+        if (data) {
+          const uniqueCities = data.reduce((acc: City[], curr) => {
+            const existing = acc.find(c => c.city === curr.city && c.state === curr.state);
+            if (existing) {
+              existing.barbershop_count++;
+            } else if (curr.city && curr.state) {
+              acc.push({ city: curr.city, state: curr.state, barbershop_count: 1 });
+            }
+            return acc;
+          }, []);
+          setCities(uniqueCities);
         }
+      } catch (error) {
+        console.error('Erro ao carregar cidades:', error);
+        setCities([]);
       } finally {
         setLoadingCities(false);
       }
     };
 
     fetchCities();
-  }, []);
+  }, [debouncedCitySearchQuery]);
 
-  // Filter cities based on search
-  const filteredCities = useMemo(() => {
-    if (!citySearchQuery) return cities;
-    const query = citySearchQuery.toLowerCase();
-    return cities.filter(
-      c => c.city?.toLowerCase().includes(query) || 
-           c.state?.toLowerCase().includes(query)
-    );
-  }, [cities, citySearchQuery]);
+  // Cities are already filtered from the database query
+  const filteredCities = cities;
 
   // Handle proximity search
   const handleProximityClick = useCallback(() => {
@@ -260,7 +258,11 @@ export const AdvancedSearch = ({
                   />
                   <CommandList>
                     <CommandEmpty>
-                      {loadingCities ? "Carregando..." : "Nenhuma cidade encontrada"}
+                      {citySearchQuery.length < MIN_SEARCH_CHARS 
+                        ? `Digite pelo menos ${MIN_SEARCH_CHARS} letras para buscar...`
+                        : loadingCities 
+                          ? "Carregando..." 
+                          : "Nenhuma cidade encontrada"}
                     </CommandEmpty>
                     <CommandGroup>
                       {filteredCities.map((city) => (
@@ -303,9 +305,9 @@ export const AdvancedSearch = ({
               </div>
             )}
             
-            {cities.length === 0 && !loadingCities && (
+            {!selectedCity && citySearchQuery.length < MIN_SEARCH_CHARS && (
               <p className="text-sm text-muted-foreground text-center">
-                Nenhuma cidade cadastrada ainda. As barbearias precisam completar seus dados de endereço.
+                Digite pelo menos {MIN_SEARCH_CHARS} letras para buscar uma cidade.
               </p>
             )}
           </div>
