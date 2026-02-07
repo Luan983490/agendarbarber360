@@ -517,6 +517,7 @@ export const ServiceSelectionStep = ({
             {/* Info Tab Content */}
             <TabsContent value="info" className="mt-4">
               <BarbershopInfoTab
+                barbershopId={barbershop.id}
                 barbershop={{
                   description: barbershopDetails?.description,
                   phone: barbershopDetails?.phone,
