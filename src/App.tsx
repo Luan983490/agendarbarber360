@@ -79,7 +79,7 @@ const AppContent = () => {
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/dev-assistant" element={<DevAssistant />} />
             <Route path="/verify-mfa" element={<VerifyMFA />} />
-            <Route path="/barbearia/:id" element={<BarbershopPage />} />
+            <Route path="/barbearia/:slug" element={<BarbershopPage />} />
             {/* Admin Routes (Owner only) */}
             <Route 
               path="/admin/dashboard" 
