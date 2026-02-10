@@ -15,6 +15,7 @@ interface BookingFlowProps {
     rating?: number;
   };
   autoOpen?: boolean;
+  onBackFromAutoOpen?: () => void;
 }
 
 interface Service {
@@ -40,7 +41,7 @@ interface SelectedServiceItem {
 
 type BookingStep = "services" | "datetime";
 
-export const BookingFlow = ({ children, barbershop, autoOpen = false }: BookingFlowProps) => {
+export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFromAutoOpen }: BookingFlowProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -253,7 +254,13 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false }: BookingF
               barbershop={barbershop}
               services={services}
               onSelectService={handleSelectService}
-              onBack={() => setIsOpen(false)}
+              onBack={() => {
+                if (onBackFromAutoOpen) {
+                  onBackFromAutoOpen();
+                } else {
+                  setIsOpen(false);
+                }
+              }}
             />
           )}
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
+import { toSlug } from "@/lib/slug";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -93,7 +94,7 @@ export const ServiceSelectionStep = ({
   };
 
   const handleShare = async () => {
-    const barbershopUrl = `${window.location.origin}/barbearia/${barbershop.id}`;
+    const barbershopUrl = `${window.location.origin}/barbearia/${toSlug(barbershop.name)}-${barbershop.id}`;
     const shareData = {
       title: barbershop.name,
       text: `Confira ${barbershop.name}!`,
