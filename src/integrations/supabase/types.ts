@@ -389,6 +389,7 @@ export type Database = {
           phone: string | null
           postal_code: string | null
           rating: number | null
+          slug: string
           state: string | null
           street_number: string | null
           total_reviews: number | null
@@ -419,6 +420,7 @@ export type Database = {
           phone?: string | null
           postal_code?: string | null
           rating?: number | null
+          slug: string
           state?: string | null
           street_number?: string | null
           total_reviews?: number | null
@@ -449,6 +451,7 @@ export type Database = {
           phone?: string | null
           postal_code?: string | null
           rating?: number | null
+          slug?: string
           state?: string | null
           street_number?: string | null
           total_reviews?: number | null
@@ -2069,6 +2072,7 @@ export type Database = {
       decrypt_phone: { Args: { encrypted_phone: string }; Returns: string }
       decrypt_sensitive: { Args: { encrypted_data: string }; Returns: string }
       encrypt_sensitive: { Args: { data: string }; Returns: string }
+      generate_slug: { Args: { input_name: string }; Returns: string }
       get_active_alerts: {
         Args: never
         Returns: {
@@ -2423,6 +2427,7 @@ export type Database = {
           total_reviews: number
         }[]
       }
+      unaccent: { Args: { "": string }; Returns: string }
       user_has_role_at: {
         Args: { p_barbershop_id: string; p_user_id: string }
         Returns: boolean
