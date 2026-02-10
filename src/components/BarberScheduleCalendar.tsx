@@ -10,6 +10,7 @@ import { BookingDetailsDialog } from './BookingDetailsDialog';
 import { CreateBookingDialog } from './CreateBookingDialog';
 import { BlockOptionsDialog } from './BlockOptionsDialog';
 import { SlotActionMenu } from './SlotActionMenu';
+import { EncaixeDialog } from './EncaixeDialog';
 import { MultiBlockDialog } from './MultiBlockDialog';
 import { useUserAccess } from '@/hooks/useUserAccess';
 import { ChevronLeft, ChevronRight, Loader2, ChevronDown, ChevronUp, Plus, Minus } from 'lucide-react';
@@ -149,6 +150,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
   const [actionMenuOpen, setActionMenuOpen] = useState(false);
   const [actionMenuPosition, setActionMenuPosition] = useState({ x: 0, y: 0 });
   const [multiBlockOpen, setMultiBlockOpen] = useState(false);
+  const [encaixeOpen, setEncaixeOpen] = useState(false);
   const [selectedSlots, setSelectedSlots] = useState<Array<{ date: Date; time: string }>>([]);
   
   // Estado para horários de trabalho do barbeiro
@@ -162,7 +164,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
   const lastFetchedBarberRef = useRef<string | null>(null);
 
   // Helper para verificar se algum dialog está aberto
-  const isAnyDialogOpen = dialogOpen || bookingDetailsOpen || createBookingOpen || blockOptionsOpen || actionMenuOpen || multiBlockOpen;
+  const isAnyDialogOpen = dialogOpen || bookingDetailsOpen || createBookingOpen || blockOptionsOpen || actionMenuOpen || multiBlockOpen || encaixeOpen;
 
   const isBarberView = !!barberIdFilter;
 
@@ -1082,7 +1084,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                 size="sm" 
                 className="hidden lg:flex gap-1 text-xs text-white h-7 px-2 rounded-none"
                 style={{ backgroundColor: '#2d044a' }}
-                onClick={() => setCreateBookingOpen(true)}
+                onClick={() => setEncaixeOpen(true)}
               >
                 <Plus className="h-3 w-3" strokeWidth={1.5} />
                 <span>Encaixe</span>
@@ -1097,7 +1099,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                 size="sm" 
                 className="lg:hidden flex gap-1 text-xs text-white h-7 px-2 rounded-none"
                 style={{ backgroundColor: '#2d044a' }}
-                onClick={() => setCreateBookingOpen(true)}
+                onClick={() => setEncaixeOpen(true)}
               >
                 <Plus className="h-3 w-3" strokeWidth={1.5} />
                 <span>Encaixe</span>
@@ -1391,6 +1393,22 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
         barberId={selectedBarber}
         onBlock={handleMultiDayBlock}
       />
+
+      {/* Dialog de Encaixe */}
+      <EncaixeDialog
+        open={encaixeOpen}
+        onOpenChange={setEncaixeOpen}
+        barberId={selectedBarber}
+        barbershopId={barbershopId}
+        currentDate={viewMode === 'day' ? currentDate : new Date()}
+        bookings={bookings}
+        blocks={blocks}
+        workingHours={barberWorkingHours}
+        overrides={barberScheduleOverrides}
+        onSuccess={fetchScheduleData}
+      />
+
+
 
       {/* Dialog de Criar Agendamento */}
       {selectedSlot && (
