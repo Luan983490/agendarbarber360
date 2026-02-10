@@ -539,31 +539,8 @@ export const DateTimeSelectionStep = ({
           </div>
 
           {/* Time slots - horizontal scroll with circular arrows */}
-          <div className="w-full mt-6 flex items-center gap-1">
-            {/* Left arrow - desktop only */}
-            {!isCompact && (
-              <button
-                onClick={() => {
-                  if (timeContainerRef.current) {
-                    timeContainerRef.current.scrollBy({ left: -200, behavior: "smooth" });
-                  }
-                }}
-                className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full border border-border bg-background hover:bg-muted transition-colors flex-shrink-0"
-              >
-                <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
-              </button>
-            )}
-
-            <div
-              ref={timeContainerRef}
-              className={cn(
-                "flex-1 flex gap-3 py-2",
-                isCompact 
-                  ? "overflow-x-auto snap-x snap-mandatory scroll-smooth scrollbar-hide -mx-1 px-1" 
-                  : "overflow-x-auto scrollbar-hide"
-              )}
-              style={{ scrollbarWidth: "none", msOverflowStyle: "none", ...(isCompact ? { WebkitOverflowScrolling: "touch" } : {}) }}
-            >
+          <div className="w-full mt-6">
+            <div className="flex flex-wrap gap-2 py-2">
               {(slotsLoading || isFetching) ? (
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Clock className="w-4 h-4 animate-pulse" />
@@ -607,8 +584,7 @@ export const DateTimeSelectionStep = ({
                       key={time}
                       onClick={() => onTimeChange(time)}
                       className={cn(
-                        "px-5 md:px-6 py-3 rounded-lg text-sm md:text-base font-medium transition-all flex-shrink-0 border",
-                        isCompact && "snap-start",
+                        "px-4 py-2.5 rounded-lg text-sm font-medium transition-all border",
                         isSelected
                           ? "bg-[#3d9a9b] text-white border-[#3d9a9b]"
                           : "bg-card text-foreground border-border hover:border-foreground"
@@ -620,20 +596,6 @@ export const DateTimeSelectionStep = ({
                 })
               )}
             </div>
-
-            {/* Right arrow - desktop only */}
-            {!isCompact && (
-              <button
-                onClick={() => {
-                  if (timeContainerRef.current) {
-                    timeContainerRef.current.scrollBy({ left: 200, behavior: "smooth" });
-                  }
-                }}
-                className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full border border-border bg-background hover:bg-muted transition-colors flex-shrink-0"
-              >
-                <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
-              </button>
-            )}
           </div>
         </>
       )}
