@@ -420,7 +420,7 @@ export type Database = {
           phone?: string | null
           postal_code?: string | null
           rating?: number | null
-          slug: string
+          slug?: string
           state?: string | null
           street_number?: string | null
           total_reviews?: number | null

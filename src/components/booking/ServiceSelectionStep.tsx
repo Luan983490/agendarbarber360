@@ -37,6 +37,7 @@ interface Barber {
 }
 
 interface BarbershopDetails {
+  slug?: string;
   description?: string;
   phone?: string;
   email?: string;
@@ -94,7 +95,8 @@ export const ServiceSelectionStep = ({
   };
 
   const handleShare = async () => {
-    const barbershopUrl = `${window.location.origin}/barbearia/${toSlug(barbershop.name)}-${barbershop.id}`;
+    const slug = barbershopDetails?.slug || toSlug(barbershop.name);
+    const barbershopUrl = `${window.location.origin}/barbearia/${slug}`;
     const shareData = {
       title: barbershop.name,
       text: `Confira ${barbershop.name}!`,
@@ -195,7 +197,7 @@ export const ServiceSelectionStep = ({
         const [detailsResult, barbersResult] = await Promise.all([
           supabase
             .from("barbershops")
-            .select("description, phone, email, address, opening_hours, amenities, postal_code, neighborhood, street_number, city, state, latitude, longitude, whatsapp, instagram_url, facebook_url, payment_methods")
+            .select("slug, description, phone, email, address, opening_hours, amenities, postal_code, neighborhood, street_number, city, state, latitude, longitude, whatsapp, instagram_url, facebook_url, payment_methods")
             .eq("id", barbershop.id)
             .single(),
           supabase
