@@ -540,7 +540,7 @@ export const DateTimeSelectionStep = ({
 
           {/* Time slots - horizontal scroll with circular arrows */}
           <div className="w-full mt-6">
-            <div className="flex flex-wrap gap-2 py-2">
+            <div className="flex flex-wrap justify-center gap-2 py-2">
               {(slotsLoading || isFetching) ? (
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Clock className="w-4 h-4 animate-pulse" />
