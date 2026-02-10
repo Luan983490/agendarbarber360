@@ -304,6 +304,7 @@ export type Database = {
         Row: {
           barbershop_id: string
           created_at: string
+          deleted_at: string | null
           id: string
           image_url: string | null
           is_active: boolean | null
@@ -316,6 +317,7 @@ export type Database = {
         Insert: {
           barbershop_id: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean | null
@@ -328,6 +330,7 @@ export type Database = {
         Update: {
           barbershop_id?: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean | null
@@ -367,6 +370,7 @@ export type Database = {
           amenities: string[] | null
           city: string | null
           created_at: string
+          deleted_at: string | null
           description: string | null
           email: string | null
           facebook_url: string | null
@@ -396,6 +400,7 @@ export type Database = {
           amenities?: string[] | null
           city?: string | null
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           email?: string | null
           facebook_url?: string | null
@@ -425,6 +430,7 @@ export type Database = {
           amenities?: string[] | null
           city?: string | null
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           email?: string | null
           facebook_url?: string | null
@@ -724,6 +730,7 @@ export type Database = {
           client_id: string | null
           client_name: string | null
           created_at: string
+          deleted_at: string | null
           id: string
           is_external_booking: boolean | null
           notes: string | null
@@ -741,6 +748,7 @@ export type Database = {
           client_id?: string | null
           client_name?: string | null
           created_at?: string
+          deleted_at?: string | null
           id?: string
           is_external_booking?: boolean | null
           notes?: string | null
@@ -758,6 +766,7 @@ export type Database = {
           client_id?: string | null
           client_name?: string | null
           created_at?: string
+          deleted_at?: string | null
           id?: string
           is_external_booking?: boolean | null
           notes?: string | null
@@ -861,6 +870,7 @@ export type Database = {
           barbershop_id: string
           client_id: string
           created_at: string
+          deleted_at: string | null
           expiry_date: string
           id: string
           package_id: string
@@ -874,6 +884,7 @@ export type Database = {
           barbershop_id: string
           client_id: string
           created_at?: string
+          deleted_at?: string | null
           expiry_date: string
           id?: string
           package_id: string
@@ -887,6 +898,7 @@ export type Database = {
           barbershop_id?: string
           client_id?: string
           created_at?: string
+          deleted_at?: string | null
           expiry_date?: string
           id?: string
           package_id?: string
@@ -933,6 +945,7 @@ export type Database = {
           benefits: Json | null
           client_id: string
           created_at: string
+          deleted_at: string | null
           id: string
           next_billing_date: string
           plan_description: string | null
@@ -948,6 +961,7 @@ export type Database = {
           benefits?: Json | null
           client_id: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           next_billing_date: string
           plan_description?: string | null
@@ -963,6 +977,7 @@ export type Database = {
           benefits?: Json | null
           client_id?: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           next_billing_date?: string
           plan_description?: string | null
@@ -1087,6 +1102,7 @@ export type Database = {
         Row: {
           barbershop_id: string
           created_at: string
+          deleted_at: string | null
           description: string | null
           id: string
           is_active: boolean | null
@@ -1097,6 +1113,7 @@ export type Database = {
         Insert: {
           barbershop_id: string
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           id?: string
           is_active?: boolean | null
@@ -1107,6 +1124,7 @@ export type Database = {
         Update: {
           barbershop_id?: string
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           id?: string
           is_active?: boolean | null
@@ -1289,6 +1307,7 @@ export type Database = {
         Row: {
           barbershop_id: string
           created_at: string
+          deleted_at: string | null
           description: string | null
           id: string
           is_active: boolean | null
@@ -1301,6 +1320,7 @@ export type Database = {
         Insert: {
           barbershop_id: string
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           id?: string
           is_active?: boolean | null
@@ -1313,6 +1333,7 @@ export type Database = {
         Update: {
           barbershop_id?: string
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           id?: string
           is_active?: boolean | null
@@ -1338,6 +1359,7 @@ export type Database = {
           cardholder_name: string
           client_id: string
           created_at: string
+          deleted_at: string | null
           expiry_month: number
           expiry_year: number
           id: string
@@ -1350,6 +1372,7 @@ export type Database = {
           cardholder_name: string
           client_id: string
           created_at?: string
+          deleted_at?: string | null
           expiry_month: number
           expiry_year: number
           id?: string
@@ -1362,6 +1385,7 @@ export type Database = {
           cardholder_name?: string
           client_id?: string
           created_at?: string
+          deleted_at?: string | null
           expiry_month?: number
           expiry_year?: number
           id?: string
@@ -1390,6 +1414,7 @@ export type Database = {
         Row: {
           barbershop_id: string
           created_at: string
+          deleted_at: string | null
           description: string | null
           id: string
           is_active: boolean | null
@@ -1401,6 +1426,7 @@ export type Database = {
         Insert: {
           barbershop_id: string
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           id?: string
           is_active?: boolean | null
@@ -1412,6 +1438,7 @@ export type Database = {
         Update: {
           barbershop_id?: string
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           id?: string
           is_active?: boolean | null
@@ -1631,6 +1658,7 @@ export type Database = {
           client_id: string
           comment: string | null
           created_at: string
+          deleted_at: string | null
           id: string
           rating: number
           updated_at: string
@@ -1640,6 +1668,7 @@ export type Database = {
           client_id: string
           comment?: string | null
           created_at?: string
+          deleted_at?: string | null
           id?: string
           rating: number
           updated_at?: string
@@ -1649,6 +1678,7 @@ export type Database = {
           client_id?: string
           comment?: string | null
           created_at?: string
+          deleted_at?: string | null
           id?: string
           rating?: number
           updated_at?: string
@@ -1681,6 +1711,7 @@ export type Database = {
         Row: {
           barbershop_id: string
           created_at: string
+          deleted_at: string | null
           description: string | null
           duration: number
           id: string
@@ -1692,6 +1723,7 @@ export type Database = {
         Insert: {
           barbershop_id: string
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           duration: number
           id?: string
@@ -1703,6 +1735,7 @@ export type Database = {
         Update: {
           barbershop_id?: string
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           duration?: number
           id?: string
@@ -1726,6 +1759,7 @@ export type Database = {
           barbershop_id: string
           benefits: Json | null
           created_at: string
+          deleted_at: string | null
           description: string | null
           id: string
           is_active: boolean | null
@@ -1737,6 +1771,7 @@ export type Database = {
           barbershop_id: string
           benefits?: Json | null
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           id?: string
           is_active?: boolean | null
@@ -1748,6 +1783,7 @@ export type Database = {
           barbershop_id?: string
           benefits?: Json | null
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           id?: string
           is_active?: boolean | null
