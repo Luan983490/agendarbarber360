@@ -55,6 +55,7 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFrom
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedBarber, setSelectedBarber] = useState("");
   const [loading, setLoading] = useState(false);
+  const [notes, setNotes] = useState("");
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -204,6 +205,7 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFrom
           total_price: totalPrice,
           status: "pending",
           client_name: profileData?.display_name || "Cliente",
+          notes: notes.trim() || null,
         })
         .select()
         .single();
@@ -236,6 +238,7 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFrom
     setSelectedDate(new Date());
     setSelectedTime("");
     setSelectedBarber("");
+    setNotes("");
   };
 
   if (!isOpen) {
@@ -280,6 +283,8 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFrom
               onContinue={handleContinue}
               onAddService={handleAddService}
               loading={loading}
+              notes={notes}
+              onNotesChange={setNotes}
             />
           )}
         </div>

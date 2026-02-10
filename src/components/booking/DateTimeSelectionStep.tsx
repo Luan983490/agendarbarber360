@@ -45,6 +45,8 @@ interface DateTimeSelectionStepProps {
   onContinue: () => void;
   onAddService: () => void;
   loading: boolean;
+  notes?: string;
+  onNotesChange?: (notes: string) => void;
 }
 
 type TimePeriod = "Manhã" | "Tarde" | "Noite";
@@ -70,6 +72,8 @@ export const DateTimeSelectionStep = ({
   onContinue,
   onAddService,
   loading,
+  notes = "",
+  onNotesChange,
 }: DateTimeSelectionStepProps) => {
   const today = startOfToday();
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>("Manhã");
@@ -654,6 +658,24 @@ export const DateTimeSelectionStep = ({
           >
             + Adicionar outro serviço
           </button>
+
+          {/* Observations field */}
+          <div className="mt-5">
+            <label className="text-sm font-medium text-foreground mb-2 block">
+              Observações (opcional)
+            </label>
+            <textarea
+              value={notes}
+              onChange={(e) => onNotesChange?.(e.target.value)}
+              placeholder="Ex: Quero o corte mais curto nas laterais, tenho alergia a certos produtos..."
+              maxLength={500}
+              className="w-full min-h-[80px] px-4 py-3 rounded-xl border border-border bg-card text-foreground text-sm placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-[#3d9a9b] focus:border-transparent transition-all"
+              rows={3}
+            />
+            <span className="text-xs text-muted-foreground mt-1 block text-right">
+              {notes.length}/500
+            </span>
+          </div>
         </div>
       </div>
 
