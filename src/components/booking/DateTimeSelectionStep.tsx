@@ -79,6 +79,7 @@ export const DateTimeSelectionStep = ({
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
+  const [mobileVisibleMonth, setMobileVisibleMonth] = useState<Date | null>(null);
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -231,12 +232,35 @@ export const DateTimeSelectionStep = ({
   const totalPrice = selectedServices.reduce((sum, item) => sum + item.service.price, 0);
   const totalDuration = selectedServices.reduce((sum, item) => sum + item.service.duration, 0);
 
+  // Track visible month on mobile scroll
+  useEffect(() => {
+    if (!isCompact || !dateContainerRef.current) return;
+    const container = dateContainerRef.current;
+    const handleScroll = () => {
+      const containerRect = container.getBoundingClientRect();
+      const centerX = containerRect.left + containerRect.width / 2;
+      const buttons = container.children;
+      for (let i = 0; i < buttons.length; i++) {
+        const btn = buttons[i] as HTMLElement;
+        const btnRect = btn.getBoundingClientRect();
+        if (btnRect.left <= centerX && btnRect.right >= centerX) {
+          if (i < allDates.length) {
+            setMobileVisibleMonth(allDates[i]);
+          }
+          break;
+        }
+      }
+    };
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [isCompact, allDates]);
+
   // Month title
   const getMonthYearTitle = () => {
+    const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
     if (isCompact) {
-      // On mobile, show the selected date's month
-      const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-      return `${capitalize(format(selectedDate, "MMMM", { locale: ptBR }))} ${format(selectedDate, "yyyy")}`;
+      const refDate = mobileVisibleMonth || selectedDate;
+      return `${capitalize(format(refDate, "MMMM", { locale: ptBR }))} ${format(refDate, "yyyy")}`;
     }
     const firstVisible = visibleDates[0];
     const lastVisible = visibleDates[visibleDates.length - 1];
@@ -247,8 +271,6 @@ export const DateTimeSelectionStep = ({
     const lastMonth = format(lastVisible, "MMMM", { locale: ptBR });
     const firstYear = format(firstVisible, "yyyy");
     const lastYear = format(lastVisible, "yyyy");
-
-    const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
     if (firstMonth === lastMonth && firstYear === lastYear) {
       return `${capitalize(firstMonth)} ${firstYear}`;
