@@ -82,6 +82,7 @@ export const ServiceSelectionStep = ({
   const [activeTab, setActiveTab] = useState("services");
   const [barbers, setBarbers] = useState<Barber[]>([]);
   const [barbershopDetails, setBarbershopDetails] = useState<BarbershopDetails | null>(null);
+  const [loadingDetails, setLoadingDetails] = useState(true);
   const [loadingBarbers, setLoadingBarbers] = useState(false);
 
   const isFav = isFavorited(barbershop.id);
@@ -185,6 +186,7 @@ export const ServiceSelectionStep = ({
   // Fetch barbershop details (description and amenities) on mount
   useEffect(() => {
     const fetchBarbershopDetails = async () => {
+      setLoadingDetails(true);
       try {
         const { data } = await supabase
           .from("barbershops")
@@ -194,6 +196,8 @@ export const ServiceSelectionStep = ({
         setBarbershopDetails(data);
       } catch (error) {
         console.error("Error fetching barbershop details:", error);
+      } finally {
+        setLoadingDetails(false);
       }
     };
     
@@ -222,6 +226,35 @@ export const ServiceSelectionStep = ({
 
     fetchBarbers();
   }, [activeTab, barbershop.id, barbers.length]);
+
+  // Show skeleton while initial data loads to prevent flash
+  if (loadingDetails) {
+    return (
+      <div className="flex flex-col min-h-full bg-background p-4 md:p-8 lg:p-12 animate-pulse">
+        <div className="h-5 w-16 bg-muted rounded mb-6" />
+        <div className="flex items-start gap-3 mb-6">
+          <div className="w-14 h-14 rounded-full bg-muted" />
+          <div className="flex-1 space-y-2">
+            <div className="h-5 w-40 bg-muted rounded" />
+            <div className="h-3 w-64 bg-muted rounded" />
+            <div className="h-3 w-24 bg-muted rounded" />
+          </div>
+        </div>
+        <div className="h-10 w-full bg-muted rounded-lg mb-4" />
+        <div className="space-y-4 mt-4">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="flex justify-between items-center py-4">
+              <div className="h-5 w-32 bg-muted rounded" />
+              <div className="flex items-center gap-4">
+                <div className="h-5 w-20 bg-muted rounded" />
+                <div className="h-10 w-24 bg-muted rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-full bg-background overflow-y-auto">
