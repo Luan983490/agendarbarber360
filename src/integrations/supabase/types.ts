@@ -2427,7 +2427,6 @@ export type Database = {
           total_reviews: number
         }[]
       }
-      unaccent: { Args: { "": string }; Returns: string }
       user_has_role_at: {
         Args: { p_barbershop_id: string; p_user_id: string }
         Returns: boolean
