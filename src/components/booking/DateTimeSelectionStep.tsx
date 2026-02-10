@@ -78,6 +78,13 @@ export const DateTimeSelectionStep = ({
   const timeContainerRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
+  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const currentService = selectedServices[currentServiceIndex];
   const selectedBarberData = barbers.find((b) => b.id === selectedBarber);
@@ -143,7 +150,8 @@ export const DateTimeSelectionStep = ({
 
   // Generate 365 days from today (full year)
   const allDates = Array.from({ length: 365 }, (_, i) => addDays(today, i));
-  const visibleDatesCount = isMobile ? 7 : 14;
+  const visibleDatesCount = windowWidth < 480 ? 5 : windowWidth < 768 ? 7 : windowWidth < 1024 ? 10 : 14;
+  const isCompact = windowWidth < 768;
   const visibleDates = allDates.slice(dateScrollOffset, dateScrollOffset + visibleDatesCount);
 
   // Get available times from slots - FILTER by available === true
@@ -297,8 +305,8 @@ export const DateTimeSelectionStep = ({
         <div 
           ref={dateContainerRef}
           className={cn(
-            "flex-1 flex gap-1.5 md:gap-2 py-2",
-            isMobile ? "overflow-x-auto scrollbar-hide" : ""
+            "flex-1 flex gap-1 sm:gap-1.5 md:gap-2 py-2",
+            isCompact ? "overflow-x-auto scrollbar-hide" : ""
           )}
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
@@ -319,8 +327,8 @@ export const DateTimeSelectionStep = ({
                 onClick={() => !isDisabled && onDateChange(date)}
                 disabled={isDisabled}
                 className={cn(
-                  "flex flex-col items-center py-3 rounded-xl transition-all flex-1",
-                  isMobile ? "min-w-[48px] flex-shrink-0 px-2" : "px-1",
+                  "flex flex-col items-center py-2.5 sm:py-3 rounded-xl transition-all flex-1",
+                  isCompact ? "min-w-[44px] flex-shrink-0 px-1.5" : "px-1",
                   isSelected
                     ? "bg-[#3d9a9b] text-white"
                     : "bg-card border border-border hover:bg-muted text-foreground",
