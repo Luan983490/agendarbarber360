@@ -27,24 +27,11 @@ const BarbershopPage = () => {
         return;
       }
 
-      // Extract the ID from the end of the slug (last segment after the last dash that looks like a UUID)
-      // Format: "barbearia-do-joao-8bfa6a4b-c2e7-4a4a-9e47-4db00f217c70"
-      const uuidRegex = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      const match = slug.match(uuidRegex);
-
-      if (!match) {
-        setError(true);
-        setLoading(false);
-        return;
-      }
-
-      const id = match[0];
-
       try {
         const { data, error: fetchError } = await supabase
           .from("barbershops")
           .select("id, name, image_url, address, rating")
-          .eq("id", id)
+          .eq("slug", slug)
           .single();
 
         if (fetchError || !data) {
