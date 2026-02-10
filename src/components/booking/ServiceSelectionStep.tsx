@@ -230,27 +230,63 @@ export const ServiceSelectionStep = ({
   // Show skeleton while initial data loads to prevent flash
   if (loadingDetails) {
     return (
-      <div className="flex flex-col min-h-full bg-background p-4 md:p-8 lg:p-12 animate-pulse">
-        <div className="h-5 w-16 bg-muted rounded mb-6" />
-        <div className="flex items-start gap-3 mb-6">
-          <div className="w-14 h-14 rounded-full bg-muted" />
-          <div className="flex-1 space-y-2">
-            <div className="h-5 w-40 bg-muted rounded" />
-            <div className="h-3 w-64 bg-muted rounded" />
-            <div className="h-3 w-24 bg-muted rounded" />
-          </div>
+      <div className="flex flex-col min-h-full bg-background overflow-y-auto">
+        <div className="w-full px-4 md:px-8 lg:px-12 pt-4">
+          <div className="h-5 w-16 bg-muted rounded animate-pulse" />
         </div>
-        <div className="h-10 w-full bg-muted rounded-lg mb-4" />
-        <div className="space-y-4 mt-4">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="flex justify-between items-center py-4">
-              <div className="h-5 w-32 bg-muted rounded" />
-              <div className="flex items-center gap-4">
-                <div className="h-5 w-20 bg-muted rounded" />
-                <div className="h-10 w-24 bg-muted rounded" />
+        <div className="flex flex-col lg:flex-row w-full px-4 md:px-8 lg:px-12 pt-4 gap-8 lg:gap-10">
+          {/* Left column skeleton */}
+          <div className="flex-1 min-w-0 animate-pulse">
+            <div className="flex items-start gap-3 mb-6">
+              <div className="w-14 h-14 rounded-full bg-muted flex-shrink-0" />
+              <div className="flex-1 space-y-2">
+                <div className="h-5 w-40 bg-muted rounded" />
+                <div className="h-3 w-64 bg-muted rounded" />
+                <div className="h-3 w-24 bg-muted rounded" />
               </div>
             </div>
-          ))}
+            <div className="h-10 w-full bg-muted rounded-lg mb-4" />
+            <div className="space-y-4 mt-4">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="flex justify-between items-center py-4">
+                  <div className="h-5 w-32 bg-muted rounded" />
+                  <div className="flex items-center gap-4">
+                    <div className="h-5 w-20 bg-muted rounded" />
+                    <div className="h-10 w-24 bg-muted rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* Right column skeleton (desktop) */}
+          <div className="hidden lg:block lg:w-80 xl:w-96 flex-shrink-0">
+            <div className="bg-card border border-border rounded-lg p-5 animate-pulse space-y-5">
+              <div className="space-y-2">
+                <div className="h-4 w-24 bg-muted rounded" />
+                <div className="h-3 w-full bg-muted rounded" />
+                <div className="h-3 w-3/4 bg-muted rounded" />
+                <div className="h-9 w-32 bg-muted rounded mt-3" />
+              </div>
+              <div className="h-px bg-border" />
+              <div className="space-y-2">
+                <div className="h-4 w-40 bg-muted rounded" />
+                {[1, 2, 3, 4, 5].map(i => (
+                  <div key={i} className="flex justify-between">
+                    <div className="h-3 w-16 bg-muted rounded" />
+                    <div className="h-3 w-24 bg-muted rounded" />
+                  </div>
+                ))}
+              </div>
+              <div className="h-px bg-border" />
+              <div className="space-y-2">
+                <div className="h-4 w-20 bg-muted rounded" />
+                <div className="flex gap-2">
+                  <div className="h-9 w-20 bg-muted rounded" />
+                  <div className="h-9 w-24 bg-muted rounded" />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
