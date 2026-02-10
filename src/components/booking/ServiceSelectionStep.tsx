@@ -93,10 +93,11 @@ export const ServiceSelectionStep = ({
   };
 
   const handleShare = async () => {
+    const barbershopUrl = `${window.location.origin}/barbearia/${barbershop.id}`;
     const shareData = {
       title: barbershop.name,
       text: `Confira ${barbershop.name}!`,
-      url: window.location.href,
+      url: barbershopUrl,
     };
 
     try {

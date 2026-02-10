@@ -14,6 +14,7 @@ interface BookingFlowProps {
     address?: string;
     rating?: number;
   };
+  autoOpen?: boolean;
 }
 
 interface Service {
@@ -39,11 +40,11 @@ interface SelectedServiceItem {
 
 type BookingStep = "services" | "datetime";
 
-export const BookingFlow = ({ children, barbershop }: BookingFlowProps) => {
+export const BookingFlow = ({ children, barbershop, autoOpen = false }: BookingFlowProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(autoOpen);
   const [currentStep, setCurrentStep] = useState<BookingStep>("services");
   const [services, setServices] = useState<Service[]>([]);
   const [barbers, setBarbers] = useState<Barber[]>([]);

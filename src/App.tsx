@@ -30,6 +30,7 @@ import Auth from "./pages/Auth";
 import AuthCallback from "./pages/AuthCallback";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
+const BarbershopPage = lazy(() => import("./pages/BarbershopPage"));
 
 // Dev tools (lazy load)
 const DevAssistant = lazy(() => import("./pages/DevAssistant"));
@@ -78,7 +79,7 @@ const AppContent = () => {
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/dev-assistant" element={<DevAssistant />} />
             <Route path="/verify-mfa" element={<VerifyMFA />} />
-            
+            <Route path="/barbearia/:id" element={<BarbershopPage />} />
             {/* Admin Routes (Owner only) */}
             <Route 
               path="/admin/dashboard" 
