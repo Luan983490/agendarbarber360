@@ -325,11 +325,10 @@ export const DateTimeSelectionStep = ({
           >
             <ChevronLeft className="w-6 h-6 text-foreground" />
           </button>
-          {isCompact ? (
-            <div className="flex-1 flex items-center justify-center gap-2">
-              <button
-                onClick={() => {
-                  if (!dateContainerRef.current) return;
+          <div className="flex-1 flex items-center justify-center gap-2">
+            <button
+              onClick={() => {
+                if (isCompact && dateContainerRef.current) {
                   const refDate = mobileVisibleMonth || selectedDate;
                   const prevMonth = new Date(refDate.getFullYear(), refDate.getMonth() - 1, 1);
                   const idx = allDates.findIndex(d => d.getMonth() === prevMonth.getMonth() && d.getFullYear() === prevMonth.getFullYear());
@@ -337,17 +336,22 @@ export const DateTimeSelectionStep = ({
                     const btn = dateContainerRef.current.children[idx] as HTMLElement;
                     dateContainerRef.current.scrollTo({ left: btn.offsetLeft, behavior: 'smooth' });
                   }
-                }}
-                className="p-1 hover:bg-muted rounded-full transition-colors"
-              >
-                <ChevronLeft className="w-5 h-5 text-foreground" strokeWidth={1.5} />
-              </button>
-              <h2 className="text-xl font-bold text-foreground italic min-w-[140px] text-center">
-                {getMonthYearTitle()}
-              </h2>
-              <button
-                onClick={() => {
-                  if (!dateContainerRef.current) return;
+                } else {
+                  // Desktop: jump back one month worth of days
+                  const newOffset = Math.max(0, dateScrollOffset - 30);
+                  setDateScrollOffset(newOffset);
+                }
+              }}
+              className="p-1 hover:bg-muted rounded-full transition-colors"
+            >
+              <ChevronLeft className="w-5 h-5 text-foreground" strokeWidth={1.5} />
+            </button>
+            <h2 className="text-xl md:text-2xl font-bold text-foreground italic min-w-[140px] text-center">
+              {getMonthYearTitle()}
+            </h2>
+            <button
+              onClick={() => {
+                if (isCompact && dateContainerRef.current) {
                   const refDate = mobileVisibleMonth || selectedDate;
                   const nextMonth = new Date(refDate.getFullYear(), refDate.getMonth() + 1, 1);
                   const idx = allDates.findIndex(d => d.getMonth() === nextMonth.getMonth() && d.getFullYear() === nextMonth.getFullYear());
@@ -355,20 +359,17 @@ export const DateTimeSelectionStep = ({
                     const btn = dateContainerRef.current.children[idx] as HTMLElement;
                     dateContainerRef.current.scrollTo({ left: btn.offsetLeft, behavior: 'smooth' });
                   }
-                }}
-                className="p-1 hover:bg-muted rounded-full transition-colors"
-              >
-                <ChevronRight className="w-5 h-5 text-foreground" strokeWidth={1.5} />
-              </button>
-            </div>
-          ) : (
-            <>
-              <h2 className="flex-1 text-center text-xl md:text-2xl font-bold text-foreground italic">
-                {getMonthYearTitle()}
-              </h2>
-              <div className="w-10" />
-            </>
-          )}
+                } else {
+                  // Desktop: jump forward one month worth of days
+                  const newOffset = Math.min(allDates.length - visibleDatesCount, dateScrollOffset + 30);
+                  setDateScrollOffset(newOffset);
+                }
+              }}
+              className="p-1 hover:bg-muted rounded-full transition-colors"
+            >
+              <ChevronRight className="w-5 h-5 text-foreground" strokeWidth={1.5} />
+            </button>
+          </div>
         </div>
       </div>
 
