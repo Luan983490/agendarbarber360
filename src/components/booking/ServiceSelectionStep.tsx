@@ -104,7 +104,7 @@ export const ServiceSelectionStep = ({
       if (navigator.share) {
         await navigator.share(shareData);
       } else {
-        await navigator.clipboard.writeText(window.location.href);
+        await navigator.clipboard.writeText(barbershopUrl);
         toast({
           title: "Link copiado!",
           description: "O link foi copiado para a área de transferência.",
