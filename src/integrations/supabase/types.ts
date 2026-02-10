@@ -1047,6 +1047,42 @@ export type Database = {
           },
         ]
       }
+      favorites_audit: {
+        Row: {
+          action: string
+          barbershop_id: string | null
+          changed_at: string
+          changed_by: string | null
+          client_id: string | null
+          favorite_id: string
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+        }
+        Insert: {
+          action: string
+          barbershop_id?: string | null
+          changed_at?: string
+          changed_by?: string | null
+          client_id?: string | null
+          favorite_id: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+        }
+        Update: {
+          action?: string
+          barbershop_id?: string | null
+          changed_at?: string
+          changed_by?: string | null
+          client_id?: string | null
+          favorite_id?: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+        }
+        Relationships: []
+      }
       loyalty_rewards: {
         Row: {
           barbershop_id: string

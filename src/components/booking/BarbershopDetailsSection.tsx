@@ -38,12 +38,15 @@ interface BarbershopDetailsSectionProps {
 
 export const BarbershopDetailsSection = ({ barbershopId, barbershop, compact = false }: BarbershopDetailsSectionProps) => {
   const [workingHours, setWorkingHours] = useState<BarberWorkingHours[] | null>(null);
-  const [loadingHours, setLoadingHours] = useState(false);
+  const [loadingHours, setLoadingHours] = useState(true);
 
   // Fetch working hours from barber_working_hours table
   useEffect(() => {
     const fetchWorkingHours = async () => {
-      if (!barbershopId) return;
+      if (!barbershopId) {
+        setLoadingHours(false);
+        return;
+      }
       
       setLoadingHours(true);
       try {
@@ -63,10 +66,13 @@ export const BarbershopDetailsSection = ({ barbershopId, barbershop, compact = f
             .eq("barber_id", barbers[0].id)
             .order("day_of_week");
           
-          setWorkingHours(hours);
+          setWorkingHours(hours || []);
+        } else {
+          setWorkingHours([]);
         }
       } catch (error) {
         console.error("Error fetching working hours:", error);
+        setWorkingHours([]);
       } finally {
         setLoadingHours(false);
       }
@@ -188,7 +194,7 @@ export const BarbershopDetailsSection = ({ barbershopId, barbershop, compact = f
   const hasPayments = barbershop.payment_methods && barbershop.payment_methods.length > 0;
   const hasSocials = barbershop.instagram_url || barbershop.facebook_url || barbershop.whatsapp;
 
-  if (!hasLocation && !openingHours && !hasContact && !hasPayments && !hasSocials) {
+  if (!hasLocation && !hasContact && !hasPayments && !hasSocials && !loadingHours && (!workingHours || workingHours.length === 0)) {
     return null;
   }
 
@@ -221,14 +227,16 @@ export const BarbershopDetailsSection = ({ barbershopId, barbershop, compact = f
       )}
 
       {/* Opening Hours Section */}
-      {openingHours && (
-        <>
-          <Separator />
-          <div className="space-y-3">
-            <div className="flex items-start gap-3">
-              <Clock className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" strokeWidth={1.5} />
-              <div className="flex-1">
-                <h4 className="font-medium text-foreground text-sm">Horário de Funcionamento</h4>
+      <>
+        <Separator />
+        <div className="space-y-3">
+          <div className="flex items-start gap-3">
+            <Clock className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+            <div className="flex-1">
+              <h4 className="font-medium text-foreground text-sm">Horário de Funcionamento</h4>
+              {loadingHours ? (
+                <p className="text-sm text-muted-foreground mt-2">Carregando...</p>
+              ) : openingHours && openingHours.length > 0 ? (
                 <div className="mt-2 space-y-1.5">
                   {openingHours.map((day: any, index: number) => (
                     <div key={index} className="flex justify-between text-sm">
@@ -242,11 +250,13 @@ export const BarbershopDetailsSection = ({ barbershopId, barbershop, compact = f
                     </div>
                   ))}
                 </div>
-              </div>
+              ) : (
+                <p className="text-sm text-muted-foreground mt-2">Horário não informado</p>
+              )}
             </div>
           </div>
-        </>
-      )}
+        </div>
+      </>
 
       {/* Contact Section */}
       {hasContact && (
