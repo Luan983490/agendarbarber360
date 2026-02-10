@@ -260,9 +260,25 @@ export const EncaixeDialog = ({
     ? gaps.filter(g => g.durationMinutes >= selectedServiceData.duration)
     : gaps;
 
+  // Generate selectable time options within a gap (15-min intervals)
+  const getTimeSlotsInGap = (gap: GapSlot): string[] => {
+    if (!selectedServiceData) return [];
+    const slots: string[] = [];
+    const gapStart = timeToMinutes(gap.start);
+    const gapEnd = timeToMinutes(gap.end);
+    const duration = selectedServiceData.duration;
+
+    let cursor = gapStart;
+    while (cursor + duration <= gapEnd) {
+      slots.push(minutesToHHMM(cursor));
+      cursor += 15;
+    }
+    return slots;
+  };
+
   const handleSelectGap = (gap: GapSlot) => {
     setSelectedGap(gap);
-    setSelectedTime(gap.start);
+    setSelectedTime(''); // Reset time so user picks one
   };
 
   const handleCreate = async () => {
@@ -287,15 +303,19 @@ export const EncaixeDialog = ({
     try {
       const service = services.find(s => s.id === selectedService);
 
+      const endMinutes = timeToMinutes(selectedTime) + (service?.duration || 30);
+      const bookingEndTime = minutesToHHMM(endMinutes);
+
       const bookingData: any = {
         barbershop_id: barbershopId,
         barber_id: barberId,
         service_id: selectedService,
         booking_date: format(currentDate, 'yyyy-MM-dd'),
-        booking_time: selectedTime,
+        booking_time: selectedTime + ':00',
+        booking_end_time: bookingEndTime + ':00',
         total_price: service?.price || 0,
         status: 'confirmed',
-        notes: notes ? sanitizeString(notes, { maxLength: 500 }) : null,
+        notes: notes ? sanitizeString(`[Encaixe] ${notes}`, { maxLength: 500 }) : '[Encaixe]',
         is_external_booking: isExternalBooking,
       };
 
@@ -412,17 +432,33 @@ export const EncaixeDialog = ({
               </div>
             )}
 
-            {/* Step 3: Adjust time within the gap */}
+            {/* Step 3: Choose time within the gap */}
             {selectedGap && selectedService && (
               <div className="space-y-2">
-                <Label>Horário do encaixe</Label>
-                <Input
-                  type="time"
-                  value={selectedTime}
-                  onChange={(e) => setSelectedTime(e.target.value)}
-                  min={selectedGap.start}
-                  max={selectedGap.end}
-                />
+                <Label>Escolha o horário do encaixe</Label>
+                <div className="flex flex-wrap gap-1.5">
+                  {getTimeSlotsInGap(selectedGap).map((t) => (
+                    <Button
+                      key={t}
+                      type="button"
+                      variant={selectedTime === t ? 'default' : 'outline'}
+                      size="sm"
+                      className={cn(
+                        'text-xs h-8 px-3 rounded-none',
+                        selectedTime === t && 'text-white'
+                      )}
+                      style={selectedTime === t ? { backgroundColor: '#2d044a' } : undefined}
+                      onClick={() => setSelectedTime(t)}
+                    >
+                      {t}
+                    </Button>
+                  ))}
+                </div>
+                {getTimeSlotsInGap(selectedGap).length === 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Nenhum horário possível nesta janela para o serviço selecionado.
+                  </p>
+                )}
                 <p className="text-xs text-muted-foreground">
                   Janela: {selectedGap.start} — {selectedGap.end} ({selectedGap.durationMinutes}min)
                 </p>
@@ -430,7 +466,7 @@ export const EncaixeDialog = ({
             )}
 
             {/* Step 4: Client info */}
-            {selectedGap && selectedService && (
+            {selectedGap && selectedService && selectedTime && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Checkbox
