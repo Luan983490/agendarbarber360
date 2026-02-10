@@ -152,7 +152,7 @@ export const DateTimeSelectionStep = ({
   const allDates = Array.from({ length: 365 }, (_, i) => addDays(today, i));
   const visibleDatesCount = windowWidth < 480 ? 5 : windowWidth < 768 ? 7 : windowWidth < 1024 ? 10 : 14;
   const isCompact = windowWidth < 768;
-  const visibleDates = allDates.slice(dateScrollOffset, dateScrollOffset + visibleDatesCount);
+  const visibleDates = isCompact ? allDates : allDates.slice(dateScrollOffset, dateScrollOffset + visibleDatesCount);
 
   // Get available times from slots - FILTER by available === true
   const allSlotsFromApi = availableSlots || [];
@@ -233,6 +233,11 @@ export const DateTimeSelectionStep = ({
 
   // Month title
   const getMonthYearTitle = () => {
+    if (isCompact) {
+      // On mobile, show the selected date's month
+      const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+      return `${capitalize(format(selectedDate, "MMMM", { locale: ptBR }))} ${format(selectedDate, "yyyy")}`;
+    }
     const firstVisible = visibleDates[0];
     const lastVisible = visibleDates[visibleDates.length - 1];
     
@@ -263,20 +268,23 @@ export const DateTimeSelectionStep = ({
     }
   };
 
-  // Touch swipe support for date picker
-  const touchStartX = useRef<number | null>(null);
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-  };
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX.current === null) return;
-    const diff = touchStartX.current - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 40) {
-      handleDateScroll(diff > 0 ? "right" : "left");
-    }
-    touchStartX.current = null;
-  };
+  // Touch swipe removed — mobile now uses native overflow-x scroll for smooth carousel feel
 
+  // Scroll selected date into view on mobile
+  useEffect(() => {
+    if (isCompact && dateContainerRef.current) {
+      const selectedIndex = allDates.findIndex(d => isSameDay(d, selectedDate));
+      if (selectedIndex >= 0) {
+        const container = dateContainerRef.current;
+        const buttons = container.children;
+        if (buttons[selectedIndex]) {
+          const btn = buttons[selectedIndex] as HTMLElement;
+          const scrollLeft = btn.offsetLeft - container.offsetWidth / 2 + btn.offsetWidth / 2;
+          container.scrollTo({ left: Math.max(0, scrollLeft), behavior: 'smooth' });
+        }
+      }
+    }
+  }, [isCompact, selectedDate]);
   // Check if date has any availability (for visual indicator)
   const getDateAvailability = (date: Date): "available" | "limited" | "unavailable" => {
     // Sunday is always unavailable by default
@@ -304,23 +312,27 @@ export const DateTimeSelectionStep = ({
 
       {/* Horizontal date picker - full width with circular arrows */}
       <div className="w-full flex items-center gap-1">
-        {/* Left arrow in circle - always visible */}
-        <button
-          onClick={() => handleDateScroll("left")}
-          disabled={dateScrollOffset === 0}
-          className={cn(
-            "w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full border border-border bg-background transition-colors flex-shrink-0",
-            dateScrollOffset === 0 ? "opacity-30 pointer-events-none" : "hover:bg-muted"
-          )}
-        >
-          <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
-        </button>
+        {/* Left arrow - desktop only */}
+        {!isCompact && (
+          <button
+            onClick={() => handleDateScroll("left")}
+            disabled={dateScrollOffset === 0}
+            className={cn(
+              "w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full border border-border bg-background transition-colors flex-shrink-0",
+              dateScrollOffset === 0 ? "opacity-30 pointer-events-none" : "hover:bg-muted"
+            )}
+          >
+            <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
+          </button>
+        )}
 
         <div 
           ref={dateContainerRef}
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
-          className="flex-1 flex gap-1 sm:gap-1.5 md:gap-2 py-2"
+          className={cn(
+            "flex-1 flex gap-1 sm:gap-1.5 md:gap-2 py-2",
+            isCompact && "overflow-x-auto snap-x snap-mandatory scroll-smooth scrollbar-hide -mx-1 px-1"
+          )}
+          style={isCompact ? { scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" } : undefined}
         >
           {visibleDates.map((date, index) => {
             const isPast = isBefore(startOfDay(date), startOfDay(today));
@@ -339,8 +351,8 @@ export const DateTimeSelectionStep = ({
                 onClick={() => !isDisabled && onDateChange(date)}
                 disabled={isDisabled}
                 className={cn(
-                  "flex flex-col items-center py-2.5 sm:py-3 rounded-xl transition-all flex-1",
-                  isCompact ? "min-w-[44px] flex-shrink-0 px-1.5" : "px-1",
+                  "flex flex-col items-center py-2.5 sm:py-3 rounded-xl transition-all",
+                  isCompact ? "min-w-[52px] flex-shrink-0 px-1.5 snap-start" : "flex-1 px-1",
                   isSelected
                     ? "bg-[#3d9a9b] text-white"
                     : "bg-card border border-border hover:bg-muted text-foreground",
@@ -372,17 +384,19 @@ export const DateTimeSelectionStep = ({
           })}
         </div>
 
-        {/* Right arrow in circle - always visible */}
-        <button
-          onClick={() => handleDateScroll("right")}
-          disabled={dateScrollOffset >= allDates.length - visibleDatesCount}
-          className={cn(
-            "w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full border border-border bg-background transition-colors flex-shrink-0",
-            dateScrollOffset >= allDates.length - visibleDatesCount ? "opacity-30 pointer-events-none" : "hover:bg-muted"
-          )}
-        >
-          <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
-        </button>
+        {/* Right arrow - desktop only */}
+        {!isCompact && (
+          <button
+            onClick={() => handleDateScroll("right")}
+            disabled={dateScrollOffset >= allDates.length - visibleDatesCount}
+            className={cn(
+              "w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full border border-border bg-background transition-colors flex-shrink-0",
+              dateScrollOffset >= allDates.length - visibleDatesCount ? "opacity-30 pointer-events-none" : "hover:bg-muted"
+            )}
+          >
+            <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
+          </button>
+        )}
       </div>
 
       {/* Barber selection - visible cards with photo and name */}
