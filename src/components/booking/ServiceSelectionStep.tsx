@@ -82,6 +82,7 @@ export const ServiceSelectionStep = ({
   const [activeTab, setActiveTab] = useState("services");
   const [barbers, setBarbers] = useState<Barber[]>([]);
   const [barbershopDetails, setBarbershopDetails] = useState<BarbershopDetails | null>(null);
+  const [prefetchedWorkingHours, setPrefetchedWorkingHours] = useState<any[] | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(true);
   const [loadingBarbers, setLoadingBarbers] = useState(false);
 
@@ -183,25 +184,48 @@ export const ServiceSelectionStep = ({
     return Scissors;
   };
 
-  // Fetch barbershop details (description and amenities) on mount
+  // Fetch barbershop details AND working hours together on mount
   useEffect(() => {
-    const fetchBarbershopDetails = async () => {
+    const fetchAllDetails = async () => {
       setLoadingDetails(true);
       try {
-        const { data } = await supabase
-          .from("barbershops")
-          .select("description, phone, email, address, opening_hours, amenities, postal_code, neighborhood, street_number, city, state, latitude, longitude, whatsapp, instagram_url, facebook_url, payment_methods")
-          .eq("id", barbershop.id)
-          .single();
-        setBarbershopDetails(data);
+        // Fetch barbershop details and first active barber in parallel
+        const [detailsResult, barbersResult] = await Promise.all([
+          supabase
+            .from("barbershops")
+            .select("description, phone, email, address, opening_hours, amenities, postal_code, neighborhood, street_number, city, state, latitude, longitude, whatsapp, instagram_url, facebook_url, payment_methods")
+            .eq("id", barbershop.id)
+            .single(),
+          supabase
+            .from("barbers")
+            .select("id")
+            .eq("barbershop_id", barbershop.id)
+            .eq("is_active", true)
+            .limit(1),
+        ]);
+
+        setBarbershopDetails(detailsResult.data);
+
+        // Fetch working hours if we have a barber
+        if (barbersResult.data && barbersResult.data.length > 0) {
+          const { data: hours } = await supabase
+            .from("barber_working_hours")
+            .select("day_of_week, is_day_off, period1_start, period1_end, period2_start, period2_end")
+            .eq("barber_id", barbersResult.data[0].id)
+            .order("day_of_week");
+          setPrefetchedWorkingHours(hours || []);
+        } else {
+          setPrefetchedWorkingHours([]);
+        }
       } catch (error) {
         console.error("Error fetching barbershop details:", error);
+        setPrefetchedWorkingHours([]);
       } finally {
         setLoadingDetails(false);
       }
     };
     
-    fetchBarbershopDetails();
+    fetchAllDetails();
   }, [barbershop.id]);
 
   // Fetch barbers when tab changes
@@ -574,6 +598,7 @@ export const ServiceSelectionStep = ({
                     instagram_url: barbershopDetails?.instagram_url,
                     facebook_url: barbershopDetails?.facebook_url,
                   }}
+                  prefetchedWorkingHours={prefetchedWorkingHours}
                 />
               </div>
             </TabsContent>
@@ -630,6 +655,7 @@ export const ServiceSelectionStep = ({
                   instagram_url: barbershopDetails?.instagram_url,
                   facebook_url: barbershopDetails?.facebook_url,
                 }}
+                prefetchedWorkingHours={prefetchedWorkingHours}
               />
             </div>
           </div>
