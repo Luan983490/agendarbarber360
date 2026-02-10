@@ -296,7 +296,10 @@ export const DateTimeSelectionStep = ({
 
         <div 
           ref={dateContainerRef}
-          className="flex-1 flex gap-2 overflow-x-auto scrollbar-hide py-2"
+          className={cn(
+            "flex-1 flex gap-2 py-2",
+            isMobile ? "overflow-x-auto scrollbar-hide" : "justify-center"
+          )}
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {visibleDates.map((date, index) => {
@@ -316,7 +319,10 @@ export const DateTimeSelectionStep = ({
                 onClick={() => !isDisabled && onDateChange(date)}
                 disabled={isDisabled}
                 className={cn(
-                  "flex flex-col items-center py-3 px-3 md:px-4 rounded-xl transition-all min-w-[48px] md:min-w-[60px] flex-shrink-0",
+                  "flex flex-col items-center py-3 rounded-xl transition-all",
+                  isMobile
+                    ? "px-3 min-w-[48px] flex-shrink-0"
+                    : "px-2 flex-1 max-w-[72px]",
                   isSelected
                     ? "bg-[#3d9a9b] text-white"
                     : "bg-card border border-border hover:bg-muted text-foreground",
