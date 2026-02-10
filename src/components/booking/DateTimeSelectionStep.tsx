@@ -255,12 +255,26 @@ export const DateTimeSelectionStep = ({
   };
 
   const handleDateScroll = (direction: "left" | "right") => {
-    const scrollStep = isMobile ? 7 : 7;
+    const scrollStep = visibleDatesCount;
     if (direction === "left" && dateScrollOffset > 0) {
       setDateScrollOffset((prev) => Math.max(0, prev - scrollStep));
     } else if (direction === "right" && dateScrollOffset < allDates.length - visibleDatesCount) {
       setDateScrollOffset((prev) => Math.min(allDates.length - visibleDatesCount, prev + scrollStep));
     }
+  };
+
+  // Touch swipe support for date picker
+  const touchStartX = useRef<number | null>(null);
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 40) {
+      handleDateScroll(diff > 0 ? "right" : "left");
+    }
+    touchStartX.current = null;
   };
 
   // Check if date has any availability (for visual indicator)
@@ -304,11 +318,9 @@ export const DateTimeSelectionStep = ({
 
         <div 
           ref={dateContainerRef}
-          className={cn(
-            "flex-1 flex gap-1 sm:gap-1.5 md:gap-2 py-2",
-            isCompact ? "overflow-x-auto scrollbar-hide" : ""
-          )}
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          className="flex-1 flex gap-1 sm:gap-1.5 md:gap-2 py-2"
         >
           {visibleDates.map((date, index) => {
             const isPast = isBefore(startOfDay(date), startOfDay(today));
