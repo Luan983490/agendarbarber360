@@ -150,33 +150,64 @@ export const BarbershopDetailsSection = ({ barbershopId, barbershop, compact = f
     return time.substring(0, 5);
   };
 
-  // Parse opening hours from barber_working_hours table
+  // Parse opening hours from barber_working_hours table, with fallback to barbershop.opening_hours JSON
   const formatOpeningHours = () => {
-    if (!workingHours || workingHours.length === 0) return null;
-    
-    const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-    
-    return workingHours.map((day) => {
-      const displayName = dayNames[day.day_of_week];
+    // Try barber_working_hours first
+    if (workingHours && workingHours.length > 0) {
+      const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
       
-      if (day.is_day_off) {
-        return { day: displayName, periods: null };
-      }
-      
-      const periods = [
-        day.period1_start && day.period1_end 
-          ? `${formatTime(day.period1_start)} - ${formatTime(day.period1_end)}` 
-          : null,
-        day.period2_start && day.period2_end 
-          ? `${formatTime(day.period2_start)} - ${formatTime(day.period2_end)}` 
-          : null,
-      ].filter(Boolean);
-      
-      return {
-        day: displayName,
-        periods: periods.length > 0 ? periods : null
+      return workingHours.map((day) => {
+        const displayName = dayNames[day.day_of_week];
+        
+        if (day.is_day_off) {
+          return { day: displayName, periods: null };
+        }
+        
+        const periods = [
+          day.period1_start && day.period1_end 
+            ? `${formatTime(day.period1_start)} - ${formatTime(day.period1_end)}` 
+            : null,
+          day.period2_start && day.period2_end 
+            ? `${formatTime(day.period2_start)} - ${formatTime(day.period2_end)}` 
+            : null,
+        ].filter(Boolean);
+        
+        return {
+          day: displayName,
+          periods: periods.length > 0 ? periods : null
+        };
+      });
+    }
+
+    // Fallback: use opening_hours JSON from barbershops table
+    if (barbershop.opening_hours && typeof barbershop.opening_hours === 'object') {
+      const dayMapping: Record<string, string> = {
+        sunday: "Domingo",
+        monday: "Segunda",
+        tuesday: "Terça",
+        wednesday: "Quarta",
+        thursday: "Quinta",
+        friday: "Sexta",
+        saturday: "Sábado",
       };
-    });
+      const dayOrder = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+
+      return dayOrder.map((key) => {
+        const dayData = barbershop.opening_hours?.[key];
+        const displayName = dayMapping[key];
+
+        if (!dayData || dayData.open === "Fechado" || dayData.close === "Fechado") {
+          return { day: displayName, periods: null };
+        }
+
+        return {
+          day: displayName,
+          periods: [`${dayData.open} - ${dayData.close}`],
+        };
+      });
+    }
+
+    return null;
   };
 
   // Payment methods mapping

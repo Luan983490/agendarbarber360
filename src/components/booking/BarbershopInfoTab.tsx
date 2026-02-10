@@ -99,7 +99,6 @@ export const BarbershopInfoTab = ({ barbershopId, barbershop }: BarbershopInfoTa
   useEffect(() => {
     const fetchWorkingHours = async () => {
       try {
-        // First, get the first active barber of this barbershop
         const { data: barbers } = await supabase
           .from("barbers")
           .select("id")
@@ -109,15 +108,13 @@ export const BarbershopInfoTab = ({ barbershopId, barbershop }: BarbershopInfoTa
 
         if (barbers && barbers.length > 0) {
           const barberId = barbers[0].id;
-          
-          // Fetch working hours for this barber
           const { data: hours } = await supabase
             .from("barber_working_hours")
             .select("day_of_week, is_day_off, period1_start, period1_end, period2_start, period2_end")
             .eq("barber_id", barberId)
             .order("day_of_week");
 
-          if (hours) {
+          if (hours && hours.length > 0) {
             setWorkingHours(hours);
           }
         }
@@ -132,6 +129,27 @@ export const BarbershopInfoTab = ({ barbershopId, barbershop }: BarbershopInfoTa
   }, [barbershopId]);
 
   const groupedHours = groupWorkingHours(workingHours);
+
+  // Fallback: parse opening_hours JSON from barbershops table
+  const fallbackHours = () => {
+    if (!barbershop.opening_hours || typeof barbershop.opening_hours !== 'object') return [];
+    const dayMapping: Record<string, string> = {
+      sunday: "Dom", monday: "Seg", tuesday: "Ter", wednesday: "Qua",
+      thursday: "Qui", friday: "Sex", saturday: "Sáb",
+    };
+    const dayOrder = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+    
+    return dayOrder.map((key) => {
+      const dayData = (barbershop.opening_hours as any)?.[key];
+      const dayName = dayMapping[key];
+      if (!dayData || dayData.open === "Fechado" || dayData.close === "Fechado") {
+        return { days: dayName, hours: "Fechado" };
+      }
+      return { days: dayName, hours: `${dayData.open} - ${dayData.close}` };
+    });
+  };
+
+  const displayHours = groupedHours.length > 0 ? groupedHours : fallbackHours();
 
   return (
     <div className="space-y-4">
@@ -152,9 +170,9 @@ export const BarbershopInfoTab = ({ barbershopId, barbershop }: BarbershopInfoTa
               <h4 className="font-medium text-foreground">Horário de Funcionamento</h4>
               {loading ? (
                 <p className="text-sm text-muted-foreground">Carregando...</p>
-              ) : groupedHours.length > 0 ? (
+              ) : displayHours.length > 0 ? (
                 <div className="space-y-1 mt-1">
-                  {groupedHours.map((group, idx) => (
+                  {displayHours.map((group, idx) => (
                     <p key={idx} className="text-sm text-muted-foreground">
                       <span className="font-medium text-foreground/80">{group.days}:</span> {group.hours}
                     </p>
