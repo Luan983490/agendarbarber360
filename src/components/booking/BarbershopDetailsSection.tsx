@@ -34,14 +34,26 @@ interface BarbershopDetailsSectionProps {
   };
   /** Compact mode: removes top separator and vertical padding (for desktop sidebar) */
   compact?: boolean;
+  /** Pre-fetched working hours to avoid secondary fetch delay */
+  prefetchedWorkingHours?: BarberWorkingHours[] | null;
 }
 
-export const BarbershopDetailsSection = ({ barbershopId, barbershop, compact = false }: BarbershopDetailsSectionProps) => {
-  const [workingHours, setWorkingHours] = useState<BarberWorkingHours[] | null>(null);
-  const [loadingHours, setLoadingHours] = useState(true);
+export const BarbershopDetailsSection = ({ barbershopId, barbershop, compact = false, prefetchedWorkingHours }: BarbershopDetailsSectionProps) => {
+  const [workingHours, setWorkingHours] = useState<BarberWorkingHours[] | null>(prefetchedWorkingHours ?? null);
+  const [loadingHours, setLoadingHours] = useState(prefetchedWorkingHours === undefined);
 
-  // Fetch working hours from barber_working_hours table
+  // Sync pre-fetched data when it arrives
   useEffect(() => {
+    if (prefetchedWorkingHours !== undefined) {
+      setWorkingHours(prefetchedWorkingHours);
+      setLoadingHours(false);
+    }
+  }, [prefetchedWorkingHours]);
+
+  // Only fetch independently if no prefetched data was provided
+  useEffect(() => {
+    if (prefetchedWorkingHours !== undefined) return; // skip if parent provides data
+
     const fetchWorkingHours = async () => {
       if (!barbershopId) {
         setLoadingHours(false);
@@ -50,7 +62,6 @@ export const BarbershopDetailsSection = ({ barbershopId, barbershop, compact = f
       
       setLoadingHours(true);
       try {
-        // First get the barbers for this barbershop
         const { data: barbers } = await supabase
           .from("barbers")
           .select("id")
@@ -59,7 +70,6 @@ export const BarbershopDetailsSection = ({ barbershopId, barbershop, compact = f
           .limit(1);
         
         if (barbers && barbers.length > 0) {
-          // Get working hours from the first barber (as representative)
           const { data: hours } = await supabase
             .from("barber_working_hours")
             .select("day_of_week, is_day_off, period1_start, period1_end, period2_start, period2_end")
@@ -79,7 +89,7 @@ export const BarbershopDetailsSection = ({ barbershopId, barbershop, compact = f
     };
     
     fetchWorkingHours();
-  }, [barbershopId]);
+  }, [barbershopId, prefetchedWorkingHours]);
 
   // Build complete address
   const buildFullAddress = () => {
