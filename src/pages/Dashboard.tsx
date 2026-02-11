@@ -21,6 +21,7 @@ import { LoyaltyManagement } from '@/components/LoyaltyManagement';
 import { StaffManagement } from '@/components/StaffManagement';
 import { ReportsPage } from '@/components/reports/ReportsPage';
 import { useSubscription } from '@/hooks/useSubscription';
+import { TrialBanner } from '@/components/TrialBanner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 import { DashboardSidebar } from '@/components/DashboardSidebar';
@@ -112,7 +113,7 @@ const Dashboard = () => {
   const [currentTab, setCurrentTab] = useState('bookings');
   const [blockPanelOpen, setBlockPanelOpen] = useState(false);
   const { toast } = useToast();
-  const { subscription } = useSubscription(barbershop?.id || null);
+  const { subscription, trial } = useSubscription(barbershop?.id || null);
   
   // Ref para função de refresh do calendário
   const calendarRefreshRef = useRef<(() => void) | null>(null);
@@ -712,16 +713,7 @@ const Dashboard = () => {
           <main className="flex-1 flex flex-col w-full min-w-0">
             {/* Conteúdo - área principal */}
             <div className="flex-1 p-3 sm:p-4 lg:p-6 flex flex-col min-h-0">
-              {subscription && subscription.plan_type === 'teste_gratis' && subscription.days_remaining <= 2 && (
-                <Alert variant="destructive" className="mb-4 sm:mb-6 flex-shrink-0">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle className="text-sm">Teste Gratuito Encerrando</AlertTitle>
-                  <AlertDescription className="text-xs sm:text-sm">
-                    Seu teste gratuito termina em {subscription.days_remaining} dia(s). 
-                    Faça upgrade para continuar usando todas as funcionalidades.
-                  </AlertDescription>
-                </Alert>
-              )}
+              <TrialBanner barbershopId={barbershop?.id || null} />
 
               <div className="flex-1 flex flex-col min-h-0">
                 {renderContent()}

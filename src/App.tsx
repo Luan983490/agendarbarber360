@@ -40,6 +40,8 @@ const VerifyMFA = lazy(() => import("./pages/VerifyMFA"));
 
 // Admin pages (lazy load - heavy components)
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const PlansPage = lazy(() => import("./pages/PlansPage"));
+const SubscriptionSettings = lazy(() => import("./pages/SubscriptionSettings"));
 
 // Barber pages (lazy load)
 const BarberHoje = lazy(() => import("./pages/BarberHoje"));
@@ -94,6 +96,26 @@ const AppContent = () => {
               element={
                 <ProtectedRoute allowedRoles={['owner']}>
                   <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+
+            {/* Plans page (accessible even without subscription) */}
+            <Route 
+              path="/planos" 
+              element={
+                <ProtectedRoute allowedRoles={['owner']} checkSubscription={false}>
+                  <PlansPage />
+                </ProtectedRoute>
+              } 
+            />
+
+            {/* Subscription settings */}
+            <Route 
+              path="/admin/assinatura" 
+              element={
+                <ProtectedRoute allowedRoles={['owner']} checkSubscription={false}>
+                  <SubscriptionSettings />
                 </ProtectedRoute>
               } 
             />

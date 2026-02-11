@@ -1,5 +1,6 @@
-import { X, ChevronRight, CalendarDays, BarChart3, FolderOpen, Scissors, UserRound, Settings, Store, LucideIcon } from 'lucide-react';
+import { X, ChevronRight, CalendarDays, BarChart3, FolderOpen, Scissors, UserRound, Settings, Store, CreditCard, LucideIcon } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Sidebar,
   SidebarContent,
@@ -28,6 +29,7 @@ interface MenuItem {
   title: string;
   icon?: LucideIcon;
   children?: MenuItem[];
+  href?: string;
 }
 
 // ============================================
@@ -51,6 +53,7 @@ const menuStructure: MenuItem[] = [
     icon: Settings,
     children: [
       { id: 'edit', title: 'Editar Barbearia', icon: Store },
+      { id: 'assinatura', title: 'Assinatura', icon: CreditCard, href: '/admin/assinatura' },
     ],
   },
 ];
@@ -96,6 +99,7 @@ const menuStructure: MenuItem[] = [
 export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarProps) {
   const { setOpenMobile, isMobile } = useSidebar();
   const [openGroups, setOpenGroups] = useState<string[]>([]);
+  const navigate = useNavigate();
 
   const toggleGroup = (groupId: string) => {
     setOpenGroups(prev =>
@@ -189,7 +193,11 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
                                   className="w-full hover:bg-[#3a3939] transition-colors flex items-center gap-2"
                                   style={{ color: '#d9d9d9' }}
                                   onClick={() => {
-                                    onTabChange(subItem.id);
+                                    if (subItem.href) {
+                                      navigate(subItem.href);
+                                    } else {
+                                      onTabChange(subItem.id);
+                                    }
                                     if (isMobile) {
                                       setOpenMobile(false);
                                     }
