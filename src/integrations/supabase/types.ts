@@ -741,6 +741,10 @@ export type Database = {
           status: string | null
           total_price: number
           updated_at: string
+          whatsapp_confirmation_sent: boolean | null
+          whatsapp_confirmation_sent_at: string | null
+          whatsapp_reminder_sent: boolean | null
+          whatsapp_reminder_sent_at: string | null
         }
         Insert: {
           barber_id?: string | null
@@ -759,6 +763,10 @@ export type Database = {
           status?: string | null
           total_price: number
           updated_at?: string
+          whatsapp_confirmation_sent?: boolean | null
+          whatsapp_confirmation_sent_at?: string | null
+          whatsapp_reminder_sent?: boolean | null
+          whatsapp_reminder_sent_at?: string | null
         }
         Update: {
           barber_id?: string | null
@@ -777,6 +785,10 @@ export type Database = {
           status?: string | null
           total_price?: number
           updated_at?: string
+          whatsapp_confirmation_sent?: boolean | null
+          whatsapp_confirmation_sent_at?: string | null
+          whatsapp_reminder_sent?: boolean | null
+          whatsapp_reminder_sent_at?: string | null
         }
         Relationships: [
           {
