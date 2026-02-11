@@ -393,6 +393,9 @@ export type Database = {
           state: string | null
           street_number: string | null
           total_reviews: number | null
+          trial_end_date: string | null
+          trial_start_date: string | null
+          trial_used: boolean | null
           updated_at: string
           whatsapp: string | null
         }
@@ -424,6 +427,9 @@ export type Database = {
           state?: string | null
           street_number?: string | null
           total_reviews?: number | null
+          trial_end_date?: string | null
+          trial_start_date?: string | null
+          trial_used?: boolean | null
           updated_at?: string
           whatsapp?: string | null
         }
@@ -455,6 +461,9 @@ export type Database = {
           state?: string | null
           street_number?: string | null
           total_reviews?: number | null
+          trial_end_date?: string | null
+          trial_start_date?: string | null
+          trial_used?: boolean | null
           updated_at?: string
           whatsapp?: string | null
         }
@@ -1425,6 +1434,69 @@ export type Database = {
           },
         ]
       }
+      payment_history: {
+        Row: {
+          amount: number
+          barbershop_id: string
+          created_at: string | null
+          currency: string | null
+          failure_reason: string | null
+          id: string
+          paid_at: string | null
+          payment_method: string | null
+          status: string
+          stripe_charge_id: string | null
+          stripe_invoice_id: string | null
+          stripe_payment_intent_id: string | null
+          subscription_id: string | null
+        }
+        Insert: {
+          amount: number
+          barbershop_id: string
+          created_at?: string | null
+          currency?: string | null
+          failure_reason?: string | null
+          id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          status: string
+          stripe_charge_id?: string | null
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
+          subscription_id?: string | null
+        }
+        Update: {
+          amount?: number
+          barbershop_id?: string
+          created_at?: string | null
+          currency?: string | null
+          failure_reason?: string | null
+          id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          status?: string
+          stripe_charge_id?: string | null
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
+          subscription_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_history_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_history_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           barbershop_id: string
@@ -1769,6 +1841,57 @@ export type Database = {
           },
         ]
       }
+      stripe_plans: {
+        Row: {
+          billing_period: string
+          created_at: string | null
+          description: string | null
+          discount_percentage: number | null
+          id: string
+          is_active: boolean | null
+          max_professionals: number
+          plan_code: string
+          plan_name: string
+          price_monthly: number
+          price_total: number
+          stripe_price_id: string
+          stripe_product_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          billing_period: string
+          created_at?: string | null
+          description?: string | null
+          discount_percentage?: number | null
+          id?: string
+          is_active?: boolean | null
+          max_professionals: number
+          plan_code: string
+          plan_name: string
+          price_monthly: number
+          price_total: number
+          stripe_price_id: string
+          stripe_product_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          billing_period?: string
+          created_at?: string | null
+          description?: string | null
+          discount_percentage?: number | null
+          id?: string
+          is_active?: boolean | null
+          max_professionals?: number
+          plan_code?: string
+          plan_name?: string
+          price_monthly?: number
+          price_total?: number
+          stripe_price_id?: string
+          stripe_product_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       subscription_plans: {
         Row: {
           barbershop_id: string
@@ -1819,32 +1942,59 @@ export type Database = {
       subscriptions: {
         Row: {
           barbershop_id: string
+          billing_period: string | null
+          cancel_at_period_end: boolean | null
+          canceled_at: string | null
           created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
           end_date: string
           id: string
           plan_type: string
           start_date: string
           status: string
+          stripe_customer_id: string | null
+          stripe_plan_id: string | null
+          stripe_price_id: string | null
+          stripe_subscription_id: string | null
           updated_at: string
         }
         Insert: {
           barbershop_id: string
+          billing_period?: string | null
+          cancel_at_period_end?: boolean | null
+          canceled_at?: string | null
           created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
           end_date: string
           id?: string
           plan_type?: string
           start_date?: string
           status?: string
+          stripe_customer_id?: string | null
+          stripe_plan_id?: string | null
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
           updated_at?: string
         }
         Update: {
           barbershop_id?: string
+          billing_period?: string | null
+          cancel_at_period_end?: boolean | null
+          canceled_at?: string | null
           created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
           end_date?: string
           id?: string
           plan_type?: string
           start_date?: string
           status?: string
+          stripe_customer_id?: string | null
+          stripe_plan_id?: string | null
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1853,6 +2003,13 @@ export type Database = {
             columns: ["barbershop_id"]
             isOneToOne: false
             referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_stripe_plan_id_fkey"
+            columns: ["stripe_plan_id"]
+            isOneToOne: false
+            referencedRelation: "stripe_plans"
             referencedColumns: ["id"]
           },
         ]
@@ -2342,6 +2499,15 @@ export type Database = {
           service_name: string
           total_bookings: number
           total_revenue: number
+        }[]
+      }
+      get_trial_status: {
+        Args: { p_barbershop_id: string }
+        Returns: {
+          days_left: number
+          has_active_subscription: boolean
+          is_expired: boolean
+          trial_end_date: string
         }[]
       }
       get_triggers_info: {
