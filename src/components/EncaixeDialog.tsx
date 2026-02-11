@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils';
 import { sanitizeString } from '@/lib/sanitizer';
 import { getErrorMessage } from '@/lib/error-handler';
 import { CreateClientDialog } from './CreateClientDialog';
+import { enviarConfirmacaoWhatsApp } from '@/utils/whatsapp';
 
 interface ServiceOption {
   id: string;
@@ -327,8 +328,15 @@ export const EncaixeDialog = ({
         bookingData.client_name = clientData?.display_name || 'Cliente';
       }
 
-      const { error } = await supabase.from('bookings').insert(bookingData);
+      const { data: createdBooking, error } = await supabase.from('bookings').insert(bookingData).select().single();
       if (error) throw error;
+
+      // Send WhatsApp confirmation (fire-and-forget)
+      if (createdBooking?.id) {
+        enviarConfirmacaoWhatsApp(createdBooking.id).catch(err => {
+          console.error('Erro ao enviar WhatsApp:', err);
+        });
+      }
 
       toast({
         title: 'Encaixe criado!',
