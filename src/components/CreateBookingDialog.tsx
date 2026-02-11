@@ -25,6 +25,7 @@ import { CreateClientDialog } from './CreateClientDialog';
 import { useCreateBlocksForPeriod } from '@/hooks/useBarber';
 import { sanitizeString } from '@/lib/sanitizer';
 import { getErrorMessage } from '@/lib/error-handler';
+import { enviarConfirmacaoWhatsApp } from '@/utils/whatsapp';
 
 // Types for local state
 interface ClientOption {
@@ -280,11 +281,21 @@ export const CreateBookingDialog = ({
         return bookingData;
       });
       
-      const { error } = await supabase
+      const { data: createdBookings, error } = await supabase
         .from('bookings')
-        .insert(bookingsData);
+        .insert(bookingsData)
+        .select();
 
       if (error) throw error;
+
+      // Send WhatsApp confirmations (fire-and-forget)
+      if (createdBookings) {
+        for (const b of createdBookings) {
+          enviarConfirmacaoWhatsApp(b.id).catch(err => {
+            console.error('Erro ao enviar WhatsApp:', err);
+          });
+        }
+      }
 
       toast({
         title: 'Agendamento criado',

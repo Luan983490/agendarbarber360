@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ServiceSelectionStep } from "./ServiceSelectionStep";
 import { DateTimeSelectionStep } from "./DateTimeSelectionStep";
+import { enviarConfirmacaoWhatsApp } from "@/utils/whatsapp";
 
 interface BookingFlowProps {
   children: React.ReactNode;
@@ -193,7 +194,7 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFrom
 
       const totalPrice = selectedServices.reduce((sum, item) => sum + item.service.price, 0);
 
-      const { error } = await supabase
+      const { data: newBooking, error } = await supabase
         .from("bookings")
         .insert({
           client_id: user.id,
@@ -211,6 +212,13 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFrom
         .single();
 
       if (error) throw error;
+
+      // Send WhatsApp confirmation (fire-and-forget)
+      if (newBooking?.id) {
+        enviarConfirmacaoWhatsApp(newBooking.id).catch(err => {
+          console.error('Erro ao enviar WhatsApp:', err);
+        });
+      }
 
       toast({
         title: "Agendamento realizado!",
