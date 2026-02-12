@@ -1,4 +1,4 @@
-import { CalendarDays, BarChart3, Scissors, UserRound, Store, CreditCard, LucideIcon } from 'lucide-react';
+import { CalendarDays, BarChart3, Scissors, UserRound, Store, CreditCard, Settings, LucideIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   Sidebar,
@@ -31,7 +31,7 @@ const menuItems: MenuItem[] = [
   { id: 'reports', title: 'Relatórios', icon: BarChart3, separator: true },
   { id: 'edit', title: 'Editar Barbearia', icon: Store },
   { id: 'assinatura', title: 'Assinatura', icon: CreditCard, href: '/admin/assinatura' },
-  
+  { id: 'settings', title: 'Configurações', icon: Settings, href: '/perfil', separator: true },
 ];
 
 export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarProps) {
