@@ -93,8 +93,8 @@ export const TimeSlot = ({
     onClick?.(event);
   };
 
-  // Altura fixa e uniforme para TODOS os slots - maior em mobile para melhor toque
-  const slotHeight = 'h-[42px] sm:h-[36px] lg:h-[28px]';
+  // Altura fixa e uniforme para TODOS os slots
+  const slotHeight = 'h-[32px] sm:h-[30px] lg:h-[28px]';
 
   const clientLabel = booking?.client_name?.trim() || 'Cliente';
   // Pega apenas o primeiro nome para mobile
