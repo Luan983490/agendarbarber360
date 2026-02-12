@@ -700,9 +700,11 @@ const Dashboard = () => {
         
         <div className={cn("flex flex-1 w-full pt-14", isAgendaTab && "max-lg:min-h-0 max-lg:overflow-hidden")}>
           {/* Sidebar Fixo - hidden on mobile */}
-          <div className="hidden lg:block sticky top-14 h-[calc(100vh-56px)] z-40">
+          <div className="hidden lg:block fixed left-0 top-14 h-[calc(100vh-56px)] z-40">
             <DashboardSidebar currentTab={currentTab} onTabChange={setCurrentTab} />
           </div>
+          {/* Spacer for fixed sidebar */}
+          <div className="hidden lg:block flex-shrink-0" style={{ width: 64 }} />
           
           <main className={cn("flex-1 flex flex-col w-full min-w-0", isAgendaTab && "max-lg:min-h-0")}>
             {/* Conteúdo - área principal */}
