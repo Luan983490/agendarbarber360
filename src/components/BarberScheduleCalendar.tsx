@@ -1365,8 +1365,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                           {time.substring(0, 5)}
                         </div>
                       ))}
-                      {/* Spacer to match grid and clear mobile bottom nav */}
-                      <div className="h-14 lg:hidden" />
+                      <div className="h-10 lg:hidden" style={{ backgroundColor: '#d9d9d9' }} />
                     </div>
                   </div>
                 </div>
@@ -1455,8 +1454,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                           })}
                         </div>
                       ))}
-                      {/* Spacer to match time column and clear mobile bottom nav */}
-                      <div className="h-14 lg:hidden" />
+                      <div className="h-10 lg:hidden" style={{ backgroundColor: '#d9d9d9' }} />
                     </div>
                   </div>
                 </div>
