@@ -428,7 +428,7 @@ const Dashboard = () => {
         );
       case 'bookings':
         return (
-          <div className="flex flex-col xl:flex-row gap-4 h-full min-h-0" style={{ backgroundColor: '#000000' }}>
+          <div className="flex flex-col xl:flex-row gap-4 max-lg:h-full max-lg:min-h-0 lg:h-[calc(100vh-80px)]" style={{ backgroundColor: '#000000' }}>
             {/* Botão Bloquear Horários - Mobile/Tablet (no topo) */}
             <div className="xl:hidden flex-shrink-0 px-1">
               <Sheet open={blockPanelOpen} onOpenChange={setBlockPanelOpen}>
@@ -695,10 +695,10 @@ const Dashboard = () => {
 
   return (
     <SidebarProvider>
-      <div className={cn("bg-background flex flex-col w-full min-h-screen", isAgendaTab && "max-lg:h-screen max-lg:overflow-hidden max-lg:min-h-0")}>
+      <div className={cn("min-h-screen bg-background flex flex-col w-full", isAgendaTab && "max-lg:h-screen max-lg:overflow-hidden max-lg:min-h-0")}>
         <DashboardHeader />
         
-        <div className={cn("flex flex-1 w-full pt-14", isAgendaTab && "max-lg:min-h-0")}>
+        <div className="flex flex-1 w-full pt-14">
           {/* Sidebar Fixo - hidden on mobile */}
           <div className="hidden lg:block sticky top-14 h-[calc(100vh-56px)] z-40">
             <DashboardSidebar currentTab={currentTab} onTabChange={setCurrentTab} />
@@ -707,8 +707,8 @@ const Dashboard = () => {
           <main className={cn("flex-1 flex flex-col w-full min-w-0", isAgendaTab && "max-lg:min-h-0")}>
             {/* Conteúdo - área principal */}
             <div className={cn(
-              "flex-1 flex flex-col",
-              isAgendaTab ? "p-0 lg:p-6 max-lg:min-h-0 pb-14 lg:pb-0" : "p-3 sm:p-4 lg:p-6 pb-16 lg:pb-0"
+              "flex-1 p-3 sm:p-4 lg:p-6 flex flex-col pb-16 lg:pb-0",
+              isAgendaTab && "max-lg:p-0 max-lg:pb-14 max-lg:min-h-0"
             )}>
               <TrialBanner barbershopId={barbershop?.id || null} />
 
