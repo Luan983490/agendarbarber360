@@ -695,7 +695,7 @@ const Dashboard = () => {
 
   return (
     <SidebarProvider>
-      <div className={cn("bg-background flex flex-col w-full", isAgendaTab ? "h-screen overflow-hidden" : "min-h-screen")}>
+      <div className={cn("bg-background flex flex-col w-full min-h-screen", isAgendaTab && "max-lg:h-screen max-lg:overflow-hidden max-lg:min-h-0")}>
         <DashboardHeader />
         
         <div className="flex flex-1 w-full pt-14 min-h-0">
@@ -708,9 +708,9 @@ const Dashboard = () => {
             {/* Conteúdo - área principal */}
             <div className={cn(
               "flex-1 flex flex-col min-h-0",
-              isAgendaTab ? "p-0 sm:p-1 lg:p-2 pb-14 lg:pb-0" : "p-3 sm:p-4 lg:p-6 pb-16 lg:pb-0"
+              isAgendaTab ? "p-0 lg:p-6 pb-14 lg:pb-0" : "p-3 sm:p-4 lg:p-6 pb-16 lg:pb-0"
             )}>
-              {!isAgendaTab && <TrialBanner barbershopId={barbershop?.id || null} />}
+              <TrialBanner barbershopId={barbershop?.id || null} />
 
               <div className="flex-1 flex flex-col min-h-0">
                 {renderContent()}
