@@ -155,6 +155,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
   const [actionMenuPosition, setActionMenuPosition] = useState({ x: 0, y: 0 });
   const [multiBlockOpen, setMultiBlockOpen] = useState(false);
   const [encaixeOpen, setEncaixeOpen] = useState(false);
+  const [mobileLegendOpen, setMobileLegendOpen] = useState(false);
   const [selectedSlots, setSelectedSlots] = useState<Array<{ date: Date; time: string }>>([]);
   
   // Estado para horários de trabalho do barbeiro
@@ -1131,38 +1132,39 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
-                      <Collapsible className="w-full">
-                        <CollapsibleTrigger className="flex items-center justify-between w-full px-2 py-1.5 text-sm">
-                          <span>Legenda</span>
-                          <ChevronDown className="h-3.5 w-3.5" />
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="px-2 pb-2">
-                          <div className="flex flex-col gap-1.5 text-xs mt-1">
-                            <div className="flex items-center gap-1.5">
-                              <div className="w-2.5 h-2.5" style={{ backgroundColor: '#558b90' }} />
-                              <span>Disponível</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              <div className="w-2.5 h-2.5" style={{ backgroundColor: '#066d3e' }} />
-                              <span>Agendado</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              <div className="w-2.5 h-2.5" style={{ backgroundColor: '#d19102' }} />
-                              <span>Sem Cadastro</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              <div className="w-2.5 h-2.5" style={{ backgroundColor: '#6a1f1f' }} />
-                              <span>Bloqueado</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              <div className="w-2.5 h-2.5" style={{ backgroundColor: '#000000' }} />
-                              <span>Fora do Expediente</span>
-                            </div>
-                          </div>
-                        </CollapsibleContent>
-                      </Collapsible>
+                    <DropdownMenuItem onSelect={(e) => {
+                      e.preventDefault();
+                      setMobileLegendOpen(!mobileLegendOpen);
+                    }}>
+                      <span>Legenda</span>
+                      <ChevronDown className={cn("h-3.5 w-3.5 ml-auto transition-transform", mobileLegendOpen && "rotate-180")} />
                     </DropdownMenuItem>
+                    {mobileLegendOpen && (
+                      <div className="px-3 pb-2 pt-1">
+                        <div className="flex flex-col gap-1.5 text-xs">
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-2.5 h-2.5 shrink-0" style={{ backgroundColor: '#558b90' }} />
+                            <span>Disponível</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-2.5 h-2.5 shrink-0" style={{ backgroundColor: '#066d3e' }} />
+                            <span>Agendado</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-2.5 h-2.5 shrink-0" style={{ backgroundColor: '#d19102' }} />
+                            <span>Sem Cadastro</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-2.5 h-2.5 shrink-0" style={{ backgroundColor: '#6a1f1f' }} />
+                            <span>Bloqueado</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-2.5 h-2.5 shrink-0" style={{ backgroundColor: '#000000' }} />
+                            <span>Fora do Expediente</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     <DropdownMenuItem onSelect={() => setMultiBlockOpen(true)}>
                       Bloquear período
                     </DropdownMenuItem>
