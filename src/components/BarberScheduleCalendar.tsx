@@ -1035,16 +1035,16 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
           <div className="flex-shrink-0">
             {/* === MOBILE HEADER === */}
             {isMobile ? (
-              <div className="flex items-center justify-between py-1">
+              <div className="flex items-center justify-between py-1 text-black">
                 {/* Left: "Hoje ▾" dropdown for view switching + date navigation */}
                 <div className="flex flex-col">
                   <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="sm" onClick={handlePrevious} className="h-6 w-6 p-0 text-foreground">
+                    <Button variant="ghost" size="sm" onClick={handlePrevious} className="h-6 w-6 p-0 text-black hover:text-black/70">
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-auto py-0 px-1 text-foreground hover:bg-transparent">
+                        <Button variant="ghost" size="sm" className="h-auto py-0 px-1 text-black hover:bg-transparent">
                           <div className="flex items-center gap-1">
                             <span className="text-lg font-semibold">
                               {viewMode === 'day' 
@@ -1098,17 +1098,17 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                         </div>
                       </PopoverContent>
                     </Popover>
-                    <Button variant="ghost" size="sm" onClick={handleNext} className="h-6 w-6 p-0 text-foreground">
+                    <Button variant="ghost" size="sm" onClick={handleNext} className="h-6 w-6 p-0 text-black hover:text-black/70">
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
                   {/* Working hours subtitle */}
                   {viewMode === 'day' && (() => {
                     const { periods, isDayOff } = getWorkingHoursForDate(currentDate);
-                    if (isDayOff || periods.length === 0) return <span className="text-xs text-muted-foreground pl-8">Folga</span>;
+                    if (isDayOff || periods.length === 0) return <span className="text-xs text-gray-500 pl-8">Folga</span>;
                     const earliest = periods[0].start;
                     const latest = periods[periods.length - 1].end;
-                    return <span className="text-xs text-muted-foreground pl-8">{earliest} - {latest}</span>;
+                    return <span className="text-xs text-gray-500 pl-8">{earliest} - {latest}</span>;
                   })()}
                 </div>
 
@@ -1127,7 +1127,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                 {/* Right: Three dots menu */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-foreground">
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-black">
                       <MoreVertical className="h-5 w-5" />
                     </Button>
                   </DropdownMenuTrigger>
