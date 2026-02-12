@@ -55,24 +55,25 @@ export function TrialBanner({ barbershopId }: TrialBannerProps) {
   const Icon = config.icon;
 
   return (
-    <div className={cn('w-full border-b px-3 py-2 sm:px-4 sm:py-3', config.bgClass)}>
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-2 min-w-0">
-          <Icon className={cn('h-4 w-4 shrink-0', config.accentClass)} />
-          <span className={cn('text-xs sm:text-sm font-medium', config.textClass)}>
-            🎉 Você tem{' '}
+    <div className={cn('w-full border-b px-2 py-1.5 sm:px-4 sm:py-2.5', config.bgClass)}>
+      <div className="flex items-center justify-between gap-2 flex-nowrap">
+        <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+          <Icon className={cn('h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0', config.accentClass)} />
+          <span className={cn('text-[11px] sm:text-sm font-medium truncate', config.textClass)}>
             <span className={cn('font-bold', config.accentClass)}>
-              {daysLeft} {daysLeft === 1 ? 'dia' : 'dias'}
-            </span>{' '}
-            restantes no seu teste gratuito!
+              {daysLeft}d
+            </span>
+            {' '}restantes no teste
+            <span className="hidden sm:inline"> gratuito! 🎉</span>
           </span>
         </div>
         <Button
           size="sm"
-          className={cn('shrink-0 text-xs h-7 px-3', config.btnClass)}
+          className={cn('shrink-0 text-[10px] sm:text-xs h-6 px-2 sm:h-7 sm:px-3', config.btnClass)}
           onClick={() => navigate('/planos')}
         >
-          Assinar Agora
+          Assinar
+          <span className="hidden sm:inline">&nbsp;Agora</span>
         </Button>
       </div>
     </div>
