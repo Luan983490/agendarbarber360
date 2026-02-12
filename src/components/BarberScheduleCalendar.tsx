@@ -1416,8 +1416,11 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                     }}
                   >
                     <div 
-                      className="divide-y divide-gray-500/30 pb-14 lg:pb-0"
-                      style={{ minWidth: displayDays.length > 1 ? `${displayDays.length * 90}px` : 'auto' }}
+                      className="divide-y divide-gray-500/30"
+                      style={{ 
+                        minWidth: displayDays.length > 1 ? `${displayDays.length * 90}px` : 'auto',
+                        paddingBottom: 'env(safe-area-inset-bottom, 0px)'
+                      }}
                     >
                       {allTimeSlotsForView.map((time) => (
                         <div
@@ -1447,6 +1450,8 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                           })}
                         </div>
                       ))}
+                      {/* Spacer for mobile bottom nav */}
+                      <div className="h-14 lg:hidden" style={{ backgroundColor: '#f0f0f0' }} />
                     </div>
                   </div>
                 </div>
