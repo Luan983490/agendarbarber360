@@ -1346,11 +1346,13 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                   <div className="flex-shrink-0" style={{ height: 36, backgroundColor: '#d9d9d9' }} />
                   {/* Labels dos horários - scroll vertical sincronizado */}
                   <div 
-                    ref={timeColRef}
                     className="flex-1 min-h-0 overflow-hidden"
                     style={{ backgroundColor: '#d9d9d9' }}
                   >
-                    <div className="divide-y divide-gray-500/30">
+                    <div 
+                      ref={timeColRef}
+                      className="divide-y divide-gray-500/30 will-change-transform"
+                    >
                       {allTimeSlotsForView.map((time) => (
                         <div
                           key={time}
@@ -1412,8 +1414,10 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                       if (dayHeaderRef.current) {
                         dayHeaderRef.current.scrollLeft = target.scrollLeft;
                       }
+                      // Use transform instead of scrollTop to avoid clamping
+                      // when grid has horizontal scrollbar but time column doesn't
                       if (timeColRef.current) {
-                        timeColRef.current.scrollTop = target.scrollTop;
+                        timeColRef.current.style.transform = `translateY(-${target.scrollTop}px)`;
                       }
                     }}
                   >
