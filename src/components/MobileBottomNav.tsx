@@ -7,7 +7,7 @@ interface MobileBottomNavProps {
 }
 
 const navItems = [
-  { id: 'bookings', label: 'Agendamentos', icon: CalendarDays },
+  { id: 'bookings', label: 'Agenda', icon: CalendarDays },
   { id: 'barbers', label: 'Barbeiros', icon: UserRound },
   { id: 'services', label: 'Serviços', icon: Scissors },
   { id: 'reports', label: 'Relatórios', icon: BarChart3 },
