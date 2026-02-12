@@ -1267,27 +1267,38 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                     </div>
                   </div>
 
-                  {/* Body - scroll em ambas direções */}
+                  {/* Body - eixos de scroll separados para evitar scroll diagonal no mobile */}
+                  {/* Outer: scroll horizontal */}
                   <div 
-                    className="flex-1 min-h-0 overflow-auto"
+                    className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden"
                     style={{ 
-                      WebkitOverflowScrolling: 'touch',
-                      overscrollBehavior: 'contain',
+                      overscrollBehavior: 'none',
                       backgroundColor: '#f0f0f0',
                       borderRadius: 0
                     }}
                     onScroll={(e) => {
                       const target = e.currentTarget;
-                      // Sincronizar scroll vertical com coluna de horários
-                      if (timeColRef.current) {
-                        timeColRef.current.scrollTop = target.scrollTop;
-                      }
-                      // Sincronizar scroll horizontal com header dos dias
                       if (dayHeaderRef.current) {
                         dayHeaderRef.current.scrollLeft = target.scrollLeft;
                       }
                     }}
                   >
+                    {/* Inner: scroll vertical */}
+                    <div 
+                      className="h-full overflow-y-auto overflow-x-hidden"
+                      style={{ 
+                        WebkitOverflowScrolling: 'touch',
+                        overscrollBehavior: 'contain',
+                        touchAction: 'pan-y',
+                        minWidth: displayDays.length > 1 ? `${displayDays.length * 90}px` : 'auto'
+                      }}
+                      onScroll={(e) => {
+                        const target = e.currentTarget;
+                        if (timeColRef.current) {
+                          timeColRef.current.scrollTop = target.scrollTop;
+                        }
+                      }}
+                    >
                     <div className="divide-y divide-gray-500/30">
                       {allTimeSlotsForView.map((time) => (
                         <div
@@ -1317,6 +1328,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                           })}
                         </div>
                       ))}
+                    </div>
                     </div>
                   </div>
                 </div>
