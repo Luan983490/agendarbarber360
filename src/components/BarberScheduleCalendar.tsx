@@ -1397,7 +1397,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
 
                   {/* Body - single scroll container for both axes */}
                   <div 
-                    className="flex-1 min-h-0 overflow-auto agenda-scroll"
+                    className="flex-1 min-h-0 overflow-scroll agenda-scroll"
                     style={{ 
                       WebkitOverflowScrolling: 'touch',
                       overscrollBehavior: 'contain',
