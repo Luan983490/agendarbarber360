@@ -698,21 +698,21 @@ const Dashboard = () => {
       <div className={cn("bg-background flex flex-col w-full min-h-screen", isAgendaTab && "max-lg:h-screen max-lg:overflow-hidden max-lg:min-h-0")}>
         <DashboardHeader />
         
-        <div className="flex flex-1 w-full pt-14 min-h-0">
+        <div className={cn("flex flex-1 w-full pt-14", isAgendaTab && "max-lg:min-h-0")}>
           {/* Sidebar Fixo - hidden on mobile */}
           <div className="hidden lg:block sticky top-14 h-[calc(100vh-56px)] z-40">
             <DashboardSidebar currentTab={currentTab} onTabChange={setCurrentTab} />
           </div>
           
-          <main className="flex-1 flex flex-col w-full min-w-0 min-h-0">
+          <main className={cn("flex-1 flex flex-col w-full min-w-0", isAgendaTab && "max-lg:min-h-0")}>
             {/* Conteúdo - área principal */}
             <div className={cn(
-              "flex-1 flex flex-col min-h-0",
-              isAgendaTab ? "p-0 lg:p-6 pb-14 lg:pb-0" : "p-3 sm:p-4 lg:p-6 pb-16 lg:pb-0"
+              "flex-1 flex flex-col",
+              isAgendaTab ? "p-0 lg:p-6 max-lg:min-h-0 pb-14 lg:pb-0" : "p-3 sm:p-4 lg:p-6 pb-16 lg:pb-0"
             )}>
               <TrialBanner barbershopId={barbershop?.id || null} />
 
-              <div className="flex-1 flex flex-col min-h-0">
+              <div className={cn("flex-1 flex flex-col", isAgendaTab && "max-lg:min-h-0")}>
                 {renderContent()}
               </div>
             </div>
