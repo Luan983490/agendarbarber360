@@ -74,8 +74,8 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
                             className={cn(
                               'flex items-center justify-center w-10 h-10 rounded-md transition-colors',
                               isActive
-                                ? 'bg-[#333] text-white'
-                                : 'text-[#888] hover:text-white hover:bg-[#2a2a2a]'
+                                ? 'text-white'
+                                : 'text-[#888] hover:text-white'
                             )}
                           >
                             <Icon className="h-5 w-5" strokeWidth={1.5} />
