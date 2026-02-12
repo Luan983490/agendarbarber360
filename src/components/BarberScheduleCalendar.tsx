@@ -1219,8 +1219,8 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                   <div 
                     className="grid"
                     style={{ 
-                      gridTemplateColumns: `48px repeat(${displayDays.length}, minmax(60px, 1fr))`,
-                      minWidth: displayDays.length > 1 ? `${48 + displayDays.length * 70}px` : 'auto'
+                      gridTemplateColumns: `48px repeat(${displayDays.length}, minmax(80px, 1fr))`,
+                      minWidth: displayDays.length > 1 ? `${48 + displayDays.length * 90}px` : 'auto'
                     }}
                   >
                     <div style={{ backgroundColor: '#d9d9d9' }} />
@@ -1250,7 +1250,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                 >
                   <div 
                     style={{ 
-                      minWidth: displayDays.length > 1 ? `${48 + displayDays.length * 70}px` : 'auto'
+                      minWidth: displayDays.length > 1 ? `${48 + displayDays.length * 90}px` : 'auto'
                     }}
                   >
                     {/* Linhas de horários */}
@@ -1260,7 +1260,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                           key={time}
                           className="grid"
                           style={{ 
-                            gridTemplateColumns: `48px repeat(${displayDays.length}, minmax(60px, 1fr))`
+                            gridTemplateColumns: `48px repeat(${displayDays.length}, minmax(80px, 1fr))`
                           }}
                         >
                           <div 
