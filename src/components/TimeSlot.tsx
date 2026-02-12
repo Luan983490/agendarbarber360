@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils';
 import { Clock, User, Ban } from 'lucide-react';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface TimeSlotProps {
   time: string;
@@ -33,6 +34,7 @@ export const TimeSlot = ({
   isBookingEnd = true,
   compact = false
 }: TimeSlotProps) => {
+  const isMobile = useIsMobile();
   const isBooked = type === 'booked' || type === 'booked-external';
   const isContinuation = isBooked && !isBookingStart;
 
@@ -162,8 +164,8 @@ export const TimeSlot = ({
     </div>
   );
 
-  // HoverCard apenas para o slot inicial do booking
-  if (isBooked && booking && isBookingStart) {
+  // HoverCard apenas para desktop - no mobile interfere com touch scroll
+  if (!isMobile && isBooked && booking && isBookingStart) {
     return (
       <HoverCard>
         <HoverCardTrigger asChild>
@@ -191,7 +193,7 @@ export const TimeSlot = ({
     );
   }
 
-  if (type === 'blocked' && block) {
+  if (!isMobile && type === 'blocked' && block) {
     return (
       <HoverCard>
         <HoverCardTrigger asChild>
