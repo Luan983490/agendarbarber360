@@ -1048,7 +1048,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                           <div className="flex items-center gap-1">
                             <span className="text-lg font-semibold">
                               {viewMode === 'day' 
-                                ? (format(currentDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd') ? 'Hoje' : format(currentDate, "EEEE", { locale: ptBR }))
+                                ? (format(currentDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd') ? 'Hoje' : format(currentDate, "EEEE", { locale: ptBR }).replace('-feira', ''))
                                 : viewMode === 'week' 
                                 ? `${format(currentWeekStart, "dd/MM", { locale: ptBR })} - ${format(addDays(currentWeekStart, 6), "dd/MM", { locale: ptBR })}`
                                 : format(currentDate, "MMM yyyy", { locale: ptBR })
