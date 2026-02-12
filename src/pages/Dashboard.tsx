@@ -31,6 +31,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import b360Logo from '@/assets/b360-logo.png';
+import { MobileBottomNav } from '@/components/MobileBottomNav';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Profile {
   id: string;
@@ -114,6 +116,7 @@ const Dashboard = () => {
   const [blockPanelOpen, setBlockPanelOpen] = useState(false);
   const { toast } = useToast();
   const { subscription, trial } = useSubscription(barbershop?.id || null);
+  const isMobile = useIsMobile();
   
   // Ref para função de refresh do calendário
   const calendarRefreshRef = useRef<(() => void) | null>(null);
@@ -529,7 +532,7 @@ const Dashboard = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 sm:h-9 sm:w-9"
+                className="hidden lg:flex h-8 w-8 sm:h-9 sm:w-9"
                 onClick={toggleSidebar}
               >
                 <Menu className="h-5 w-5" />
@@ -705,14 +708,14 @@ const Dashboard = () => {
         <DashboardHeader />
         
         <div className="flex flex-1 w-full pt-14">
-          {/* Sidebar Fixo */}
-          <div className="sticky top-14 h-[calc(100vh-56px)] z-40">
+          {/* Sidebar Fixo - hidden on mobile */}
+          <div className="hidden lg:block sticky top-14 h-[calc(100vh-56px)] z-40">
             <DashboardSidebar currentTab={currentTab} onTabChange={setCurrentTab} />
           </div>
           
           <main className="flex-1 flex flex-col w-full min-w-0">
             {/* Conteúdo - área principal */}
-            <div className="flex-1 p-3 sm:p-4 lg:p-6 flex flex-col min-h-0">
+            <div className="flex-1 p-3 sm:p-4 lg:p-6 flex flex-col min-h-0 pb-16 lg:pb-0">
               <TrialBanner barbershopId={barbershop?.id || null} />
 
               <div className="flex-1 flex flex-col min-h-0">
@@ -721,6 +724,9 @@ const Dashboard = () => {
             </div>
           </main>
         </div>
+
+        {/* Bottom Nav - mobile only */}
+        <MobileBottomNav currentTab={currentTab} onTabChange={setCurrentTab} />
       </div>
     </SidebarProvider>
   );
