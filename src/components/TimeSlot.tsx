@@ -96,7 +96,7 @@ export const TimeSlot = ({
   };
 
   // Altura fixa e uniforme para TODOS os slots
-  const slotHeight = compact ? 'h-[24px]' : 'h-[32px] sm:h-[30px] lg:h-[28px]';
+  const slotHeight = compact ? 'h-[20px]' : 'h-[24px] sm:h-[22px]';
 
   const clientLabel = booking?.client_name?.trim() || 'Cliente';
   // Pega apenas o primeiro nome para mobile

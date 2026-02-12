@@ -1356,7 +1356,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                           key={time}
                           className={cn(
                             "flex items-center justify-end pr-1.5 border-r border-gray-400/10 text-black",
-                            viewMode === 'week' ? "h-[24px]" : "h-[32px] sm:h-[30px] lg:h-[28px]"
+                            viewMode === 'week' ? "h-[20px]" : "h-[24px] sm:h-[22px]"
                           )}
                           style={{ fontSize: 11, fontWeight: 500 }}
                         >
@@ -1421,7 +1421,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                       {allTimeSlotsForView.map((time) => (
                         <div
                           key={time}
-                          className={cn("grid", viewMode === 'week' ? "h-[24px]" : "h-[32px] sm:h-[30px] lg:h-[28px]")}
+                          className={cn("grid", viewMode === 'week' ? "h-[20px]" : "h-[24px] sm:h-[22px]")}
                           style={{ 
                             gridTemplateColumns: `repeat(${displayDays.length}, minmax(80px, 1fr))`,
                           }}
