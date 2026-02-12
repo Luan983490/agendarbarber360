@@ -698,7 +698,7 @@ const Dashboard = () => {
       <div className={cn("min-h-screen bg-background flex flex-col w-full", isAgendaTab && "max-lg:h-[100dvh] max-lg:overflow-hidden max-lg:min-h-0")}>
         <DashboardHeader />
         
-        <div className={cn("flex flex-1 w-full pt-14", isAgendaTab && "max-lg:min-h-0 max-lg:overflow-hidden")}>
+        <div className={cn("flex flex-1 w-full pt-14", isAgendaTab && "max-lg:min-h-0 max-lg:overflow-hidden max-lg:pb-[52px]")}>
           {/* Sidebar Fixo - hidden on mobile */}
           <div className="hidden lg:block sticky top-14 h-[calc(100vh-56px)] z-40">
             <DashboardSidebar currentTab={currentTab} onTabChange={setCurrentTab} />
