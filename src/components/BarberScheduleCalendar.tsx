@@ -1240,13 +1240,12 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                   </div>
                 </div>
 
-                {/* Corpo dos horários - scroll horizontal e vertical */}
+                {/* Wrapper para scroll horizontal - controla apenas eixo X */}
                 <div 
-                  className="flex-1 min-h-0 overflow-auto"
+                  className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden"
                   style={{ 
                     WebkitOverflowScrolling: 'touch',
-                    overscrollBehavior: 'contain',
-                    backgroundColor: '#f0f0f0',
+                    overscrollBehavior: 'none',
                     borderRadius: 0
                   }}
                   onScroll={(e) => {
@@ -1258,8 +1257,15 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                     }
                   }}
                 >
+                  {/* Corpo dos horários - scroll vertical apenas */}
                   <div 
+                    className="h-full overflow-y-scroll overflow-x-hidden"
                     style={{ 
+                      WebkitOverflowScrolling: 'touch',
+                      overscrollBehavior: 'contain',
+                      touchAction: 'pan-y',
+                      backgroundColor: '#f0f0f0',
+                      borderRadius: 0,
                       minWidth: displayDays.length > 1 ? `${48 + displayDays.length * 90}px` : 'auto'
                     }}
                   >
