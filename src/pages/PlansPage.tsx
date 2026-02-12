@@ -56,7 +56,7 @@ const planFeatures: Record<number, string[]> = {
 const PlansPage = () => {
   const navigate = useNavigate();
   const { barbershopId } = useUserAccess();
-  const { subscription } = useSubscription(barbershopId || null);
+  const { subscription, trial } = useSubscription(barbershopId || null);
   const { toast } = useToast();
   const [plans, setPlans] = useState<StripePlan[]>([]);
   const [loading, setLoading] = useState(true);
@@ -160,16 +160,25 @@ const PlansPage = () => {
 
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Current subscription info */}
-        {subscription?.status === 'ativo' && (
+        {subscription?.plan_type === 'teste_gratis' && trial ? (
+          <div className="mb-6 p-4 rounded-lg border border-emerald-700/30 bg-emerald-950/30">
+            <p className="text-sm text-emerald-300">
+              Plano atual:{' '}
+              <span className="font-semibold text-emerald-400">
+                Teste Grátis — {trial.days_left} {trial.days_left === 1 ? 'dia restante' : 'dias restantes'}
+              </span>
+            </p>
+          </div>
+        ) : subscription?.status === 'ativo' && subscription.stripe_plan ? (
           <div className="mb-6 p-4 rounded-lg border border-primary/30 bg-primary/5">
             <p className="text-sm text-muted-foreground">
               Plano atual:{' '}
               <span className="font-semibold text-primary">
-                {subscription.stripe_plan?.plan_name} - {periodLabels[subscription.stripe_plan?.billing_period as BillingPeriod] || subscription.stripe_plan?.billing_period}
+                {subscription.stripe_plan.plan_name} - {periodLabels[subscription.stripe_plan.billing_period as BillingPeriod] || subscription.stripe_plan.billing_period}
               </span>
             </p>
           </div>
-        )}
+        ) : null}
 
         {/* Billing Period Toggle */}
         <div className="flex justify-center mb-8">

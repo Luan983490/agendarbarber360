@@ -12,13 +12,14 @@ export function TrialBanner({ barbershopId }: TrialBannerProps) {
   const { trial, subscription } = useSubscription(barbershopId);
   const navigate = useNavigate();
 
-  // Don't render if: no trial data, trial expired, has active paid subscription
-  if (!trial || trial.is_expired || trial.has_active_subscription) return null;
-  if (subscription?.status === 'ativo') return null;
+  // Don't render if no trial data or trial expired
+  if (!trial || trial.is_expired) return null;
+
+  // Don't render if user has a paid subscription (not teste_gratis)
+  if (subscription?.status === 'ativo' && subscription.plan_type !== 'teste_gratis') return null;
 
   const daysLeft = trial.days_left;
 
-  // Dynamic urgency styling
   const getUrgencyConfig = () => {
     if (daysLeft >= 15) {
       return {
