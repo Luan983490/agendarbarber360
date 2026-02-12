@@ -428,7 +428,7 @@ const Dashboard = () => {
         );
       case 'bookings':
         return (
-          <div className="flex flex-col xl:flex-row gap-4 max-lg:h-full max-lg:min-h-0 lg:h-[calc(100vh-80px)]" style={{ backgroundColor: '#000000' }}>
+          <div className="flex flex-col xl:flex-row gap-4 max-lg:flex-1 max-lg:min-h-0 lg:h-[calc(100vh-80px)]" style={{ backgroundColor: '#000000' }}>
             {/* Botão Bloquear Horários - Mobile/Tablet (no topo) */}
             <div className="xl:hidden flex-shrink-0 px-1">
               <Sheet open={blockPanelOpen} onOpenChange={setBlockPanelOpen}>
@@ -698,7 +698,7 @@ const Dashboard = () => {
       <div className={cn("min-h-screen bg-background flex flex-col w-full", isAgendaTab && "max-lg:h-screen max-lg:overflow-hidden max-lg:min-h-0")}>
         <DashboardHeader />
         
-        <div className="flex flex-1 w-full pt-14">
+        <div className={cn("flex flex-1 w-full pt-14", isAgendaTab && "max-lg:min-h-0 max-lg:overflow-hidden")}>
           {/* Sidebar Fixo - hidden on mobile */}
           <div className="hidden lg:block sticky top-14 h-[calc(100vh-56px)] z-40">
             <DashboardSidebar currentTab={currentTab} onTabChange={setCurrentTab} />
@@ -708,7 +708,7 @@ const Dashboard = () => {
             {/* Conteúdo - área principal */}
             <div className={cn(
               "flex-1 p-3 sm:p-4 lg:p-6 flex flex-col pb-16 lg:pb-0",
-              isAgendaTab && "max-lg:p-0 max-lg:pb-14 max-lg:min-h-0"
+              isAgendaTab && "max-lg:p-0 max-lg:pb-14 max-lg:min-h-0 max-lg:overflow-hidden"
             )}>
               <TrialBanner barbershopId={barbershop?.id || null} />
 
