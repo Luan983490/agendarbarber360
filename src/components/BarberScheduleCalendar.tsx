@@ -1044,7 +1044,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                     </Button>
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-auto py-0 px-1 text-black hover:bg-transparent">
+                        <Button variant="ghost" size="sm" className="h-auto py-0 px-1 text-black hover:bg-transparent hover:text-black">
                           <div className="flex items-center gap-1">
                             <span className="text-lg font-semibold">
                               {viewMode === 'day' 
