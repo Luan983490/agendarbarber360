@@ -1219,14 +1219,14 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                   <div 
                     className="grid"
                     style={{ 
-                      gridTemplateColumns: `40px repeat(${displayDays.length}, minmax(50px, 1fr))`,
-                      minWidth: displayDays.length > 1 ? `${40 + displayDays.length * 60}px` : 'auto'
+                      gridTemplateColumns: `48px repeat(${displayDays.length}, minmax(60px, 1fr))`,
+                      minWidth: displayDays.length > 1 ? `${48 + displayDays.length * 70}px` : 'auto'
                     }}
                   >
                     <div style={{ backgroundColor: '#d9d9d9' }} />
                     {displayDays.map((day, i) => (
-                      <div key={i} className="text-center px-0.5 py-2 overflow-hidden">
-                        <p className="font-semibold text-[10px] sm:text-xs truncate text-black capitalize">
+                      <div key={i} className="text-center px-0.5 py-2.5 overflow-hidden">
+                        <p className="font-semibold text-xs sm:text-xs truncate text-black capitalize">
                           {viewMode === 'week' 
                             ? format(day, "EEEEEE dd/M", { locale: ptBR })
                             : format(day, "EEEE, dd/MMM/yyyy", { locale: ptBR }).replace('-feira', '')
@@ -1250,7 +1250,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                 >
                   <div 
                     style={{ 
-                      minWidth: displayDays.length > 1 ? `${40 + displayDays.length * 60}px` : 'auto'
+                      minWidth: displayDays.length > 1 ? `${48 + displayDays.length * 70}px` : 'auto'
                     }}
                   >
                     {/* Linhas de horários */}
@@ -1260,11 +1260,11 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                           key={time}
                           className="grid"
                           style={{ 
-                            gridTemplateColumns: `40px repeat(${displayDays.length}, minmax(50px, 1fr))`
+                            gridTemplateColumns: `48px repeat(${displayDays.length}, minmax(60px, 1fr))`
                           }}
                         >
                           <div 
-                            className="text-[9px] sm:text-[10px] font-medium flex items-center justify-end pr-1 sticky left-0 z-10 text-black border-r border-gray-400/10"
+                            className="text-[11px] sm:text-[10px] font-medium flex items-center justify-end pr-1.5 sticky left-0 z-10 text-black border-r border-gray-400/10"
                             style={{ backgroundColor: '#d9d9d9' }}
                           >
                             {time.substring(0, 5)}

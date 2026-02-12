@@ -93,8 +93,8 @@ export const TimeSlot = ({
     onClick?.(event);
   };
 
-  // Altura fixa e uniforme para TODOS os slots
-  const slotHeight = 'h-[28px]';
+  // Altura fixa e uniforme para TODOS os slots - maior em mobile para melhor toque
+  const slotHeight = 'h-[42px] sm:h-[36px] lg:h-[28px]';
 
   const clientLabel = booking?.client_name?.trim() || 'Cliente';
   // Pega apenas o primeiro nome para mobile
@@ -107,7 +107,7 @@ export const TimeSlot = ({
     <div
       className={cn(
         // Layout fixo: largura total da célula, overflow hidden para não empurrar outras colunas
-        'w-full overflow-hidden px-0.5 sm:px-1 transition-all flex items-center',
+        'w-full overflow-hidden px-1 sm:px-1 transition-all flex items-center',
         getSlotStyles(),
         slotHeight,
         continuationStyle
@@ -119,7 +119,7 @@ export const TimeSlot = ({
           <div className="flex items-center gap-1 min-w-0">
             {getStatusDot()}
             <span
-              className="min-w-0 flex-1 text-[10px] sm:text-xs font-bold leading-tight truncate"
+              className="min-w-0 flex-1 text-xs sm:text-xs font-bold leading-tight truncate"
               title={clientLabel}
             >
               {/* Mostra nome curto em mobile, completo em desktop */}
@@ -128,10 +128,10 @@ export const TimeSlot = ({
             </span>
           </div>
 
-          {/* Mostra duração apenas em telas maiores para evitar overflow */}
+          {/* Mostra duração em todas as telas */}
           {(booking.duration || booking.end_time) && (
             <div className={cn(
-              "hidden sm:block mt-0.5 text-[9px] sm:text-[10px] leading-none truncate font-medium",
+              "mt-0.5 text-[9px] sm:text-[10px] leading-none truncate font-medium",
               type === 'booked' ? 'text-white/80' : 'text-amber-950/70'
             )}>
               {booking.duration ? `${booking.duration}min` : ''}
@@ -149,10 +149,10 @@ export const TimeSlot = ({
         </div>
       )}
       {!isBooked && type === 'available' && (
-        <Clock className="h-2 w-2 sm:h-2.5 sm:w-2.5 text-white/70 mx-auto" />
+        <Clock className="h-3 w-3 sm:h-2.5 sm:w-2.5 text-white/70 mx-auto" />
       )}
       {type === 'blocked' && (
-        <Ban className="h-2 w-2 sm:h-2.5 sm:w-2.5 text-white/70 mx-auto" />
+        <Ban className="h-3 w-3 sm:h-2.5 sm:w-2.5 text-white/70 mx-auto" />
       )}
       {type === 'off-hours' && (
         <span className="text-white/50 text-[8px] mx-auto">—</span>
