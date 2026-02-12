@@ -4,7 +4,6 @@ import {
   Sidebar,
   SidebarContent,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
@@ -68,19 +67,17 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
                   <SidebarMenuItem>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <SidebarMenuButton asChild isActive={isActive}>
-                          <button
-                            onClick={() => handleClick(item)}
-                            className={cn(
-                              'flex items-center justify-center w-10 h-10 rounded-md transition-colors',
-                              isActive
-                                ? 'text-white'
-                                : 'text-[#888] hover:text-white'
-                            )}
-                          >
-                            <Icon className="h-5 w-5" strokeWidth={1.5} />
-                          </button>
-                        </SidebarMenuButton>
+                        <button
+                          onClick={() => handleClick(item)}
+                          className={cn(
+                            'flex items-center justify-center w-10 h-10 rounded-md transition-colors',
+                            isActive
+                              ? 'text-white'
+                              : 'text-[#888] hover:text-white'
+                          )}
+                        >
+                          <Icon className="h-5 w-5" strokeWidth={1.5} />
+                        </button>
                       </TooltipTrigger>
                       <TooltipContent side="right" className="text-xs">
                         {item.title}
