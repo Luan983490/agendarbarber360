@@ -13,8 +13,11 @@ import { SlotActionMenu } from './SlotActionMenu';
 import { EncaixeDialog } from './EncaixeDialog';
 import { MultiBlockDialog } from './MultiBlockDialog';
 import { useUserAccess } from '@/hooks/useUserAccess';
-import { ChevronLeft, ChevronRight, Loader2, ChevronDown, ChevronUp, Plus, Minus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, ChevronDown, ChevronUp, Plus, Minus, MoreVertical } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   format,
   addDays,
@@ -122,6 +125,7 @@ const isTimeInPeriods = (time: string, periods: Array<{ start: string; end: stri
 
 export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly = false, onRefreshRef }: BarberScheduleCalendarProps) => {
   const { role, barberId: currentBarberId } = useUserAccess();
+  const isMobile = useIsMobile();
   const [barbers, setBarbers] = useState<Barber[]>([]);
   
   // REATIVO: selectedBarber vem SEMPRE da prop barberIdFilter
@@ -1026,124 +1030,246 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
       <Card className="flex flex-col h-full overflow-hidden border-0 shadow-none rounded-none" style={{ backgroundColor: '#f0f0f0', borderRadius: 0 }}>
         <CardContent className="flex flex-col flex-1 overflow-hidden p-2 sm:p-3 lg:p-4 gap-2 min-h-0 rounded-none" style={{ backgroundColor: '#f0f0f0', borderRadius: 0 }}>
 
-          {/* Controles Compactos - Navegação + Legenda */}
-          <div className="flex-shrink-0 space-y-1.5">
-            {/* Linha 1: View Mode + Navegação (sempre na mesma linha) */}
-            <div className="flex items-center justify-between gap-1">
-              {/* View Mode + Navegação de data juntos */}
-              <div className="flex items-center gap-1 sm:gap-2">
-                <div className="flex gap-0.5 bg-stone-200 p-0.5 sm:p-0.5 rounded-none">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setViewMode('day')}
-                    className={`h-7 sm:h-7 px-2 sm:px-2 text-xs sm:text-xs rounded-none ${viewMode === 'day' ? 'bg-amber-500 text-black' : 'text-gray-900 hover:bg-black hover:text-white'}`}
-                  >
-                    Dia
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setViewMode('week')}
-                    className={`h-7 sm:h-7 px-2 sm:px-2 text-xs sm:text-xs rounded-none ${viewMode === 'week' ? 'bg-amber-500 text-black' : 'text-gray-900 hover:bg-black hover:text-white'}`}
-                  >
-                    Sem
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setViewMode('month')}
-                    className={`h-7 sm:h-7 px-2 sm:px-2 text-xs sm:text-xs rounded-none ${viewMode === 'month' ? 'bg-amber-500 text-black' : 'text-gray-900 hover:bg-black hover:text-white'}`}
-                  >
-                    Mês
-                  </Button>
+          {/* Controles - Mobile vs Desktop */}
+          <div className="flex-shrink-0">
+            {/* === MOBILE HEADER === */}
+            {isMobile ? (
+              <div className="flex items-center justify-between py-1">
+                {/* Left: "Hoje ▾" dropdown for view switching + date navigation */}
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="sm" onClick={handlePrevious} className="h-6 w-6 p-0 text-foreground">
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-auto py-0 px-1 text-foreground hover:bg-transparent">
+                          <div className="flex items-center gap-1">
+                            <span className="text-lg font-semibold">
+                              {viewMode === 'day' 
+                                ? (format(currentDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd') ? 'Hoje' : format(currentDate, "EEE dd/MM", { locale: ptBR }))
+                                : viewMode === 'week' 
+                                ? `${format(currentWeekStart, "dd/MM", { locale: ptBR })} - ${format(addDays(currentWeekStart, 6), "dd/MM", { locale: ptBR })}`
+                                : format(currentDate, "MMM yyyy", { locale: ptBR })
+                              }
+                            </span>
+                            <ChevronDown className="h-4 w-4" />
+                          </div>
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-2" align="start">
+                        <div className="flex flex-col gap-1">
+                          <Button
+                            variant={viewMode === 'day' ? 'default' : 'ghost'}
+                            size="sm"
+                            onClick={() => setViewMode('day')}
+                            className="justify-start text-sm"
+                          >
+                            Dia
+                          </Button>
+                          <Button
+                            variant={viewMode === 'week' ? 'default' : 'ghost'}
+                            size="sm"
+                            onClick={() => setViewMode('week')}
+                            className="justify-start text-sm"
+                          >
+                            Semana
+                          </Button>
+                          <Button
+                            variant={viewMode === 'month' ? 'default' : 'ghost'}
+                            size="sm"
+                            onClick={() => setViewMode('month')}
+                            className="justify-start text-sm"
+                          >
+                            Mês
+                          </Button>
+                          <hr className="my-1 border-border" />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              handleToday();
+                            }}
+                            className="justify-start text-sm font-semibold"
+                          >
+                            Ir para Hoje
+                          </Button>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                    <Button variant="ghost" size="sm" onClick={handleNext} className="h-6 w-6 p-0 text-foreground">
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {/* Working hours subtitle */}
+                  {viewMode === 'day' && (() => {
+                    const { periods, isDayOff } = getWorkingHoursForDate(currentDate);
+                    if (isDayOff || periods.length === 0) return <span className="text-xs text-muted-foreground pl-8">Folga</span>;
+                    const earliest = periods[0].start;
+                    const latest = periods[periods.length - 1].end;
+                    return <span className="text-xs text-muted-foreground pl-8">{earliest} - {latest}</span>;
+                  })()}
                 </div>
-                
-                {/* Navegação de data */}
-                <div className="flex items-center gap-0">
-                  <Button variant="ghost" size="sm" onClick={handlePrevious} className="h-6 sm:h-7 w-6 sm:w-7 p-0 text-gray-900 hover:text-gray-700">
-                    <ChevronLeft className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={handleNext} className="h-6 sm:h-7 w-6 sm:w-7 p-0 text-gray-900 hover:text-gray-700">
-                    <ChevronRight className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
-                  </Button>
+
+                {/* Center: Encaixe button */}
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="flex gap-1 text-xs text-white h-7 px-2 rounded-none"
+                  style={{ backgroundColor: '#2d044a' }}
+                  onClick={() => setEncaixeOpen(true)}
+                >
+                  <Plus className="h-3 w-3" strokeWidth={1.5} />
+                  <span>Encaixe</span>
+                </Button>
+
+                {/* Right: Three dots menu */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-foreground">
+                      <MoreVertical className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
+                      <Collapsible className="w-full">
+                        <CollapsibleTrigger className="flex items-center justify-between w-full px-2 py-1.5 text-sm">
+                          <span>Legenda</span>
+                          <ChevronDown className="h-3.5 w-3.5" />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="px-2 pb-2">
+                          <div className="flex flex-col gap-1.5 text-xs mt-1">
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-2.5 h-2.5" style={{ backgroundColor: '#558b90' }} />
+                              <span>Disponível</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-2.5 h-2.5" style={{ backgroundColor: '#066d3e' }} />
+                              <span>Agendado</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-2.5 h-2.5" style={{ backgroundColor: '#d19102' }} />
+                              <span>Sem Cadastro</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-2.5 h-2.5" style={{ backgroundColor: '#6a1f1f' }} />
+                              <span>Bloqueado</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-2.5 h-2.5" style={{ backgroundColor: '#000000' }} />
+                              <span>Fora do Expediente</span>
+                            </div>
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setMultiBlockOpen(true)}>
+                      Bloquear período
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            ) : (
+              /* === DESKTOP HEADER (unchanged) === */
+              <div className="space-y-1.5">
+                {/* Linha 1: View Mode + Navegação */}
+                <div className="flex items-center justify-between gap-1">
+                  <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="flex gap-0.5 bg-stone-200 p-0.5 rounded-none">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setViewMode('day')}
+                        className={`h-7 px-2 text-xs rounded-none ${viewMode === 'day' ? 'bg-amber-500 text-black' : 'text-gray-900 hover:bg-black hover:text-white'}`}
+                      >
+                        Dia
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setViewMode('week')}
+                        className={`h-7 px-2 text-xs rounded-none ${viewMode === 'week' ? 'bg-amber-500 text-black' : 'text-gray-900 hover:bg-black hover:text-white'}`}
+                      >
+                        Sem
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setViewMode('month')}
+                        className={`h-7 px-2 text-xs rounded-none ${viewMode === 'month' ? 'bg-amber-500 text-black' : 'text-gray-900 hover:bg-black hover:text-white'}`}
+                      >
+                        Mês
+                      </Button>
+                    </div>
+                    
+                    <div className="flex items-center gap-0">
+                      <Button variant="ghost" size="sm" onClick={handlePrevious} className="h-7 w-7 p-0 text-gray-900 hover:text-gray-700">
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={handleNext} className="h-7 w-7 p-0 text-gray-900 hover:text-gray-700">
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={handleToday} 
+                        className="h-7 px-2 text-xs bg-black text-white hover:bg-amber-500 hover:text-black rounded-none"
+                      >
+                        Hoje
+                      </Button>
+                    </div>
+                  </div>
+
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    onClick={() => {
-                      const today = new Date();
-                      setCurrentDate(today);
-                      setCurrentWeekStart(startOfWeek(today, { locale: ptBR }));
-                    }} 
-                    className="h-6 sm:h-7 px-2 text-xs bg-black text-white hover:bg-amber-500 hover:text-black rounded-none"
+                    className="flex gap-1 text-xs text-white h-7 px-2 rounded-none"
+                    style={{ backgroundColor: '#2d044a' }}
+                    onClick={() => setEncaixeOpen(true)}
                   >
-                    Hoje
+                    <Plus className="h-3 w-3" strokeWidth={1.5} />
+                    <span>Encaixe</span>
                   </Button>
                 </div>
+
+                {/* Linha 2: Legenda */}
+                <div className="flex items-center gap-2">
+                  <Collapsible>
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" size="sm" className="gap-1 text-xs bg-black text-white hover:bg-amber-500 hover:text-black h-7 px-2 rounded-none">
+                        <Plus className="h-3 w-3 transition-transform [[data-state=open]>&]:hidden" />
+                        <Minus className="h-3 w-3 transition-transform hidden [[data-state=open]>&]:block" />
+                        <span>Legenda</span>
+                      </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="absolute left-0 mt-1 bg-stone-200 border border-stone-300 p-2 z-50">
+                      <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-gray-900">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2.5 h-2.5" style={{ backgroundColor: '#558b90' }} />
+                          <span>Disponível</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2.5 h-2.5" style={{ backgroundColor: '#066d3e' }} />
+                          <span>Agendado</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2.5 h-2.5" style={{ backgroundColor: '#d19102' }} />
+                          <span>Sem Cadastro</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2.5 h-2.5" style={{ backgroundColor: '#6a1f1f' }} />
+                          <span>Bloqueado</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2.5 h-2.5" style={{ backgroundColor: '#000000' }} />
+                          <span>Fora do Expediente</span>
+                        </div>
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                </div>
               </div>
-
-              {/* Botão Encaixe - visível apenas em telas grandes */}
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="hidden lg:flex gap-1 text-xs text-white h-7 px-2 rounded-none"
-                style={{ backgroundColor: '#2d044a' }}
-                onClick={() => setEncaixeOpen(true)}
-              >
-                <Plus className="h-3 w-3" strokeWidth={1.5} />
-                <span>Encaixe</span>
-              </Button>
-            </div>
-
-            {/* Linha 2: Encaixe (mobile/tablet) + Legenda */}
-            <div className="flex items-center gap-2">
-              {/* Botão Encaixe - visível em mobile e tablet */}
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="lg:hidden flex gap-1 text-xs text-white h-7 px-2 rounded-none"
-                style={{ backgroundColor: '#2d044a' }}
-                onClick={() => setEncaixeOpen(true)}
-              >
-                <Plus className="h-3 w-3" strokeWidth={1.5} />
-                <span>Encaixe</span>
-              </Button>
-
-              {/* Legenda Colapsável */}
-              <Collapsible>
-                <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="sm" className="gap-1 text-xs bg-black text-white hover:bg-amber-500 hover:text-black h-7 px-2 rounded-none">
-                    <Plus className="h-3 w-3 transition-transform [[data-state=open]>&]:hidden" />
-                    <Minus className="h-3 w-3 transition-transform hidden [[data-state=open]>&]:block" />
-                    <span>Legenda</span>
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="absolute left-0 mt-1 bg-stone-200 border border-stone-300 p-2 z-50">
-                  <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-gray-900">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2.5 h-2.5" style={{ backgroundColor: '#558b90' }} />
-                      <span>Disponível</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2.5 h-2.5" style={{ backgroundColor: '#066d3e' }} />
-                      <span>Agendado</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2.5 h-2.5" style={{ backgroundColor: '#d19102' }} />
-                      <span>Sem Cadastro</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2.5 h-2.5" style={{ backgroundColor: '#6a1f1f' }} />
-                      <span>Bloqueado</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2.5 h-2.5" style={{ backgroundColor: '#000000' }} />
-                      <span>Fora do Expediente</span>
-                    </div>
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-            </div>
+            )}
           </div>
 
           {/* Grade de Horários - Container maximizado, sem border-radius */}
