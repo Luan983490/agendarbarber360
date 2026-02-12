@@ -68,7 +68,7 @@ export function TrialBanner({ barbershopId }: TrialBannerProps) {
         </div>
         <Button
           size="sm"
-          className={cn('shrink-0 text-[11px] sm:text-xs h-7 px-3 sm:h-8 sm:px-4 rounded-sm', config.btnClass)}
+          className={cn('shrink-0 text-[11px] sm:text-xs h-7 px-3 sm:h-8 sm:px-4 rounded-sm leading-none', config.btnClass)}
           onClick={() => navigate('/planos')}
         >
           Assinar
