@@ -1350,7 +1350,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                     className="flex-1 min-h-0 overflow-hidden"
                     style={{ backgroundColor: '#d9d9d9' }}
                   >
-                    <div className="divide-y divide-gray-500/30 pb-14 lg:pb-0">
+                    <div className="divide-y divide-gray-500/30">
                       {allTimeSlotsForView.map((time) => (
                         <div
                           key={time}
