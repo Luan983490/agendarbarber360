@@ -48,38 +48,38 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
 
   return (
     <Sidebar
-      className="w-14 shrink-0 border-r border-[#3a3939]"
+      className="w-16 shrink-0 border-r border-[#2a2a2a]"
       collapsible="none"
       style={{ backgroundColor: '#1a1a1a' }}
     >
-      <SidebarContent className="py-3" style={{ backgroundColor: '#1a1a1a' }}>
+      <SidebarContent className="py-4 flex items-center" style={{ backgroundColor: '#1a1a1a' }}>
         <TooltipProvider delayDuration={100}>
-          <SidebarMenu className="gap-1 px-2">
+          <SidebarMenu className="gap-2 w-full flex flex-col items-center">
             {menuItems.map((item, index) => {
               const Icon = item.icon;
               const isActive = currentTab === item.id;
 
               return (
-                <div key={item.id}>
+                <div key={item.id} className="w-full flex flex-col items-center">
                   {item.separator && index > 0 && (
-                    <Separator className="my-2 bg-[#3a3939]" />
+                    <Separator className="my-2 w-8 bg-[#333]" />
                   )}
-                  <SidebarMenuItem className="relative">
+                  <SidebarMenuItem className="relative flex justify-center w-full">
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <button
                           onClick={() => handleClick(item)}
                           className={cn(
-                            'flex items-center justify-center w-10 h-10 rounded-md transition-colors',
+                            'flex items-center justify-center w-11 h-11 rounded-lg transition-all duration-200',
                             isActive
                               ? 'text-white'
-                              : 'text-[#888] hover:text-white'
+                              : 'text-[#9CA3AF] hover:text-[#D1D5DB]'
                           )}
                         >
-                          <Icon className="h-5 w-5" strokeWidth={1.5} />
+                          <Icon size={22} strokeWidth={1.5} />
                         </button>
                       </TooltipTrigger>
-                      <TooltipContent side="right" className="text-xs">
+                      <TooltipContent side="right" sideOffset={12} className="text-xs font-medium">
                         {item.title}
                       </TooltipContent>
                     </Tooltip>
