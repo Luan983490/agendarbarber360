@@ -67,15 +67,18 @@ const SubscriptionSettings = () => {
   };
 
   // Determine status
-  const hasActiveSubscription = subscription?.status === 'ativo';
+  const isTesteGratis = subscription?.plan_type === 'teste_gratis';
+  const hasActiveSubscription = subscription?.status === 'ativo' && !isTesteGratis;
   const isCanceled =
     subscription?.status === 'cancelado' ||
     (subscription?.cancel_at_period_end && subscription?.current_period_end);
   const isExpired =
     !hasActiveSubscription &&
+    !isTesteGratis &&
     !isCanceled &&
     trial?.is_expired;
-  const isInTrial = trial && !trial.is_expired && !hasActiveSubscription;
+  const isInTrial = (isTesteGratis && trial && !trial.is_expired) || 
+                    (trial && !trial.is_expired && !hasActiveSubscription && !isCanceled);
 
   return (
     <div className="space-y-6">
@@ -97,7 +100,7 @@ const SubscriptionSettings = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* TRIAL */}
+          {/* TRIAL / TESTE GRATIS */}
           {isInTrial && (
             <>
               <div className="flex items-center gap-2">
@@ -111,12 +114,12 @@ const SubscriptionSettings = () => {
                 <div className="p-3 rounded-lg bg-muted/50">
                   <p className="text-xs text-muted-foreground">Dias restantes</p>
                   <p className="text-lg font-bold text-foreground">
-                    {trial.days_left} {trial.days_left === 1 ? 'dia' : 'dias'}
+                    {trial!.days_left} {trial!.days_left === 1 ? 'dia' : 'dias'}
                   </p>
                 </div>
                 <div className="p-3 rounded-lg bg-muted/50">
                   <p className="text-xs text-muted-foreground">Expira em</p>
-                  <p className="text-lg font-bold text-foreground">{formatDate(trial.trial_end_date)}</p>
+                  <p className="text-lg font-bold text-foreground">{formatDate(trial!.trial_end_date)}</p>
                 </div>
               </div>
               <Button onClick={() => navigate('/planos')} className="w-full sm:w-auto">
@@ -125,7 +128,7 @@ const SubscriptionSettings = () => {
             </>
           )}
 
-          {/* ACTIVE SUBSCRIPTION */}
+          {/* ACTIVE PAID SUBSCRIPTION */}
           {hasActiveSubscription && !isCanceled && (
             <>
               <div className="flex items-center gap-2">
@@ -139,26 +142,26 @@ const SubscriptionSettings = () => {
                 <div className="p-3 rounded-lg bg-muted/50">
                   <p className="text-xs text-muted-foreground">Plano</p>
                   <p className="text-sm font-bold text-foreground">
-                    {subscription.stripe_plan?.plan_name || subscription.plan_type}
+                    {subscription!.stripe_plan?.plan_name || subscription!.plan_type}
                   </p>
                 </div>
                 <div className="p-3 rounded-lg bg-muted/50">
                   <p className="text-xs text-muted-foreground">Período</p>
                   <p className="text-sm font-bold text-foreground">
-                    {periodLabels[subscription.stripe_plan?.billing_period || ''] ||
-                      subscription.stripe_plan?.billing_period}
+                    {periodLabels[subscription!.stripe_plan?.billing_period || ''] ||
+                      subscription!.stripe_plan?.billing_period || '-'}
                   </p>
                 </div>
                 <div className="p-3 rounded-lg bg-muted/50">
                   <p className="text-xs text-muted-foreground">Valor</p>
                   <p className="text-sm font-bold text-foreground">
-                    R$ {Number(subscription.stripe_plan?.price_monthly || 0).toFixed(2).replace('.', ',')}/mês
+                    R$ {Number(subscription!.stripe_plan?.price_monthly || 0).toFixed(2).replace('.', ',')}/mês
                   </p>
                 </div>
               </div>
-              {subscription.current_period_end && (
+              {subscription!.current_period_end && (
                 <p className="text-sm text-muted-foreground">
-                  Próxima cobrança: <span className="font-medium text-foreground">{formatDate(subscription.current_period_end)}</span>
+                  Próxima cobrança: <span className="font-medium text-foreground">{formatDate(subscription!.current_period_end)}</span>
                 </p>
               )}
               <div className="flex flex-wrap gap-3">
@@ -216,6 +219,20 @@ const SubscriptionSettings = () => {
                 <p className="text-sm text-destructive">
                   ⚠️ Seu acesso ao sistema expirou. Assine um plano para continuar usando todas as funcionalidades.
                 </p>
+              </div>
+              <Button onClick={() => navigate('/planos')}>Ver Planos</Button>
+            </>
+          )}
+
+          {/* Fallback if no state matches */}
+          {!isInTrial && !hasActiveSubscription && !isCanceled && !isExpired && (
+            <>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Status:</span>
+                <Badge variant="destructive">
+                  <XCircle className="h-3 w-3 mr-1" />
+                  Sem Assinatura Ativa
+                </Badge>
               </div>
               <Button onClick={() => navigate('/planos')}>Ver Planos</Button>
             </>

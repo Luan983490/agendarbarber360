@@ -67,11 +67,15 @@ export const useSubscription = (barbershopId: string | null): UseSubscriptionRet
   const trial = query.data?.trial ?? null;
   const subscription = query.data?.subscription ?? null;
 
-  // hasAccess = trial not expired OR active subscription OR canceled but still in period
+  // hasAccess logic:
+  // 1. No barbershopId → allow (non-owner or no shop yet)
+  // 2. Trial not expired (including teste_gratis with days_left > 0)
+  // 3. Active paid subscription
+  // 4. Canceled but still within period
   const hasAccess = !barbershopId
     ? true
     : (trial && !trial.is_expired) ||
-      subscription?.status === 'ativo' ||
+      (subscription?.status === 'ativo') ||
       (subscription?.status === 'cancelado' &&
         subscription?.current_period_end &&
         new Date(subscription.current_period_end) > new Date()) ||
