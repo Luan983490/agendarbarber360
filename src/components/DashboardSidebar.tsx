@@ -64,7 +64,7 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
                   {item.separator && index > 0 && (
                     <Separator className="my-2 bg-[#3a3939]" />
                   )}
-                  <SidebarMenuItem>
+                  <SidebarMenuItem className="relative">
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <button
@@ -83,6 +83,9 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
                         {item.title}
                       </TooltipContent>
                     </Tooltip>
+                    {isActive && (
+                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-r-full bg-white" />
+                    )}
                   </SidebarMenuItem>
                 </div>
               );
