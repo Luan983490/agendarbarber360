@@ -1450,8 +1450,6 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                           })}
                         </div>
                       ))}
-                      {/* Spacer for mobile bottom nav */}
-                      <div className="h-14 lg:hidden" style={{ backgroundColor: '#f0f0f0' }} />
                     </div>
                   </div>
                 </div>
