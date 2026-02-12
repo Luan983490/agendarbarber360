@@ -425,7 +425,7 @@ const Dashboard = () => {
         );
       case 'bookings':
         return (
-          <div className="flex flex-col xl:flex-row gap-4 h-[calc(100vh-80px)]" style={{ backgroundColor: '#000000' }}>
+          <div className="flex flex-col xl:flex-row gap-4 h-[calc(100vh-80px)]" style={{ backgroundColor: '#ffffff' }}>
             {/* Botão Bloquear Horários - Mobile/Tablet (no topo) */}
             <div className="xl:hidden flex-shrink-0 px-1">
               <Sheet open={blockPanelOpen} onOpenChange={setBlockPanelOpen}>

@@ -153,4 +153,15 @@ All colors MUST be HSL.
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* Off-hours diagonal hatching pattern (Booksy-style) */
+  .off-hours-pattern {
+    background: repeating-linear-gradient(
+      -45deg,
+      #f5f5f5,
+      #f5f5f5 4px,
+      #ebebeb 4px,
+      #ebebeb 5px
+    );
+  }
 }
