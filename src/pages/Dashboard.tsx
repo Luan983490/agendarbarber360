@@ -121,7 +121,9 @@ const Dashboard = () => {
   // Ref para função de refresh do calendário
   const calendarRefreshRef = useRef<(() => void) | null>(null);
   const bannerRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
   const [bannerHeight, setBannerHeight] = useState(0);
+  const [headerHeight, setHeaderHeight] = useState(56);
 
   // Trial banner height measurement
   const showTrialBanner = trial && !trial.is_expired && !(subscription?.status === 'ativo' && subscription.plan_type !== 'teste_gratis');
@@ -141,6 +143,20 @@ const Dashboard = () => {
       setBannerHeight(0);
     }
   }, [showTrialBanner]);
+
+  useEffect(() => {
+    if (headerRef.current) {
+      const h = headerRef.current.offsetHeight;
+      setHeaderHeight(h);
+      const observer = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          setHeaderHeight(entry.contentRect.height);
+        }
+      });
+      observer.observe(headerRef.current);
+      return () => observer.disconnect();
+    }
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -543,7 +559,7 @@ const Dashboard = () => {
   const DashboardHeader = () => {
 
     return (
-      <header className="fixed left-0 right-0 z-50 bg-black text-white border-b border-gray-800" style={{ top: bannerHeight }}>
+      <header ref={headerRef} className="fixed left-0 right-0 z-50 bg-black text-white border-b border-gray-800" style={{ top: bannerHeight }}>
         <div className="w-full px-2 sm:px-4 py-2">
           <div className="flex items-center justify-between gap-2 sm:gap-4">
             {/* Logo */}
@@ -726,9 +742,9 @@ const Dashboard = () => {
         )}
         <DashboardHeader />
         
-        <div className={cn("flex flex-1 w-full", isAgendaTab && "max-lg:min-h-0 max-lg:overflow-hidden")} style={{ paddingTop: 56 + bannerHeight }}>
+        <div className={cn("flex flex-1 w-full", isAgendaTab && "max-lg:min-h-0 max-lg:overflow-hidden")} style={{ paddingTop: headerHeight + bannerHeight }}>
           {/* Sidebar Fixo - hidden on mobile */}
-          <div className="hidden lg:block fixed left-0 z-40" style={{ top: 56 + bannerHeight, height: `calc(100vh - ${56 + bannerHeight}px)` }}>
+          <div className="hidden lg:block fixed left-0 z-40" style={{ top: headerHeight + bannerHeight, height: `calc(100vh - ${headerHeight + bannerHeight}px)` }}>
             <DashboardSidebar currentTab={currentTab} onTabChange={setCurrentTab} />
           </div>
           {/* Spacer for fixed sidebar */}
