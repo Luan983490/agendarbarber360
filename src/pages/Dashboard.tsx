@@ -520,24 +520,13 @@ const Dashboard = () => {
 
   // Componente Header que usa useSidebar
   const DashboardHeader = () => {
-    const { toggleSidebar, open } = useSidebar();
 
     return (
       <header className="fixed top-0 left-0 right-0 z-50 bg-black text-white border-b border-gray-800">
         <div className="w-full px-2 sm:px-4 py-2">
           <div className="flex items-center justify-between gap-2 sm:gap-4">
-            {/* Menu Toggle + Logo */}
+            {/* Logo */}
             <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-              {/* Ícone Menu para recolher/abrir sidebar */}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="hidden lg:flex h-8 w-8 sm:h-9 sm:w-9"
-                onClick={toggleSidebar}
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
-
               <a href="/" className="flex items-center">
                 <img src={b360Logo} alt="B360" className="h-12 sm:h-14" />
               </a>

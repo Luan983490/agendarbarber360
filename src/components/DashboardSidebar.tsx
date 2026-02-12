@@ -1,23 +1,16 @@
-import { X, ChevronRight, CalendarDays, BarChart3, FolderOpen, Scissors, UserRound, Settings, Store, CreditCard, LucideIcon } from 'lucide-react';
-import { useState } from 'react';
+import { CalendarDays, BarChart3, Scissors, UserRound, Settings, Store, CreditCard, LucideIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   Sidebar,
   SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubItem,
-  SidebarMenuSubButton,
   useSidebar,
-  SidebarHeader,
 } from '@/components/ui/sidebar';
-import { Button } from '@/components/ui/button';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
 interface DashboardSidebarProps {
   currentTab: string;
@@ -27,198 +20,78 @@ interface DashboardSidebarProps {
 interface MenuItem {
   id: string;
   title: string;
-  icon?: LucideIcon;
-  children?: MenuItem[];
+  icon: LucideIcon;
   href?: string;
+  separator?: boolean;
 }
 
-// ============================================
-// 🚀 MENU PRINCIPAL - MVP v1.0
-// ============================================
-const menuStructure: MenuItem[] = [
+const menuItems: MenuItem[] = [
   { id: 'bookings', title: 'Agenda', icon: CalendarDays },
-  { id: 'reports', title: 'Relatórios', icon: BarChart3 },
-  {
-    id: 'cadastros',
-    title: 'Cadastros',
-    icon: FolderOpen,
-    children: [
-      { id: 'services', title: 'Serviços', icon: Scissors },
-      { id: 'barbers', title: 'Barbeiros', icon: UserRound },
-    ],
-  },
-  {
-    id: 'configuracoes',
-    title: 'Configurações',
-    icon: Settings,
-    children: [
-      { id: 'edit', title: 'Editar Barbearia', icon: Store },
-      { id: 'assinatura', title: 'Assinatura', icon: CreditCard, href: '/admin/assinatura' },
-    ],
-  },
+  { id: 'barbers', title: 'Barbeiros', icon: UserRound },
+  { id: 'services', title: 'Serviços', icon: Scissors },
+  { id: 'reports', title: 'Relatórios', icon: BarChart3, separator: true },
+  { id: 'edit', title: 'Editar Barbearia', icon: Store },
+  { id: 'assinatura', title: 'Assinatura', icon: CreditCard, href: '/admin/assinatura' },
+  { id: 'settings', title: 'Configurações', icon: Settings },
 ];
 
-// ============================================
-// 🚀 FEATURES v2.0 - REATIVAR APÓS VALIDAÇÃO
-// ============================================
-// Features removidas para simplificar MVP
-// Critério reativação: 10+ barbearias ativas
-// Data: 15/12/2024
-// ============================================
-
-// [MVP v1.0] Removido temporariamente - Reativar na v2.0
-// Motivo: Simplificação para validação do core
-// { id: 'products', title: 'Produtos', icon: ShoppingBag },
-// { id: 'packages', title: 'Pacotes', icon: Package },
-// { id: 'subscriptions', title: 'Assinaturas', icon: CreditCard },
-// { id: 'loyalty', title: 'Fidelidade', icon: Gift },
-// { id: 'staff', title: 'Funcionários', icon: Users },
-
-// [MVP v1.0] Menus completos removidos - Reativar na v2.0
-// {
-//   id: 'comandas',
-//   title: 'Comandas',
-//   icon: Calendar,
-//   children: [
-//     { id: 'schedule', title: 'Lista de Agendamentos', icon: Calendar },
-//   ],
-// },
-// {
-//   id: 'financeiro',
-//   title: 'Financeiro',
-//   icon: DollarSign,
-//   children: [],
-// },
-// {
-//   id: 'relatorios',
-//   title: 'Relatórios',
-//   icon: BarChart3,
-//   children: [],
-// },
-
 export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarProps) {
-  const { setOpenMobile, isMobile } = useSidebar();
-  const [openGroups, setOpenGroups] = useState<string[]>([]);
+  const { isMobile } = useSidebar();
   const navigate = useNavigate();
 
-  const toggleGroup = (groupId: string) => {
-    setOpenGroups(prev =>
-      prev.includes(groupId)
-        ? prev.filter(id => id !== groupId)
-        : [...prev, groupId]
-    );
+  const handleClick = (item: MenuItem) => {
+    if (item.href) {
+      navigate(item.href);
+    } else {
+      onTabChange(item.id);
+    }
   };
 
   return (
-    <Sidebar 
-      className="border-r w-56 lg:w-64 shrink-0" 
-      collapsible="offcanvas"
-      style={{ backgroundColor: '#282727' }}
+    <Sidebar
+      className="w-14 shrink-0 border-r border-[#3a3939]"
+      collapsible="none"
+      style={{ backgroundColor: '#1a1a1a' }}
     >
-      <SidebarHeader className="border-b border-[#3a3939] p-2 sm:p-3 lg:p-4" style={{ backgroundColor: '#282727' }}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-            <h2 className="text-sm sm:text-base lg:text-lg font-semibold truncate" style={{ color: '#d9d9d9' }}>Dashboard</h2>
-          </div>
-          <Button
-            variant="ghost" 
-            size="sm"
-            className="lg:hidden gap-1 flex-shrink-0 h-7 w-7 sm:h-8 sm:w-8 p-0 text-[#d9d9d9] hover:bg-[#3a3939]"
-            onClick={() => setOpenMobile(false)}
-          >
-            <X className="h-4 w-4" strokeWidth={1.5} />
-          </Button>
-        </div>
-      </SidebarHeader>
-      <SidebarContent className="pt-4" style={{ backgroundColor: '#282727' }}>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-                {menuStructure.map((item) => {
-                const IconComponent = item.icon;
-                // Item sem filhos (link direto)
-                if (!item.children || item.children.length === 0) {
-                  return (
-                    <SidebarMenuItem key={item.id}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={currentTab === item.id}
-                        tooltip={item.title}
-                      >
-                        <button
-                          className="w-full hover:bg-[#3a3939] transition-colors flex items-center gap-2"
-                          style={{ color: '#d9d9d9' }}
-                          onClick={() => {
-                            onTabChange(item.id);
-                            if (isMobile) {
-                              setOpenMobile(false);
-                            }
-                          }}
-                        >
-                          {IconComponent && <IconComponent className="h-4 w-4" strokeWidth={1.5} />}
-                          <span>{item.title}</span>
-                        </button>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                }
+      <SidebarContent className="py-3" style={{ backgroundColor: '#1a1a1a' }}>
+        <TooltipProvider delayDuration={100}>
+          <SidebarMenu className="gap-1 px-2">
+            {menuItems.map((item, index) => {
+              const Icon = item.icon;
+              const isActive = currentTab === item.id;
 
-                // Item com filhos (grupo expansível)
-                return (
-                  <Collapsible
-                    key={item.id}
-                    open={openGroups.includes(item.id)}
-                    onOpenChange={() => toggleGroup(item.id)}
-                    className="group/collapsible"
-                  >
-                    <SidebarMenuItem>
-                      <CollapsibleTrigger asChild>
-                        <SidebarMenuButton tooltip={item.title} className="hover:bg-[#3a3939] flex items-center gap-2" style={{ color: '#d9d9d9' }}>
-                          {IconComponent && <IconComponent className="h-4 w-4" strokeWidth={1.5} />}
-                          <span>{item.title}</span>
-                          <ChevronRight className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" strokeWidth={1.5} />
+              return (
+                <div key={item.id}>
+                  {item.separator && index > 0 && (
+                    <Separator className="my-2 bg-[#3a3939]" />
+                  )}
+                  <SidebarMenuItem>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <SidebarMenuButton asChild isActive={isActive}>
+                          <button
+                            onClick={() => handleClick(item)}
+                            className={cn(
+                              'flex items-center justify-center w-10 h-10 rounded-md transition-colors',
+                              isActive
+                                ? 'bg-[#333] text-white'
+                                : 'text-[#888] hover:text-white hover:bg-[#2a2a2a]'
+                            )}
+                          >
+                            <Icon className="h-5 w-5" strokeWidth={1.5} />
+                          </button>
                         </SidebarMenuButton>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent>
-                        <SidebarMenuSub>
-                          {item.children.map((subItem) => {
-                            const SubIconComponent = subItem.icon;
-                            return (
-                            <SidebarMenuSubItem key={subItem.id}>
-                              <SidebarMenuSubButton
-                                asChild
-                                isActive={currentTab === subItem.id}
-                              >
-                                <button
-                                  className="w-full hover:bg-[#3a3939] transition-colors flex items-center gap-2"
-                                  style={{ color: '#d9d9d9' }}
-                                  onClick={() => {
-                                    if (subItem.href) {
-                                      navigate(subItem.href);
-                                    } else {
-                                      onTabChange(subItem.id);
-                                    }
-                                    if (isMobile) {
-                                      setOpenMobile(false);
-                                    }
-                                  }}
-                                >
-                                  {SubIconComponent && <SubIconComponent className="h-3.5 w-3.5" strokeWidth={1.5} />}
-                                  <span>{subItem.title}</span>
-                                </button>
-                              </SidebarMenuSubButton>
-                            </SidebarMenuSubItem>
-                            );
-                          })}
-                        </SidebarMenuSub>
-                      </CollapsibleContent>
-                    </SidebarMenuItem>
-                  </Collapsible>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="text-xs">
+                        {item.title}
+                      </TooltipContent>
+                    </Tooltip>
+                  </SidebarMenuItem>
+                </div>
+              );
+            })}
+          </SidebarMenu>
+        </TooltipProvider>
       </SidebarContent>
     </Sidebar>
   );
