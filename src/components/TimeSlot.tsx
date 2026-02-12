@@ -19,6 +19,7 @@ interface TimeSlotProps {
   isBookingStart?: boolean;
   isBookingMiddle?: boolean;
   isBookingEnd?: boolean;
+  compact?: boolean;
 }
 
 export const TimeSlot = ({ 
@@ -29,7 +30,8 @@ export const TimeSlot = ({
   onClick,
   isBookingStart = true,
   isBookingMiddle = false,
-  isBookingEnd = true
+  isBookingEnd = true,
+  compact = false
 }: TimeSlotProps) => {
   const isBooked = type === 'booked' || type === 'booked-external';
   const isContinuation = isBooked && !isBookingStart;
@@ -94,7 +96,7 @@ export const TimeSlot = ({
   };
 
   // Altura fixa e uniforme para TODOS os slots
-  const slotHeight = 'h-[32px] sm:h-[30px] lg:h-[28px]';
+  const slotHeight = compact ? 'h-[24px]' : 'h-[32px] sm:h-[30px] lg:h-[28px]';
 
   const clientLabel = booking?.client_name?.trim() || 'Cliente';
   // Pega apenas o primeiro nome para mobile

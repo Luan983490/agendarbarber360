@@ -1354,7 +1354,10 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                       {allTimeSlotsForView.map((time) => (
                         <div
                           key={time}
-                          className="flex items-center justify-end pr-1.5 border-r border-gray-400/10 text-black h-[32px] sm:h-[30px] lg:h-[28px]"
+                          className={cn(
+                            "flex items-center justify-end pr-1.5 border-r border-gray-400/10 text-black",
+                            viewMode === 'week' ? "h-[24px]" : "h-[32px] sm:h-[30px] lg:h-[28px]"
+                          )}
                           style={{ fontSize: 11, fontWeight: 500 }}
                         >
                           {time.substring(0, 5)}
@@ -1418,7 +1421,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                       {allTimeSlotsForView.map((time) => (
                         <div
                           key={time}
-                          className="grid h-[32px] sm:h-[30px] lg:h-[28px]"
+                          className={cn("grid", viewMode === 'week' ? "h-[24px]" : "h-[32px] sm:h-[30px] lg:h-[28px]")}
                           style={{ 
                             gridTemplateColumns: `repeat(${displayDays.length}, minmax(80px, 1fr))`,
                           }}
@@ -1436,6 +1439,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                                   isBookingStart={slotInfo.isBookingStart}
                                   isBookingMiddle={slotInfo.isBookingMiddle}
                                   isBookingEnd={slotInfo.isBookingEnd}
+                                  compact={viewMode === 'week'}
                                 />
                               </div>
                             );
