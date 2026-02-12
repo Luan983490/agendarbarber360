@@ -712,7 +712,9 @@ const Dashboard = () => {
               "flex-1 p-3 sm:p-4 lg:p-6 flex flex-col pb-16 lg:pb-0",
               isAgendaTab && "!p-0 !pb-0 max-lg:min-h-0 max-lg:overflow-hidden lg:!p-0"
             )}>
-              <TrialBanner barbershopId={barbershop?.id || null} />
+              <div className="flex-shrink-0">
+                <TrialBanner barbershopId={barbershop?.id || null} />
+              </div>
 
               <div className={cn("flex-1 flex flex-col", isAgendaTab && "max-lg:min-h-0")}>
                 {renderContent()}
