@@ -1229,8 +1229,8 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                       {allTimeSlotsForView.map((time) => (
                         <div
                           key={time}
-                          className="flex items-center justify-end pr-1.5 border-r border-gray-400/10 text-black"
-                          style={{ height: 40, fontSize: 11, fontWeight: 500 }}
+                          className="flex items-center justify-end pr-1.5 border-r border-gray-400/10 text-black h-[32px] sm:h-[30px] lg:h-[28px]"
+                          style={{ fontSize: 11, fontWeight: 500 }}
                         >
                           {time.substring(0, 5)}
                         </div>
@@ -1292,11 +1292,10 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                       {allTimeSlotsForView.map((time) => (
                         <div
                           key={time}
-                          className="grid"
+                          className="grid h-[32px] sm:h-[30px] lg:h-[28px]"
                           style={{ 
                             gridTemplateColumns: `repeat(${displayDays.length}, minmax(80px, 1fr))`,
-                            minWidth: displayDays.length > 1 ? `${displayDays.length * 90}px` : 'auto',
-                            height: 40
+                            minWidth: displayDays.length > 1 ? `${displayDays.length * 90}px` : 'auto'
                           }}
                         >
                           {displayDays.map((day, i) => {
