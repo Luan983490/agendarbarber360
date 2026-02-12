@@ -11,12 +11,12 @@ interface BarberLayoutProps {
 
 export const BarberLayout = ({ children, currentTab, onTabChange }: BarberLayoutProps) => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen flex flex-col overflow-hidden bg-background">
       <Header />
       <SidebarProvider>
-        <div className="flex min-h-screen w-full mt-16">
+        <div className="flex flex-1 w-full mt-16 min-h-0">
           <BarberSidebar currentTab={currentTab} onTabChange={onTabChange} />
-          <main className="flex-1 flex flex-col w-full min-h-screen">
+          <main className="flex-1 flex flex-col min-h-0 overflow-hidden">
             {children}
           </main>
         </div>
