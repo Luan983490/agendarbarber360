@@ -695,14 +695,30 @@ const Dashboard = () => {
 
   // Check if trial banner should show
   const showTrialBanner = trial && !trial.is_expired && !(subscription?.status === 'ativo' && subscription.plan_type !== 'teste_gratis');
-  const bannerHeight = showTrialBanner ? 28 : 0; // approximate thin banner height
+  const [bannerHeight, setBannerHeight] = useState(0);
+  const bannerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (showTrialBanner && bannerRef.current) {
+      const h = bannerRef.current.offsetHeight;
+      setBannerHeight(h);
+      const observer = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          setBannerHeight(entry.contentRect.height);
+        }
+      });
+      observer.observe(bannerRef.current);
+      return () => observer.disconnect();
+    } else if (!showTrialBanner) {
+      setBannerHeight(0);
+    }
+  }, [showTrialBanner]);
 
   return (
     <SidebarProvider>
       <div className={cn("min-h-screen bg-background flex flex-col w-full", isAgendaTab && "max-lg:h-[100dvh] max-lg:overflow-hidden max-lg:min-h-0")}>
-        {/* Trial banner - fixed on top of everything */}
         {showTrialBanner && (
-          <div className="fixed top-0 left-0 right-0 z-[60]">
+          <div ref={bannerRef} className="fixed top-0 left-0 right-0 z-[60]">
             <TrialBanner barbershopId={barbershop?.id || null} />
           </div>
         )}
