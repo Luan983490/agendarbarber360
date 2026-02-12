@@ -1253,7 +1253,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
 
                     {/* Corpo dos horários - scroll vertical apenas */}
                     <div 
-                      className="flex-1 min-h-0 overflow-y-scroll overflow-x-hidden"
+                      className="flex-1 min-h-0 overflow-y-scroll"
                       style={{ 
                         WebkitOverflowScrolling: 'touch',
                         overscrollBehavior: 'contain',
