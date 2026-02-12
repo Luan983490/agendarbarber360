@@ -1023,8 +1023,8 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
 
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ borderRadius: 0 }}>
-      <Card className="flex flex-col h-full overflow-hidden border-0 shadow-none rounded-none" style={{ backgroundColor: '#f0f0f0', borderRadius: 0 }}>
-        <CardContent className="flex flex-col flex-1 overflow-hidden p-2 sm:p-3 lg:p-4 gap-2 min-h-0 rounded-none" style={{ backgroundColor: '#f0f0f0', borderRadius: 0 }}>
+      <Card className="flex flex-col h-full overflow-hidden border-0 shadow-none rounded-none bg-background" style={{ borderRadius: 0 }}>
+        <CardContent className="flex flex-col flex-1 overflow-hidden p-2 sm:p-3 lg:p-4 gap-2 min-h-0 rounded-none bg-background" style={{ borderRadius: 0 }}>
 
           {/* Controles Compactos - Navegação + Legenda */}
           <div className="flex-shrink-0 space-y-1.5">
@@ -1032,12 +1032,12 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
             <div className="flex items-center justify-between gap-1">
               {/* View Mode + Navegação de data juntos */}
               <div className="flex items-center gap-1 sm:gap-2">
-                <div className="flex gap-0.5 bg-stone-200 p-0.5 sm:p-0.5 rounded-none">
+                <div className="flex gap-0.5 bg-muted p-0.5 sm:p-0.5 rounded-none">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setViewMode('day')}
-                    className={`h-7 sm:h-7 px-2 sm:px-2 text-xs sm:text-xs rounded-none ${viewMode === 'day' ? 'bg-amber-500 text-black' : 'text-gray-900 hover:bg-black hover:text-white'}`}
+                    className={`h-7 sm:h-7 px-2 sm:px-2 text-xs sm:text-xs rounded-none ${viewMode === 'day' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-accent'}`}
                   >
                     Dia
                   </Button>
@@ -1045,7 +1045,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                     variant="ghost"
                     size="sm"
                     onClick={() => setViewMode('week')}
-                    className={`h-7 sm:h-7 px-2 sm:px-2 text-xs sm:text-xs rounded-none ${viewMode === 'week' ? 'bg-amber-500 text-black' : 'text-gray-900 hover:bg-black hover:text-white'}`}
+                    className={`h-7 sm:h-7 px-2 sm:px-2 text-xs sm:text-xs rounded-none ${viewMode === 'week' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-accent'}`}
                   >
                     Sem
                   </Button>
@@ -1053,7 +1053,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                     variant="ghost"
                     size="sm"
                     onClick={() => setViewMode('month')}
-                    className={`h-7 sm:h-7 px-2 sm:px-2 text-xs sm:text-xs rounded-none ${viewMode === 'month' ? 'bg-amber-500 text-black' : 'text-gray-900 hover:bg-black hover:text-white'}`}
+                    className={`h-7 sm:h-7 px-2 sm:px-2 text-xs sm:text-xs rounded-none ${viewMode === 'month' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-accent'}`}
                   >
                     Mês
                   </Button>
@@ -1061,10 +1061,10 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                 
                 {/* Navegação de data */}
                 <div className="flex items-center gap-0">
-                  <Button variant="ghost" size="sm" onClick={handlePrevious} className="h-6 sm:h-7 w-6 sm:w-7 p-0 text-gray-900 hover:text-gray-700">
+                  <Button variant="ghost" size="sm" onClick={handlePrevious} className="h-6 sm:h-7 w-6 sm:w-7 p-0 text-foreground hover:text-muted-foreground">
                     <ChevronLeft className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={handleNext} className="h-6 sm:h-7 w-6 sm:w-7 p-0 text-gray-900 hover:text-gray-700">
+                  <Button variant="ghost" size="sm" onClick={handleNext} className="h-6 sm:h-7 w-6 sm:w-7 p-0 text-foreground hover:text-muted-foreground">
                     <ChevronRight className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
                   </Button>
                   <Button 
@@ -1075,7 +1075,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                       setCurrentDate(today);
                       setCurrentWeekStart(startOfWeek(today, { locale: ptBR }));
                     }} 
-                    className="h-6 sm:h-7 px-2 text-xs bg-black text-white hover:bg-amber-500 hover:text-black rounded-none"
+                    className="h-6 sm:h-7 px-2 text-xs bg-primary text-primary-foreground hover:bg-primary/90 rounded-none"
                   >
                     Hoje
                   </Button>
@@ -1086,8 +1086,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="hidden lg:flex gap-1 text-xs text-white h-7 px-2 rounded-none"
-                style={{ backgroundColor: '#2d044a' }}
+                className="hidden lg:flex gap-1 text-xs text-primary-foreground h-7 px-2 rounded-none bg-primary hover:bg-primary/90"
                 onClick={() => setEncaixeOpen(true)}
               >
                 <Plus className="h-3 w-3" strokeWidth={1.5} />
@@ -1101,8 +1100,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="lg:hidden flex gap-1 text-xs text-white h-7 px-2 rounded-none"
-                style={{ backgroundColor: '#2d044a' }}
+                className="lg:hidden flex gap-1 text-xs text-primary-foreground h-7 px-2 rounded-none bg-primary hover:bg-primary/90"
                 onClick={() => setEncaixeOpen(true)}
               >
                 <Plus className="h-3 w-3" strokeWidth={1.5} />
@@ -1112,20 +1110,20 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
               {/* Legenda Colapsável */}
               <Collapsible>
                 <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="sm" className="gap-1 text-xs bg-black text-white hover:bg-amber-500 hover:text-black h-7 px-2 rounded-none">
+                  <Button variant="ghost" size="sm" className="gap-1 text-xs bg-primary text-primary-foreground hover:bg-primary/90 h-7 px-2 rounded-none">
                     <Plus className="h-3 w-3 transition-transform [[data-state=open]>&]:hidden" />
                     <Minus className="h-3 w-3 transition-transform hidden [[data-state=open]>&]:block" />
                     <span>Legenda</span>
                   </Button>
                 </CollapsibleTrigger>
-                <CollapsibleContent className="absolute left-0 mt-1 bg-stone-200 border border-stone-300 p-2 z-50">
-                  <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-gray-900">
+                <CollapsibleContent className="absolute left-0 mt-1 bg-background border border-border p-2 z-50 shadow-md">
+                  <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-foreground">
                     <div className="flex items-center gap-1.5">
-                      <div className="w-2.5 h-2.5" style={{ backgroundColor: '#558b90' }} />
+                      <div className="w-2.5 h-2.5 bg-background border border-border" />
                       <span>Disponível</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <div className="w-2.5 h-2.5" style={{ backgroundColor: '#066d3e' }} />
+                      <div className="w-2.5 h-2.5" style={{ backgroundColor: '#2d8a4e' }} />
                       <span>Agendado</span>
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -1133,11 +1131,11 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                       <span>Sem Cadastro</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <div className="w-2.5 h-2.5" style={{ backgroundColor: '#6a1f1f' }} />
+                      <div className="w-2.5 h-2.5" style={{ backgroundColor: '#c0392b' }} />
                       <span>Bloqueado</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <div className="w-2.5 h-2.5" style={{ backgroundColor: '#000000' }} />
+                      <div className="w-2.5 h-2.5 bg-muted border border-border" />
                       <span>Fora do Expediente</span>
                     </div>
                   </div>
@@ -1154,7 +1152,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                 {/* Cabeçalho dos dias da semana - FIXO */}
                 <div className="flex-shrink-0 grid grid-cols-7 gap-1 sm:gap-2 mb-2">
                   {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day, i) => (
-                    <div key={i} className="text-center font-semibold text-[10px] sm:text-sm py-1 sm:py-2 border-b text-black">
+                    <div key={i} className="text-center font-semibold text-[10px] sm:text-sm py-1 sm:py-2 border-b text-foreground">
                       {day}
                     </div>
                   ))}
@@ -1218,18 +1216,17 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                 {/* Coluna fixa de horários (mobile) - nunca rola horizontalmente */}
                 <div className="flex-shrink-0 flex flex-col" style={{ width: 48 }}>
                   {/* Espaço do header dos dias */}
-                  <div className="flex-shrink-0" style={{ height: 36, backgroundColor: '#d9d9d9' }} />
+                  <div className="flex-shrink-0 bg-muted" style={{ height: 36 }} />
                   {/* Labels dos horários - scroll vertical sincronizado */}
                   <div 
                     ref={timeColRef}
-                    className="flex-1 min-h-0 overflow-hidden"
-                    style={{ backgroundColor: '#d9d9d9' }}
+                    className="flex-1 min-h-0 overflow-hidden bg-muted"
                   >
-                    <div className="divide-y divide-gray-500/30">
+                    <div className="divide-y divide-border">
                       {allTimeSlotsForView.map((time) => (
                         <div
                           key={time}
-                          className="flex items-center justify-end pr-1.5 border-r border-gray-400/10 text-black h-[32px] sm:h-[30px] lg:h-[28px]"
+                          className="flex items-center justify-end pr-1.5 border-r border-border text-foreground h-[32px] sm:h-[30px] lg:h-[28px]"
                           style={{ fontSize: 11, fontWeight: 500 }}
                         >
                           {time.substring(0, 5)}
@@ -1244,8 +1241,8 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                   {/* Header dos dias - fixo no topo, rola horizontalmente */}
                   <div 
                     ref={dayHeaderRef}
-                    className="flex-shrink-0 overflow-hidden"
-                    style={{ backgroundColor: '#d9d9d9', height: 36 }}
+                    className="flex-shrink-0 overflow-hidden bg-muted"
+                    style={{ height: 36 }}
                   >
                     <div 
                       className="grid"
@@ -1256,7 +1253,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                     >
                       {displayDays.map((day, i) => (
                         <div key={i} className="text-center px-0.5 py-2.5 overflow-hidden">
-                          <p className="font-semibold text-xs truncate text-black capitalize">
+                          <p className="font-semibold text-xs truncate text-foreground capitalize">
                             {viewMode === 'week' 
                               ? format(day, "EEEEEE dd/M", { locale: ptBR })
                               : format(day, "EEEE, dd/MMM/yyyy", { locale: ptBR }).replace('-feira', '')
@@ -1273,7 +1270,6 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                     className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden"
                     style={{ 
                       overscrollBehavior: 'none',
-                      backgroundColor: '#f0f0f0',
                       borderRadius: 0
                     }}
                     onScroll={(e) => {
@@ -1299,7 +1295,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                         }
                       }}
                     >
-                    <div className="divide-y divide-gray-500/30">
+                    <div className="divide-y divide-border">
                       {allTimeSlotsForView.map((time) => (
                         <div
                           key={time}
@@ -1312,7 +1308,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                           {displayDays.map((day, i) => {
                             const slotInfo = getSlotType(day, time);
                             return (
-                              <div key={i} className="min-w-0 overflow-hidden border-r border-gray-400/10 last:border-r-0">
+                              <div key={i} className="min-w-0 overflow-hidden border-r border-border last:border-r-0">
                                 <TimeSlot
                                   time={time}
                                   type={slotInfo.type}
