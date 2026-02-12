@@ -1363,6 +1363,8 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                           {time.substring(0, 5)}
                         </div>
                       ))}
+                      {/* Spacer to match grid and clear mobile bottom nav */}
+                      <div className="h-14 lg:hidden" />
                     </div>
                   </div>
                 </div>
@@ -1419,7 +1421,6 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                       className="divide-y divide-gray-500/30"
                       style={{ 
                         minWidth: displayDays.length > 1 ? `${displayDays.length * 90}px` : 'auto',
-                        paddingBottom: 'env(safe-area-inset-bottom, 0px)'
                       }}
                     >
                       {allTimeSlotsForView.map((time) => (
@@ -1450,6 +1451,8 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                           })}
                         </div>
                       ))}
+                      {/* Spacer to match time column and clear mobile bottom nav */}
+                      <div className="h-14 lg:hidden" />
                     </div>
                   </div>
                 </div>
