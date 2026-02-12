@@ -55,8 +55,8 @@ export function TrialBanner({ barbershopId }: TrialBannerProps) {
   const Icon = config.icon;
 
   return (
-    <div className={cn('w-full border-b px-3 py-2.5 sm:px-4 sm:py-3 flex-shrink-0', config.bgClass)}>
-      <div className="flex items-center justify-between gap-2 flex-nowrap overflow-visible">
+    <div className={cn('w-full border-b px-3 py-1 sm:px-4 sm:py-1.5 flex-shrink-0', config.bgClass)}>
+      <div className="flex items-center justify-center gap-3 flex-nowrap overflow-visible">
         <div className="flex items-center gap-1.5 min-w-0">
           <Icon className={cn('h-4 w-4 shrink-0', config.accentClass)} />
           <span className={cn('text-xs sm:text-sm font-medium', config.textClass)}>
@@ -68,7 +68,7 @@ export function TrialBanner({ barbershopId }: TrialBannerProps) {
         </div>
         <Button
           size="sm"
-          className={cn('shrink-0 text-[11px] sm:text-xs h-7 px-3 sm:h-8 sm:px-4 rounded-sm leading-none', config.btnClass)}
+          className={cn('shrink-0 text-[10px] sm:text-xs h-5 px-2 sm:h-6 sm:px-3 rounded-sm leading-none', config.btnClass)}
           onClick={() => navigate('/planos')}
         >
           Assinar
