@@ -1392,12 +1392,12 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                     </div>
                   </div>
 
-                  {/* Body - eixos de scroll separados para evitar scroll diagonal no mobile */}
-                  {/* Outer: scroll horizontal */}
+                  {/* Body - single scroll container for both axes */}
                   <div 
-                    className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden"
+                    className="flex-1 min-h-0 overflow-auto"
                     style={{ 
-                      overscrollBehavior: 'none',
+                      WebkitOverflowScrolling: 'touch',
+                      overscrollBehavior: 'contain',
                       backgroundColor: '#f0f0f0',
                       borderRadius: 0
                     }}
@@ -1406,32 +1406,21 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                       if (dayHeaderRef.current) {
                         dayHeaderRef.current.scrollLeft = target.scrollLeft;
                       }
+                      if (timeColRef.current) {
+                        timeColRef.current.scrollTop = target.scrollTop;
+                      }
                     }}
                   >
-                    {/* Inner: scroll vertical */}
                     <div 
-                      className="h-full overflow-y-auto overflow-x-hidden"
-                      style={{ 
-                        WebkitOverflowScrolling: 'touch',
-                        overscrollBehavior: 'contain',
-                        touchAction: 'pan-y',
-                        minWidth: displayDays.length > 1 ? `${displayDays.length * 90}px` : 'auto'
-                      }}
-                      onScroll={(e) => {
-                        const target = e.currentTarget;
-                        if (timeColRef.current) {
-                          timeColRef.current.scrollTop = target.scrollTop;
-                        }
-                      }}
+                      className="divide-y divide-gray-500/30"
+                      style={{ minWidth: displayDays.length > 1 ? `${displayDays.length * 90}px` : 'auto' }}
                     >
-                    <div className="divide-y divide-gray-500/30">
                       {allTimeSlotsForView.map((time) => (
                         <div
                           key={time}
                           className="grid h-[32px] sm:h-[30px] lg:h-[28px]"
                           style={{ 
                             gridTemplateColumns: `repeat(${displayDays.length}, minmax(80px, 1fr))`,
-                            minWidth: displayDays.length > 1 ? `${displayDays.length * 90}px` : 'auto'
                           }}
                         >
                           {displayDays.map((day, i) => {
@@ -1453,7 +1442,6 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                           })}
                         </div>
                       ))}
-                    </div>
                     </div>
                   </div>
                 </div>
