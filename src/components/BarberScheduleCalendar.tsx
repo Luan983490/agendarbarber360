@@ -1165,9 +1165,6 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                         </div>
                       </div>
                     )}
-                    <DropdownMenuItem onSelect={() => setMultiBlockOpen(true)}>
-                      Bloquear período
-                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
