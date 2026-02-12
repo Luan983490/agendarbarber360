@@ -44,25 +44,30 @@ export const TimeSlot = ({
     
     switch (type) {
       case 'available':
-        return 'text-foreground cursor-pointer [&]:bg-background [&]:border-border [&]:hover:bg-accent';
+        // Disponível - #558b90
+        return 'text-white cursor-pointer [&]:bg-[#558b90] [&]:border-[#456f73] [&]:hover:bg-[#456f73]';
       case 'booked':
+        // Agendado - #066d3e (verde escuro)
         return cn(
-          'text-white cursor-pointer [&]:bg-[#2d8a4e] [&]:border-[#237a3e] [&]:hover:bg-[#237a3e]',
+          'text-white cursor-pointer [&]:bg-[#066d3e] [&]:border-[#055530] [&]:hover:bg-[#055530]',
           isBookingStart && !isBookingEnd && 'border-b-0',
           isBookingEnd && !isBookingStart && 'border-t-0',
           isBookingMiddle && 'border-t-0 border-b-0'
         );
       case 'booked-external':
+        // Sem Cadastro - #d19102 (amarelo/dourado)
         return cn(
-          'text-white cursor-pointer [&]:bg-[#d19102] [&]:border-[#b07e02] [&]:hover:bg-[#b07e02]',
+          'text-white cursor-pointer [&]:bg-[#d19102] [&]:border-[#a87502] [&]:hover:bg-[#a87502]',
           isBookingStart && !isBookingEnd && 'border-b-0',
           isBookingEnd && !isBookingStart && 'border-t-0',
           isBookingMiddle && 'border-t-0 border-b-0'
         );
       case 'blocked':
-        return 'text-white cursor-pointer [&]:bg-[#c0392b] [&]:border-[#a93226] [&]:hover:bg-[#a93226]';
+        // Bloqueado - #6a1f1f (vermelho escuro/marrom)
+        return 'text-white cursor-pointer [&]:bg-[#6a1f1f] [&]:border-[#521818] [&]:hover:bg-[#521818]';
       case 'off-hours':
-        return '[&]:bg-muted [&]:border-border cursor-not-allowed';
+        // Fora do expediente - #000000 (preto)
+        return '[&]:bg-[#000000] [&]:border-[#000000] cursor-not-allowed';
       default:
         return 'bg-muted border-border';
     }
@@ -144,13 +149,13 @@ export const TimeSlot = ({
         </div>
       )}
       {!isBooked && type === 'available' && (
-        <span className="text-muted-foreground text-[8px] mx-auto">·</span>
+        <Clock className="h-3 w-3 sm:h-2.5 sm:w-2.5 text-white/70 mx-auto" />
       )}
       {type === 'blocked' && (
         <Ban className="h-3 w-3 sm:h-2.5 sm:w-2.5 text-white/70 mx-auto" />
       )}
       {type === 'off-hours' && (
-        <span className="text-muted-foreground/30 text-[8px] mx-auto">—</span>
+        <span className="text-white/50 text-[8px] mx-auto">—</span>
       )}
     </div>
   );

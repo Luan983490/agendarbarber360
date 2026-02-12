@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Scissors, Calendar, Package, Store, Users, DollarSign, Star, Edit, CalendarDays, AlertCircle, ChevronDown, ChevronUp, User as UserIcon, Settings as SettingsIcon, LogOut as LogOutIcon, Plus } from 'lucide-react';
+import { Scissors, Calendar, Package, Store, Users, DollarSign, Star, Edit, CalendarDays, AlertCircle, ChevronDown, ChevronUp, User as UserIcon, Settings as SettingsIcon, LogOut as LogOutIcon, Menu } from 'lucide-react';
 import BarbershopSetup from '@/components/BarbershopSetup';
 import BarbershopEdit from '@/components/BarbershopEdit';
 import ServiceForm from '@/components/ServiceForm';
@@ -25,7 +25,6 @@ import { TrialBanner } from '@/components/TrialBanner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 import { DashboardSidebar } from '@/components/DashboardSidebar';
-import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -426,7 +425,7 @@ const Dashboard = () => {
         );
       case 'bookings':
         return (
-          <div className="flex flex-col xl:flex-row gap-4 h-[calc(100vh-120px)]">
+          <div className="flex flex-col xl:flex-row gap-4 h-[calc(100vh-80px)]" style={{ backgroundColor: '#000000' }}>
             {/* Botão Bloquear Horários - Mobile/Tablet (no topo) */}
             <div className="xl:hidden flex-shrink-0 px-1">
               <Sheet open={blockPanelOpen} onOpenChange={setBlockPanelOpen}>
@@ -518,29 +517,42 @@ const Dashboard = () => {
 
   // Componente Header que usa useSidebar
   const DashboardHeader = () => {
+    const { toggleSidebar, open } = useSidebar();
+
     return (
-      <header className="sticky top-0 z-50 bg-background border-b border-border">
-        <div className="w-full px-3 sm:px-4 py-2">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-black text-white border-b border-gray-800">
+        <div className="w-full px-2 sm:px-4 py-2">
           <div className="flex items-center justify-between gap-2 sm:gap-4">
-            {/* Logo */}
-            <div className="flex items-center gap-2 shrink-0">
+            {/* Menu Toggle + Logo */}
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+              {/* Ícone Menu para recolher/abrir sidebar */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 sm:h-9 sm:w-9"
+                onClick={toggleSidebar}
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+
               <a href="/" className="flex items-center">
-                <img src={b360Logo} alt="B360" className="h-8 sm:h-10" />
+                <img src={b360Logo} alt="B360" className="h-12 sm:h-14" />
               </a>
             </div>
 
             {/* Seletor de Barbeiro no Header (quando na aba de agenda) */}
             {barbershop && currentTab === 'bookings' && barbers.length > 0 && (
               <div className="flex items-center gap-2 flex-1 justify-center max-w-xs sm:max-w-sm">
-                <span className="text-sm font-medium text-muted-foreground hidden sm:inline">Profissional:</span>
+                <span className="text-sm font-medium text-muted-foreground hidden sm:inline">Profissionais:</span>
                 <Select 
                   value={selectedBarber} 
                   onValueChange={(newBarberId) => {
+                    // Persistir no localStorage e atualizar estado
                     localStorage.setItem(STORAGE_KEY_SELECTED_BARBER, newBarberId);
                     setSelectedBarber(newBarberId);
                   }}
                 >
-                  <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm w-[140px] sm:w-[180px]">
+                  <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm w-[120px] sm:w-[160px] bg-background">
                     <SelectValue placeholder="Selecionar" />
                   </SelectTrigger>
                   <SelectContent>
@@ -567,7 +579,7 @@ const Dashboard = () => {
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuContent align="end" className="w-56 bg-popover">
                     <div className="px-2 py-1.5 text-xs sm:text-sm">
                       <p className="font-medium truncate">{profile?.display_name || 'Usuário'}</p>
                       <p className="text-muted-foreground truncate text-xs">{user.email}</p>
@@ -616,11 +628,11 @@ const Dashboard = () => {
 
   // Header simples para quando não tem barbearia
   const SimpleHeader = () => (
-    <header className="sticky top-0 z-50 bg-background border-b border-border">
-      <div className="w-full px-3 sm:px-4 py-2">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-black text-white border-b border-gray-800">
+      <div className="w-full px-2 sm:px-4 py-2">
         <div className="flex items-center justify-between gap-2 sm:gap-4">
           <a href="/" className="flex items-center shrink-0">
-            <img src={b360Logo} alt="B360" className="h-8 sm:h-10" />
+            <img src={b360Logo} alt="B360" className="h-10 sm:h-12" />
           </a>
           <div className="flex items-center gap-1 sm:gap-2">
             {user && (
@@ -634,7 +646,7 @@ const Dashboard = () => {
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuContent align="end" className="w-56 bg-popover">
                   <div className="px-2 py-1.5 text-xs sm:text-sm">
                     <p className="font-medium truncate">{profile?.display_name || 'Usuário'}</p>
                     <p className="text-muted-foreground truncate text-xs">{user.email}</p>
@@ -674,7 +686,13 @@ const Dashboard = () => {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <SimpleHeader />
-        <main className="flex-1 px-4 py-6">
+        <main className="container mx-auto px-4 py-8 mt-14">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-2">Dashboard da Barbearia</h1>
+            <p className="text-muted-foreground">
+              Gerencie sua barbearia, agendamentos e produtos
+            </p>
+          </div>
           <BarbershopSetup onBarbershopCreated={handleBarbershopCreated} />
         </main>
       </div>
@@ -682,29 +700,29 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col w-full">
-      <DashboardHeader />
-      
-      <div className="flex flex-1 w-full">
-        {/* Icon Sidebar - Desktop only */}
-        <div className="sticky top-0 h-screen z-40">
-          <DashboardSidebar currentTab={currentTab} onTabChange={setCurrentTab} />
-        </div>
+    <SidebarProvider>
+      <div className="min-h-screen bg-background flex flex-col w-full">
+        <DashboardHeader />
         
-        <main className="flex-1 flex flex-col w-full min-w-0">
-          <div className="flex-1 p-2 sm:p-3 lg:p-4 flex flex-col min-h-0 pb-16 lg:pb-4">
-            <TrialBanner barbershopId={barbershop?.id || null} />
-
-            <div className="flex-1 flex flex-col min-h-0">
-              {renderContent()}
-            </div>
+        <div className="flex flex-1 w-full pt-14">
+          {/* Sidebar Fixo */}
+          <div className="sticky top-14 h-[calc(100vh-56px)] z-40">
+            <DashboardSidebar currentTab={currentTab} onTabChange={setCurrentTab} />
           </div>
-        </main>
-      </div>
+          
+          <main className="flex-1 flex flex-col w-full min-w-0">
+            {/* Conteúdo - área principal */}
+            <div className="flex-1 p-3 sm:p-4 lg:p-6 flex flex-col min-h-0">
+              <TrialBanner barbershopId={barbershop?.id || null} />
 
-      {/* Mobile Bottom Navigation */}
-      <MobileBottomNav currentTab={currentTab} onTabChange={setCurrentTab} />
-    </div>
+              <div className="flex-1 flex flex-col min-h-0">
+                {renderContent()}
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
   );
 };
 
