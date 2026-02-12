@@ -132,7 +132,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
   // Não há leitura de localStorage aqui - isso é responsabilidade do Dashboard
   const selectedBarber = barberIdFilter || '';
   
-  const [viewMode, setViewMode] = useState<ViewMode>('week');
+  const [viewMode, setViewMode] = useState<ViewMode>('day');
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(startOfWeek(new Date(), { locale: ptBR }));
   const [bookings, setBookings] = useState<Booking[]>([]);
