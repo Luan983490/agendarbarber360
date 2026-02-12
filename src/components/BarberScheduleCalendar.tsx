@@ -1039,7 +1039,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                 {/* Left: "Hoje ▾" dropdown for view switching + date navigation */}
                 <div className="flex flex-col">
                   <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="sm" onClick={handlePrevious} className="h-6 w-6 p-0 text-black hover:text-black/70">
+                    <Button variant="ghost" size="sm" onClick={handlePrevious} className="h-6 w-6 p-0 text-black hover:bg-transparent hover:text-black">
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
                     <Popover>
@@ -1098,7 +1098,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                         </div>
                       </PopoverContent>
                     </Popover>
-                    <Button variant="ghost" size="sm" onClick={handleNext} className="h-6 w-6 p-0 text-black hover:text-black/70">
+                    <Button variant="ghost" size="sm" onClick={handleNext} className="h-6 w-6 p-0 text-black hover:bg-transparent hover:text-black">
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
@@ -1127,7 +1127,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                 {/* Right: Three dots menu */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-black">
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-black hover:bg-transparent hover:text-black">
                       <MoreVertical className="h-5 w-5" />
                     </Button>
                   </DropdownMenuTrigger>
