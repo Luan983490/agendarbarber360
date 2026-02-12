@@ -55,8 +55,8 @@ export function TrialBanner({ barbershopId }: TrialBannerProps) {
   const Icon = config.icon;
 
   return (
-    <div className={cn('w-full border-b px-3 py-2 sm:px-4 sm:py-2.5', config.bgClass)}>
-      <div className="flex items-center justify-between gap-2 flex-nowrap">
+    <div className={cn('w-full border-b px-3 py-2.5 sm:px-4 sm:py-3', config.bgClass)}>
+      <div className="flex items-center justify-between gap-2 flex-nowrap overflow-visible">
         <div className="flex items-center gap-1.5 min-w-0">
           <Icon className={cn('h-4 w-4 shrink-0', config.accentClass)} />
           <span className={cn('text-xs sm:text-sm font-medium', config.textClass)}>
