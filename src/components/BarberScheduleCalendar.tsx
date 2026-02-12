@@ -1211,36 +1211,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
             ) : (
               /* Visualização Dia/Semana - Grade de Horários - Quadrada */
               <div className="flex flex-col h-full min-h-0" style={{ borderRadius: 0 }}>
-                {/* Cabeçalho dos dias - FIXO verticalmente */}
-                <div 
-                  className="flex-shrink-0 overflow-hidden"
-                  style={{ backgroundColor: '#d9d9d9' }}
-                  ref={(el) => {
-                    if (el) el.dataset.headerScroll = 'true';
-                  }}
-                >
-                  <div 
-                    className="grid"
-                    style={{ 
-                      gridTemplateColumns: `48px repeat(${displayDays.length}, minmax(80px, 1fr))`,
-                      minWidth: displayDays.length > 1 ? `${48 + displayDays.length * 90}px` : 'auto'
-                    }}
-                  >
-                    <div className="sticky left-0 z-10" style={{ backgroundColor: '#d9d9d9' }} />
-                    {displayDays.map((day, i) => (
-                      <div key={i} className="text-center px-0.5 py-2.5 overflow-hidden">
-                        <p className="font-semibold text-xs sm:text-xs truncate text-black capitalize">
-                          {viewMode === 'week' 
-                            ? format(day, "EEEEEE dd/M", { locale: ptBR })
-                            : format(day, "EEEE, dd/MMM/yyyy", { locale: ptBR }).replace('-feira', '')
-                          }
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Wrapper para scroll horizontal - controla apenas eixo X */}
+                {/* Container único: scroll horizontal move header + body juntos */}
                 <div 
                   className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden"
                   style={{ 
@@ -1248,62 +1219,83 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                     overscrollBehavior: 'none',
                     borderRadius: 0
                   }}
-                  onScroll={(e) => {
-                    // Sincronizar scroll horizontal do cabeçalho
-                    const target = e.currentTarget;
-                    const header = target.previousElementSibling as HTMLElement;
-                    if (header) {
-                      header.scrollLeft = target.scrollLeft;
-                    }
-                  }}
                 >
-                  {/* Corpo dos horários - scroll vertical apenas */}
                   <div 
-                    className="h-full overflow-y-scroll overflow-x-hidden"
+                    className="flex flex-col h-full"
                     style={{ 
-                      WebkitOverflowScrolling: 'touch',
-                      overscrollBehavior: 'contain',
-                      touchAction: 'pan-y',
-                      backgroundColor: '#f0f0f0',
-                      borderRadius: 0,
                       minWidth: displayDays.length > 1 ? `${48 + displayDays.length * 90}px` : 'auto'
                     }}
                   >
-                    {/* Linhas de horários */}
-                    <div className="divide-y divide-gray-400/10">
-                      {allTimeSlotsForView.map((time) => (
-                        <div
-                          key={time}
-                          className="grid"
-                          style={{ 
-                            gridTemplateColumns: `48px repeat(${displayDays.length}, minmax(80px, 1fr))`
-                          }}
-                        >
-                          <div 
-                            className="text-[11px] sm:text-[10px] font-medium flex items-center justify-end pr-1.5 sticky left-0 z-10 text-black border-r border-gray-400/10"
-                            style={{ backgroundColor: '#d9d9d9' }}
-                          >
-                            {time.substring(0, 5)}
+                    {/* Cabeçalho dos dias - fixo no topo, rola horizontalmente junto */}
+                    <div 
+                      className="flex-shrink-0 sticky top-0 z-20"
+                      style={{ backgroundColor: '#d9d9d9' }}
+                    >
+                      <div 
+                        className="grid"
+                        style={{ 
+                          gridTemplateColumns: `48px repeat(${displayDays.length}, minmax(80px, 1fr))`
+                        }}
+                      >
+                        <div className="sticky left-0 z-30" style={{ backgroundColor: '#d9d9d9' }} />
+                        {displayDays.map((day, i) => (
+                          <div key={i} className="text-center px-0.5 py-2.5 overflow-hidden">
+                            <p className="font-semibold text-xs truncate text-black capitalize">
+                              {viewMode === 'week' 
+                                ? format(day, "EEEEEE dd/M", { locale: ptBR })
+                                : format(day, "EEEE, dd/MMM/yyyy", { locale: ptBR }).replace('-feira', '')
+                              }
+                            </p>
                           </div>
-                          {displayDays.map((day, i) => {
-                            const slotInfo = getSlotType(day, time);
-                            return (
-                              <div key={i} className="min-w-0 overflow-hidden border-r border-gray-400/10 last:border-r-0">
-                                <TimeSlot
-                                  time={time}
-                                  type={slotInfo.type}
-                                  booking={slotInfo.booking}
-                                  block={slotInfo.block}
-                                  onClick={(e) => handleSlotClick(day, time, e)}
-                                  isBookingStart={slotInfo.isBookingStart}
-                                  isBookingMiddle={slotInfo.isBookingMiddle}
-                                  isBookingEnd={slotInfo.isBookingEnd}
-                                />
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ))}
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Corpo dos horários - scroll vertical apenas */}
+                    <div 
+                      className="flex-1 min-h-0 overflow-y-scroll overflow-x-hidden"
+                      style={{ 
+                        WebkitOverflowScrolling: 'touch',
+                        overscrollBehavior: 'contain',
+                        backgroundColor: '#f0f0f0',
+                        borderRadius: 0
+                      }}
+                    >
+                      <div className="divide-y divide-gray-400/10">
+                        {allTimeSlotsForView.map((time) => (
+                          <div
+                            key={time}
+                            className="grid"
+                            style={{ 
+                              gridTemplateColumns: `48px repeat(${displayDays.length}, minmax(80px, 1fr))`
+                            }}
+                          >
+                            <div 
+                              className="text-[11px] sm:text-[10px] font-medium flex items-center justify-end pr-1.5 sticky left-0 z-10 text-black border-r border-gray-400/10"
+                              style={{ backgroundColor: '#d9d9d9' }}
+                            >
+                              {time.substring(0, 5)}
+                            </div>
+                            {displayDays.map((day, i) => {
+                              const slotInfo = getSlotType(day, time);
+                              return (
+                                <div key={i} className="min-w-0 overflow-hidden border-r border-gray-400/10 last:border-r-0">
+                                  <TimeSlot
+                                    time={time}
+                                    type={slotInfo.type}
+                                    booking={slotInfo.booking}
+                                    block={slotInfo.block}
+                                    onClick={(e) => handleSlotClick(day, time, e)}
+                                    isBookingStart={slotInfo.isBookingStart}
+                                    isBookingMiddle={slotInfo.isBookingMiddle}
+                                    isBookingEnd={slotInfo.isBookingEnd}
+                                  />
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
