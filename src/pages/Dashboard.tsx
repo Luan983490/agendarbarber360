@@ -522,7 +522,7 @@ const Dashboard = () => {
   const DashboardHeader = () => {
 
     return (
-      <header className="fixed top-0 left-0 right-0 z-50 bg-black text-white border-b border-gray-800">
+      <header className="fixed left-0 right-0 z-50 bg-black text-white border-b border-gray-800" style={{ top: bannerHeight }}>
         <div className="w-full px-2 sm:px-4 py-2">
           <div className="flex items-center justify-between gap-2 sm:gap-4">
             {/* Logo */}
@@ -693,14 +693,24 @@ const Dashboard = () => {
 
   const isAgendaTab = currentTab === 'bookings';
 
+  // Check if trial banner should show
+  const showTrialBanner = trial && !trial.is_expired && !(subscription?.status === 'ativo' && subscription.plan_type !== 'teste_gratis');
+  const bannerHeight = showTrialBanner ? 28 : 0; // approximate thin banner height
+
   return (
     <SidebarProvider>
       <div className={cn("min-h-screen bg-background flex flex-col w-full", isAgendaTab && "max-lg:h-[100dvh] max-lg:overflow-hidden max-lg:min-h-0")}>
+        {/* Trial banner - fixed on top of everything */}
+        {showTrialBanner && (
+          <div className="fixed top-0 left-0 right-0 z-[60]">
+            <TrialBanner barbershopId={barbershop?.id || null} />
+          </div>
+        )}
         <DashboardHeader />
         
-        <div className={cn("flex flex-1 w-full pt-14", isAgendaTab && "max-lg:min-h-0 max-lg:overflow-hidden")}>
+        <div className={cn("flex flex-1 w-full", isAgendaTab && "max-lg:min-h-0 max-lg:overflow-hidden")} style={{ paddingTop: 56 + bannerHeight }}>
           {/* Sidebar Fixo - hidden on mobile */}
-          <div className="hidden lg:block fixed left-0 top-14 h-[calc(100vh-56px)] z-40">
+          <div className="hidden lg:block fixed left-0 z-40" style={{ top: 56 + bannerHeight, height: `calc(100vh - ${56 + bannerHeight}px)` }}>
             <DashboardSidebar currentTab={currentTab} onTabChange={setCurrentTab} />
           </div>
           {/* Spacer for fixed sidebar */}
@@ -712,9 +722,8 @@ const Dashboard = () => {
               "flex-1 p-3 sm:p-4 lg:p-6 flex flex-col pb-16 lg:pb-0",
               isAgendaTab && "!p-0 !pb-0 max-lg:min-h-0 max-lg:overflow-hidden lg:!p-0"
             )}>
-              <div className="flex-shrink-0">
-                <TrialBanner barbershopId={barbershop?.id || null} />
-              </div>
+
+
 
               <div className={cn("flex-1 flex flex-col", isAgendaTab && "max-lg:min-h-0")}>
                 {renderContent()}
