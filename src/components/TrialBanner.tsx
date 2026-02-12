@@ -60,11 +60,10 @@ export function TrialBanner({ barbershopId }: TrialBannerProps) {
         <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
           <Icon className={cn('h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0', config.accentClass)} />
           <span className={cn('text-[11px] sm:text-sm font-medium truncate', config.textClass)}>
+            Seu teste expira em{' '}
             <span className={cn('font-bold', config.accentClass)}>
-              {daysLeft}d
+              {daysLeft} {daysLeft === 1 ? 'dia' : 'dias'}
             </span>
-            {' '}restantes no teste
-            <span className="hidden sm:inline"> gratuito! 🎉</span>
           </span>
         </div>
         <Button
