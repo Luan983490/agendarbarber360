@@ -120,6 +120,27 @@ const Dashboard = () => {
   
   // Ref para função de refresh do calendário
   const calendarRefreshRef = useRef<(() => void) | null>(null);
+  const bannerRef = useRef<HTMLDivElement>(null);
+  const [bannerHeight, setBannerHeight] = useState(0);
+
+  // Trial banner height measurement
+  const showTrialBanner = trial && !trial.is_expired && !(subscription?.status === 'ativo' && subscription.plan_type !== 'teste_gratis');
+  
+  useEffect(() => {
+    if (showTrialBanner && bannerRef.current) {
+      const h = bannerRef.current.offsetHeight;
+      setBannerHeight(h);
+      const observer = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          setBannerHeight(entry.contentRect.height);
+        }
+      });
+      observer.observe(bannerRef.current);
+      return () => observer.disconnect();
+    } else if (!showTrialBanner) {
+      setBannerHeight(0);
+    }
+  }, [showTrialBanner]);
 
   useEffect(() => {
     if (user) {
@@ -693,26 +714,7 @@ const Dashboard = () => {
 
   const isAgendaTab = currentTab === 'bookings';
 
-  // Check if trial banner should show
-  const showTrialBanner = trial && !trial.is_expired && !(subscription?.status === 'ativo' && subscription.plan_type !== 'teste_gratis');
-  const [bannerHeight, setBannerHeight] = useState(0);
-  const bannerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (showTrialBanner && bannerRef.current) {
-      const h = bannerRef.current.offsetHeight;
-      setBannerHeight(h);
-      const observer = new ResizeObserver((entries) => {
-        for (const entry of entries) {
-          setBannerHeight(entry.contentRect.height);
-        }
-      });
-      observer.observe(bannerRef.current);
-      return () => observer.disconnect();
-    } else if (!showTrialBanner) {
-      setBannerHeight(0);
-    }
-  }, [showTrialBanner]);
 
   return (
     <SidebarProvider>
