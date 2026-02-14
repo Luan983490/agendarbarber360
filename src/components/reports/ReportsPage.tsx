@@ -16,6 +16,8 @@ import { AlertsCard } from './AlertsCard';
 import { AuditTimelineCard } from './AuditTimelineCard';
 import { ExportReportsButton } from './ExportReportsButton';
 import { ReportsSidebar } from './ReportsSidebar';
+import { RevenueChart } from './RevenueChart';
+import { ServicesChart } from './ServicesChart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -508,7 +510,10 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
                 {/* Bookings Chart */}
                 <BookingsChart data={bookingsData} loading={loadingBookings} />
 
-                {/* Revenue summary inline */}
+                {/* Revenue Chart */}
+                <RevenueChart bookingsData={bookingsData} revenueData={revenueData} loading={loadingRevenue || loadingBookings} />
+
+                {/* Revenue summary cards */}
                 <RevenueCard data={revenueData} loading={loadingRevenue} />
 
                 {/* Monthly Comparison */}
@@ -541,7 +546,8 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
                 {/* Status Breakdown */}
                 <CancellationRatesCard data={cancellationData} loading={loadingCancellation} />
 
-                {/* Top Services */}
+                {/* Services donut + table */}
+                <ServicesChart data={servicesData} loading={loadingServices} />
                 <TopServicesTable data={servicesData} loading={loadingServices} />
               </div>
 
@@ -606,7 +612,9 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
           <TabsContent value="revenue" className="pt-6">
             <div className="flex flex-col lg:flex-row gap-6">
               <div className="flex-1 min-w-0 space-y-8">
+                <RevenueChart bookingsData={bookingsData} revenueData={revenueData} loading={loadingRevenue || loadingBookings} />
                 <RevenueCard data={revenueData} loading={loadingRevenue} />
+                <ServicesChart data={servicesData} loading={loadingServices} />
                 <MonthlyComparisonCard 
                   data={comparisonData} 
                   loading={loadingComparison}
@@ -677,6 +685,7 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
             <div className="flex flex-col lg:flex-row gap-6">
               <div className="flex-1 min-w-0 space-y-8">
                 <BookingsChart data={bookingsData} loading={loadingBookings} />
+                <RevenueChart bookingsData={bookingsData} revenueData={revenueData} loading={loadingRevenue || loadingBookings} />
                 <RevenueCard data={revenueData} loading={loadingRevenue} />
                 <MonthlyComparisonCard 
                   data={comparisonData} 
