@@ -9,7 +9,8 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import ImageUpload from '@/components/ImageUpload';
-import { User, Scissors, Clock, Key, ArrowRight, ArrowLeft, Check, Loader2 } from 'lucide-react';
+import { User, Scissors, Clock, Key, Shield, ArrowRight, ArrowLeft, Check, Loader2 } from 'lucide-react';
+import { BarberPermissionsPanel } from './BarberPermissionsPanel';
 
 interface Service {
   id: string;
@@ -94,6 +95,7 @@ export const CreateBarberWizard = ({
     { number: 2, title: 'Serviços', icon: Scissors },
     { number: 3, title: 'Horários', icon: Clock },
     { number: 4, title: 'Acesso', icon: Key },
+    { number: 5, title: 'Permissões', icon: Shield },
   ];
 
   const resetForm = () => {
@@ -384,7 +386,7 @@ export const CreateBarberWizard = ({
               </div>
             ))}
           </div>
-          <Progress value={(currentStep / 4) * 100} className="h-2" />
+          <Progress value={(currentStep / 5) * 100} className="h-2" />
         </div>
 
         {/* Step 1: Personal Data */}
@@ -630,6 +632,23 @@ export const CreateBarberWizard = ({
           </div>
         )}
 
+        {/* Step 5: Permissions */}
+        {currentStep === 5 && createdBarberId && (
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              Permissões do Profissional
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Configure o que este profissional poderá acessar no sistema
+            </p>
+            <BarberPermissionsPanel
+              barberId={createdBarberId}
+              barbershopId={barbershopId}
+            />
+          </div>
+        )}
+
         {/* Navigation Buttons */}
         <div className="flex justify-between pt-4 border-t">
           {currentStep > 1 && currentStep < 4 && (
@@ -656,6 +675,19 @@ export const CreateBarberWizard = ({
           )}
 
           {currentStep === 4 && loginCreated && (
+            <Button onClick={() => setCurrentStep(5)} className="ml-auto">
+              Próximo: Permissões
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          )}
+
+          {currentStep === 4 && !loginCreated && (
+            <Button variant="outline" onClick={handleFinish} className="ml-auto">
+              Pular e Concluir
+            </Button>
+          )}
+
+          {currentStep === 5 && (
             <Button onClick={handleFinish} className="ml-auto">
               <Check className="h-4 w-4 mr-2" />
               Concluir
