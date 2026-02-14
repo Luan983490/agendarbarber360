@@ -1,4 +1,4 @@
-import { CalendarDays, BarChart3, Scissors, UserRound, Store, CreditCard, Settings, Users, Shield, LucideIcon } from 'lucide-react';
+import { CalendarDays, BarChart3, Scissors, UserRound, Store, CreditCard, Settings, Users, LucideIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   Sidebar,
@@ -33,7 +33,6 @@ const menuItems: MenuItem[] = [
   { id: 'services', title: 'Serviços', icon: Scissors, permission: 'view_services' },
   { id: 'clients', title: 'Clientes', icon: Users, permission: 'view_all_clients' },
   { id: 'reports', title: 'Relatórios', icon: BarChart3, separator: true, permission: 'view_dashboard' },
-  { id: 'permissions', title: 'Permissões', icon: Shield, ownerOnly: true },
   { id: 'edit', title: 'Editar Barbearia', icon: Store, permission: 'edit_barbershop_settings' },
   { id: 'assinatura', title: 'Assinatura', icon: CreditCard, href: '/admin/assinatura', ownerOnly: true },
   { id: 'settings', title: 'Configurações', icon: Settings, href: '/perfil', separator: true },

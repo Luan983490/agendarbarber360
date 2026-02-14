@@ -5,12 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { User, Scissors, Clock, Loader2 } from 'lucide-react';
+import { User, Scissors, Clock, Loader2, Shield } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import ImageUpload from './ImageUpload';
 import BarberWorkingHoursForm from './BarberWorkingHoursForm';
 import BarberServicesForm from './BarberServicesForm';
+import { BarberPermissionsPanel } from './BarberPermissionsPanel';
+import { usePermissions } from '@/hooks/usePermissions';
 
 interface Barber {
   id: string;
@@ -19,6 +21,7 @@ interface Barber {
   phone?: string;
   image_url?: string;
   barbershop_id: string;
+  user_id?: string | null;
 }
 
 interface EditBarberDialogProps {
@@ -30,6 +33,8 @@ interface EditBarberDialogProps {
 
 export const EditBarberDialog = ({ open, onOpenChange, barber, onBarberUpdated }: EditBarberDialogProps) => {
   const [activeTab, setActiveTab] = useState('personal');
+  const { isOwner } = usePermissions();
+  const showPermissions = isOwner && !!barber.user_id;
   const [formData, setFormData] = useState({
     name: barber.name,
     specialty: barber.specialty || '',
@@ -91,7 +96,7 @@ export const EditBarberDialog = ({ open, onOpenChange, barber, onBarberUpdated }
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className={`grid w-full ${showPermissions ? 'grid-cols-4' : 'grid-cols-3'}`}>
             <TabsTrigger value="personal" className="gap-2">
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">Dados Pessoais</span>
@@ -106,6 +111,13 @@ export const EditBarberDialog = ({ open, onOpenChange, barber, onBarberUpdated }
               <span className="hidden sm:inline">Horário de Trabalho</span>
               <span className="sm:hidden">Horário</span>
             </TabsTrigger>
+            {showPermissions && (
+              <TabsTrigger value="permissions" className="gap-2">
+                <Shield className="h-4 w-4" />
+                <span className="hidden sm:inline">Permissões</span>
+                <span className="sm:hidden">Perm.</span>
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="personal" className="mt-4 space-y-4">
@@ -178,6 +190,16 @@ export const EditBarberDialog = ({ open, onOpenChange, barber, onBarberUpdated }
               barberName={barber.name} 
             />
           </TabsContent>
+
+          {showPermissions && (
+            <TabsContent value="permissions" className="mt-4">
+              <BarberPermissionsPanel
+                barberId={barber.id}
+                barbershopId={barber.barbershop_id}
+                barberName={barber.name}
+              />
+            </TabsContent>
+          )}
         </Tabs>
       </DialogContent>
     </Dialog>

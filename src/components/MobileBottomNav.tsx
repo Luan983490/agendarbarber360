@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CalendarDays, Scissors, UserRound, BarChart3, Store, CreditCard, ChevronUp, Settings, Users, Shield } from 'lucide-react';
+import { CalendarDays, Scissors, UserRound, BarChart3, Store, CreditCard, ChevronUp, Settings, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -19,7 +19,6 @@ const mainNavItems = [
 
 const barbershopSubItems = [
   { id: 'reports', label: 'Relatórios', icon: BarChart3, permission: 'view_dashboard' },
-  { id: 'permissions', label: 'Permissões', icon: Shield, ownerOnly: true },
   { id: 'edit', label: 'Editar Barbearia', icon: Settings, permission: 'edit_barbershop_settings' },
   { id: 'assinatura', label: 'Assinatura', icon: CreditCard, href: '/admin/assinatura', ownerOnly: true },
 ];
