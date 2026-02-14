@@ -364,6 +364,151 @@ export type Database = {
           },
         ]
       }
+      barbershop_clients: {
+        Row: {
+          barbershop_id: string
+          client_email: string
+          client_name: string
+          client_notes: string | null
+          client_phone: string
+          client_profile_id: string | null
+          created_at: string
+          deleted_at: string | null
+          id: string
+          is_active: boolean
+          source: string
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          barbershop_id: string
+          client_email: string
+          client_name: string
+          client_notes?: string | null
+          client_phone: string
+          client_profile_id?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_active?: boolean
+          source?: string
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          barbershop_id?: string
+          client_email?: string
+          client_name?: string
+          client_notes?: string | null
+          client_phone?: string
+          client_profile_id?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_active?: boolean
+          source?: string
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "barbershop_clients_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "barbershop_clients_client_profile_id_fkey"
+            columns: ["client_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "barbershop_clients_client_profile_id_fkey"
+            columns: ["client_profile_id"]
+            isOneToOne: false
+            referencedRelation: "vw_mfa_status"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      barbershop_clients_audit: {
+        Row: {
+          action: string
+          barbershop_id: string
+          changed_at: string
+          changed_by: string | null
+          client_id: string
+          id: string
+          ip_address: unknown
+          new_data: Json | null
+          old_data: Json | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          barbershop_id: string
+          changed_at?: string
+          changed_by?: string | null
+          client_id: string
+          id?: string
+          ip_address?: unknown
+          new_data?: Json | null
+          old_data?: Json | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          barbershop_id?: string
+          changed_at?: string
+          changed_by?: string | null
+          client_id?: string
+          id?: string
+          ip_address?: unknown
+          new_data?: Json | null
+          old_data?: Json | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "barbershop_clients_audit_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "barbershop_clients_audit_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "barbershop_clients_audit_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "vw_mfa_status"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "barbershop_clients_audit_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "barbershop_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "barbershop_clients_audit_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_clients_export"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       barbershops: {
         Row: {
           address: string
@@ -2141,6 +2286,45 @@ export type Database = {
         }
         Relationships: []
       }
+      v_clients_export: {
+        Row: {
+          "Barbeiro Favorito": string | null
+          barbershop_id: string | null
+          barbershop_id_filter: string | null
+          "Data de Cadastro": string | null
+          deleted_at_filter: string | null
+          Email: string | null
+          id: string | null
+          is_active_filter: boolean | null
+          Nome: string | null
+          Notas: string | null
+          Origem: string | null
+          Status: string | null
+          Tags: string | null
+          tags_filter: string[] | null
+          Telefone: string | null
+          Tipo: string | null
+          "Total de Agendamentos": number | null
+          "Último Agendamento": string | null
+          "Valor Total Gasto": string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "barbershop_clients_barbershop_id_fkey"
+            columns: ["barbershop_id_filter"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "barbershop_clients_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vw_mfa_status: {
         Row: {
           barbershop_id: string | null
@@ -2354,9 +2538,93 @@ export type Database = {
           total_bookings: number
         }[]
       }
+      get_client_details: {
+        Args: { p_barbershop_id: string; p_client_id: string }
+        Returns: {
+          client_email: string
+          client_name: string
+          client_notes: string
+          client_phone: string
+          client_profile_id: string
+          created_at: string
+          favorite_barber_name: string
+          first_booking_date: string
+          id: string
+          is_active: boolean
+          last_booking_date: string
+          recent_bookings: Json
+          source: string
+          tags: string[]
+          total_bookings: number
+          total_spent: number
+          updated_at: string
+        }[]
+      }
+      get_client_details_test: {
+        Args: { p_barbershop_id: string; p_client_id: string }
+        Returns: {
+          client_email: string
+          client_name: string
+          client_notes: string
+          client_phone: string
+          client_profile_id: string
+          created_at: string
+          favorite_barber_name: string
+          first_booking_date: string
+          id: string
+          is_active: boolean
+          last_booking_date: string
+          recent_bookings: Json
+          source: string
+          tags: string[]
+          total_bookings: number
+          total_spent: number
+          updated_at: string
+        }[]
+      }
       get_client_display_name: {
         Args: { p_client_id: string }
         Returns: string
+      }
+      get_clients_for_export: {
+        Args: {
+          p_barbershop_id: string
+          p_include_inactive?: boolean
+          p_tags?: string[]
+        }
+        Returns: {
+          "Barbeiro Favorito": string
+          "Data de Cadastro": string
+          Email: string
+          Nome: string
+          Notas: string
+          Origem: string
+          Status: string
+          Tags: string
+          Telefone: string
+          Tipo: string
+          "Total de Agendamentos": number
+          "Último Agendamento": string
+          "Valor Total Gasto": string
+        }[]
+      }
+      get_clients_for_export_test: {
+        Args: { p_barbershop_id: string; p_include_inactive?: boolean }
+        Returns: {
+          "Barbeiro Favorito": string
+          "Data de Cadastro": string
+          Email: string
+          Nome: string
+          Notas: string
+          Origem: string
+          Status: string
+          Tags: string
+          Telefone: string
+          Tipo: string
+          "Total de Agendamentos": number
+          "Último Agendamento": string
+          "Valor Total Gasto": string
+        }[]
       }
       get_database_functions_info: {
         Args: never
@@ -2533,6 +2801,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      import_clients: {
+        Args: { p_barbershop_id: string; p_clients: Json }
+        Returns: Json
+      }
+      import_clients_test: {
+        Args: { p_barbershop_id: string; p_clients: Json }
+        Returns: Json
+      }
       insert_app_log: {
         Args: {
           p_barbershop_id?: string
@@ -2568,6 +2844,56 @@ export type Database = {
       }
       is_email_verified: { Args: never; Returns: boolean }
       is_user_in_grace_period: { Args: never; Returns: boolean }
+      list_clients: {
+        Args: {
+          p_barbershop_id: string
+          p_include_inactive?: boolean
+          p_limit?: number
+          p_offset?: number
+          p_search?: string
+          p_tags?: string[]
+        }
+        Returns: {
+          client_email: string
+          client_name: string
+          client_notes: string
+          client_phone: string
+          client_profile_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          last_booking_date: string
+          source: string
+          tags: string[]
+          total_bookings: number
+          total_spent: number
+        }[]
+      }
+      list_clients_test: {
+        Args: {
+          p_barbershop_id: string
+          p_include_inactive?: boolean
+          p_limit?: number
+          p_offset?: number
+          p_search?: string
+          p_tags?: string[]
+        }
+        Returns: {
+          client_email: string
+          client_name: string
+          client_notes: string
+          client_phone: string
+          client_profile_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          last_booking_date: string
+          source: string
+          tags: string[]
+          total_bookings: number
+          total_spent: number
+        }[]
+      }
       log_mfa_attempt: {
         Args: {
           p_attempt_type: string
