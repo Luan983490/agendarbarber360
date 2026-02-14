@@ -162,6 +162,133 @@ export type Database = {
             referencedRelation: "barbers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "barber_blocks_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "vw_barber_permissions_summary"
+            referencedColumns: ["barber_id"]
+          },
+        ]
+      }
+      barber_permissions: {
+        Row: {
+          barber_id: string
+          created_at: string
+          granted: boolean | null
+          granted_at: string | null
+          granted_by: string | null
+          id: string
+          permission_id: string
+          updated_at: string
+        }
+        Insert: {
+          barber_id: string
+          created_at?: string
+          granted?: boolean | null
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          permission_id: string
+          updated_at?: string
+        }
+        Update: {
+          barber_id?: string
+          created_at?: string
+          granted?: boolean | null
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          permission_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "barber_permissions_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "barbers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "barber_permissions_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "vw_barber_permissions_summary"
+            referencedColumns: ["barber_id"]
+          },
+          {
+            foreignKeyName: "barber_permissions_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "barber_permissions_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "vw_mfa_status"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "barber_permissions_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      barber_permissions_audit: {
+        Row: {
+          action: string
+          barber_id: string
+          barber_permission_id: string | null
+          changed_at: string
+          changed_by: string | null
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+          permission_id: string
+        }
+        Insert: {
+          action: string
+          barber_id: string
+          barber_permission_id?: string | null
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          permission_id: string
+        }
+        Update: {
+          action?: string
+          barber_id?: string
+          barber_permission_id?: string | null
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          permission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "barber_permissions_audit_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "barber_permissions_audit_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "vw_mfa_status"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       barber_schedule_overrides: {
@@ -215,6 +342,13 @@ export type Database = {
             referencedRelation: "barbers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "barber_schedule_overrides_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "vw_barber_permissions_summary"
+            referencedColumns: ["barber_id"]
+          },
         ]
       }
       barber_services: {
@@ -243,6 +377,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "barbers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "barber_services_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "vw_barber_permissions_summary"
+            referencedColumns: ["barber_id"]
           },
           {
             foreignKeyName: "barber_services_service_id_fkey"
@@ -297,6 +438,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "barbers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "barber_working_hours_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "vw_barber_permissions_summary"
+            referencedColumns: ["barber_id"]
           },
         ]
       }
@@ -951,6 +1099,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "barbers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "vw_barber_permissions_summary"
+            referencedColumns: ["barber_id"]
           },
           {
             foreignKeyName: "bookings_barbershop_id_fkey"
@@ -1642,6 +1797,83 @@ export type Database = {
           },
         ]
       }
+      permission_modules: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          display_order: number | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      permissions: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          module_id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          module_id: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          module_id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "permissions_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "permission_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           barbershop_id: string
@@ -1874,6 +2106,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "barbers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_alerts_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "vw_barber_permissions_summary"
+            referencedColumns: ["barber_id"]
           },
           {
             foreignKeyName: "report_alerts_barbershop_id_fkey"
@@ -2311,13 +2550,52 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "barbershop_clients_barbershop_id_fkey"
-            columns: ["barbershop_id_filter"]
+            columns: ["barbershop_id"]
             isOneToOne: false
             referencedRelation: "barbershops"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "barbershop_clients_barbershop_id_fkey"
+            columns: ["barbershop_id_filter"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vw_barber_permissions_summary: {
+        Row: {
+          barber_id: string | null
+          barber_name: string | null
+          barbershop_id: string | null
+          barbershop_name: string | null
+          granted_at: string | null
+          granted_by: string | null
+          granted_by_name: string | null
+          has_permission: boolean | null
+          module_code: string | null
+          module_name: string | null
+          permission_code: string | null
+          permission_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "barber_permissions_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "barber_permissions_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "vw_mfa_status"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "barbers_barbershop_id_fkey"
             columns: ["barbershop_id"]
             isOneToOne: false
             referencedRelation: "barbershops"
@@ -2405,6 +2683,14 @@ export type Database = {
       client_can_cancel_booking: {
         Args: { _booking_id: string; _user_id: string }
         Returns: boolean
+      }
+      clone_barber_permissions: {
+        Args: {
+          p_granted_by?: string
+          p_source_barber_id: string
+          p_target_barber_id: string
+        }
+        Returns: undefined
       }
       current_user_verified: {
         Args: never
@@ -2498,6 +2784,16 @@ export type Database = {
           barber_name: string
           total_bookings: number
           total_revenue: number
+        }[]
+      }
+      get_barber_permissions: {
+        Args: { p_barber_id: string }
+        Returns: {
+          granted: boolean
+          module_code: string
+          module_name: string
+          permission_code: string
+          permission_name: string
         }[]
       }
       get_barbershop_cities: {
@@ -2793,6 +3089,14 @@ export type Database = {
         Args: { _barbershop_id: string; _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      grant_all_permissions: {
+        Args: { p_barber_id: string; p_granted_by?: string }
+        Returns: undefined
+      }
+      has_permission: {
+        Args: { p_barber_id: string; p_permission_code: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _barbershop_id: string
@@ -2908,6 +3212,10 @@ export type Database = {
           p_action_type: Database["public"]["Enums"]["rate_limit_action"]
           p_ip_address: string
         }
+        Returns: undefined
+      }
+      revoke_all_permissions: {
+        Args: { p_barber_id: string; p_granted_by?: string }
         Returns: undefined
       }
       sanitize_input: { Args: { input_text: string }; Returns: string }
