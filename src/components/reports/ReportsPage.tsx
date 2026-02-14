@@ -109,17 +109,17 @@ interface AuditLog {
   barber_name: string;
 }
 
+const tabTriggerClass = "rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm font-medium text-muted-foreground data-[state=active]:text-foreground";
+
 export function ReportsPage({ barbershopId }: ReportsPageProps) {
   const { role, barberId } = useUserAccess();
   const { toast } = useToast();
   const isOwnerOrAdmin = role === 'owner';
   
-  // Month-based navigation
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const startDate = startOfMonth(currentMonth);
   const endDate = endOfMonth(currentMonth);
   
-  // Barber filter (only for owner/admin)
   const [barbers, setBarbers] = useState<Barber[]>([]);
   const [selectedBarberId, setSelectedBarberId] = useState<string>('all');
   
@@ -148,14 +148,12 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
   const goToPreviousMonth = () => setCurrentMonth(prev => subMonths(prev, 1));
   const goToNextMonth = () => setCurrentMonth(prev => addMonths(prev, 1));
 
-  // Fetch barbers for filter (owner/admin only)
   useEffect(() => {
     if (isOwnerOrAdmin) {
       fetchBarbers();
     }
   }, [isOwnerOrAdmin, barbershopId]);
 
-  // Fetch reports when filters change
   useEffect(() => {
     fetchReports();
   }, [currentMonth, selectedBarberId, role, barberId]);
@@ -406,15 +404,61 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
   const previousPeriodLabel = format(subMonths(startDate, 1), 'MMM', { locale: ptBR });
   const monthLabel = format(currentMonth, "MMM yyyy", { locale: ptBR });
 
+  const sidebarProps = {
+    revenueData,
+    cancellationData,
+    comparisonData,
+    loadingRevenue,
+    loadingCancellation,
+    loadingComparison,
+    topClientsData,
+    loadingTopClients,
+  };
+
+  const reportLinksBookings = [
+    'Resumo de visitas',
+    'Resumo de serviços',
+    'Lista de agendamentos',
+    'Agendamentos por serviço',
+    'Agendamentos por funcionário',
+    'Agendamentos por dias e horários',
+    'Cancelados',
+    'Não comparecimentos',
+  ];
+
+  const reportLinksClients = [
+    'Resumo de clientes',
+    'Lista de clientes',
+    'Novos clientes',
+    'Clientes recorrentes',
+    'Clientes não fidelizados',
+  ];
+
+  const ReportLinksList = ({ items }: { items: string[] }) => (
+    <div className="w-full lg:w-[300px] flex-shrink-0">
+      <div className="border border-border rounded-xl p-5 space-y-1 sticky top-4">
+        <h3 className="text-base font-semibold text-foreground mb-4">Relatórios</h3>
+        {items.map((label) => (
+          <button
+            key={label}
+            className="w-full flex items-center justify-between py-3 px-1 text-sm text-foreground hover:text-primary transition-colors border-b border-border last:border-0"
+          >
+            {label}
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-0">
-      {/* Booksy-style Header */}
+      {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-6">
         <h1 className="text-xl sm:text-2xl font-bold text-foreground">
           Estatísticas e relatórios
         </h1>
         <div className="flex items-center gap-2">
-          {/* Barber filter */}
           {isOwnerOrAdmin && (
             <Select value={selectedBarberId} onValueChange={setSelectedBarberId}>
               <SelectTrigger className="w-[160px] h-10 bg-card border-border">
@@ -463,60 +507,22 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
       {/* Tabs */}
       {isOwnerOrAdmin ? (
         <Tabs defaultValue="overview" className="space-y-0">
-          <TabsList className="bg-transparent border-b border-border rounded-none h-auto p-0 gap-0 w-full justify-start">
-            <TabsTrigger 
-              value="overview" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm font-medium text-muted-foreground data-[state=active]:text-foreground"
-            >
-              Painel
-            </TabsTrigger>
-            <TabsTrigger 
-              value="bookings" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm font-medium text-muted-foreground data-[state=active]:text-foreground"
-            >
-              Agendamentos
-            </TabsTrigger>
-            <TabsTrigger 
-              value="clients" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm font-medium text-muted-foreground data-[state=active]:text-foreground"
-            >
-              Clientes
-            </TabsTrigger>
-            <TabsTrigger 
-              value="revenue" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm font-medium text-muted-foreground data-[state=active]:text-foreground"
-            >
-              Receita
-            </TabsTrigger>
-            <TabsTrigger 
-              value="team" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm font-medium text-muted-foreground data-[state=active]:text-foreground"
-            >
-              Equipe
-            </TabsTrigger>
-            <TabsTrigger 
-              value="audit" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm font-medium text-muted-foreground data-[state=active]:text-foreground"
-            >
-              Auditoria
-            </TabsTrigger>
+          <TabsList className="bg-transparent border-b border-border rounded-none h-auto p-0 gap-0 w-full justify-start overflow-x-auto">
+            <TabsTrigger value="overview" className={tabTriggerClass}>Painel</TabsTrigger>
+            <TabsTrigger value="bookings" className={tabTriggerClass}>Agendamentos</TabsTrigger>
+            <TabsTrigger value="clients" className={tabTriggerClass}>Clientes</TabsTrigger>
+            <TabsTrigger value="revenue" className={tabTriggerClass}>Receita</TabsTrigger>
+            <TabsTrigger value="team" className={tabTriggerClass}>Equipe</TabsTrigger>
+            <TabsTrigger value="audit" className={tabTriggerClass}>Auditoria</TabsTrigger>
           </TabsList>
 
-          {/* PAINEL (Overview) Tab */}
+          {/* PAINEL Tab */}
           <TabsContent value="overview" className="pt-6">
             <div className="flex flex-col lg:flex-row gap-6">
-              {/* Main Content - Left */}
               <div className="flex-1 min-w-0 space-y-8">
-                {/* Bookings Chart */}
                 <BookingsChart data={bookingsData} loading={loadingBookings} />
-
-                {/* Revenue Chart */}
                 <RevenueChart bookingsData={bookingsData} revenueData={revenueData} loading={loadingRevenue || loadingBookings} />
-
-                {/* Revenue summary cards */}
                 <RevenueCard data={revenueData} loading={loadingRevenue} />
-
-                {/* Monthly Comparison */}
                 <MonthlyComparisonCard 
                   data={comparisonData} 
                   loading={loadingComparison}
@@ -524,16 +530,7 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
                   previousPeriod={previousPeriodLabel}
                 />
               </div>
-
-              {/* Sidebar - Right */}
-              <ReportsSidebar
-                revenueData={revenueData}
-                cancellationData={cancellationData}
-                comparisonData={comparisonData}
-                loadingRevenue={loadingRevenue}
-                loadingCancellation={loadingCancellation}
-                loadingComparison={loadingComparison}
-              />
+              <ReportsSidebar {...sidebarProps} />
             </div>
           </TabsContent>
 
@@ -542,39 +539,11 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
             <div className="flex flex-col lg:flex-row gap-6">
               <div className="flex-1 min-w-0 space-y-8">
                 <BookingsChart data={bookingsData} loading={loadingBookings} />
-
-                {/* Status Breakdown */}
                 <CancellationRatesCard data={cancellationData} loading={loadingCancellation} />
-
-                {/* Services donut + table */}
                 <ServicesChart data={servicesData} loading={loadingServices} />
                 <TopServicesTable data={servicesData} loading={loadingServices} />
               </div>
-
-              {/* Sidebar */}
-              <div className="w-full lg:w-[300px] flex-shrink-0">
-                <div className="border border-border rounded-xl p-5 space-y-1 sticky top-4">
-                  <h3 className="text-base font-semibold text-foreground mb-4">Relatórios</h3>
-                  {[
-                    'Resumo de visitas',
-                    'Resumo de serviços',
-                    'Lista de agendamentos',
-                    'Agendamentos por serviço',
-                    'Agendamentos por funcionário',
-                    'Agendamentos por dias e horários',
-                    'Cancelados',
-                    'Não comparecimentos',
-                  ].map((label) => (
-                    <button
-                      key={label}
-                      className="w-full flex items-center justify-between py-3 px-1 text-sm text-foreground hover:text-primary transition-colors border-b border-border last:border-0"
-                    >
-                      {label}
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <ReportLinksList items={reportLinksBookings} />
             </div>
           </TabsContent>
 
@@ -584,27 +553,7 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
               <div className="flex-1 min-w-0 space-y-8">
                 <TopClientsCard data={topClientsData} loading={loadingTopClients} />
               </div>
-
-              <div className="w-full lg:w-[300px] flex-shrink-0">
-                <div className="border border-border rounded-xl p-5 space-y-1 sticky top-4">
-                  <h3 className="text-base font-semibold text-foreground mb-4">Relatórios</h3>
-                  {[
-                    'Resumo de clientes',
-                    'Lista de clientes',
-                    'Novos clientes',
-                    'Clientes recorrentes',
-                    'Clientes não fidelizados',
-                  ].map((label) => (
-                    <button
-                      key={label}
-                      className="w-full flex items-center justify-between py-3 px-1 text-sm text-foreground hover:text-primary transition-colors border-b border-border last:border-0"
-                    >
-                      {label}
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <ReportLinksList items={reportLinksClients} />
             </div>
           </TabsContent>
 
@@ -622,16 +571,7 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
                   previousPeriod={previousPeriodLabel}
                 />
               </div>
-
-              <ReportsSidebar
-                revenueData={revenueData}
-                cancellationData={cancellationData}
-                comparisonData={comparisonData}
-                loadingRevenue={loadingRevenue}
-                loadingCancellation={loadingCancellation}
-                loadingComparison={loadingComparison}
-                variant="revenue"
-              />
+              <ReportsSidebar {...sidebarProps} variant="revenue" />
             </div>
           </TabsContent>
 
@@ -658,27 +598,12 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
           </TabsContent>
         </Tabs>
       ) : (
-        // Barber view - simplified with same layout style
+        // Barber view - simplified
         <Tabs defaultValue="overview" className="space-y-0">
           <TabsList className="bg-transparent border-b border-border rounded-none h-auto p-0 gap-0 w-full justify-start">
-            <TabsTrigger 
-              value="overview" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm font-medium text-muted-foreground data-[state=active]:text-foreground"
-            >
-              Painel
-            </TabsTrigger>
-            <TabsTrigger 
-              value="bookings" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm font-medium text-muted-foreground data-[state=active]:text-foreground"
-            >
-              Agendamentos
-            </TabsTrigger>
-            <TabsTrigger 
-              value="clients" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm font-medium text-muted-foreground data-[state=active]:text-foreground"
-            >
-              Clientes
-            </TabsTrigger>
+            <TabsTrigger value="overview" className={tabTriggerClass}>Painel</TabsTrigger>
+            <TabsTrigger value="bookings" className={tabTriggerClass}>Agendamentos</TabsTrigger>
+            <TabsTrigger value="clients" className={tabTriggerClass}>Clientes</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="pt-6">
@@ -694,14 +619,7 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
                   previousPeriod={previousPeriodLabel}
                 />
               </div>
-              <ReportsSidebar
-                revenueData={revenueData}
-                cancellationData={cancellationData}
-                comparisonData={comparisonData}
-                loadingRevenue={loadingRevenue}
-                loadingCancellation={loadingCancellation}
-                loadingComparison={loadingComparison}
-              />
+              <ReportsSidebar {...sidebarProps} />
             </div>
           </TabsContent>
 
