@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useUserRole } from '@/hooks/useUserRole';
 import { Button } from '@/components/ui/button';
@@ -121,9 +121,27 @@ const Dashboard = () => {
   // Ref para função de refresh do calendário
   const calendarRefreshRef = useRef<(() => void) | null>(null);
   const bannerRef = useRef<HTMLDivElement>(null);
-  const headerRef = useRef<HTMLElement>(null);
+  const headerObserverRef = useRef<ResizeObserver | null>(null);
   const [bannerHeight, setBannerHeight] = useState(0);
   const [headerHeight, setHeaderHeight] = useState(56);
+
+  // Callback ref for header - works even inside nested component
+  const headerRefCallback = useCallback((node: HTMLElement | null) => {
+    if (headerObserverRef.current) {
+      headerObserverRef.current.disconnect();
+      headerObserverRef.current = null;
+    }
+    if (node) {
+      setHeaderHeight(node.offsetHeight);
+      const observer = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          setHeaderHeight(entry.contentRect.height);
+        }
+      });
+      observer.observe(node);
+      headerObserverRef.current = observer;
+    }
+  }, []);
 
   // Trial banner height measurement
   const showTrialBanner = trial && !trial.is_expired && !(subscription?.status === 'ativo' && subscription.plan_type !== 'teste_gratis');
@@ -143,20 +161,6 @@ const Dashboard = () => {
       setBannerHeight(0);
     }
   }, [showTrialBanner]);
-
-  useEffect(() => {
-    if (headerRef.current) {
-      const h = headerRef.current.offsetHeight;
-      setHeaderHeight(h);
-      const observer = new ResizeObserver((entries) => {
-        for (const entry of entries) {
-          setHeaderHeight(entry.contentRect.height);
-        }
-      });
-      observer.observe(headerRef.current);
-      return () => observer.disconnect();
-    }
-  }, []);
 
   useEffect(() => {
     if (user) {
@@ -559,7 +563,7 @@ const Dashboard = () => {
   const DashboardHeader = () => {
 
     return (
-      <header ref={headerRef} className="fixed left-0 right-0 z-50 bg-black text-white border-b border-gray-800" style={{ top: bannerHeight }}>
+      <header ref={headerRefCallback} className="fixed left-0 right-0 z-50 bg-black text-white border-b border-gray-800" style={{ top: bannerHeight }}>
         <div className="w-full px-2 sm:px-4 py-2">
           <div className="flex items-center justify-between gap-2 sm:gap-4">
             {/* Logo */}
