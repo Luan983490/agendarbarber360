@@ -23,7 +23,7 @@ export function TrialBanner({ barbershopId }: TrialBannerProps) {
   const getUrgencyConfig = () => {
     if (daysLeft >= 15) {
       return {
-        bgClass: 'bg-emerald-950/60 border-emerald-800/50',
+        bgClass: 'bg-emerald-950 border-emerald-800',
         textClass: 'text-emerald-300',
         accentClass: 'text-emerald-400',
         btnClass: 'bg-emerald-600 hover:bg-emerald-700 text-white',
@@ -33,7 +33,7 @@ export function TrialBanner({ barbershopId }: TrialBannerProps) {
     }
     if (daysLeft >= 8) {
       return {
-        bgClass: 'bg-amber-950/60 border-amber-800/50',
+        bgClass: 'bg-amber-950 border-amber-800',
         textClass: 'text-amber-300',
         accentClass: 'text-amber-400',
         btnClass: 'bg-amber-600 hover:bg-amber-700 text-white',
@@ -42,7 +42,7 @@ export function TrialBanner({ barbershopId }: TrialBannerProps) {
       };
     }
     return {
-      bgClass: 'bg-red-950/60 border-red-800/50',
+      bgClass: 'bg-red-950 border-red-800',
       textClass: 'text-red-300',
       accentClass: 'text-red-400',
       btnClass: 'bg-red-600 hover:bg-red-700 text-white',
