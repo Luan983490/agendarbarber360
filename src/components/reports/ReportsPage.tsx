@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import { format, startOfMonth, endOfMonth, subMonths, addMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserAccess } from '@/hooks/useUserAccess';
@@ -8,7 +8,6 @@ import { RevenueCard } from './RevenueCard';
 import { TopServicesTable } from './TopServicesTable';
 import { BarberPerformanceTable } from './BarberPerformanceTable';
 import { BookingsChart } from './BookingsChart';
-import { DateRangeFilter } from './DateRangeFilter';
 import { MonthlyComparisonCard } from './MonthlyComparisonCard';
 import { CancellationRatesCard } from './CancellationRatesCard';
 import { OccupancyTable } from './OccupancyTable';
@@ -16,9 +15,11 @@ import { TopClientsCard } from './TopClientsCard';
 import { AlertsCard } from './AlertsCard';
 import { AuditTimelineCard } from './AuditTimelineCard';
 import { ExportReportsButton } from './ExportReportsButton';
+import { ReportsSidebar } from './ReportsSidebar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart3 } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface Barber {
   id: string;
@@ -111,9 +112,10 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
   const { toast } = useToast();
   const isOwnerOrAdmin = role === 'owner';
   
-  // Date range
-  const [startDate, setStartDate] = useState<Date>(() => startOfMonth(new Date()));
-  const [endDate, setEndDate] = useState<Date>(() => endOfMonth(new Date()));
+  // Month-based navigation
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  const startDate = startOfMonth(currentMonth);
+  const endDate = endOfMonth(currentMonth);
   
   // Barber filter (only for owner/admin)
   const [barbers, setBarbers] = useState<Barber[]>([]);
@@ -141,6 +143,9 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
   const [loadingTopClients, setLoadingTopClients] = useState(true);
   const [loadingAudit, setLoadingAudit] = useState(true);
 
+  const goToPreviousMonth = () => setCurrentMonth(prev => subMonths(prev, 1));
+  const goToNextMonth = () => setCurrentMonth(prev => addMonths(prev, 1));
+
   // Fetch barbers for filter (owner/admin only)
   useEffect(() => {
     if (isOwnerOrAdmin) {
@@ -151,7 +156,7 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
   // Fetch reports when filters change
   useEffect(() => {
     fetchReports();
-  }, [startDate, endDate, selectedBarberId, role, barberId]);
+  }, [currentMonth, selectedBarberId, role, barberId]);
 
   const fetchBarbers = async () => {
     try {
@@ -174,14 +179,12 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
     const endDateStr = format(endDate, 'yyyy-MM-dd');
     const barberFilter = selectedBarberId === 'all' ? null : selectedBarberId;
     
-    // Calculate previous period for comparison
     const monthsDiff = Math.max(1, Math.round((endDate.getTime() - startDate.getTime()) / (30 * 24 * 60 * 60 * 1000)));
     const previousStart = subMonths(startDate, monthsDiff);
     const previousEnd = subMonths(endDate, monthsDiff);
     const previousStartStr = format(previousStart, 'yyyy-MM-dd');
     const previousEndStr = format(previousEnd, 'yyyy-MM-dd');
 
-    // Fetch all reports in parallel
     Promise.all([
       fetchRevenueReport(startDateStr, endDateStr, barberFilter),
       fetchBookingsReport(startDateStr, endDateStr, barberFilter),
@@ -397,129 +400,318 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
     }
   };
 
-  const handleDateChange = (start: Date, end: Date) => {
-    setStartDate(start);
-    setEndDate(end);
-  };
-
   const currentPeriodLabel = format(startDate, 'MMM', { locale: ptBR });
   const previousPeriodLabel = format(subMonths(startDate, 1), 'MMM', { locale: ptBR });
+  const monthLabel = format(currentMonth, "MMM yyyy", { locale: ptBR });
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-0">
+      {/* Booksy-style Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+          Estatísticas e relatórios
+        </h1>
         <div className="flex items-center gap-2">
-          <BarChart3 className="h-6 w-6 text-primary" />
-          <h1 className="text-xl sm:text-2xl font-bold">Relatórios</h1>
+          {/* Barber filter */}
+          {isOwnerOrAdmin && (
+            <Select value={selectedBarberId} onValueChange={setSelectedBarberId}>
+              <SelectTrigger className="w-[160px] h-10 bg-card border-border">
+                <SelectValue placeholder="Filtrar barbeiro" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {barbers.map((barber) => (
+                  <SelectItem key={barber.id} value={barber.id}>
+                    {barber.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          {isOwnerOrAdmin && (
+            <ExportReportsButton startDate={startDate} endDate={endDate} />
+          )}
+
+          {/* Month Navigator */}
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={goToPreviousMonth}
+              className="h-10 w-10 rounded-full border border-border hover:bg-accent"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            <span className="text-base font-semibold capitalize min-w-[100px] text-center">
+              {monthLabel}
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={goToNextMonth}
+              className="h-10 w-10 rounded-full border border-border hover:bg-accent"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
-        {isOwnerOrAdmin && (
-          <ExportReportsButton startDate={startDate} endDate={endDate} />
-        )}
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-card p-4 rounded-lg border">
-        <DateRangeFilter
-          startDate={startDate}
-          endDate={endDate}
-          onDateChange={handleDateChange}
-        />
-
-        {/* Barber filter - only for owner/admin */}
-        {isOwnerOrAdmin && (
-          <Select value={selectedBarberId} onValueChange={setSelectedBarberId}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filtrar barbeiro" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os Barbeiros</SelectItem>
-              {barbers.map((barber) => (
-                <SelectItem key={barber.id} value={barber.id}>
-                  {barber.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-      </div>
-
-      {/* Tabs for Owner/Admin */}
+      {/* Tabs */}
       {isOwnerOrAdmin ? (
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-            <TabsTrigger value="clients">Clientes</TabsTrigger>
-            <TabsTrigger value="audit">Auditoria</TabsTrigger>
-            <TabsTrigger value="alerts">Alertas</TabsTrigger>
+        <Tabs defaultValue="overview" className="space-y-0">
+          <TabsList className="bg-transparent border-b border-border rounded-none h-auto p-0 gap-0 w-full justify-start">
+            <TabsTrigger 
+              value="overview" 
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm font-medium text-muted-foreground data-[state=active]:text-foreground"
+            >
+              Painel
+            </TabsTrigger>
+            <TabsTrigger 
+              value="bookings" 
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm font-medium text-muted-foreground data-[state=active]:text-foreground"
+            >
+              Agendamentos
+            </TabsTrigger>
+            <TabsTrigger 
+              value="clients" 
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm font-medium text-muted-foreground data-[state=active]:text-foreground"
+            >
+              Clientes
+            </TabsTrigger>
+            <TabsTrigger 
+              value="revenue" 
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm font-medium text-muted-foreground data-[state=active]:text-foreground"
+            >
+              Receita
+            </TabsTrigger>
+            <TabsTrigger 
+              value="team" 
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm font-medium text-muted-foreground data-[state=active]:text-foreground"
+            >
+              Equipe
+            </TabsTrigger>
+            <TabsTrigger 
+              value="audit" 
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm font-medium text-muted-foreground data-[state=active]:text-foreground"
+            >
+              Auditoria
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
-            {/* Revenue Cards */}
-            <RevenueCard data={revenueData} loading={loadingRevenue} />
+          {/* PAINEL (Overview) Tab */}
+          <TabsContent value="overview" className="pt-6">
+            <div className="flex flex-col lg:flex-row gap-6">
+              {/* Main Content - Left */}
+              <div className="flex-1 min-w-0 space-y-8">
+                {/* Bookings Chart */}
+                <BookingsChart data={bookingsData} loading={loadingBookings} />
 
-            {/* Monthly Comparison */}
-            <MonthlyComparisonCard 
-              data={comparisonData} 
-              loading={loadingComparison}
-              currentPeriod={currentPeriodLabel}
-              previousPeriod={previousPeriodLabel}
-            />
+                {/* Revenue summary inline */}
+                <RevenueCard data={revenueData} loading={loadingRevenue} />
 
-            {/* Cancellation & No-Show Rates */}
-            <CancellationRatesCard data={cancellationData} loading={loadingCancellation} />
+                {/* Monthly Comparison */}
+                <MonthlyComparisonCard 
+                  data={comparisonData} 
+                  loading={loadingComparison}
+                  currentPeriod={currentPeriodLabel}
+                  previousPeriod={previousPeriodLabel}
+                />
+              </div>
 
-            {/* Charts and Tables */}
-            <div className="grid gap-6 lg:grid-cols-2">
-              <BookingsChart data={bookingsData} loading={loadingBookings} />
-              <TopServicesTable data={servicesData} loading={loadingServices} />
+              {/* Sidebar - Right */}
+              <ReportsSidebar
+                revenueData={revenueData}
+                cancellationData={cancellationData}
+                comparisonData={comparisonData}
+                loadingRevenue={loadingRevenue}
+                loadingCancellation={loadingCancellation}
+                loadingComparison={loadingComparison}
+              />
             </div>
-
-            {/* Occupancy */}
-            <OccupancyTable data={occupancyData} loading={loadingOccupancy} />
-
-            {/* Barber Performance */}
-            <BarberPerformanceTable data={performanceData} loading={loadingPerformance} />
           </TabsContent>
 
-          <TabsContent value="clients" className="space-y-6">
-            <TopClientsCard data={topClientsData} loading={loadingTopClients} />
+          {/* AGENDAMENTOS Tab */}
+          <TabsContent value="bookings" className="pt-6">
+            <div className="flex flex-col lg:flex-row gap-6">
+              <div className="flex-1 min-w-0 space-y-8">
+                <BookingsChart data={bookingsData} loading={loadingBookings} />
+
+                {/* Status Breakdown */}
+                <CancellationRatesCard data={cancellationData} loading={loadingCancellation} />
+
+                {/* Top Services */}
+                <TopServicesTable data={servicesData} loading={loadingServices} />
+              </div>
+
+              {/* Sidebar */}
+              <div className="w-full lg:w-[300px] flex-shrink-0">
+                <div className="border border-border rounded-xl p-5 space-y-1 sticky top-4">
+                  <h3 className="text-base font-semibold text-foreground mb-4">Relatórios</h3>
+                  {[
+                    'Resumo de visitas',
+                    'Resumo de serviços',
+                    'Lista de agendamentos',
+                    'Agendamentos por serviço',
+                    'Agendamentos por funcionário',
+                    'Agendamentos por dias e horários',
+                    'Cancelados',
+                    'Não comparecimentos',
+                  ].map((label) => (
+                    <button
+                      key={label}
+                      className="w-full flex items-center justify-between py-3 px-1 text-sm text-foreground hover:text-primary transition-colors border-b border-border last:border-0"
+                    >
+                      {label}
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           </TabsContent>
 
-          <TabsContent value="audit" className="space-y-6">
-            <AuditTimelineCard data={auditData} loading={loadingAudit} />
+          {/* CLIENTES Tab */}
+          <TabsContent value="clients" className="pt-6">
+            <div className="flex flex-col lg:flex-row gap-6">
+              <div className="flex-1 min-w-0 space-y-8">
+                <TopClientsCard data={topClientsData} loading={loadingTopClients} />
+              </div>
+
+              <div className="w-full lg:w-[300px] flex-shrink-0">
+                <div className="border border-border rounded-xl p-5 space-y-1 sticky top-4">
+                  <h3 className="text-base font-semibold text-foreground mb-4">Relatórios</h3>
+                  {[
+                    'Resumo de clientes',
+                    'Lista de clientes',
+                    'Novos clientes',
+                    'Clientes recorrentes',
+                    'Clientes não fidelizados',
+                  ].map((label) => (
+                    <button
+                      key={label}
+                      className="w-full flex items-center justify-between py-3 px-1 text-sm text-foreground hover:text-primary transition-colors border-b border-border last:border-0"
+                    >
+                      {label}
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           </TabsContent>
 
-          <TabsContent value="alerts" className="space-y-6">
-            <AlertsCard />
+          {/* RECEITA Tab */}
+          <TabsContent value="revenue" className="pt-6">
+            <div className="flex flex-col lg:flex-row gap-6">
+              <div className="flex-1 min-w-0 space-y-8">
+                <RevenueCard data={revenueData} loading={loadingRevenue} />
+                <MonthlyComparisonCard 
+                  data={comparisonData} 
+                  loading={loadingComparison}
+                  currentPeriod={currentPeriodLabel}
+                  previousPeriod={previousPeriodLabel}
+                />
+              </div>
+
+              <ReportsSidebar
+                revenueData={revenueData}
+                cancellationData={cancellationData}
+                comparisonData={comparisonData}
+                loadingRevenue={loadingRevenue}
+                loadingCancellation={loadingCancellation}
+                loadingComparison={loadingComparison}
+                variant="revenue"
+              />
+            </div>
+          </TabsContent>
+
+          {/* EQUIPE Tab */}
+          <TabsContent value="team" className="pt-6">
+            <div className="flex flex-col lg:flex-row gap-6">
+              <div className="flex-1 min-w-0 space-y-8">
+                <BarberPerformanceTable data={performanceData} loading={loadingPerformance} />
+                <OccupancyTable data={occupancyData} loading={loadingOccupancy} />
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* AUDITORIA Tab */}
+          <TabsContent value="audit" className="pt-6">
+            <div className="flex flex-col lg:flex-row gap-6">
+              <div className="flex-1 min-w-0 space-y-8">
+                <AuditTimelineCard data={auditData} loading={loadingAudit} />
+              </div>
+              <div className="w-full lg:w-[300px] flex-shrink-0">
+                <AlertsCard />
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       ) : (
-        // Barber view - simplified
-        <div className="space-y-6">
-          {/* Revenue Cards */}
-          <RevenueCard data={revenueData} loading={loadingRevenue} />
+        // Barber view - simplified with same layout style
+        <Tabs defaultValue="overview" className="space-y-0">
+          <TabsList className="bg-transparent border-b border-border rounded-none h-auto p-0 gap-0 w-full justify-start">
+            <TabsTrigger 
+              value="overview" 
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm font-medium text-muted-foreground data-[state=active]:text-foreground"
+            >
+              Painel
+            </TabsTrigger>
+            <TabsTrigger 
+              value="bookings" 
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm font-medium text-muted-foreground data-[state=active]:text-foreground"
+            >
+              Agendamentos
+            </TabsTrigger>
+            <TabsTrigger 
+              value="clients" 
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 text-sm font-medium text-muted-foreground data-[state=active]:text-foreground"
+            >
+              Clientes
+            </TabsTrigger>
+          </TabsList>
 
-          {/* Monthly Comparison */}
-          <MonthlyComparisonCard 
-            data={comparisonData} 
-            loading={loadingComparison}
-            currentPeriod={currentPeriodLabel}
-            previousPeriod={previousPeriodLabel}
-          />
+          <TabsContent value="overview" className="pt-6">
+            <div className="flex flex-col lg:flex-row gap-6">
+              <div className="flex-1 min-w-0 space-y-8">
+                <BookingsChart data={bookingsData} loading={loadingBookings} />
+                <RevenueCard data={revenueData} loading={loadingRevenue} />
+                <MonthlyComparisonCard 
+                  data={comparisonData} 
+                  loading={loadingComparison}
+                  currentPeriod={currentPeriodLabel}
+                  previousPeriod={previousPeriodLabel}
+                />
+              </div>
+              <ReportsSidebar
+                revenueData={revenueData}
+                cancellationData={cancellationData}
+                comparisonData={comparisonData}
+                loadingRevenue={loadingRevenue}
+                loadingCancellation={loadingCancellation}
+                loadingComparison={loadingComparison}
+              />
+            </div>
+          </TabsContent>
 
-          {/* Cancellation & No-Show Rates */}
-          <CancellationRatesCard data={cancellationData} loading={loadingCancellation} />
+          <TabsContent value="bookings" className="pt-6">
+            <div className="flex flex-col lg:flex-row gap-6">
+              <div className="flex-1 min-w-0 space-y-8">
+                <BookingsChart data={bookingsData} loading={loadingBookings} />
+                <CancellationRatesCard data={cancellationData} loading={loadingCancellation} />
+                <TopServicesTable data={servicesData} loading={loadingServices} />
+              </div>
+            </div>
+          </TabsContent>
 
-          {/* Charts and Tables */}
-          <div className="grid gap-6 lg:grid-cols-2">
-            <BookingsChart data={bookingsData} loading={loadingBookings} />
-            <TopServicesTable data={servicesData} loading={loadingServices} />
-          </div>
-
-          {/* Top Clients for barber */}
-          <TopClientsCard data={topClientsData} loading={loadingTopClients} />
-        </div>
+          <TabsContent value="clients" className="pt-6">
+            <div className="flex-1 min-w-0 space-y-8">
+              <TopClientsCard data={topClientsData} loading={loadingTopClients} />
+            </div>
+          </TabsContent>
+        </Tabs>
       )}
     </div>
   );

@@ -1,6 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Users, Clock, Calendar } from 'lucide-react';
 
 interface TopClientData {
@@ -22,19 +20,14 @@ interface TopClientsCardProps {
 const weekdayNames = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
 export function TopClientsCard({ data, loading }: TopClientsCardProps) {
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
-  };
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
   const formatTime = (time: string) => {
     if (!time || time === '00:00:00') return '-';
     return time.substring(0, 5);
   };
 
-  // Get profitable insights from first row (same for all rows)
   const profitableWeekday = data.length > 0 ? weekdayNames[data[0].profitable_weekday] : '-';
   const profitableTime = data.length > 0 ? formatTime(data[0].profitable_time_slot) : '-';
   const weekdayRevenue = data.length > 0 ? data[0].profitable_weekday_revenue : 0;
@@ -42,79 +35,78 @@ export function TopClientsCard({ data, loading }: TopClientsCardProps) {
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-48" />
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Skeleton className="h-20" />
-          <Skeleton className="h-40" />
-        </CardContent>
-      </Card>
+      <div>
+        <h2 className="text-base font-semibold text-foreground mb-4 flex items-center gap-2">
+          <Users className="h-5 w-5 text-primary" />
+          Top Clientes & Horários Lucrativos
+        </h2>
+        <Skeleton className="h-48 w-full rounded-lg" />
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
+    <div className="space-y-8">
+      {/* Profitable Insights */}
+      <div>
+        <h2 className="text-base font-semibold text-foreground mb-4 flex items-center gap-2">
           <Users className="h-5 w-5 text-primary" />
-          Top Clientes & Horários Lucrativos
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Profitable Insights */}
+          Insights de Lucratividade
+        </h2>
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-            <Calendar className="h-5 w-5 text-primary" />
+          <div className="flex items-center gap-3 p-4 border border-border rounded-xl">
+            <Calendar className="h-5 w-5 text-primary flex-shrink-0" />
             <div>
-              <p className="text-sm text-muted-foreground">Dia mais lucrativo</p>
-              <p className="font-medium">{profitableWeekday}</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Dia mais lucrativo</p>
+              <p className="font-medium text-foreground">{profitableWeekday}</p>
               <p className="text-xs text-muted-foreground">{formatCurrency(weekdayRevenue)}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-            <Clock className="h-5 w-5 text-primary" />
+          <div className="flex items-center gap-3 p-4 border border-border rounded-xl">
+            <Clock className="h-5 w-5 text-primary flex-shrink-0" />
             <div>
-              <p className="text-sm text-muted-foreground">Horário mais lucrativo</p>
-              <p className="font-medium">{profitableTime}</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Horário mais lucrativo</p>
+              <p className="font-medium text-foreground">{profitableTime}</p>
               <p className="text-xs text-muted-foreground">{formatCurrency(timeRevenue)}</p>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Top Clients Table */}
+      {/* Top Clients Table */}
+      <div>
+        <h2 className="text-base font-semibold text-foreground mb-4">
+          Top 10 clientes por volume de negócios
+        </h2>
         {data.length === 0 ? (
-          <p className="text-muted-foreground text-sm text-center py-4">
+          <div className="text-center py-8 text-muted-foreground border border-border rounded-xl">
             Nenhum cliente encontrado no período.
-          </p>
+          </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12">#</TableHead>
-                <TableHead>Cliente</TableHead>
-                <TableHead className="text-right">Atendimentos</TableHead>
-                <TableHead className="text-right">Faturamento</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.map((client, index) => (
-                <TableRow key={client.client_id || index}>
-                  <TableCell className="font-medium text-muted-foreground">
-                    {index + 1}
-                  </TableCell>
-                  <TableCell className="font-medium">{client.client_name}</TableCell>
-                  <TableCell className="text-right">{client.total_bookings}</TableCell>
-                  <TableCell className="text-right font-medium">
-                    {formatCurrency(client.total_revenue)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <div className="border border-border rounded-xl overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-muted-foreground text-[11px] uppercase tracking-wider border-b border-border">
+                  <th className="text-left font-semibold py-3 px-5 w-12">#</th>
+                  <th className="text-left font-semibold py-3 px-5">Cliente</th>
+                  <th className="text-center font-semibold py-3 px-5">Atendimentos</th>
+                  <th className="text-right font-semibold py-3 px-5">Faturamento</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.map((client, index) => (
+                  <tr key={client.client_id || index} className="border-t border-border hover:bg-accent/30 transition-colors">
+                    <td className="py-3 px-5 text-muted-foreground font-medium">{index + 1}</td>
+                    <td className="py-3 px-5 text-foreground font-medium">{client.client_name}</td>
+                    <td className="py-3 px-5 text-center text-foreground">{client.total_bookings}</td>
+                    <td className="py-3 px-5 text-right text-foreground font-medium">{formatCurrency(client.total_revenue)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
