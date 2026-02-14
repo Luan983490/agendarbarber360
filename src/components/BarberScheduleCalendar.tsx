@@ -1365,7 +1365,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                           {time.substring(0, 5)}
                         </div>
                       ))}
-                      <div className="h-10 lg:hidden" style={{ backgroundColor: '#d9d9d9' }} />
+                      <div className="h-24 lg:hidden" style={{ backgroundColor: '#d9d9d9' }} />
                     </div>
                   </div>
                 </div>
@@ -1454,7 +1454,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                           })}
                         </div>
                       ))}
-                      <div className="h-10 lg:hidden" style={{ backgroundColor: '#d9d9d9' }} />
+                      <div className="h-24 lg:hidden" style={{ backgroundColor: '#d9d9d9' }} />
                     </div>
                   </div>
                 </div>
