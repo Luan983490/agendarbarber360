@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CalendarDays, Scissors, UserRound, BarChart3, Store, CreditCard, ChevronUp, Settings } from 'lucide-react';
+import { CalendarDays, Scissors, UserRound, BarChart3, Store, CreditCard, ChevronUp, Settings, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
@@ -13,10 +13,11 @@ const mainNavItems = [
   { id: 'bookings', label: 'Agenda', icon: CalendarDays },
   { id: 'barbers', label: 'Barbeiros', icon: UserRound },
   { id: 'services', label: 'Serviços', icon: Scissors },
-  { id: 'reports', label: 'Relatórios', icon: BarChart3 },
+  { id: 'clients', label: 'Clientes', icon: Users },
 ];
 
 const barbershopSubItems = [
+  { id: 'reports', label: 'Relatórios', icon: BarChart3 },
   { id: 'edit', label: 'Editar Barbearia', icon: Settings },
   { id: 'assinatura', label: 'Assinatura', icon: CreditCard, href: '/admin/assinatura' },
 ];

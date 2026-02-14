@@ -20,6 +20,7 @@ import { SubscriptionsManagement } from '@/components/SubscriptionsManagement';
 import { LoyaltyManagement } from '@/components/LoyaltyManagement';
 import { StaffManagement } from '@/components/StaffManagement';
 import { ReportsPage } from '@/components/reports/ReportsPage';
+import { ClientsManagement } from '@/components/clients/ClientsManagement';
 import { useSubscription } from '@/hooks/useSubscription';
 import { TrialBanner } from '@/components/TrialBanner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -554,6 +555,8 @@ const Dashboard = () => {
         return <StaffManagement barbershopId={barbershop!.id} />;
       case 'reports':
         return <ReportsPage barbershopId={barbershop!.id} />;
+      case 'clients':
+        return <ClientsManagement barbershopId={barbershop!.id} />;
       default:
         return null;
     }
