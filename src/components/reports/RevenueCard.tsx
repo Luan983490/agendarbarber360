@@ -1,6 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign, TrendingUp, Calendar } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DollarSign, TrendingUp, Calendar } from 'lucide-react';
 
 interface RevenueData {
   total_revenue: number;
@@ -14,71 +13,58 @@ interface RevenueCardProps {
 }
 
 export function RevenueCard({ data, loading }: RevenueCardProps) {
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+
   if (loading) {
     return (
       <div className="grid gap-4 md:grid-cols-3">
         {[1, 2, 3].map((i) => (
-          <Card key={i}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-4 w-4" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-8 w-32" />
-              <Skeleton className="h-3 w-20 mt-1" />
-            </CardContent>
-          </Card>
+          <div key={i} className="border border-border rounded-xl p-5">
+            <Skeleton className="h-4 w-24 mb-3" />
+            <Skeleton className="h-8 w-32" />
+          </div>
         ))}
       </div>
     );
   }
 
+  const metrics = [
+    {
+      label: 'Faturamento Total',
+      value: formatCurrency(data?.total_revenue || 0),
+      icon: DollarSign,
+      highlight: true,
+    },
+    {
+      label: 'Total de Agendamentos',
+      value: (data?.total_bookings || 0).toString(),
+      icon: Calendar,
+      highlight: false,
+    },
+    {
+      label: 'Ticket Médio',
+      value: formatCurrency(data?.average_ticket || 0),
+      icon: TrendingUp,
+      highlight: false,
+    },
+  ];
+
   return (
     <div className="grid gap-4 md:grid-cols-3">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Faturamento Total</CardTitle>
-          <DollarSign className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-primary">
-            R$ {(data?.total_revenue || 0).toFixed(2)}
+      {metrics.map((metric) => (
+        <div key={metric.label} className="border border-border rounded-xl p-5">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              {metric.label}
+            </p>
+            <metric.icon className="h-4 w-4 text-muted-foreground" />
           </div>
-          <p className="text-xs text-muted-foreground">
-            Período selecionado
+          <p className={`text-2xl font-bold ${metric.highlight ? 'text-primary' : 'text-foreground'}`}>
+            {metric.value}
           </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total de Agendamentos</CardTitle>
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">
-            {data?.total_bookings || 0}
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Concluídos no período
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Ticket Médio</CardTitle>
-          <TrendingUp className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">
-            R$ {(data?.average_ticket || 0).toFixed(2)}
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Por atendimento
-          </p>
-        </CardContent>
-      </Card>
+        </div>
+      ))}
     </div>
   );
 }

@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
@@ -27,26 +26,22 @@ export function MonthlyComparisonCard({
   currentPeriod = 'Mês atual',
   previousPeriod = 'Mês anterior'
 }: MonthlyComparisonCardProps) {
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
-  };
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
   const VariationIndicator = ({ value }: { value: number }) => {
     if (value === 0) {
       return (
-        <span className="flex items-center gap-1 text-muted-foreground">
-          <Minus className="h-4 w-4" />
+        <span className="flex items-center gap-1 text-muted-foreground text-xs">
+          <Minus className="h-3 w-3" />
           0%
         </span>
       );
     }
     const isPositive = value > 0;
     return (
-      <span className={`flex items-center gap-1 font-semibold ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-        {isPositive ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+      <span className={`flex items-center gap-1 font-semibold text-xs ${isPositive ? 'text-emerald-400' : 'text-red-400'}`}>
+        {isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
         {isPositive ? '+' : ''}{value.toFixed(1)}%
       </span>
     );
@@ -54,24 +49,16 @@ export function MonthlyComparisonCard({
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-48" />
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
-            <Skeleton className="h-20" />
-            <Skeleton className="h-20" />
-            <Skeleton className="h-20" />
-          </div>
-        </CardContent>
-      </Card>
+      <div>
+        <h2 className="text-base font-semibold text-foreground mb-4">
+          Comparativo: {currentPeriod} vs {previousPeriod}
+        </h2>
+        <Skeleton className="h-24 w-full rounded-lg" />
+      </div>
     );
   }
 
-  if (!data) {
-    return null;
-  }
+  if (!data) return null;
 
   const metrics = [
     {
@@ -95,20 +82,20 @@ export function MonthlyComparisonCard({
   ];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">
-          Comparativo: {currentPeriod} vs {previousPeriod}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+    <div>
+      <h2 className="text-base font-semibold text-foreground mb-4">
+        Comparativo: {currentPeriod} vs {previousPeriod}
+      </h2>
+      <div className="border border-border rounded-xl p-5">
         <div className="grid gap-6 md:grid-cols-3">
           {metrics.map((metric) => (
-            <div key={metric.label} className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">{metric.label}</p>
+            <div key={metric.label} className="space-y-1">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {metric.label}
+              </p>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-lg font-bold">{metric.current}</p>
+                  <p className="text-lg font-bold text-foreground">{metric.current}</p>
                   <p className="text-xs text-muted-foreground">vs {metric.previous}</p>
                 </div>
                 <VariationIndicator value={metric.variation} />
@@ -116,7 +103,7 @@ export function MonthlyComparisonCard({
             </div>
           ))}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

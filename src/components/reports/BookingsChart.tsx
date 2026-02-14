@@ -1,6 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { CalendarDays } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -18,17 +17,10 @@ interface BookingsChartProps {
 export function BookingsChart({ data, loading }: BookingsChartProps) {
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CalendarDays className="h-5 w-5" />
-            Agendamentos por Dia
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-[300px] w-full" />
-        </CardContent>
-      </Card>
+      <div>
+        <h2 className="text-base font-semibold text-foreground mb-4">Agendamentos e horário reservado</h2>
+        <Skeleton className="h-[280px] w-full rounded-lg" />
+      </div>
     );
   }
 
@@ -38,53 +30,58 @@ export function BookingsChart({ data, loading }: BookingsChartProps) {
   }));
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <CalendarDays className="h-5 w-5" />
-          Agendamentos por Dia
-        </CardTitle>
-        <CardDescription>
-          Distribuição de atendimentos concluídos no período
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {data.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground h-[300px] flex items-center justify-center">
-            Nenhum agendamento no período selecionado
-          </div>
-        ) : (
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+    <div>
+      <h2 className="text-base font-semibold text-foreground mb-4">Agendamentos e horário reservado</h2>
+      {data.length === 0 ? (
+        <div className="text-center py-16 text-muted-foreground border border-border rounded-xl">
+          Nenhum agendamento no período selecionado
+        </div>
+      ) : (
+        <div className="border border-border rounded-xl p-4">
+          <ResponsiveContainer width="100%" height={260}>
+            <AreaChart data={chartData}>
+              <defs>
+                <linearGradient id="colorBookings" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
               <XAxis 
                 dataKey="date" 
-                className="text-xs"
-                tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
               />
               <YAxis 
-                className="text-xs"
-                tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
                 allowDecimals={false}
               />
               <Tooltip 
                 contentStyle={{ 
                   backgroundColor: 'hsl(var(--card))',
                   border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px'
+                  borderRadius: '8px',
+                  fontSize: '13px'
                 }}
                 labelStyle={{ color: 'hsl(var(--foreground))' }}
               />
-              <Bar 
+              <Area 
+                type="monotone"
                 dataKey="total_bookings" 
                 name="Agendamentos"
-                fill="hsl(var(--primary))" 
-                radius={[4, 4, 0, 0]}
+                stroke="hsl(var(--primary))" 
+                strokeWidth={2}
+                fill="url(#colorBookings)"
+                dot={{ r: 4, fill: 'hsl(var(--primary))', strokeWidth: 2, stroke: 'hsl(var(--background))' }}
+                activeDot={{ r: 6, fill: 'hsl(var(--primary))', strokeWidth: 2, stroke: 'hsl(var(--background))' }}
               />
-            </BarChart>
+            </AreaChart>
           </ResponsiveContainer>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      )}
+    </div>
   );
 }

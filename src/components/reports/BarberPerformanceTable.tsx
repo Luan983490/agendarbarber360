@@ -1,7 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Users } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Users } from 'lucide-react';
 
 interface BarberPerformance {
   barber_id: string;
@@ -16,76 +14,59 @@ interface BarberPerformanceTableProps {
 }
 
 export function BarberPerformanceTable({ data, loading }: BarberPerformanceTableProps) {
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Performance por Barbeiro
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex justify-between items-center">
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-4 w-16" />
-                <Skeleton className="h-4 w-20" />
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <div>
+        <h2 className="text-base font-semibold text-foreground mb-4 flex items-center gap-2">
+          <Users className="h-5 w-5 text-primary" />
+          Performance por Barbeiro
+        </h2>
+        <Skeleton className="h-48 w-full rounded-lg" />
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Users className="h-5 w-5" />
-          Performance por Barbeiro
-        </CardTitle>
-        <CardDescription>
-          Comparativo de desempenho entre profissionais
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {data.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            Nenhum dado de performance disponível
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Barbeiro</TableHead>
-                <TableHead className="text-right">Atendimentos</TableHead>
-                <TableHead className="text-right">Faturamento</TableHead>
-                <TableHead className="text-right">Ticket Médio</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+    <div>
+      <h2 className="text-base font-semibold text-foreground mb-4 flex items-center gap-2">
+        <Users className="h-5 w-5 text-primary" />
+        Performance por Barbeiro
+      </h2>
+      {data.length === 0 ? (
+        <div className="text-center py-8 text-muted-foreground border border-border rounded-xl">
+          Nenhum dado de performance disponível
+        </div>
+      ) : (
+        <div className="border border-border rounded-xl overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-muted-foreground text-[11px] uppercase tracking-wider border-b border-border">
+                <th className="text-left font-semibold py-3 px-5">Barbeiro</th>
+                <th className="text-center font-semibold py-3 px-5">Atendimentos</th>
+                <th className="text-right font-semibold py-3 px-5">Faturamento</th>
+                <th className="text-right font-semibold py-3 px-5">Ticket Médio</th>
+              </tr>
+            </thead>
+            <tbody>
               {data.map((barber) => (
-                <TableRow key={barber.barber_id}>
-                  <TableCell className="font-medium">{barber.barber_name}</TableCell>
-                  <TableCell className="text-right">{barber.total_bookings}</TableCell>
-                  <TableCell className="text-right font-medium">
-                    R$ {barber.total_revenue.toFixed(2)}
-                  </TableCell>
-                  <TableCell className="text-right text-muted-foreground">
-                    R$ {barber.total_bookings > 0 
-                      ? (barber.total_revenue / barber.total_bookings).toFixed(2)
-                      : '0.00'
-                    }
-                  </TableCell>
-                </TableRow>
+                <tr key={barber.barber_id} className="border-t border-border hover:bg-accent/30 transition-colors">
+                  <td className="py-3 px-5 text-foreground font-medium">{barber.barber_name}</td>
+                  <td className="py-3 px-5 text-center text-foreground">{barber.total_bookings}</td>
+                  <td className="py-3 px-5 text-right text-foreground font-medium">
+                    {formatCurrency(barber.total_revenue)}
+                  </td>
+                  <td className="py-3 px-5 text-right text-muted-foreground">
+                    {formatCurrency(barber.total_bookings > 0 ? barber.total_revenue / barber.total_bookings : 0)}
+                  </td>
+                </tr>
               ))}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
-    </Card>
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
   );
 }
