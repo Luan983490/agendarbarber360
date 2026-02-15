@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useUserRole } from '@/hooks/useUserRole';
 import { Button } from '@/components/ui/button';
@@ -766,52 +766,46 @@ const Dashboard = () => {
   }
 
   const isAgendaTab = currentTab === 'bookings';
+  const Wrapper = isMobile ? React.Fragment : SidebarProvider;
 
-
-
-  return (
-    <SidebarProvider>
-      <div className={cn("min-h-screen bg-background flex flex-col w-full", isAgendaTab && "max-lg:h-[100dvh] max-lg:overflow-hidden max-lg:min-h-0")}>
-        {showTrialBanner && (
-          <div ref={bannerRef} className="fixed top-0 left-0 right-0 z-[60]">
+  const content = (
+    <div className={cn("min-h-screen bg-background flex flex-col w-full", isAgendaTab && "max-lg:h-[100dvh] max-lg:overflow-hidden max-lg:min-h-0")}>
+      {showTrialBanner && (
+        <div ref={bannerRef} className="fixed top-0 left-0 right-0 z-[60] pointer-events-none">
+          <div className="pointer-events-auto">
             <TrialBanner barbershopId={barbershop?.id || null} />
           </div>
-        )}
-        <DashboardHeader />
-        
-        <div className={cn("flex flex-1 w-full", isAgendaTab && "max-lg:min-h-0 max-lg:overflow-hidden")} style={{ paddingTop: headerHeight + bannerHeight }}>
-          {/* Sidebar Fixo - only rendered on desktop to avoid TooltipProvider global listeners on mobile */}
-          {!isMobile && (
-            <>
-              <div className="fixed left-0 z-40" style={{ top: headerHeight + bannerHeight, height: `calc(100vh - ${headerHeight + bannerHeight}px)` }}>
-                <DashboardSidebar currentTab={currentTab} onTabChange={setCurrentTab} />
-              </div>
-              {/* Spacer for fixed sidebar */}
-              <div className="flex-shrink-0" style={{ width: 64 }} />
-            </>
-          )}
-          
-          <main className={cn("flex-1 flex flex-col w-full min-w-0", isAgendaTab && "max-lg:min-h-0")}>
-            {/* Conteúdo - área principal */}
-            <div className={cn(
-              "flex-1 p-3 sm:p-4 lg:p-6 flex flex-col pb-16 lg:pb-0",
-              isAgendaTab && "!p-0 !pb-0 max-lg:min-h-0 max-lg:overflow-hidden lg:!p-0"
-            )}>
-
-
-
-              <div className={cn("flex-1 flex flex-col", isAgendaTab && "max-lg:min-h-0")}>
-                {renderContent()}
-              </div>
-            </div>
-          </main>
         </div>
-
-        {/* Bottom Nav - mobile only */}
-        <MobileBottomNav currentTab={currentTab} onTabChange={setCurrentTab} />
+      )}
+      <DashboardHeader />
+      
+      <div className={cn("flex flex-1 w-full", isAgendaTab && "max-lg:min-h-0 max-lg:overflow-hidden")} style={{ paddingTop: headerHeight + bannerHeight }}>
+        {!isMobile && (
+          <>
+            <div className="fixed left-0 z-40" style={{ top: headerHeight + bannerHeight, height: `calc(100vh - ${headerHeight + bannerHeight}px)` }}>
+              <DashboardSidebar currentTab={currentTab} onTabChange={setCurrentTab} />
+            </div>
+            <div className="flex-shrink-0" style={{ width: 64 }} />
+          </>
+        )}
+        
+        <main className={cn("flex-1 flex flex-col w-full min-w-0", isAgendaTab && "max-lg:min-h-0")}>
+          <div className={cn(
+            "flex-1 p-3 sm:p-4 lg:p-6 flex flex-col pb-16 lg:pb-0",
+            isAgendaTab && "!p-0 !pb-0 max-lg:min-h-0 max-lg:overflow-hidden lg:!p-0"
+          )}>
+            <div className={cn("flex-1 flex flex-col", isAgendaTab && "max-lg:min-h-0")}>
+              {renderContent()}
+            </div>
+          </div>
+        </main>
       </div>
-    </SidebarProvider>
+
+      <MobileBottomNav currentTab={currentTab} onTabChange={setCurrentTab} />
+    </div>
   );
+
+  return <Wrapper>{content}</Wrapper>;
 };
 
 export default Dashboard;
