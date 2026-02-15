@@ -82,11 +82,11 @@ const AppContent = () => {
             <Route path="/dev-assistant" element={<DevAssistant />} />
             <Route path="/verify-mfa" element={<VerifyMFA />} />
             <Route path="/barbearia/:slug" element={<BarbershopPage />} />
-            {/* Admin Routes (Owner only) */}
+            {/* Dashboard Routes (Owner and Barber with permissions) */}
             <Route 
               path="/admin/dashboard" 
               element={
-                <ProtectedRoute allowedRoles={['owner']}>
+                <ProtectedRoute allowedRoles={['owner', 'barber']}>
                   <Dashboard />
                 </ProtectedRoute>
               } 
@@ -94,7 +94,7 @@ const AppContent = () => {
             <Route 
               path="/dashboard" 
               element={
-                <ProtectedRoute allowedRoles={['owner']}>
+                <ProtectedRoute allowedRoles={['owner', 'barber']}>
                   <Dashboard />
                 </ProtectedRoute>
               } 

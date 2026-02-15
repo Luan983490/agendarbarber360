@@ -10,6 +10,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { usePermissions } from '@/hooks/usePermissions';
 
 interface DashboardSidebarProps {
   currentTab: string;
@@ -22,22 +23,25 @@ interface MenuItem {
   icon: LucideIcon;
   href?: string;
   separator?: boolean;
+  permission?: string | string[];
+  ownerOnly?: boolean;
 }
 
 const menuItems: MenuItem[] = [
-  { id: 'bookings', title: 'Agenda', icon: CalendarDays },
-  { id: 'barbers', title: 'Barbeiros', icon: UserRound },
-  { id: 'services', title: 'Serviços', icon: Scissors },
-  { id: 'clients', title: 'Clientes', icon: Users },
-  { id: 'reports', title: 'Relatórios', icon: BarChart3, separator: true },
-  { id: 'edit', title: 'Editar Barbearia', icon: Store },
-  { id: 'assinatura', title: 'Assinatura', icon: CreditCard, href: '/admin/assinatura' },
+  { id: 'bookings', title: 'Agenda', icon: CalendarDays, permission: 'view_all_bookings' },
+  { id: 'barbers', title: 'Barbeiros', icon: UserRound, permission: 'view_all_barbers' },
+  { id: 'services', title: 'Serviços', icon: Scissors, permission: 'view_services' },
+  { id: 'clients', title: 'Clientes', icon: Users, permission: 'view_all_clients' },
+  { id: 'reports', title: 'Relatórios', icon: BarChart3, separator: true, permission: 'view_dashboard' },
+  { id: 'edit', title: 'Editar Barbearia', icon: Store, permission: 'edit_barbershop_settings' },
+  { id: 'assinatura', title: 'Assinatura', icon: CreditCard, href: '/admin/assinatura', ownerOnly: true },
   { id: 'settings', title: 'Configurações', icon: Settings, href: '/perfil', separator: true },
 ];
 
 export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarProps) {
   const { isMobile } = useSidebar();
   const navigate = useNavigate();
+  const { hasAnyPermission, isOwner } = usePermissions();
 
   const handleClick = (item: MenuItem) => {
     if (item.href) {
@@ -46,6 +50,13 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
       onTabChange(item.id);
     }
   };
+
+  const visibleItems = menuItems.filter(item => {
+    if (item.ownerOnly) return isOwner;
+    if (!item.permission) return true;
+    const perms = Array.isArray(item.permission) ? item.permission : [item.permission];
+    return hasAnyPermission(perms);
+  });
 
   return (
     <Sidebar
@@ -56,7 +67,7 @@ export function DashboardSidebar({ currentTab, onTabChange }: DashboardSidebarPr
       <SidebarContent className="py-4 flex items-center" style={{ backgroundColor: '#1a1a1a' }}>
         <TooltipProvider delayDuration={100}>
           <SidebarMenu className="gap-2 w-full flex flex-col items-center">
-            {menuItems.map((item, index) => {
+            {visibleItems.map((item, index) => {
               const Icon = item.icon;
               const isActive = currentTab === item.id;
 

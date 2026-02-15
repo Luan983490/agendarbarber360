@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { CalendarDays, Scissors, UserRound, BarChart3, Store, CreditCard, ChevronUp, Settings, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { usePermissions } from '@/hooks/usePermissions';
 
 interface MobileBottomNavProps {
   currentTab: string;
@@ -10,23 +11,35 @@ interface MobileBottomNavProps {
 }
 
 const mainNavItems = [
-  { id: 'bookings', label: 'Agenda', icon: CalendarDays },
-  { id: 'barbers', label: 'Barbeiros', icon: UserRound },
-  { id: 'services', label: 'Serviços', icon: Scissors },
-  { id: 'clients', label: 'Clientes', icon: Users },
+  { id: 'bookings', label: 'Agenda', icon: CalendarDays, permission: 'view_all_bookings' },
+  { id: 'barbers', label: 'Barbeiros', icon: UserRound, permission: 'view_all_barbers' },
+  { id: 'services', label: 'Serviços', icon: Scissors, permission: 'view_services' },
+  { id: 'clients', label: 'Clientes', icon: Users, permission: 'view_all_clients' },
 ];
 
 const barbershopSubItems = [
-  { id: 'reports', label: 'Relatórios', icon: BarChart3 },
-  { id: 'edit', label: 'Editar Barbearia', icon: Settings },
-  { id: 'assinatura', label: 'Assinatura', icon: CreditCard, href: '/admin/assinatura' },
+  { id: 'reports', label: 'Relatórios', icon: BarChart3, permission: 'view_dashboard' },
+  { id: 'edit', label: 'Editar Barbearia', icon: Settings, permission: 'edit_barbershop_settings' },
+  { id: 'assinatura', label: 'Assinatura', icon: CreditCard, href: '/admin/assinatura', ownerOnly: true },
 ];
 
 export function MobileBottomNav({ currentTab, onTabChange }: MobileBottomNavProps) {
   const [subMenuOpen, setSubMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const { hasAnyPermission, isOwner } = usePermissions();
 
-  const isBarbershopActive = barbershopSubItems.some(item => currentTab === item.id);
+  const visibleMainItems = mainNavItems.filter(item => {
+    if (!item.permission) return true;
+    return hasAnyPermission([item.permission]);
+  });
+
+  const visibleSubItems = barbershopSubItems.filter((item: any) => {
+    if (item.ownerOnly) return isOwner;
+    if (!item.permission) return true;
+    return hasAnyPermission([item.permission]);
+  });
+
+  const isBarbershopActive = visibleSubItems.some(item => currentTab === item.id);
 
   const handleSubItemClick = (item: typeof barbershopSubItems[0]) => {
     if (item.href) {
@@ -40,7 +53,7 @@ export function MobileBottomNav({ currentTab, onTabChange }: MobileBottomNavProp
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden border-t border-[#3a3939]" style={{ backgroundColor: '#1a1a1a' }}>
       <div className="flex items-center justify-around py-1.5 px-1">
-        {mainNavItems.map((item) => {
+        {visibleMainItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentTab === item.id;
           return (
@@ -61,46 +74,48 @@ export function MobileBottomNav({ currentTab, onTabChange }: MobileBottomNavProp
         })}
 
         {/* Barbearia with submenu */}
-        <Popover open={subMenuOpen} onOpenChange={setSubMenuOpen}>
-          <PopoverTrigger asChild>
-            <button
-              className={cn(
-                'flex flex-col items-center gap-0.5 px-2 py-1 rounded-md transition-colors min-w-0 flex-1',
-                isBarbershopActive ? 'text-white' : 'text-[#888888] hover:text-[#bbbbbb]'
-              )}
+        {visibleSubItems.length > 0 && (
+          <Popover open={subMenuOpen} onOpenChange={setSubMenuOpen}>
+            <PopoverTrigger asChild>
+              <button
+                className={cn(
+                  'flex flex-col items-center gap-0.5 px-2 py-1 rounded-md transition-colors min-w-0 flex-1',
+                  isBarbershopActive ? 'text-white' : 'text-[#888888] hover:text-[#bbbbbb]'
+                )}
+              >
+                <Store className="h-5 w-5" strokeWidth={1.5} />
+                <span className="text-[10px] leading-tight truncate w-full text-center">
+                  Barbearia
+                </span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              side="top"
+              align="end"
+              sideOffset={8}
+              className="w-48 p-1 border-[#3a3939]"
+              style={{ backgroundColor: '#1a1a1a' }}
             >
-              <Store className="h-5 w-5" strokeWidth={1.5} />
-              <span className="text-[10px] leading-tight truncate w-full text-center">
-                Barbearia
-              </span>
-            </button>
-          </PopoverTrigger>
-          <PopoverContent
-            side="top"
-            align="end"
-            sideOffset={8}
-            className="w-48 p-1 border-[#3a3939]"
-            style={{ backgroundColor: '#1a1a1a' }}
-          >
-            {barbershopSubItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = currentTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleSubItemClick(item)}
-                  className={cn(
-                    'flex items-center gap-2 w-full px-3 py-2.5 rounded-md text-sm transition-colors',
-                    isActive ? 'text-white bg-[#333]' : 'text-[#aaa] hover:text-white hover:bg-[#2a2a2a]'
-                  )}
-                >
-                  <Icon className="h-4 w-4" strokeWidth={1.5} />
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
-          </PopoverContent>
-        </Popover>
+              {visibleSubItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = currentTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => handleSubItemClick(item)}
+                    className={cn(
+                      'flex items-center gap-2 w-full px-3 py-2.5 rounded-md text-sm transition-colors',
+                      isActive ? 'text-white bg-[#333]' : 'text-[#aaa] hover:text-white hover:bg-[#2a2a2a]'
+                    )}
+                  >
+                    <Icon className="h-4 w-4" strokeWidth={1.5} />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </PopoverContent>
+          </Popover>
+        )}
       </div>
       {/* Safe area for devices with home indicator */}
       <div className="h-[env(safe-area-inset-bottom)]" style={{ backgroundColor: '#1a1a1a' }} />

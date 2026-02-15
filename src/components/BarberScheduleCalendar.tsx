@@ -164,10 +164,8 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
 
   // Ref para controlar AbortController das requisições
   const abortControllerRef = useRef<AbortController | null>(null);
-  
-  // Refs para sincronização de scroll
-  const timeColRef = useRef<HTMLDivElement | null>(null);
-  const dayHeaderRef = useRef<HTMLDivElement | null>(null);
+
+
 
   // Ref para rastrear o último barbeiro processado (evita fetch duplicado)
   const lastFetchedBarberRef = useRef<string | null>(null);
@@ -1338,125 +1336,96 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                 </div>
               </div>
             ) : (
-              /* Visualização Dia/Semana - Grade de Horários - Mobile: coluna de horários separada */
-              <div className="flex h-full min-h-0" style={{ borderRadius: 0 }}>
-                {/* Coluna fixa de horários (mobile) - nunca rola horizontalmente */}
-                <div className="flex-shrink-0 flex flex-col" style={{ width: 48 }}>
-                  {/* Espaço do header dos dias */}
-                  <div className="flex-shrink-0" style={{ height: 36, backgroundColor: '#d9d9d9' }} />
-                  {/* Labels dos horários - scroll vertical sincronizado */}
+              /* Visualização Dia/Semana - Grade de Horários - scroll unificado com sticky */
+              <div 
+                className="flex-1 min-h-0 overflow-auto agenda-scroll"
+                style={{ 
+                  WebkitOverflowScrolling: 'touch',
+                  overscrollBehavior: 'contain',
+                  backgroundColor: '#f0f0f0',
+                  borderRadius: 0,
+                  touchAction: 'pan-x pan-y',
+                }}
+              >
+                {/* Day header row - sticky no topo */}
+                <div 
+                  className="sticky top-0 z-20 flex"
+                  style={{ 
+                    backgroundColor: '#d9d9d9',
+                    minWidth: displayDays.length > 1 ? `${displayDays.length * 90 + 48}px` : 'auto',
+                  }}
+                >
                   <div 
-                    className="flex-1 min-h-0 overflow-hidden"
-                    style={{ backgroundColor: '#d9d9d9' }}
+                    className="sticky left-0 z-30 flex-shrink-0"
+                    style={{ width: 48, height: 36, backgroundColor: '#d9d9d9' }}
+                  />
+                  <div 
+                    className="grid flex-1"
+                    style={{ 
+                      gridTemplateColumns: `repeat(${displayDays.length}, minmax(80px, 1fr))`,
+                    }}
                   >
-                    <div 
-                      ref={timeColRef}
-                      className="divide-y divide-gray-500/30 will-change-transform"
-                    >
-                      {allTimeSlotsForView.map((time) => (
-                        <div
-                          key={time}
-                          className={cn(
-                            "flex items-center justify-end pr-1.5 border-r border-gray-400/10 text-black",
-                            viewMode === 'week' ? "h-[20px]" : "h-[24px] sm:h-[22px]"
-                          )}
-                          style={{ fontSize: 11, fontWeight: 500 }}
-                        >
-                          {time.substring(0, 5)}
-                        </div>
-                      ))}
-                      <div className="h-10 lg:hidden" style={{ backgroundColor: '#d9d9d9' }} />
-                    </div>
+                    {displayDays.map((day, i) => (
+                      <div key={i} className="text-center px-0.5 py-2.5 overflow-hidden">
+                        <p className="font-semibold text-xs truncate text-black capitalize">
+                          {viewMode === 'week' 
+                            ? format(day, "EEEEEE dd/M", { locale: ptBR })
+                            : format(day, "EEEE, dd/MMM/yyyy", { locale: ptBR }).replace('-feira', '')
+                          }
+                        </p>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
-                {/* Área scrollável: dias (horizontal) + horários (vertical) */}
-                <div className="flex-1 min-w-0 flex flex-col min-h-0">
-                  {/* Header dos dias - fixo no topo, rola horizontalmente */}
-                  <div 
-                    ref={dayHeaderRef}
-                    className="flex-shrink-0 overflow-hidden"
-                    style={{ backgroundColor: '#d9d9d9', height: 36 }}
-                  >
-                    <div 
-                      className="grid"
-                      style={{ 
-                        gridTemplateColumns: `repeat(${displayDays.length}, minmax(80px, 1fr))`,
-                        minWidth: displayDays.length > 1 ? `${displayDays.length * 90}px` : 'auto'
-                      }}
+                {/* Grid rows com time label sticky à esquerda */}
+                <div 
+                  className="divide-y divide-gray-500/30"
+                  style={{ 
+                    minWidth: displayDays.length > 1 ? `${displayDays.length * 90 + 48}px` : 'auto',
+                  }}
+                >
+                  {allTimeSlotsForView.map((time) => (
+                    <div
+                      key={time}
+                      className={cn("flex", viewMode === 'week' ? "h-[20px]" : "h-[24px] sm:h-[22px]")}
                     >
-                      {displayDays.map((day, i) => (
-                        <div key={i} className="text-center px-0.5 py-2.5 overflow-hidden">
-                          <p className="font-semibold text-xs truncate text-black capitalize">
-                            {viewMode === 'week' 
-                              ? format(day, "EEEEEE dd/M", { locale: ptBR })
-                              : format(day, "EEEE, dd/MMM/yyyy", { locale: ptBR }).replace('-feira', '')
-                            }
-                          </p>
-                        </div>
-                      ))}
+                      {/* Time label - sticky left */}
+                      <div 
+                        className="sticky left-0 z-10 flex-shrink-0 flex items-center justify-end pr-1.5 border-r border-gray-400/10 text-black"
+                        style={{ width: 48, fontSize: 11, fontWeight: 500, backgroundColor: '#d9d9d9' }}
+                      >
+                        {time.substring(0, 5)}
+                      </div>
+                      {/* Day columns */}
+                      <div 
+                        className="grid flex-1"
+                        style={{ 
+                          gridTemplateColumns: `repeat(${displayDays.length}, minmax(80px, 1fr))`,
+                        }}
+                      >
+                        {displayDays.map((day, i) => {
+                          const slotInfo = getSlotType(day, time);
+                          return (
+                            <div key={i} className="min-w-0 overflow-hidden border-r border-gray-400/10 last:border-r-0">
+                              <TimeSlot
+                                time={time}
+                                type={slotInfo.type}
+                                booking={slotInfo.booking}
+                                block={slotInfo.block}
+                                onClick={(e) => handleSlotClick(day, time, e)}
+                                isBookingStart={slotInfo.isBookingStart}
+                                isBookingMiddle={slotInfo.isBookingMiddle}
+                                isBookingEnd={slotInfo.isBookingEnd}
+                                compact={viewMode === 'week'}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-
-                  {/* Body - single scroll container for both axes */}
-                  <div 
-                    className="flex-1 min-h-0 overflow-scroll agenda-scroll"
-                    style={{ 
-                      WebkitOverflowScrolling: 'touch',
-                      overscrollBehavior: 'contain',
-                      backgroundColor: '#f0f0f0',
-                      borderRadius: 0,
-                      touchAction: 'pan-x pan-y',
-                    }}
-                    onScroll={(e) => {
-                      const target = e.currentTarget;
-                      if (dayHeaderRef.current) {
-                        dayHeaderRef.current.scrollLeft = target.scrollLeft;
-                      }
-                      // Use transform instead of scrollTop to avoid clamping
-                      // when grid has horizontal scrollbar but time column doesn't
-                      if (timeColRef.current) {
-                        timeColRef.current.style.transform = `translateY(-${target.scrollTop}px)`;
-                      }
-                    }}
-                  >
-                    <div 
-                      className="divide-y divide-gray-500/30"
-                      style={{ 
-                        minWidth: displayDays.length > 1 ? `${displayDays.length * 90}px` : 'auto',
-                      }}
-                    >
-                      {allTimeSlotsForView.map((time) => (
-                        <div
-                          key={time}
-                          className={cn("grid", viewMode === 'week' ? "h-[20px]" : "h-[24px] sm:h-[22px]")}
-                          style={{ 
-                            gridTemplateColumns: `repeat(${displayDays.length}, minmax(80px, 1fr))`,
-                          }}
-                        >
-                          {displayDays.map((day, i) => {
-                            const slotInfo = getSlotType(day, time);
-                            return (
-                              <div key={i} className="min-w-0 overflow-hidden border-r border-gray-400/10 last:border-r-0">
-                                <TimeSlot
-                                  time={time}
-                                  type={slotInfo.type}
-                                  booking={slotInfo.booking}
-                                  block={slotInfo.block}
-                                  onClick={(e) => handleSlotClick(day, time, e)}
-                                  isBookingStart={slotInfo.isBookingStart}
-                                  isBookingMiddle={slotInfo.isBookingMiddle}
-                                  isBookingEnd={slotInfo.isBookingEnd}
-                                  compact={viewMode === 'week'}
-                                />
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ))}
-                      <div className="h-10 lg:hidden" style={{ backgroundColor: '#d9d9d9' }} />
-                    </div>
-                  </div>
+                  ))}
+                  <div className="h-24 lg:hidden" style={{ backgroundColor: '#d9d9d9' }} />
                 </div>
               </div>
             )}

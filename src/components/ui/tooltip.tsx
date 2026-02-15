@@ -5,57 +5,9 @@ import { cn } from "@/lib/utils";
 
 const TooltipProvider = TooltipPrimitive.Provider;
 
-// Detect touch device to prevent tooltip from stealing first tap
-function useIsTouchDevice() {
-  const [isTouch, setIsTouch] = React.useState(false);
-  React.useEffect(() => {
-    setIsTouch('ontouchstart' in window || navigator.maxTouchPoints > 0);
-  }, []);
-  return isTouch;
-}
+const Tooltip = TooltipPrimitive.Root;
 
-const TouchContext = React.createContext(false);
-
-const Tooltip = ({ children, open: openProp, onOpenChange, ...props }: TooltipPrimitive.TooltipProps) => {
-  const isTouch = useIsTouchDevice();
-  const [internalOpen, setInternalOpen] = React.useState(false);
-  const isControlled = openProp !== undefined;
-  const open = isControlled ? openProp : internalOpen;
-  const handleOpenChange = React.useCallback((val: boolean) => {
-    if (isTouch) return;
-    if (!isControlled) setInternalOpen(val);
-    onOpenChange?.(val);
-  }, [isTouch, isControlled, onOpenChange]);
-
-  return (
-    <TouchContext.Provider value={isTouch}>
-      <TooltipPrimitive.Root
-        {...props}
-        open={isTouch ? false : open}
-        onOpenChange={handleOpenChange}
-      >
-        {children}
-      </TooltipPrimitive.Root>
-    </TouchContext.Provider>
-  );
-};
-
-const TooltipTrigger = React.forwardRef<
-  React.ElementRef<typeof TooltipPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Trigger>
->(({ asChild, ...props }, ref) => {
-  const isTouch = React.useContext(TouchContext);
-  // On touch devices, bypass the Radix trigger entirely to avoid pointer event interception
-  if (isTouch) {
-    if (asChild) {
-      // When asChild, just render the child directly without the trigger wrapper
-      return <>{props.children}</>;
-    }
-    return <button ref={ref} {...props} />;
-  }
-  return <TooltipPrimitive.Trigger ref={ref} asChild={asChild} {...props} />;
-});
-TooltipTrigger.displayName = "TooltipTrigger";
+const TooltipTrigger = TooltipPrimitive.Trigger;
 
 const TooltipContent = React.forwardRef<
   React.ElementRef<typeof TooltipPrimitive.Content>,

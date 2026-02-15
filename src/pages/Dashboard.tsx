@@ -21,6 +21,7 @@ import { LoyaltyManagement } from '@/components/LoyaltyManagement';
 import { StaffManagement } from '@/components/StaffManagement';
 import { ReportsPage } from '@/components/reports/ReportsPage';
 import { ClientsManagement } from '@/components/clients/ClientsManagement';
+// BarberPermissionsManager removed - permissions now integrated into EditBarberDialog
 import { useSubscription } from '@/hooks/useSubscription';
 import { TrialBanner } from '@/components/TrialBanner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -198,6 +199,24 @@ const Dashboard = () => {
           .single();
 
         setBarbershop(barbershopData);
+      } else if (profileData.user_type === 'barber') {
+        // If user is a barber, find their barbershop
+        const { data: barberData } = await supabase
+          .from('barbers')
+          .select('barbershop_id')
+          .eq('user_id', user?.id)
+          .eq('is_active', true)
+          .single();
+
+        if (barberData) {
+          const { data: barbershopData } = await supabase
+            .from('barbershops')
+            .select('*')
+            .eq('id', barberData.barbershop_id)
+            .single();
+
+          setBarbershop(barbershopData);
+        }
       }
     } catch (error: any) {
       toast({
@@ -719,18 +738,29 @@ const Dashboard = () => {
   );
 
   if (!barbershop) {
+    // Only show setup for owners, not barbers
+    if (userType === 'barbershop_owner') {
+      return (
+        <div className="min-h-screen bg-background flex flex-col">
+          <SimpleHeader />
+          <main className="container mx-auto px-4 py-8 mt-14">
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold mb-2">Dashboard da Barbearia</h1>
+              <p className="text-muted-foreground">
+                Gerencie sua barbearia, agendamentos e produtos
+              </p>
+            </div>
+            <BarbershopSetup onBarbershopCreated={handleBarbershopCreated} />
+          </main>
+        </div>
+      );
+    }
+    // Barber without barbershop - shouldn't happen but handle gracefully
     return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <SimpleHeader />
-        <main className="container mx-auto px-4 py-8 mt-14">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">Dashboard da Barbearia</h1>
-            <p className="text-muted-foreground">
-              Gerencie sua barbearia, agendamentos e produtos
-            </p>
-          </div>
-          <BarbershopSetup onBarbershopCreated={handleBarbershopCreated} />
-        </main>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <p className="text-muted-foreground">Nenhuma barbearia encontrada.</p>
+        </div>
       </div>
     );
   }
