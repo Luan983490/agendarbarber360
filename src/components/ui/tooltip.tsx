@@ -14,21 +14,39 @@ function useIsTouchDevice() {
   return isTouch;
 }
 
+const TouchContext = React.createContext(false);
+
 const Tooltip = ({ children, open, onOpenChange, ...props }: TooltipPrimitive.TooltipProps) => {
   const isTouch = useIsTouchDevice();
-  // On touch devices, force tooltip to stay closed so first tap triggers the action
   return (
-    <TooltipPrimitive.Root
-      {...props}
-      open={isTouch ? false : open}
-      onOpenChange={isTouch ? undefined : onOpenChange}
-    >
-      {children}
-    </TooltipPrimitive.Root>
+    <TouchContext.Provider value={isTouch}>
+      <TooltipPrimitive.Root
+        {...props}
+        open={isTouch ? false : open}
+        onOpenChange={isTouch ? undefined : onOpenChange}
+      >
+        {children}
+      </TooltipPrimitive.Root>
+    </TouchContext.Provider>
   );
 };
 
-const TooltipTrigger = TooltipPrimitive.Trigger;
+const TooltipTrigger = React.forwardRef<
+  React.ElementRef<typeof TooltipPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Trigger>
+>(({ asChild, ...props }, ref) => {
+  const isTouch = React.useContext(TouchContext);
+  // On touch devices, bypass the Radix trigger entirely to avoid pointer event interception
+  if (isTouch) {
+    if (asChild) {
+      // When asChild, just render the child directly without the trigger wrapper
+      return <>{props.children}</>;
+    }
+    return <button ref={ref} {...props} />;
+  }
+  return <TooltipPrimitive.Trigger ref={ref} asChild={asChild} {...props} />;
+});
+TooltipTrigger.displayName = "TooltipTrigger";
 
 const TooltipContent = React.forwardRef<
   React.ElementRef<typeof TooltipPrimitive.Content>,
