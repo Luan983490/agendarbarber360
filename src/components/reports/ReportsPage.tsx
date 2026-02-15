@@ -18,6 +18,7 @@ import { ExportReportsButton } from './ExportReportsButton';
 import { ReportsSidebar } from './ReportsSidebar';
 import { RevenueChart } from './RevenueChart';
 import { ServicesChart } from './ServicesChart';
+import { ClientsChartSection } from './ClientsChartSection';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -417,7 +418,7 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
 
   const reportLinksBookings = [
     'Resumo de visitas',
-    'Resumo de serviços',
+    'Resumo de categorias e serviços',
     'Lista de agendamentos',
     'Agendamentos por serviço',
     'Agendamentos por funcionário',
@@ -429,22 +430,24 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
   const reportLinksClients = [
     'Resumo de clientes',
     'Lista de clientes',
-    'Novos clientes',
-    'Clientes recorrentes',
+    'Novos Clientes',
+    'Clientes Recorrentes',
     'Clientes não fidelizados',
+    'Clientes potenciais na lista de espera',
+    'Não compareceram ou cancelaram tarde demais',
   ];
 
-  const ReportLinksList = ({ items }: { items: string[] }) => (
+  const ReportLinksList = ({ items, title = 'Relatórios' }: { items: string[]; title?: string }) => (
     <div className="w-full lg:w-[300px] flex-shrink-0">
       <div className="border border-border rounded-xl p-5 space-y-1 sticky top-4">
-        <h3 className="text-base font-semibold text-foreground mb-4">Relatórios</h3>
+        <h3 className="text-base font-semibold text-foreground mb-4">{title}</h3>
         {items.map((label) => (
           <button
             key={label}
             className="w-full flex items-center justify-between py-3 px-1 text-sm text-foreground hover:text-primary transition-colors border-b border-border last:border-0"
           >
-            {label}
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            <span className="text-left">{label}</span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </button>
         ))}
       </div>
@@ -522,13 +525,6 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
               <div className="flex-1 min-w-0 space-y-8">
                 <BookingsChart data={bookingsData} loading={loadingBookings} />
                 <RevenueChart bookingsData={bookingsData} revenueData={revenueData} loading={loadingRevenue || loadingBookings} />
-                <RevenueCard data={revenueData} loading={loadingRevenue} />
-                <MonthlyComparisonCard 
-                  data={comparisonData} 
-                  loading={loadingComparison}
-                  currentPeriod={currentPeriodLabel}
-                  previousPeriod={previousPeriodLabel}
-                />
               </div>
               <ReportsSidebar {...sidebarProps} />
             </div>
@@ -540,7 +536,6 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
               <div className="flex-1 min-w-0 space-y-8">
                 <BookingsChart data={bookingsData} loading={loadingBookings} />
                 <CancellationRatesCard data={cancellationData} loading={loadingCancellation} />
-                <ServicesChart data={servicesData} loading={loadingServices} />
                 <TopServicesTable data={servicesData} loading={loadingServices} />
               </div>
               <ReportLinksList items={reportLinksBookings} />
@@ -551,6 +546,12 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
           <TabsContent value="clients" className="pt-6">
             <div className="flex flex-col lg:flex-row gap-6">
               <div className="flex-1 min-w-0 space-y-8">
+                <ClientsChartSection
+                  topClientsData={topClientsData}
+                  bookingsData={bookingsData}
+                  loading={loadingTopClients || loadingBookings}
+                  monthLabel={monthLabel}
+                />
                 <TopClientsCard data={topClientsData} loading={loadingTopClients} />
               </div>
               <ReportLinksList items={reportLinksClients} />
@@ -611,13 +612,6 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
               <div className="flex-1 min-w-0 space-y-8">
                 <BookingsChart data={bookingsData} loading={loadingBookings} />
                 <RevenueChart bookingsData={bookingsData} revenueData={revenueData} loading={loadingRevenue || loadingBookings} />
-                <RevenueCard data={revenueData} loading={loadingRevenue} />
-                <MonthlyComparisonCard 
-                  data={comparisonData} 
-                  loading={loadingComparison}
-                  currentPeriod={currentPeriodLabel}
-                  previousPeriod={previousPeriodLabel}
-                />
               </div>
               <ReportsSidebar {...sidebarProps} />
             </div>
@@ -634,8 +628,16 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
           </TabsContent>
 
           <TabsContent value="clients" className="pt-6">
-            <div className="flex-1 min-w-0 space-y-8">
-              <TopClientsCard data={topClientsData} loading={loadingTopClients} />
+            <div className="flex flex-col lg:flex-row gap-6">
+              <div className="flex-1 min-w-0 space-y-8">
+                <ClientsChartSection
+                  topClientsData={topClientsData}
+                  bookingsData={bookingsData}
+                  loading={loadingTopClients || loadingBookings}
+                  monthLabel={monthLabel}
+                />
+                <TopClientsCard data={topClientsData} loading={loadingTopClients} />
+              </div>
             </div>
           </TabsContent>
         </Tabs>
