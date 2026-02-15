@@ -6,11 +6,6 @@
 All colors MUST be HSL.
 */
 
-/* Prevent 300ms tap delay on all touch devices */
-*, *::before, *::after {
-  touch-action: manipulation;
-}
-
 @layer base {
   :root {
     /* Dark barbershop theme - main backgrounds */

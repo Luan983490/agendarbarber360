@@ -28,17 +28,6 @@ interface ComparisonData {
   avg_ticket_variation: number;
 }
 
-interface TopClientData {
-  client_id: string;
-  client_name: string;
-  total_bookings: number;
-  total_revenue: number;
-  profitable_weekday: number;
-  profitable_weekday_revenue: number;
-  profitable_time_slot: string;
-  profitable_time_slot_revenue: number;
-}
-
 interface ReportsSidebarProps {
   revenueData: RevenueData | null;
   cancellationData: CancellationData | null;
@@ -47,8 +36,6 @@ interface ReportsSidebarProps {
   loadingCancellation: boolean;
   loadingComparison: boolean;
   variant?: 'default' | 'revenue';
-  topClientsData?: TopClientData[];
-  loadingTopClients?: boolean;
 }
 
 const formatCurrency = (value: number) =>
@@ -73,16 +60,9 @@ export function ReportsSidebar({
   loadingCancellation,
   loadingComparison,
   variant = 'default',
-  topClientsData = [],
-  loadingTopClients = false,
 }: ReportsSidebarProps) {
-  // Calculate new vs recurring clients
-  const totalClients = topClientsData.length;
-  const recurringClients = topClientsData.filter(c => c.total_bookings > 1).length;
-  const newClients = totalClients - recurringClients;
-
   return (
-    <div className="w-full lg:w-[300px] flex-shrink-0 space-y-4">
+    <div className="w-full lg:w-[300px] flex-shrink-0 space-y-6">
       {/* Agendamentos Summary Card */}
       {variant === 'default' && (
         <div className="border border-border rounded-xl p-5 space-y-4">
@@ -182,66 +162,16 @@ export function ReportsSidebar({
               </div>
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Produtos
+                  Ticket Médio
                 </p>
                 <span className="text-sm font-bold text-foreground">
-                  {formatCurrency(0)}
-                </span>
-              </div>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Assinaturas
-                </p>
-                <span className="text-sm font-bold text-foreground">
-                  {formatCurrency(0)}
-                </span>
-              </div>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Pacotes
-                </p>
-                <span className="text-sm font-bold text-foreground">
-                  {formatCurrency(0)}
+                  {formatCurrency(revenueData?.average_ticket || 0)}
                 </span>
               </div>
             </div>
           </>
         )}
       </div>
-
-      {/* Clientes Summary Card */}
-      {variant === 'default' && (
-        <div className="border border-border rounded-xl p-5 space-y-4">
-          {loadingTopClients ? (
-            <div className="space-y-3">
-              <Skeleton className="h-5 w-20" />
-              <Skeleton className="h-4 w-full" />
-            </div>
-          ) : (
-            <>
-              <h3 className="text-base font-semibold text-foreground">Clientes</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Novos
-                  </p>
-                  <span className="text-lg font-bold text-foreground">
-                    {newClients}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Recorrentes
-                  </p>
-                  <span className="text-lg font-bold text-foreground">
-                    {recurringClients}
-                  </span>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      )}
     </div>
   );
 }
