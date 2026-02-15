@@ -60,6 +60,7 @@ const AttendantDashboard = lazy(() => import("./pages/AttendantDashboard"));
 const Packages = lazy(() => import("./pages/Packages"));
 const Subscriptions = lazy(() => import("./pages/Subscriptions"));
 const Cards = lazy(() => import("./pages/Cards"));
+const Onboarding = lazy(() => import("./pages/Onboarding"));
 
 const queryClient = new QueryClient(defaultQueryClientConfig);
 
@@ -82,6 +83,15 @@ const AppContent = () => {
             <Route path="/dev-assistant" element={<DevAssistant />} />
             <Route path="/verify-mfa" element={<VerifyMFA />} />
             <Route path="/barbearia/:slug" element={<BarbershopPage />} />
+            {/* Onboarding Route */}
+            <Route 
+              path="/onboarding" 
+              element={
+                <ProtectedRoute allowedRoles={['owner']} checkSubscription={false}>
+                  <Onboarding />
+                </ProtectedRoute>
+              } 
+            />
             {/* Dashboard Routes (Owner and Barber with permissions) */}
             <Route 
               path="/admin/dashboard" 

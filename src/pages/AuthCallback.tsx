@@ -159,8 +159,25 @@ const AuthCallback = () => {
       });
 
       // Redirect after showing success message
-      setTimeout(() => {
+      setTimeout(async () => {
         if (userType === 'barbershop_owner') {
+          // Check if onboarding is needed
+          const { data: bsData } = await supabase
+            .from('barbershops')
+            .select('id')
+            .eq('owner_id', session.user.id)
+            .single();
+          
+          if (bsData) {
+            const { data: onboardingStatus } = await supabase
+              .rpc('get_barbershop_onboarding_status', { p_barbershop_id: bsData.id });
+            const status = (onboardingStatus as any)?.[0];
+            if (status && !status.is_completed) {
+              console.log('[AuthCallback] -> /onboarding (incomplete)');
+              navigate('/onboarding', { replace: true });
+              return;
+            }
+          }
           console.log('[AuthCallback] -> /dashboard (owner)');
           navigate('/dashboard', { replace: true });
         } else if (userType === 'barber') {
