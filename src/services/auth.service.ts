@@ -91,6 +91,10 @@ export class AuthService {
       email: sanitizeEmail(data.email),
     };
 
+    console.log('🔵 [SIGNUP] Iniciando cadastro');
+    console.log('📧 Email:', sanitizedData.email);
+    console.log('📝 UserType:', sanitizedData.userType);
+
     const timer = logger.startTimer();
     logger.info('signUp', 'Starting user registration', { email: sanitizedData.email, userType: sanitizedData.userType });
 
@@ -121,19 +125,28 @@ export class AuthService {
       // Use dedicated callback route for email confirmation
       const redirectUrl = `${window.location.origin}/auth/callback`;
 
+      const metadata = {
+        user_type: sanitizedData.userType,
+        full_name: '',
+      };
+      console.log('📦 [SIGNUP] Metadata que será enviado:', metadata);
+      console.log('🔗 [SIGNUP] Redirect URL:', redirectUrl);
+
       const { data: authData, error } = await supabase.auth.signUp({
         email: sanitizedData.email,
         password: sanitizedData.password,
         options: {
           emailRedirectTo: redirectUrl,
-          data: {
-            user_type: sanitizedData.userType,
-            full_name: '',
-          },
+          data: metadata,
         },
       });
 
       if (error) {
+        console.error('🚨 [SIGNUP] Erro do Supabase:', {
+          message: error.message,
+          status: error.status,
+          name: error.name,
+        });
         logger.error('signUp', 'Supabase auth error', error);
 
         if (error.message.includes('already registered') || 
@@ -146,6 +159,13 @@ export class AuthService {
 
         return failure(ErrorCodes.DATABASE_ERROR, error.message);
       }
+
+      console.log('✅ [SIGNUP] Resposta do Supabase:', {
+        userId: authData.user?.id,
+        email: authData.user?.email,
+        identities: authData.user?.identities?.length,
+        metadata: authData.user?.user_metadata,
+      });
 
       if (!authData.user) {
         return failure(ErrorCodes.UNKNOWN_ERROR, 'Erro ao criar usuário');
