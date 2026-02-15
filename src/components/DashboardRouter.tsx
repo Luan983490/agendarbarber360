@@ -17,7 +17,7 @@ export const DashboardRouter = () => {
   }
 
   if (role === 'barber') {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/barber/hoje" replace />;
   }
 
   if (role === 'attendant') {

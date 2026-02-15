@@ -113,7 +113,7 @@ export const ProtectedRoute = ({ children, allowedRoles, checkSubscription = tru
   }
   
   if (role === 'barber') {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/barber/hoje" replace />;
   }
 
   // Default redirect to home
