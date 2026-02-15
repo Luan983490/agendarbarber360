@@ -198,6 +198,18 @@ const Dashboard = () => {
           .eq('owner_id', user?.id)
           .single();
 
+        if (barbershopData) {
+          // Check onboarding status
+          const { data: onboardingStatus } = await supabase
+            .rpc('get_barbershop_onboarding_status', { p_barbershop_id: barbershopData.id });
+          
+          const status = (onboardingStatus as any)?.[0];
+          if (status && !status.is_completed) {
+            navigate('/onboarding', { replace: true });
+            return;
+          }
+        }
+
         setBarbershop(barbershopData);
       } else if (profileData.user_type === 'barber') {
         // If user is a barber, find their barbershop
