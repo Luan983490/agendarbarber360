@@ -14,13 +14,18 @@ function useIsTouchDevice() {
   return isTouch;
 }
 
-const Tooltip = ({ children, ...props }: TooltipPrimitive.TooltipProps) => {
+const Tooltip = ({ children, open, onOpenChange, ...props }: TooltipPrimitive.TooltipProps) => {
   const isTouch = useIsTouchDevice();
-  if (isTouch) {
-    // On touch devices, render children without tooltip wrapper to avoid double-tap
-    return <>{children}</>;
-  }
-  return <TooltipPrimitive.Root {...props}>{children}</TooltipPrimitive.Root>;
+  // On touch devices, force tooltip to stay closed so first tap triggers the action
+  return (
+    <TooltipPrimitive.Root
+      {...props}
+      open={isTouch ? false : open}
+      onOpenChange={isTouch ? undefined : onOpenChange}
+    >
+      {children}
+    </TooltipPrimitive.Root>
+  );
 };
 
 const TooltipTrigger = TooltipPrimitive.Trigger;
