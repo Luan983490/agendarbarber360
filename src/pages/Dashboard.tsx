@@ -581,105 +581,101 @@ const Dashboard = () => {
     }
   };
 
-  // Componente Header que usa useSidebar
-  const DashboardHeader = () => {
+  // Header inline JSX (não como componente interno para evitar re-mount)
+  const dashboardHeaderJSX = (
+    <header ref={headerRefCallback} className="fixed left-0 right-0 z-50 bg-black text-white border-b border-gray-800" style={{ top: 0 }}>
+      <div className="w-full px-2 sm:px-4 py-2">
+        <div className="flex items-center justify-between gap-2 sm:gap-4">
+          {/* Logo */}
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+            <a href="/" className="flex items-center">
+              <img src={b360Logo} alt="B360" className="h-12 sm:h-14" />
+            </a>
+          </div>
 
-    return (
-      <header ref={headerRefCallback} className="fixed left-0 right-0 z-50 bg-black text-white border-b border-gray-800" style={{ top: 0 }}>
-        <div className="w-full px-2 sm:px-4 py-2">
-          <div className="flex items-center justify-between gap-2 sm:gap-4">
-            {/* Logo */}
-            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-              <a href="/" className="flex items-center">
-                <img src={b360Logo} alt="B360" className="h-12 sm:h-14" />
-              </a>
+          {/* Seletor de Barbeiro no Header (quando na aba de agenda) */}
+          {barbershop && currentTab === 'bookings' && barbers.length > 0 && (
+            <div className="flex items-center gap-2 flex-1 justify-center max-w-xs sm:max-w-sm">
+              <span className="text-sm font-medium text-muted-foreground hidden sm:inline">Profissionais:</span>
+              <Select 
+                value={selectedBarber} 
+                onValueChange={(newBarberId) => {
+                  localStorage.setItem(STORAGE_KEY_SELECTED_BARBER, newBarberId);
+                  setSelectedBarber(newBarberId);
+                }}
+              >
+                <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm w-[120px] sm:w-[160px] bg-background">
+                  <SelectValue placeholder="Selecionar" />
+                </SelectTrigger>
+                <SelectContent>
+                  {barbers.map((barber) => (
+                    <SelectItem key={barber.id} value={barber.id}>
+                      {barber.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+          )}
 
-            {/* Seletor de Barbeiro no Header (quando na aba de agenda) */}
-            {barbershop && currentTab === 'bookings' && barbers.length > 0 && (
-              <div className="flex items-center gap-2 flex-1 justify-center max-w-xs sm:max-w-sm">
-                <span className="text-sm font-medium text-muted-foreground hidden sm:inline">Profissionais:</span>
-                <Select 
-                  value={selectedBarber} 
-                  onValueChange={(newBarberId) => {
-                    // Persistir no localStorage e atualizar estado
-                    localStorage.setItem(STORAGE_KEY_SELECTED_BARBER, newBarberId);
-                    setSelectedBarber(newBarberId);
-                  }}
-                >
-                  <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm w-[120px] sm:w-[160px] bg-background">
-                    <SelectValue placeholder="Selecionar" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {barbers.map((barber) => (
-                      <SelectItem key={barber.id} value={barber.id}>
-                        {barber.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+          {/* Área de Perfil com Dropdown */}
+          <div className="flex items-center gap-1 sm:gap-2">
+            {user && (
+              <DropdownMenu modal={false}>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                    <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
+                      <AvatarFallback className="text-xs sm:text-sm bg-primary text-primary-foreground">
+                        {user.email?.charAt(0).toUpperCase() || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 bg-popover">
+                  <div className="px-2 py-1.5 text-xs sm:text-sm">
+                    <p className="font-medium truncate">{profile?.display_name || 'Usuário'}</p>
+                    <p className="text-muted-foreground truncate text-xs">{user.email}</p>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    className="cursor-pointer"
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      navigate('/perfil');
+                    }}
+                  >
+                    <UserIcon className="mr-2 h-4 w-4" />
+                    <span>Perfil</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className="cursor-pointer"
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      navigate('/perfil?tab=security');
+                    }}
+                  >
+                    <SettingsIcon className="mr-2 h-4 w-4" />
+                    <span>Configurações</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="cursor-pointer text-destructive focus:text-destructive"
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      signOut();
+                    }}
+                  >
+                    <LogOutIcon className="mr-2 h-4 w-4" />
+                    <span>Sair</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
-
-            {/* Área de Perfil com Dropdown */}
-            <div className="flex items-center gap-1 sm:gap-2">
-              {user && (
-                <DropdownMenu modal={false}>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                      <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
-                        <AvatarFallback className="text-xs sm:text-sm bg-primary text-primary-foreground">
-                          {user.email?.charAt(0).toUpperCase() || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56 bg-popover">
-                    <div className="px-2 py-1.5 text-xs sm:text-sm">
-                      <p className="font-medium truncate">{profile?.display_name || 'Usuário'}</p>
-                      <p className="text-muted-foreground truncate text-xs">{user.email}</p>
-                    </div>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem 
-                      className="cursor-pointer"
-                      onSelect={(e) => {
-                        e.preventDefault();
-                        navigate('/perfil');
-                      }}
-                    >
-                      <UserIcon className="mr-2 h-4 w-4" />
-                      <span>Perfil</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      className="cursor-pointer"
-                      onSelect={(e) => {
-                        e.preventDefault();
-                        navigate('/perfil?tab=security');
-                      }}
-                    >
-                      <SettingsIcon className="mr-2 h-4 w-4" />
-                      <span>Configurações</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="cursor-pointer text-destructive focus:text-destructive"
-                      onSelect={(e) => {
-                        e.preventDefault();
-                        signOut();
-                      }}
-                    >
-                      <LogOutIcon className="mr-2 h-4 w-4" />
-                      <span>Sair</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-            </div>
           </div>
         </div>
-      </header>
-    );
-  };
+      </div>
+    </header>
+  );
 
   // Header simples para quando não tem barbearia
   const SimpleHeader = () => (
@@ -770,7 +766,7 @@ const Dashboard = () => {
 
   const content = (
     <div className={cn("min-h-screen bg-background flex flex-col w-full", isAgendaTab && "max-lg:h-[100dvh] max-lg:overflow-hidden max-lg:min-h-0")}>
-      <DashboardHeader />
+      {dashboardHeaderJSX}
       
       <div className={cn("flex flex-1 w-full", isAgendaTab && "max-lg:min-h-0 max-lg:overflow-hidden")} style={{ paddingTop: headerHeight }}>
         {!isMobile && (
