@@ -44,9 +44,6 @@ export function OnboardingWizard({ barbershopId }: OnboardingWizardProps) {
     }
   };
 
-  const handleSkip = () => {
-    navigate('/dashboard', { replace: true });
-  };
 
   if (isLoading) {
     return (
@@ -70,7 +67,6 @@ export function OnboardingWizard({ barbershopId }: OnboardingWizardProps) {
     <OnboardingLayout
       currentStep={currentStep}
       completedSteps={completedSteps}
-      onSkip={handleSkip}
     >
       {currentStep === 1 && (
         <LocationStep

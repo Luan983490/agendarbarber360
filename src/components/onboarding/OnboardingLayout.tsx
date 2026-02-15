@@ -13,7 +13,6 @@ interface OnboardingLayoutProps {
   currentStep: number;
   completedSteps: boolean[];
   children: React.ReactNode;
-  onSkip?: () => void;
 }
 
 const STEPS = [
@@ -23,7 +22,7 @@ const STEPS = [
   { number: 4, label: 'Profissionais' },
 ];
 
-export function OnboardingLayout({ currentStep, completedSteps, children, onSkip }: OnboardingLayoutProps) {
+export function OnboardingLayout({ currentStep, completedSteps, children }: OnboardingLayoutProps) {
   const steps: Step[] = STEPS.map((s, i) => ({
     ...s,
     completed: completedSteps[i] || false,
@@ -42,14 +41,6 @@ export function OnboardingLayout({ currentStep, completedSteps, children, onSkip
             </h1>
             <p className="text-sm text-slate-400 mt-0.5">Complete o passo a passo inicial para acessar o sistema.</p>
           </div>
-          {onSkip && (
-            <button
-              onClick={onSkip}
-              className="text-sm text-slate-400 hover:text-white transition-colors"
-            >
-              Pular por enquanto →
-            </button>
-          )}
         </div>
       </div>
 
