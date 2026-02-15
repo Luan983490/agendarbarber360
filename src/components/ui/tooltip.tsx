@@ -16,14 +16,23 @@ function useIsTouchDevice() {
 
 const TouchContext = React.createContext(false);
 
-const Tooltip = ({ children, open, onOpenChange, ...props }: TooltipPrimitive.TooltipProps) => {
+const Tooltip = ({ children, open: openProp, onOpenChange, ...props }: TooltipPrimitive.TooltipProps) => {
   const isTouch = useIsTouchDevice();
+  const [internalOpen, setInternalOpen] = React.useState(false);
+  const isControlled = openProp !== undefined;
+  const open = isControlled ? openProp : internalOpen;
+  const handleOpenChange = React.useCallback((val: boolean) => {
+    if (isTouch) return;
+    if (!isControlled) setInternalOpen(val);
+    onOpenChange?.(val);
+  }, [isTouch, isControlled, onOpenChange]);
+
   return (
     <TouchContext.Provider value={isTouch}>
       <TooltipPrimitive.Root
         {...props}
         open={isTouch ? false : open}
-        onOpenChange={isTouch ? undefined : onOpenChange}
+        onOpenChange={handleOpenChange}
       >
         {children}
       </TooltipPrimitive.Root>
