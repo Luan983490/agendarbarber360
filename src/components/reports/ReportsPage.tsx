@@ -525,6 +525,13 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
               <div className="flex-1 min-w-0 space-y-8">
                 <BookingsChart data={bookingsData} loading={loadingBookings} />
                 <RevenueChart bookingsData={bookingsData} revenueData={revenueData} loading={loadingRevenue || loadingBookings} />
+                <RevenueCard data={revenueData} loading={loadingRevenue} />
+                <MonthlyComparisonCard 
+                  data={comparisonData} 
+                  loading={loadingComparison}
+                  currentPeriod={currentPeriodLabel}
+                  previousPeriod={previousPeriodLabel}
+                />
               </div>
               <ReportsSidebar {...sidebarProps} />
             </div>
@@ -612,6 +619,13 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
               <div className="flex-1 min-w-0 space-y-8">
                 <BookingsChart data={bookingsData} loading={loadingBookings} />
                 <RevenueChart bookingsData={bookingsData} revenueData={revenueData} loading={loadingRevenue || loadingBookings} />
+                <RevenueCard data={revenueData} loading={loadingRevenue} />
+                <MonthlyComparisonCard 
+                  data={comparisonData} 
+                  loading={loadingComparison}
+                  currentPeriod={currentPeriodLabel}
+                  previousPeriod={previousPeriodLabel}
+                />
               </div>
               <ReportsSidebar {...sidebarProps} />
             </div>
