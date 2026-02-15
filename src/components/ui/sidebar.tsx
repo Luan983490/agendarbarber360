@@ -105,26 +105,22 @@ const SidebarProvider = React.forwardRef<
     [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar],
   );
 
-  const content = (
-    <div
-      style={
-        {
-          "--sidebar-width": SIDEBAR_WIDTH,
-          "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
-          ...style,
-        } as React.CSSProperties
-      }
-      className={cn("group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar", className)}
-      ref={ref}
-      {...props}
-    >
-      {children}
-    </div>
-  );
-
   return (
     <SidebarContext.Provider value={contextValue}>
-      {isMobile ? content : <TooltipProvider delayDuration={0}>{content}</TooltipProvider>}
+      <div
+        style={
+          {
+            "--sidebar-width": SIDEBAR_WIDTH,
+            "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
+            ...style,
+          } as React.CSSProperties
+        }
+        className={cn("group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar", className)}
+        ref={ref}
+        {...props}
+      >
+        {children}
+      </div>
     </SidebarContext.Provider>
   );
 });
@@ -470,11 +466,17 @@ const SidebarMenuButton = React.forwardRef<
     };
   }
 
+  if (isMobile) {
+    return button;
+  }
+
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>{button}</TooltipTrigger>
-      <TooltipContent side="right" align="center" hidden={state !== "collapsed" || isMobile} {...tooltip} />
-    </Tooltip>
+    <TooltipProvider delayDuration={0}>
+      <Tooltip>
+        <TooltipTrigger asChild>{button}</TooltipTrigger>
+        <TooltipContent side="right" align="center" hidden={state !== "collapsed"} {...tooltip} />
+      </Tooltip>
+    </TooltipProvider>
   );
 });
 SidebarMenuButton.displayName = "SidebarMenuButton";
