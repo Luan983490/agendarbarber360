@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { format, startOfMonth, endOfMonth, subMonths, addMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
@@ -118,9 +118,9 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
   const isOwnerOrAdmin = role === 'owner';
   
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  const [activeTab, setActiveTab] = useState('overview');
   const startDate = startOfMonth(currentMonth);
   const endDate = endOfMonth(currentMonth);
-  
   const [barbers, setBarbers] = useState<Barber[]>([]);
   const [selectedBarberId, setSelectedBarberId] = useState<string>('all');
   
@@ -416,34 +416,58 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
     loadingTopClients,
   };
 
-  const reportLinksBookings = [
-    'Resumo de visitas',
-    'Resumo de categorias e serviços',
-    'Lista de agendamentos',
-    'Agendamentos por serviço',
-    'Agendamentos por funcionário',
-    'Agendamentos por dias e horários',
-    'Cancelados',
-    'Não comparecimentos',
-  ];
+  // Map report link labels to tab + section scroll targets
+  const bookingsLinkActions: Record<string, { tab?: string; sectionId?: string }> = {
+    'Resumo de visitas': { sectionId: 'section-bookings-chart' },
+    'Resumo de categorias e serviços': { sectionId: 'section-services-table' },
+    'Lista de agendamentos': { tab: 'bookings', sectionId: 'section-bookings-chart' },
+    'Agendamentos por serviço': { sectionId: 'section-services-table' },
+    'Agendamentos por funcionário': { tab: 'team' },
+    'Agendamentos por dias e horários': { sectionId: 'section-bookings-chart' },
+    'Cancelados': { sectionId: 'section-cancellation' },
+    'Não comparecimentos': { sectionId: 'section-cancellation' },
+  };
 
-  const reportLinksClients = [
-    'Resumo de clientes',
-    'Lista de clientes',
-    'Novos Clientes',
-    'Clientes Recorrentes',
-    'Clientes não fidelizados',
-    'Clientes potenciais na lista de espera',
-    'Não compareceram ou cancelaram tarde demais',
-  ];
+  const clientsLinkActions: Record<string, { tab?: string; sectionId?: string }> = {
+    'Resumo de clientes': { sectionId: 'section-clients-chart' },
+    'Lista de clientes': { sectionId: 'section-top-clients' },
+    'Novos Clientes': { sectionId: 'section-clients-breakdown' },
+    'Clientes Recorrentes': { sectionId: 'section-clients-breakdown' },
+    'Clientes não fidelizados': { sectionId: 'section-top-clients' },
+    'Clientes potenciais na lista de espera': { sectionId: 'section-top-clients' },
+    'Não compareceram ou cancelaram tarde demais': { tab: 'bookings', sectionId: 'section-cancellation' },
+  };
 
-  const ReportLinksList = ({ items, title = 'Relatórios' }: { items: string[]; title?: string }) => (
+  const reportLinksBookings = Object.keys(bookingsLinkActions);
+  const reportLinksClients = Object.keys(clientsLinkActions);
+
+  const handleReportLinkClick = useCallback((label: string, actions: Record<string, { tab?: string; sectionId?: string }>) => {
+    const action = actions[label];
+    if (!action) return;
+    
+    if (action.tab) {
+      setActiveTab(action.tab);
+    }
+    
+    if (action.sectionId) {
+      // Delay scroll to allow tab content to render
+      setTimeout(() => {
+        const el = document.getElementById(action.sectionId!);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
+  }, []);
+
+  const ReportLinksList = ({ items, actions, title = 'Relatórios' }: { items: string[]; actions: Record<string, { tab?: string; sectionId?: string }>; title?: string }) => (
     <div className="w-full lg:w-[300px] flex-shrink-0">
       <div className="border border-border rounded-xl p-5 space-y-1 sticky top-4">
         <h3 className="text-base font-semibold text-foreground mb-4">{title}</h3>
         {items.map((label) => (
           <button
             key={label}
+            onClick={() => handleReportLinkClick(label, actions)}
             className="w-full flex items-center justify-between py-3 px-1 text-sm text-foreground hover:text-primary transition-colors border-b border-border last:border-0"
           >
             <span className="text-left">{label}</span>
@@ -509,7 +533,7 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
 
       {/* Tabs */}
       {isOwnerOrAdmin ? (
-        <Tabs defaultValue="overview" className="space-y-0">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-0">
           <TabsList className="bg-transparent border-b border-border rounded-none h-auto p-0 gap-0 w-full justify-start overflow-x-auto">
             <TabsTrigger value="overview" className={tabTriggerClass}>Painel</TabsTrigger>
             <TabsTrigger value="bookings" className={tabTriggerClass}>Agendamentos</TabsTrigger>
@@ -541,11 +565,17 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
           <TabsContent value="bookings" className="pt-6">
             <div className="flex flex-col lg:flex-row gap-6">
               <div className="flex-1 min-w-0 space-y-8">
-                <BookingsChart data={bookingsData} loading={loadingBookings} />
-                <CancellationRatesCard data={cancellationData} loading={loadingCancellation} />
-                <TopServicesTable data={servicesData} loading={loadingServices} />
+                <div id="section-bookings-chart">
+                  <BookingsChart data={bookingsData} loading={loadingBookings} />
+                </div>
+                <div id="section-cancellation">
+                  <CancellationRatesCard data={cancellationData} loading={loadingCancellation} />
+                </div>
+                <div id="section-services-table">
+                  <TopServicesTable data={servicesData} loading={loadingServices} />
+                </div>
               </div>
-              <ReportLinksList items={reportLinksBookings} />
+              <ReportLinksList items={reportLinksBookings} actions={bookingsLinkActions} />
             </div>
           </TabsContent>
 
@@ -553,15 +583,20 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
           <TabsContent value="clients" className="pt-6">
             <div className="flex flex-col lg:flex-row gap-6">
               <div className="flex-1 min-w-0 space-y-8">
-                <ClientsChartSection
-                  topClientsData={topClientsData}
-                  bookingsData={bookingsData}
-                  loading={loadingTopClients || loadingBookings}
-                  monthLabel={monthLabel}
-                />
-                <TopClientsCard data={topClientsData} loading={loadingTopClients} />
+                <div id="section-clients-chart">
+                  <ClientsChartSection
+                    topClientsData={topClientsData}
+                    bookingsData={bookingsData}
+                    loading={loadingTopClients || loadingBookings}
+                    monthLabel={monthLabel}
+                  />
+                </div>
+                <div id="section-clients-breakdown" />
+                <div id="section-top-clients">
+                  <TopClientsCard data={topClientsData} loading={loadingTopClients} />
+                </div>
               </div>
-              <ReportLinksList items={reportLinksClients} />
+              <ReportLinksList items={reportLinksClients} actions={clientsLinkActions} />
             </div>
           </TabsContent>
 
@@ -607,7 +642,7 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
         </Tabs>
       ) : (
         // Barber view - simplified
-        <Tabs defaultValue="overview" className="space-y-0">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-0">
           <TabsList className="bg-transparent border-b border-border rounded-none h-auto p-0 gap-0 w-full justify-start">
             <TabsTrigger value="overview" className={tabTriggerClass}>Painel</TabsTrigger>
             <TabsTrigger value="bookings" className={tabTriggerClass}>Agendamentos</TabsTrigger>
