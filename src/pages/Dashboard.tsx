@@ -770,13 +770,6 @@ const Dashboard = () => {
 
   const content = (
     <div className={cn("min-h-screen bg-background flex flex-col w-full", isAgendaTab && "max-lg:h-[100dvh] max-lg:overflow-hidden max-lg:min-h-0")}>
-      {showTrialBanner && (
-        <div ref={bannerRef} className="fixed top-0 left-0 right-0 z-[60] pointer-events-none">
-          <div className="pointer-events-auto">
-            <TrialBanner barbershopId={barbershop?.id || null} />
-          </div>
-        </div>
-      )}
       <DashboardHeader />
       
       <div className={cn("flex flex-1 w-full", isAgendaTab && "max-lg:min-h-0 max-lg:overflow-hidden")} style={{ paddingTop: headerHeight + bannerHeight }}>
