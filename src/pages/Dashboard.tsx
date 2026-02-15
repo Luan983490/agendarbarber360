@@ -581,15 +581,9 @@ const Dashboard = () => {
     }
   };
 
-  const totalTopOffset = bannerHeight + headerHeight;
-
   // Header inline JSX (não como componente interno para evitar re-mount)
   const dashboardHeaderJSX = (
-    <>
-      {showTrialBanner && (
-        <TrialBanner ref={bannerRef} barbershopId={barbershop?.id || null} />
-      )}
-      <header ref={headerRefCallback} className="fixed left-0 right-0 z-50 bg-black text-white border-b border-gray-800" style={{ top: bannerHeight }}>
+    <header ref={headerRefCallback} className="fixed left-0 right-0 z-50 bg-black text-white border-b border-gray-800" style={{ top: 0 }}>
       <div className="w-full px-2 sm:px-4 py-2">
         <div className="flex items-center justify-between gap-2 sm:gap-4">
           {/* Logo */}
@@ -681,7 +675,6 @@ const Dashboard = () => {
         </div>
       </div>
     </header>
-    </>
   );
 
   // Header simples para quando não tem barbearia
@@ -775,10 +768,10 @@ const Dashboard = () => {
     <div className={cn("min-h-screen bg-background flex flex-col w-full", isAgendaTab && "max-lg:h-[100dvh] max-lg:overflow-hidden max-lg:min-h-0")}>
       {dashboardHeaderJSX}
       
-      <div className={cn("flex flex-1 w-full", isAgendaTab && "max-lg:min-h-0 max-lg:overflow-hidden")} style={{ paddingTop: totalTopOffset }}>
+      <div className={cn("flex flex-1 w-full", isAgendaTab && "max-lg:min-h-0 max-lg:overflow-hidden")} style={{ paddingTop: headerHeight }}>
         {!isMobile && (
           <>
-            <div className="fixed left-0 z-40" style={{ top: totalTopOffset, height: `calc(100vh - ${totalTopOffset}px)` }}>
+            <div className="fixed left-0 z-40" style={{ top: headerHeight, height: `calc(100vh - ${headerHeight}px)` }}>
               <DashboardSidebar currentTab={currentTab} onTabChange={setCurrentTab} />
             </div>
             <div className="flex-shrink-0" style={{ width: 64 }} />
