@@ -5,7 +5,23 @@ import { cn } from "@/lib/utils";
 
 const TooltipProvider = TooltipPrimitive.Provider;
 
-const Tooltip = TooltipPrimitive.Root;
+// Detect touch device to prevent tooltip from stealing first tap
+function useIsTouchDevice() {
+  const [isTouch, setIsTouch] = React.useState(false);
+  React.useEffect(() => {
+    setIsTouch('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  }, []);
+  return isTouch;
+}
+
+const Tooltip = ({ children, ...props }: TooltipPrimitive.TooltipProps) => {
+  const isTouch = useIsTouchDevice();
+  if (isTouch) {
+    // On touch devices, render children without tooltip wrapper to avoid double-tap
+    return <>{children}</>;
+  }
+  return <TooltipPrimitive.Root {...props}>{children}</TooltipPrimitive.Root>;
+};
 
 const TooltipTrigger = TooltipPrimitive.Trigger;
 
