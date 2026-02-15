@@ -164,33 +164,42 @@ const Auth = () => {
         .eq('user_id', user.id)
         .single();
       
+      const userType = error ? user.user_metadata?.user_type : profile?.user_type;
+      
       if (error) {
-        console.error('[Auth] Error fetching profile:', error);
-        // If profile doesn't exist yet, check user metadata
-        const userType = user.user_metadata?.user_type;
-        console.log('[Auth] Fallback to user_metadata.user_type:', userType);
-        
-        if (userType === 'barbershop_owner') {
-          navigate('/dashboard');
-        } else if (userType === 'barber') {
-          navigate('/barber/hoje');
-        } else {
-          navigate('/');
-        }
-        return;
+        console.error('[Auth] Error fetching profile, fallback to metadata:', error);
       }
       
-      console.log('[Auth] Profile found, user_type:', profile?.user_type);
+      console.log('[Auth] User type:', userType);
       
-      if (profile?.user_type === 'barbershop_owner') {
-        console.log('[Auth] Redirecting to /dashboard');
-        navigate('/dashboard');
-      } else if (profile?.user_type === 'barber') {
-        console.log('[Auth] Redirecting to /barber/hoje');
-        navigate('/barber/hoje');
+      if (userType === 'barbershop_owner') {
+        // Check onboarding status before redirecting
+        const { data: barbershopData } = await supabase
+          .from('barbershops')
+          .select('id')
+          .eq('owner_id', user.id)
+          .maybeSingle();
+        
+        if (barbershopData) {
+          const { data: onboardingStatus } = await supabase
+            .rpc('get_barbershop_onboarding_status', { p_barbershop_id: barbershopData.id });
+          const status = (onboardingStatus as any)?.[0];
+          
+          if (status && !status.is_completed) {
+            console.log('[Auth] Onboarding incomplete -> /onboarding');
+            navigate('/onboarding', { replace: true });
+            return;
+          }
+        }
+        
+        console.log('[Auth] -> /dashboard');
+        navigate('/dashboard', { replace: true });
+      } else if (userType === 'barber') {
+        console.log('[Auth] -> /barber/hoje');
+        navigate('/barber/hoje', { replace: true });
       } else {
-        console.log('[Auth] Redirecting to /');
-        navigate('/');
+        console.log('[Auth] -> /');
+        navigate('/', { replace: true });
       }
     } catch (err) {
       console.error('[Auth] Unexpected error:', err);
