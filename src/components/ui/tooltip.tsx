@@ -5,19 +5,16 @@ import { cn } from "@/lib/utils";
 
 const TooltipProvider = TooltipPrimitive.Provider;
 
+// Check touch support synchronously to avoid uncontrolled→controlled flicker
+const isTouchDevice = () =>
+  typeof window !== 'undefined' &&
+  ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+
 // Tooltip that never opens on touch devices to prevent double-tap issue
 const Tooltip = (props: React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Root>) => {
-  const [isTouch, setIsTouch] = React.useState(false);
-  
-  React.useEffect(() => {
-    setIsTouch('ontouchstart' in window || navigator.maxTouchPoints > 0);
-  }, []);
-
-  // On touch devices, force tooltip closed so it never intercepts taps
-  if (isTouch) {
+  if (isTouchDevice()) {
     return <TooltipPrimitive.Root {...props} open={false} />;
   }
-  
   return <TooltipPrimitive.Root {...props} />;
 };
 
