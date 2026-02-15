@@ -22,7 +22,7 @@ import { sanitizeEmail, sanitizeString } from '@/lib/sanitizer';
 export interface SignUpDTO {
   email: string;
   password: string;
-  userType: 'client' | 'barbershop_owner' | 'barber';
+  userType: 'client' | 'barbershop_owner';
 }
 
 export interface SignInDTO {
@@ -50,7 +50,7 @@ export interface AuthSession {
 const signUpSchema = z.object({
   email: emailSchema,
   password: passwordSchema,
-  userType: z.enum(['client', 'barbershop_owner', 'barber']),
+  userType: z.enum(['client', 'barbershop_owner']),
 });
 
 const signInSchema = z.object({

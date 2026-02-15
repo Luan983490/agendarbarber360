@@ -8,7 +8,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, userType: 'client' | 'barbershop_owner' | 'barber') => Promise<{ error: any }>;
+  signUp: (email: string, password: string, userType: 'client' | 'barbershop_owner') => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
@@ -70,7 +70,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, userType: 'client' | 'barbershop_owner' | 'barber') => {
+  const signUp = async (email: string, password: string, userType: 'client' | 'barbershop_owner') => {
     const result = await authService.signUp({ email, password, userType });
 
     if (!result.success) {
