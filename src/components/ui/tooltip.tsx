@@ -3,9 +3,20 @@ import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 
 import { cn } from "@/lib/utils";
 
+const isTouchDevice = () =>
+  typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
+
 const TooltipProvider = TooltipPrimitive.Provider;
 
-const Tooltip = TooltipPrimitive.Root;
+const Tooltip: React.FC<React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Root>> = ({
+  children,
+  ...props
+}) => {
+  if (isTouchDevice()) {
+    return <>{children}</>;
+  }
+  return <TooltipPrimitive.Root {...props}>{children}</TooltipPrimitive.Root>;
+};
 
 const TooltipTrigger = TooltipPrimitive.Trigger;
 
