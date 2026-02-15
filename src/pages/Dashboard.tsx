@@ -205,7 +205,7 @@ const Dashboard = () => {
           
           const status = (onboardingStatus as any)?.[0];
           if (status && !status.is_completed) {
-            navigate('/onboarding', { replace: true });
+            navigate(`/onboarding/${barbershopData.id}`, { replace: true });
             return;
           }
         }

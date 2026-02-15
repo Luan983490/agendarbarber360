@@ -173,8 +173,8 @@ const AuthCallback = () => {
               .rpc('get_barbershop_onboarding_status', { p_barbershop_id: bsData.id });
             const status = (onboardingStatus as any)?.[0];
             if (status && !status.is_completed) {
-              console.log('[AuthCallback] -> /onboarding (incomplete)');
-              navigate('/onboarding', { replace: true });
+              console.log('[AuthCallback] -> /onboarding/' + bsData.id + ' (incomplete)');
+              navigate(`/onboarding/${bsData.id}`, { replace: true });
               return;
             }
           }

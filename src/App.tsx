@@ -85,13 +85,15 @@ const AppContent = () => {
             <Route path="/barbearia/:slug" element={<BarbershopPage />} />
             {/* Onboarding Route */}
             <Route 
-              path="/onboarding" 
+              path="/onboarding/:barbershopId" 
               element={
                 <ProtectedRoute allowedRoles={['owner']} checkSubscription={false}>
                   <Onboarding />
                 </ProtectedRoute>
               } 
             />
+            {/* Legacy route redirect */}
+            <Route path="/onboarding" element={<Navigate to="/dashboard" replace />} />
             {/* Dashboard Routes (Owner and Barber with permissions) */}
             <Route 
               path="/admin/dashboard" 

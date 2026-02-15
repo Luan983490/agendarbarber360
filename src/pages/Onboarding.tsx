@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
@@ -7,28 +7,33 @@ import b360Logo from '@/assets/b360-logo.png';
 
 const Onboarding = () => {
   const { user, loading: authLoading } = useAuth();
-  const [barbershopId, setBarbershopId] = useState<string | null>(null);
+  const { barbershopId } = useParams<{ barbershopId: string }>();
+  const [isOwner, setIsOwner] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchBarbershop = async () => {
-      if (!user) return;
+    const verifyOwnership = async () => {
+      if (!user || !barbershopId) {
+        setLoading(false);
+        return;
+      }
       try {
         const { data } = await supabase
           .from('barbershops')
           .select('id')
+          .eq('id', barbershopId)
           .eq('owner_id', user.id)
           .single();
-        setBarbershopId(data?.id || null);
+        setIsOwner(!!data);
       } catch {
-        setBarbershopId(null);
+        setIsOwner(false);
       } finally {
         setLoading(false);
       }
     };
-    if (user) fetchBarbershop();
+    if (user) verifyOwnership();
     else if (!authLoading) setLoading(false);
-  }, [user, authLoading]);
+  }, [user, authLoading, barbershopId]);
 
   if (authLoading || loading) {
     return (
@@ -42,7 +47,7 @@ const Onboarding = () => {
   }
 
   if (!user) return <Navigate to="/auth" replace />;
-  if (!barbershopId) return <Navigate to="/dashboard" replace />;
+  if (!barbershopId || !isOwner) return <Navigate to="/dashboard" replace />;
 
   return <OnboardingWizard barbershopId={barbershopId} />;
 };

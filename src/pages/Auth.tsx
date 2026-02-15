@@ -186,8 +186,8 @@ const Auth = () => {
           const status = (onboardingStatus as any)?.[0];
           
           if (status && !status.is_completed) {
-            console.log('[Auth] Onboarding incomplete -> /onboarding');
-            navigate('/onboarding', { replace: true });
+            console.log('[Auth] Onboarding incomplete -> /onboarding/' + barbershopData.id);
+            navigate(`/onboarding/${barbershopData.id}`, { replace: true });
             return;
           }
         }
