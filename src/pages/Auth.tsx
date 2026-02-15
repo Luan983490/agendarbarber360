@@ -173,21 +173,32 @@ const Auth = () => {
       console.log('[Auth] User type:', userType);
       
       if (userType === 'barbershop_owner') {
-        // Check onboarding status before redirecting
-        const { data: barbershopData } = await supabase
-          .from('barbershops')
-          .select('id')
-          .eq('owner_id', user.id)
-          .maybeSingle();
+        // Find barbershop with retry (trigger may need time)
+        let barbershopId: string | null = null;
+        for (let attempt = 1; attempt <= 5; attempt++) {
+          const { data } = await supabase
+            .from('barbershops')
+            .select('id')
+            .eq('owner_id', user.id)
+            .maybeSingle();
+          
+          if (data?.id) {
+            barbershopId = data.id;
+            console.log(`✅ [Auth] Barbearia encontrada na tentativa ${attempt}:`, barbershopId);
+            break;
+          }
+          console.log(`⏳ [Auth] Tentativa ${attempt}/5 - aguardando barbearia...`);
+          await new Promise(resolve => setTimeout(resolve, 1500));
+        }
         
-        if (barbershopData) {
+        if (barbershopId) {
           const { data: onboardingStatus } = await supabase
-            .rpc('get_barbershop_onboarding_status', { p_barbershop_id: barbershopData.id });
+            .rpc('get_barbershop_onboarding_status', { p_barbershop_id: barbershopId });
           const status = (onboardingStatus as any)?.[0];
           
           if (status && !status.is_completed) {
-            console.log('[Auth] Onboarding incomplete -> /onboarding/' + barbershopData.id);
-            navigate(`/onboarding/${barbershopData.id}`, { replace: true });
+            console.log('🚀 [Auth] Onboarding incomplete -> /onboarding/' + barbershopId);
+            navigate(`/onboarding/${barbershopId}`, { replace: true });
             return;
           }
         }

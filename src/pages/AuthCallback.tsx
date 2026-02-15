@@ -158,23 +158,40 @@ const AuthCallback = () => {
           : 'Você está logado automaticamente.',
       });
 
+      // Helper: find barbershop with retry (trigger may need time to create it)
+      const findBarbershopWithRetry = async (userId: string, maxAttempts = 5): Promise<string | null> => {
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+          const { data } = await supabase
+            .from('barbershops')
+            .select('id')
+            .eq('owner_id', userId)
+            .maybeSingle();
+          
+          if (data?.id) {
+            console.log(`✅ [AuthCallback] Barbearia encontrada na tentativa ${attempt}:`, data.id);
+            return data.id;
+          }
+          
+          console.log(`⏳ [AuthCallback] Tentativa ${attempt}/${maxAttempts} - barbearia não encontrada, aguardando...`);
+          await new Promise(resolve => setTimeout(resolve, 1500));
+        }
+        console.error('❌ [AuthCallback] Barbearia não encontrada após', maxAttempts, 'tentativas');
+        return null;
+      };
+
       // Redirect after showing success message
       setTimeout(async () => {
         if (userType === 'barbershop_owner') {
-          // Check if onboarding is needed
-          const { data: bsData } = await supabase
-            .from('barbershops')
-            .select('id')
-            .eq('owner_id', session.user.id)
-            .single();
+          // Find barbershop with retry logic
+          const barbershopId = await findBarbershopWithRetry(session.user.id);
           
-          if (bsData) {
+          if (barbershopId) {
             const { data: onboardingStatus } = await supabase
-              .rpc('get_barbershop_onboarding_status', { p_barbershop_id: bsData.id });
+              .rpc('get_barbershop_onboarding_status', { p_barbershop_id: barbershopId });
             const status = (onboardingStatus as any)?.[0];
             if (status && !status.is_completed) {
-              console.log('[AuthCallback] -> /onboarding/' + bsData.id + ' (incomplete)');
-              navigate(`/onboarding/${bsData.id}`, { replace: true });
+              console.log('🚀 [AuthCallback] -> /onboarding/' + barbershopId + ' (incomplete)');
+              navigate(`/onboarding/${barbershopId}`, { replace: true });
               return;
             }
           }
