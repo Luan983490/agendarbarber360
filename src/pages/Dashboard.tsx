@@ -780,12 +780,16 @@ const Dashboard = () => {
         <DashboardHeader />
         
         <div className={cn("flex flex-1 w-full", isAgendaTab && "max-lg:min-h-0 max-lg:overflow-hidden")} style={{ paddingTop: headerHeight + bannerHeight }}>
-          {/* Sidebar Fixo - hidden on mobile */}
-          <div className="hidden lg:block fixed left-0 z-40" style={{ top: headerHeight + bannerHeight, height: `calc(100vh - ${headerHeight + bannerHeight}px)` }}>
-            <DashboardSidebar currentTab={currentTab} onTabChange={setCurrentTab} />
-          </div>
-          {/* Spacer for fixed sidebar */}
-          <div className="hidden lg:block flex-shrink-0" style={{ width: 64 }} />
+          {/* Sidebar Fixo - only rendered on desktop to avoid TooltipProvider global listeners on mobile */}
+          {!isMobile && (
+            <>
+              <div className="fixed left-0 z-40" style={{ top: headerHeight + bannerHeight, height: `calc(100vh - ${headerHeight + bannerHeight}px)` }}>
+                <DashboardSidebar currentTab={currentTab} onTabChange={setCurrentTab} />
+              </div>
+              {/* Spacer for fixed sidebar */}
+              <div className="flex-shrink-0" style={{ width: 64 }} />
+            </>
+          )}
           
           <main className={cn("flex-1 flex flex-col w-full min-w-0", isAgendaTab && "max-lg:min-h-0")}>
             {/* Conteúdo - área principal */}
