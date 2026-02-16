@@ -52,7 +52,7 @@ const BarbershopAuth = () => {
   const [forceUpdate, setForceUpdate] = useState(0);
   const [mfaPending, setMfaPending] = useState(false);
 
-  const { failedAttempts, isBlocked, remainingSeconds, requiresCaptcha, captchaVerified, recordFailedAttempt, resetOnSuccess, setCaptchaVerified, canAttemptLogin } = useLoginRateLimit();
+  const { failedAttempts, isBlocked, remainingSeconds, requiresCaptcha, captchaVerified, recordFailedAttempt, resetOnSuccess, setCaptchaVerified, canAttemptLogin } = useLoginRateLimit('barbershop');
 
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [signupData, setSignupData] = useState({
@@ -126,14 +126,14 @@ const BarbershopAuth = () => {
     e.preventDefault();
     setServerRateLimited(false);
     const emailUsed = loginData.email.trim().toLowerCase();
-    const attempts = Number(localStorage.getItem('auth_failures') || '0');
-    const blockedUntil = Number(localStorage.getItem('auth_blocked_until') || '0');
+    const attempts = Number(localStorage.getItem('auth_failures_barbershop') || '0');
+    const blockedUntil = Number(localStorage.getItem('auth_blocked_until_barbershop') || '0');
     if (attempts >= 3) {
       if (Date.now() < blockedUntil) {
         const remainingSecs = Math.ceil((blockedUntil - Date.now()) / 1000);
         toast({ title: 'Muitas tentativas', description: `Tente novamente em ${remainingSecs > 60 ? '1 minuto' : remainingSecs + ' segundos'}.`, variant: 'destructive' });
         return;
-      } else { localStorage.setItem('auth_failures', '0'); localStorage.removeItem('auth_blocked_until'); }
+      } else { localStorage.setItem('auth_failures_barbershop', '0'); localStorage.removeItem('auth_blocked_until_barbershop'); }
     }
     const validation = validateWithSchema(loginSchema, loginData);
     if (!validation.success) { toast({ title: 'Erro de validação', description: formatValidationErrors(validation.errors), variant: 'destructive' }); return; }
@@ -166,8 +166,8 @@ const BarbershopAuth = () => {
         return;
       }
       logAuthEvent('auth_success', emailUsed);
-      localStorage.setItem('auth_failures', '0');
-      localStorage.removeItem('auth_blocked_until');
+      localStorage.setItem('auth_failures_barbershop', '0');
+      localStorage.removeItem('auth_blocked_until_barbershop');
       resetOnSuccess();
       toast({ title: 'Login realizado!', description: 'Bem-vindo de volta.' });
     } catch (err: any) {
@@ -178,10 +178,10 @@ const BarbershopAuth = () => {
         setServerRateLimited(true);
         toast({ title: 'Sistema protegido', description: 'Muitas tentativas. Aguarde.', variant: 'destructive' });
       } else if (errorMessage.includes('invalid login credentials')) {
-        const currentCount = Number(localStorage.getItem('auth_failures') || '0');
+        const currentCount = Number(localStorage.getItem('auth_failures_barbershop') || '0');
         const newCount = currentCount + 1;
-        localStorage.setItem('auth_failures', newCount.toString());
-        if (newCount >= 3) { localStorage.setItem('auth_blocked_until', (Date.now() + 60000).toString()); }
+        localStorage.setItem('auth_failures_barbershop', newCount.toString());
+        if (newCount >= 3) { localStorage.setItem('auth_blocked_until_barbershop', (Date.now() + 60000).toString()); }
         setForceUpdate(prev => prev + 1);
         if (newCount >= 3) {
           toast({ title: 'Muitas tentativas', description: 'Tente novamente em 1 minuto.', variant: 'destructive' });
@@ -193,10 +193,10 @@ const BarbershopAuth = () => {
           });
         }
       } else {
-        const currentCount = Number(localStorage.getItem('auth_failures') || '0');
+        const currentCount = Number(localStorage.getItem('auth_failures_barbershop') || '0');
         const newCount = currentCount + 1;
-        localStorage.setItem('auth_failures', newCount.toString());
-        if (newCount >= 3) { localStorage.setItem('auth_blocked_until', (Date.now() + 60000).toString()); }
+        localStorage.setItem('auth_failures_barbershop', newCount.toString());
+        if (newCount >= 3) { localStorage.setItem('auth_blocked_until_barbershop', (Date.now() + 60000).toString()); }
         setForceUpdate(prev => prev + 1);
         toast({ title: 'Erro no login', description: err?.message || 'Erro inesperado.', variant: 'destructive' });
       }

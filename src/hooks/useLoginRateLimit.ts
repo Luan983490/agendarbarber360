@@ -12,8 +12,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 
-const FAILURES_KEY = 'auth_failures';
-const BLOCKED_KEY = 'auth_blocked_until';
 const BLOCK_DURATION_MS = 60000; // 60 segundos
 const ATTEMPTS_FOR_BLOCK = 3;
 const ATTEMPTS_FOR_CAPTCHA = 5;
@@ -39,34 +37,32 @@ interface UseLoginRateLimitResult {
   canAttemptLogin: boolean;
 }
 
-// Funções utilitárias simples para localStorage
-const getFailures = (): number => {
-  const val = localStorage.getItem(FAILURES_KEY);
-  return val ? Number(val) : 0;
-};
+export function useLoginRateLimit(namespace: string = 'default'): UseLoginRateLimitResult {
+  const FAILURES_KEY = `auth_failures_${namespace}`;
+  const BLOCKED_KEY = `auth_blocked_until_${namespace}`;
 
-const getBlockedUntil = (): number => {
-  const val = localStorage.getItem(BLOCKED_KEY);
-  return val ? Number(val) : 0;
-};
+  const getFailures = (): number => {
+    const val = localStorage.getItem(FAILURES_KEY);
+    return val ? Number(val) : 0;
+  };
 
-const setFailures = (count: number): void => {
-  localStorage.setItem(FAILURES_KEY, count.toString());
-  console.log('[RateLimit] auth_failures =', count);
-};
+  const getBlockedUntil = (): number => {
+    const val = localStorage.getItem(BLOCKED_KEY);
+    return val ? Number(val) : 0;
+  };
 
-const setBlockedUntil = (timestamp: number): void => {
-  localStorage.setItem(BLOCKED_KEY, timestamp.toString());
-  console.log('[RateLimit] auth_blocked_until =', new Date(timestamp).toISOString());
-};
+  const setFailuresLS = (count: number): void => {
+    localStorage.setItem(FAILURES_KEY, count.toString());
+  };
 
-const clearAll = (): void => {
-  localStorage.setItem(FAILURES_KEY, '0');
-  localStorage.removeItem(BLOCKED_KEY);
-  console.log('[RateLimit] Cleared all');
-};
+  const setBlockedUntilLS = (timestamp: number): void => {
+    localStorage.setItem(BLOCKED_KEY, timestamp.toString());
+  };
 
-export function useLoginRateLimit(): UseLoginRateLimitResult {
+  const clearAll = (): void => {
+    localStorage.setItem(FAILURES_KEY, '0');
+    localStorage.removeItem(BLOCKED_KEY);
+  };
   // Estado local para forçar re-renders
   const [failedAttempts, setFailedAttempts] = useState(() => getFailures());
   const [blockedUntil, setBlockedUntilState] = useState(() => getBlockedUntil());
@@ -138,12 +134,12 @@ export function useLoginRateLimit(): UseLoginRateLimitResult {
     console.log('[RateLimit] recordFailedAttempt:', { anterior: currentFailures, novo: newCount });
     
     // Salvar no localStorage
-    setFailures(newCount);
+    setFailuresLS(newCount);
     
     // Aplicar bloqueio se atingiu limite
     if (newCount >= ATTEMPTS_FOR_BLOCK) {
       const blockTime = Date.now() + BLOCK_DURATION_MS;
-      setBlockedUntil(blockTime);
+      setBlockedUntilLS(blockTime);
       setBlockedUntilState(blockTime);
     }
     
