@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { User, Check, X, Eye, EyeOff, Loader2, Mail, AlertCircle, LogIn, Shield, Clock, Lock, Phone } from 'lucide-react';
 import { loginSchema, signUpSchema, validateWithSchema, formatValidationErrors } from '@/lib/validation-schemas';
 import b360Logo from '@/assets/b360-logo.png';
+import authHero from '@/assets/auth-hero.jpg';
 
 const checkPasswordStrength = (password: string) => {
   const checks = {
@@ -231,35 +232,40 @@ export const BookingAuthDialog = ({ open, onOpenChange, onAuthSuccess }: Booking
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] max-w-md max-h-[90vh] overflow-y-auto p-0">
-        <div className="p-6">
-          {/* Header */}
-          <div className="flex flex-col items-center gap-2 mb-6">
-            <img src={b360Logo} alt="B360" className="h-8" />
-            <p className="text-sm text-muted-foreground text-center">
-              Para finalizar seu agendamento, entre ou crie sua conta
+      <DialogContent className="w-[95vw] max-w-lg max-h-[90vh] overflow-y-auto p-0">
+        {/* Hero Banner - matching ClientAuth mobile style */}
+        <div
+          className="relative flex items-center justify-center p-6 min-h-[160px]"
+          style={{ backgroundImage: `url(${authHero})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+        >
+          <div className="absolute inset-0 bg-black/50 rounded-t-lg" />
+          <div className="relative z-10 text-center space-y-3">
+            <img src={b360Logo} alt="B360" className="h-10 mx-auto drop-shadow-lg" />
+            <h1 className="text-xl font-bold text-white">
+              {activeTab === 'login' ? 'Agende seu corte em segundos' : 'Junte-se a nós!'}
+            </h1>
+            <p className="text-white/70 text-sm max-w-xs mx-auto">
+              {activeTab === 'login' ? 'Entre para finalizar seu agendamento' : 'Crie sua conta e comece a agendar agora'}
             </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setActiveTab(activeTab === 'login' ? 'signup' : 'login')}
+              className="border-white text-white hover:bg-primary hover:text-primary-foreground hover:border-primary rounded-full px-6"
+            >
+              {activeTab === 'login' ? 'Criar Conta' : 'Já tenho conta'}
+            </Button>
           </div>
+        </div>
 
-          {/* Tab switcher */}
-          <div className="flex gap-2 mb-6">
-            <Button
-              variant={activeTab === 'login' ? 'default' : 'outline'}
-              className="flex-1 rounded-full text-sm"
-              onClick={() => setActiveTab('login')}
-            >
-              Entrar
-            </Button>
-            <Button
-              variant={activeTab === 'signup' ? 'default' : 'outline'}
-              className="flex-1 rounded-full text-sm"
-              onClick={() => setActiveTab('signup')}
-            >
-              Criar Conta
-            </Button>
-          </div>
+        <div className="p-6 pt-4">
 
           {activeTab === 'login' ? (
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <h2 className="text-xl font-bold text-foreground">Login</h2>
+                <p className="text-muted-foreground text-sm">Entre com sua conta de cliente</p>
+              </div>
             <form onSubmit={handleLogin} className="space-y-4">
               {serverRateLimited && (
                 <Alert variant="destructive"><Shield className="h-4 w-4" /><AlertDescription>Sistema protegido. Aguarde alguns minutos.</AlertDescription></Alert>
@@ -297,7 +303,13 @@ export const BookingAuthDialog = ({ open, onOpenChange, onAuthSuccess }: Booking
                 </p>
               </div>
             </form>
+            </div>
           ) : (
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <h2 className="text-xl font-bold text-foreground">Cadastro - Cliente</h2>
+                <p className="text-muted-foreground text-sm">Crie sua conta para agendar</p>
+              </div>
             <form onSubmit={handleSignup} className="space-y-4">
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -372,6 +384,7 @@ export const BookingAuthDialog = ({ open, onOpenChange, onAuthSuccess }: Booking
                 Já tem conta?{' '}<button type="button" onClick={() => setActiveTab('login')} className="text-primary hover:underline font-medium">Fazer login</button>
               </p>
             </form>
+            </div>
           )}
         </div>
       </DialogContent>
