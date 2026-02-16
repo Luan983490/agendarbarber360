@@ -210,6 +210,7 @@ export const AdvancedSearch = ({
           <div className="relative">
             <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
             <Input
+              id="search-barbershop-input"
               placeholder="Digite o nome da barbearia..."
               value={localSearchQuery}
               onChange={(e) => setLocalSearchQuery(e.target.value)}
