@@ -179,7 +179,7 @@ export const AdvancedSearch = ({
           className="flex items-center gap-2 text-white"
           style={searchType === 'name' ? { background: 'linear-gradient(135deg, hsl(45, 60%, 28%) 0%, hsl(35, 40%, 14%) 100%)', border: 'none' } : {}}
         >
-          <Search className="h-4 w-4" />
+          <Search className="h-4 w-4" strokeWidth={1.5} />
           Por Nome
         </Button>
         <Button
@@ -189,7 +189,7 @@ export const AdvancedSearch = ({
           className="flex items-center gap-2 text-white"
           style={searchType === 'city' ? { background: 'linear-gradient(135deg, hsl(45, 60%, 28%) 0%, hsl(35, 40%, 14%) 100%)', border: 'none' } : {}}
         >
-          <Building2 className="h-4 w-4" />
+          <Building2 className="h-4 w-4" strokeWidth={1.5} />
           Por Cidade
         </Button>
         <Button
@@ -199,7 +199,7 @@ export const AdvancedSearch = ({
           className="flex items-center gap-2 text-white"
           style={searchType === 'proximity' ? { background: 'linear-gradient(135deg, hsl(45, 60%, 28%) 0%, hsl(35, 40%, 14%) 100%)', border: 'none' } : {}}
         >
-          <Navigation className="h-4 w-4" />
+          <Navigation className="h-4 w-4" strokeWidth={1.5} />
           Próximas
         </Button>
       </div>
