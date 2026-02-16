@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { PWAInlineBanner } from "@/components/PWAInlineBanner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -166,6 +167,7 @@ export const AdvancedSearch = ({
 
   return (
     <div className="bg-card rounded-xl p-6 shadow-elegant mb-8">
+      <PWAInlineBanner />
       <h2 className="text-2xl font-semibold text-foreground mb-6">
         Encontre sua barbearia ideal
       </h2>
