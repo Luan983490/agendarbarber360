@@ -209,7 +209,7 @@ const BarbershopAuth = () => {
     if (error) {
       if (error.code === 'AUTH_EMAIL_IN_USE' || error.message?.includes('already registered') || error.message?.includes('já está cadastrado')) {
         setEmailAlreadyExists(true);
-        toast({ title: 'Email já cadastrado', description: 'Faça login ou recupere sua senha.', variant: 'destructive' });
+        toast({ title: 'Email já cadastrado', description: 'Este email já possui uma conta. Se for de cliente, use a tela de login para clientes.', variant: 'destructive' });
         return;
       }
     } else {
@@ -387,12 +387,14 @@ const BarbershopAuth = () => {
                 {emailAlreadyExists && (
                   <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 space-y-2">
                     <div className="flex items-center gap-2 text-destructive text-sm"><AlertCircle className="h-4 w-4" /><span className="font-medium">Email já cadastrado</span></div>
+                    <p className="text-xs text-muted-foreground">Se esta conta for de cliente, use a tela correta.</p>
                     <div className="flex gap-2">
-                      <Button type="button" variant="outline" size="sm" onClick={() => { setActiveTab('login'); setLoginData(prev => ({ ...prev, email: signupData.email })); }} className="flex-1"><LogIn className="h-3 w-3 mr-1" />Fazer Login</Button>
-                      <Button type="button" variant="ghost" size="sm" onClick={() => handleForgotPassword(signupData.email)} disabled={isRecovering} className="flex-1 text-muted-foreground">
-                        {isRecovering ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />Enviando...</> : 'Recuperar Senha'}
-                      </Button>
+                      <Button type="button" variant="outline" size="sm" onClick={() => { setActiveTab('login'); setLoginData(prev => ({ ...prev, email: signupData.email })); }} className="flex-1"><LogIn className="h-3 w-3 mr-1" />Login Barbearia</Button>
+                      <Button type="button" variant="outline" size="sm" onClick={() => navigate('/login/client')} className="flex-1"><User className="h-3 w-3 mr-1" />Login Cliente</Button>
                     </div>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => handleForgotPassword(signupData.email)} disabled={isRecovering} className="w-full text-muted-foreground">
+                      {isRecovering ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />Enviando...</> : 'Recuperar Senha'}
+                    </Button>
                   </div>
                 )}
 

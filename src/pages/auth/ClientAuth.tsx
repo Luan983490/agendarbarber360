@@ -10,7 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useLoginRateLimit } from '@/hooks/useLoginRateLimit';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { User, Check, X, Eye, EyeOff, Loader2, Mail, AlertCircle, LogIn, Shield, Clock, Lock, ArrowLeft } from 'lucide-react';
+import { User, Store, Check, X, Eye, EyeOff, Loader2, Mail, AlertCircle, LogIn, Shield, Clock, Lock, ArrowLeft } from 'lucide-react';
 import { loginSchema, signUpSchema, validateWithSchema, formatValidationErrors } from '@/lib/validation-schemas';
 import { TurnstileCaptcha } from '@/components/TurnstileCaptcha';
 import b360Logo from '@/assets/b360-logo.png';
@@ -210,7 +210,7 @@ const ClientAuth = () => {
     if (error) {
       if (error.code === 'AUTH_EMAIL_IN_USE' || error.message?.includes('already registered') || error.message?.includes('já está cadastrado')) {
         setEmailAlreadyExists(true);
-        toast({ title: 'Email já cadastrado', description: 'Este email já possui uma conta. Faça login ou recupere sua senha.', variant: 'destructive' });
+        toast({ title: 'Email já cadastrado', description: 'Este email já possui uma conta. Se for de barbearia, use a tela de login para barbearias.', variant: 'destructive' });
         return;
       }
     } else {
@@ -375,12 +375,14 @@ const ClientAuth = () => {
                 {emailAlreadyExists && (
                   <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 space-y-2">
                     <div className="flex items-center gap-2 text-destructive text-sm"><AlertCircle className="h-4 w-4" /><span className="font-medium">Email já cadastrado</span></div>
+                    <p className="text-xs text-muted-foreground">Se esta conta for de barbearia, use a tela correta.</p>
                     <div className="flex gap-2">
-                      <Button type="button" variant="outline" size="sm" onClick={() => { setActiveTab('login'); setLoginData(prev => ({ ...prev, email: signupData.email })); }} className="flex-1"><LogIn className="h-3 w-3 mr-1" />Fazer Login</Button>
-                      <Button type="button" variant="ghost" size="sm" onClick={() => handleForgotPassword(signupData.email)} disabled={isRecovering} className="flex-1 text-muted-foreground">
-                        {isRecovering ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />Enviando...</> : 'Recuperar Senha'}
-                      </Button>
+                      <Button type="button" variant="outline" size="sm" onClick={() => { setActiveTab('login'); setLoginData(prev => ({ ...prev, email: signupData.email })); }} className="flex-1"><LogIn className="h-3 w-3 mr-1" />Login Cliente</Button>
+                      <Button type="button" variant="outline" size="sm" onClick={() => navigate('/login/barbershop')} className="flex-1"><Store className="h-3 w-3 mr-1" />Login Barbearia</Button>
                     </div>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => handleForgotPassword(signupData.email)} disabled={isRecovering} className="w-full text-muted-foreground">
+                      {isRecovering ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />Enviando...</> : 'Recuperar Senha'}
+                    </Button>
                   </div>
                 )}
 
