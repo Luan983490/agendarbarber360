@@ -3587,8 +3587,6 @@ export type Database = {
         Returns: boolean
       }
       is_disposable_email: { Args: { check_email: string }; Returns: boolean }
-      is_email_verified: { Args: never; Returns: boolean }
-      is_user_in_grace_period: { Args: never; Returns: boolean }
       list_clients: {
         Args: {
           p_barbershop_id: string
