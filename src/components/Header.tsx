@@ -161,41 +161,11 @@ export const Header = ({ showBackButton = false, hideMobileMenu = false }: Heade
                               className="cursor-pointer"
                               onSelect={(e) => {
                                 e.preventDefault();
-                                navigate('/historico');
-                              }}
-                            >
-                              <History className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                              <span>Histórico</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              className="cursor-pointer"
-                              onSelect={(e) => {
-                                e.preventDefault();
                                 navigate('/pacotes');
                               }}
                             >
                               <Package className="mr-2 h-4 w-4" strokeWidth={1.5} />
                               <span>Meus Pacotes</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              className="cursor-pointer"
-                              onSelect={(e) => {
-                                e.preventDefault();
-                                navigate('/assinaturas');
-                              }}
-                            >
-                              <Calendar className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                              <span>Minhas Assinaturas</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              className="cursor-pointer"
-                              onSelect={(e) => {
-                                e.preventDefault();
-                                navigate('/cartoes');
-                              }}
-                            >
-                              <CreditCard className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                              <span>Meus Cartões</span>
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               className="cursor-pointer"

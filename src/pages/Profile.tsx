@@ -200,7 +200,7 @@ const Profile = () => {
           {/* Quick links for mobile - replaces header dropdown */}
           {isMobile && (
             <div className="mb-6 space-y-1">
-              <button onClick={() => setActiveTab('data')} className={`flex items-center justify-between w-full px-3 py-3 rounded-lg hover:bg-muted transition-colors ${activeTab === 'data' ? 'bg-muted' : ''}`}>
+              <button onClick={() => { setActiveTab('data'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className={`flex items-center justify-between w-full px-3 py-3 rounded-lg hover:bg-muted transition-colors ${activeTab === 'data' || activeTab === 'address' || activeTab === 'security' || activeTab === 'access' ? 'bg-muted' : ''}`}>
                 <div className="flex items-center gap-3">
                   <User className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
                   <span className="text-sm">Dados de Cadastro</span>
@@ -214,31 +214,10 @@ const Profile = () => {
                 </div>
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </button>
-              <button onClick={() => navigate('/historico')} className="flex items-center justify-between w-full px-3 py-3 rounded-lg hover:bg-muted transition-colors">
-                <div className="flex items-center gap-3">
-                  <History className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
-                  <span className="text-sm">Histórico</span>
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              </button>
               <button onClick={() => navigate('/pacotes')} className="flex items-center justify-between w-full px-3 py-3 rounded-lg hover:bg-muted transition-colors">
                 <div className="flex items-center gap-3">
                   <Package className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
                   <span className="text-sm">Meus Pacotes</span>
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              </button>
-              <button onClick={() => navigate('/assinaturas')} className="flex items-center justify-between w-full px-3 py-3 rounded-lg hover:bg-muted transition-colors">
-                <div className="flex items-center gap-3">
-                  <Calendar className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
-                  <span className="text-sm">Minhas Assinaturas</span>
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              </button>
-              <button onClick={() => navigate('/cartoes')} className="flex items-center justify-between w-full px-3 py-3 rounded-lg hover:bg-muted transition-colors">
-                <div className="flex items-center gap-3">
-                  <CreditCard className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
-                  <span className="text-sm">Meus Cartões</span>
                 </div>
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </button>
@@ -249,7 +228,7 @@ const Profile = () => {
                 </div>
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </button>
-              <button onClick={() => navigate('/perfil?tab=security')} className="flex items-center justify-between w-full px-3 py-3 rounded-lg hover:bg-muted transition-colors">
+              <button onClick={() => { setActiveTab('security'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="flex items-center justify-between w-full px-3 py-3 rounded-lg hover:bg-muted transition-colors">
                 <div className="flex items-center gap-3">
                   <Settings className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
                   <span className="text-sm">Configurações</span>
