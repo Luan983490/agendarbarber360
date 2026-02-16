@@ -140,6 +140,21 @@ const ClientAuth = () => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email: emailUsed, password: loginData.password });
       if (error) throw error;
+
+      // Verificar tipo de usuário - bloquear barbershop_owner na tela de cliente
+      const { data: profile } = await supabase.from('profiles').select('user_type').eq('user_id', data.user.id).single();
+      const userType = profile?.user_type || data.user.user_metadata?.user_type;
+      if (userType === 'barbershop_owner') {
+        await supabase.auth.signOut();
+        setLoading(false);
+        toast({
+          title: 'Acesso incorreto',
+          description: 'Esta conta é de barbearia. Use a tela de login para barbearias.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       const { data: factorsData } = await supabase.auth.mfa.listFactors();
       const allFactors = factorsData?.all || factorsData?.totp || [];
       const activeMFAFactor = allFactors.find((factor: any) => factor.status === 'verified' && factor.factor_type === 'totp');
