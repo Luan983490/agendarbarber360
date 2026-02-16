@@ -31,6 +31,9 @@ import AuthCallback from "./pages/AuthCallback";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 const BarbershopPage = lazy(() => import("./pages/BarbershopPage"));
+const ChooseUserType = lazy(() => import("./pages/ChooseUserType"));
+const ClientAuth = lazy(() => import("./pages/auth/ClientAuth"));
+const BarbershopAuth = lazy(() => import("./pages/auth/BarbershopAuth"));
 
 // Dev tools (lazy load)
 const DevAssistant = lazy(() => import("./pages/DevAssistant"));
@@ -77,7 +80,12 @@ const AppContent = () => {
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
+            <Route path="/auth" element={<Navigate to="/choose-type" replace />} />
+            <Route path="/choose-type" element={<ChooseUserType />} />
+            <Route path="/login/client" element={<ClientAuth />} />
+            <Route path="/signup/client" element={<ClientAuth />} />
+            <Route path="/login/barbershop" element={<BarbershopAuth />} />
+            <Route path="/signup/barbershop" element={<BarbershopAuth />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/dev-assistant" element={<DevAssistant />} />
