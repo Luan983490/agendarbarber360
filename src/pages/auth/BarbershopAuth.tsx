@@ -128,12 +128,20 @@ const BarbershopAuth = () => {
     const emailUsed = loginData.email.trim().toLowerCase();
     const attempts = Number(localStorage.getItem('auth_failures_barbershop') || '0');
     const blockedUntil = Number(localStorage.getItem('auth_blocked_until_barbershop') || '0');
-    if (attempts >= 3) {
+    const firstFailureAt = Number(localStorage.getItem('auth_first_failure_barbershop') || '0');
+    // Auto-reset após 2 horas sem tentativas
+    if (firstFailureAt && Date.now() - firstFailureAt > 2 * 60 * 60 * 1000) {
+      localStorage.setItem('auth_failures_barbershop', '0');
+      localStorage.removeItem('auth_blocked_until_barbershop');
+      localStorage.removeItem('auth_first_failure_barbershop');
+    }
+    const currentAttempts = Number(localStorage.getItem('auth_failures_barbershop') || '0');
+    if (currentAttempts >= 3) {
       if (Date.now() < blockedUntil) {
         const remainingSecs = Math.ceil((blockedUntil - Date.now()) / 1000);
         toast({ title: 'Muitas tentativas', description: `Tente novamente em ${remainingSecs > 60 ? '1 minuto' : remainingSecs + ' segundos'}.`, variant: 'destructive' });
         return;
-      } else { localStorage.setItem('auth_failures_barbershop', '0'); localStorage.removeItem('auth_blocked_until_barbershop'); }
+      } else { localStorage.setItem('auth_failures_barbershop', '0'); localStorage.removeItem('auth_blocked_until_barbershop'); localStorage.removeItem('auth_first_failure_barbershop'); }
     }
     const validation = validateWithSchema(loginSchema, loginData);
     if (!validation.success) { toast({ title: 'Erro de validação', description: formatValidationErrors(validation.errors), variant: 'destructive' }); return; }
@@ -180,6 +188,7 @@ const BarbershopAuth = () => {
       } else if (errorMessage.includes('invalid login credentials')) {
         const currentCount = Number(localStorage.getItem('auth_failures_barbershop') || '0');
         const newCount = currentCount + 1;
+        if (newCount === 1) localStorage.setItem('auth_first_failure_barbershop', Date.now().toString());
         localStorage.setItem('auth_failures_barbershop', newCount.toString());
         if (newCount >= 3) { localStorage.setItem('auth_blocked_until_barbershop', (Date.now() + 60000).toString()); }
         setForceUpdate(prev => prev + 1);
@@ -195,6 +204,7 @@ const BarbershopAuth = () => {
       } else {
         const currentCount = Number(localStorage.getItem('auth_failures_barbershop') || '0');
         const newCount = currentCount + 1;
+        if (newCount === 1) localStorage.setItem('auth_first_failure_barbershop', Date.now().toString());
         localStorage.setItem('auth_failures_barbershop', newCount.toString());
         if (newCount >= 3) { localStorage.setItem('auth_blocked_until_barbershop', (Date.now() + 60000).toString()); }
         setForceUpdate(prev => prev + 1);
