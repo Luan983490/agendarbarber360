@@ -387,7 +387,7 @@ const BarbershopAuth = () => {
                 {emailAlreadyExists && (
                   <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 space-y-2">
                     <div className="flex items-center gap-2 text-destructive text-sm"><AlertCircle className="h-4 w-4" /><span className="font-medium">Email já cadastrado</span></div>
-                    <p className="text-xs text-muted-foreground">Se esta conta for de cliente, use a tela correta.</p>
+                    <p className="text-xs text-muted-foreground">Este email já possui uma conta. Para criar uma conta diferente, use outro email.</p>
                     <div className="flex gap-2">
                       <Button type="button" variant="outline" size="sm" onClick={() => { setActiveTab('login'); setLoginData(prev => ({ ...prev, email: signupData.email })); }} className="flex-1"><LogIn className="h-3 w-3 mr-1" />Login Barbearia</Button>
                       <Button type="button" variant="outline" size="sm" onClick={() => navigate('/login/client')} className="flex-1"><User className="h-3 w-3 mr-1" />Login Cliente</Button>
