@@ -11,6 +11,8 @@ import { Header } from '@/components/Header';
 import { Calendar, Search, SlidersHorizontal, MapPin, Clock, Scissors } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { ClientBottomNav } from '@/components/ClientBottomNav';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Booking {
   id: string;
@@ -31,6 +33,7 @@ interface Booking {
 }
 
 const BookingsHistory = () => {
+  const isMobile = useIsMobile();
   const { user, loading: authLoading } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -107,9 +110,9 @@ const BookingsHistory = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      {!isMobile && <Header />}
       
-      <main className="container mx-auto px-4 py-8 mt-16">
+      <main className={`container mx-auto px-4 py-8 ${isMobile ? 'pb-24' : 'mt-16'}`}>
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Histórico de agendamentos</h1>
           <p className="text-muted-foreground">
@@ -216,6 +219,7 @@ const BookingsHistory = () => {
           )}
         </div>
       </main>
+      {isMobile && <ClientBottomNav />}
     </div>
   );
 };
