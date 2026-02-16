@@ -144,9 +144,9 @@ const MyBookings = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {!isMobile && <Header />}
+      <Header />
       
-      <main className={cn("container mx-auto px-4 py-8", isMobile ? "pb-24" : "mt-16")}>
+      <main className={cn("container mx-auto px-4 py-8 mt-16", isMobile && "pb-24")}>
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Meus Agendamentos</h1>
           <p className="text-muted-foreground">

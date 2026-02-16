@@ -123,9 +123,9 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {!showClientNav && <Header />}
+      <Header />
       
-      <main className={showClientNav ? "pt-4 pb-24" : "pt-20"}>
+      <main className={showClientNav ? "pt-20 pb-24" : "pt-20"}>
         <section className="container mx-auto px-4 py-8">
           {user ? (
             <Tabs defaultValue="all" className="w-full">
