@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ServiceSelectionStep } from "./ServiceSelectionStep";
 import { DateTimeSelectionStep } from "./DateTimeSelectionStep";
 import { BookingAuthDialog } from "./BookingAuthDialog";
+import { BookingSuccessDialog } from "./BookingSuccessDialog";
 import { enviarConfirmacaoWhatsApp } from "@/utils/whatsapp";
 
 interface BookingFlowProps {
@@ -61,6 +62,7 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFrom
   const [loading, setLoading] = useState(false);
   const [notes, setNotes] = useState("");
   const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const pendingBookingRef = useRef(false);
 
   // Prevent body scroll when modal is open
@@ -228,14 +230,9 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFrom
         });
       }
 
-      toast({
-        title: "Agendamento realizado!",
-        description: "Seu agendamento foi criado com sucesso.",
-      });
-
       resetForm();
       setIsOpen(false);
-      navigate('/my-bookings');
+      setShowSuccessDialog(true);
     } catch (error: any) {
       console.error("Erro ao criar agendamento:", error);
       toast({
@@ -332,6 +329,14 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFrom
         open={showAuthDialog}
         onOpenChange={setShowAuthDialog}
         onAuthSuccess={handleAuthSuccess}
+      />
+
+      <BookingSuccessDialog
+        open={showSuccessDialog}
+        onContinue={() => {
+          setShowSuccessDialog(false);
+          navigate('/my-bookings');
+        }}
       />
     </>
   );
