@@ -277,7 +277,18 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFrom
   };
 
   if (!isOpen) {
-    return <div onClick={() => setIsOpen(true)}>{children}</div>;
+    return (
+      <>
+        <div onClick={() => setIsOpen(true)}>{children}</div>
+        <BookingSuccessDialog
+          open={showSuccessDialog}
+          onContinue={() => {
+            setShowSuccessDialog(false);
+            navigate('/my-bookings');
+          }}
+        />
+      </>
+    );
   }
 
   return (
