@@ -112,20 +112,23 @@ const MyBookings = () => {
     return timeString.substring(0, 5);
   };
 
-  const isUpcoming = (bookingDate: string) => {
-    const booking = new Date(bookingDate);
+  const isUpcoming = (booking: Booking) => {
+    // Parse date as local (not UTC) by splitting the string
+    const [year, month, day] = booking.booking_date.split('-').map(Number);
+    const bookingDate = new Date(year, month - 1, day);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    return booking >= today;
+    
+    // Future date AND not in a "finished" status
+    const isFutureOrToday = bookingDate >= today;
+    const isFinishedStatus = ['completed', 'cancelled', 'no_show'].includes(booking.status);
+    
+    return isFutureOrToday && !isFinishedStatus;
   };
 
-  const upcomingBookings = bookings.filter(booking => 
-    isUpcoming(booking.booking_date) && booking.status !== 'cancelled'
-  );
+  const upcomingBookings = bookings.filter(booking => isUpcoming(booking));
 
-  const pastBookings = bookings.filter(booking => 
-    !isUpcoming(booking.booking_date) || booking.status === 'cancelled'
-  );
+  const pastBookings = bookings.filter(booking => !isUpcoming(booking));
 
   if (authLoading || loading) {
     return (
