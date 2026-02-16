@@ -19,9 +19,13 @@ const ChooseUserType = () => {
     <div className="min-h-screen bg-[hsl(0,0%,7%)] flex flex-col">
       <Header hideMobileMenu={isMobile} />
       <div className={`flex-1 flex flex-col items-center justify-center px-4 py-12 mt-16 ${isMobile ? 'pb-24' : ''}`}>
-        <h1 className="text-2xl md:text-3xl font-bold text-white mb-8 text-center tracking-tight">
-          Faça login para <span className="text-primary">continuar</span>
-        </h1>
+        <div className="mb-10 text-center">
+          <p className="text-sm uppercase tracking-[0.2em] text-primary/80 mb-2 font-medium">Bem-vindo ao Barber360</p>
+          <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">
+            Faça login para continuar
+          </h1>
+          <div className="mx-auto mt-3 h-[2px] w-16 rounded-full bg-primary/60" />
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-[640px]">
           {/* Card Cliente */}
           <div
