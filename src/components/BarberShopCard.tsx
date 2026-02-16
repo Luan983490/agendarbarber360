@@ -68,19 +68,6 @@ export const BarberShopCard = ({ barberShop }: BarberShopCardProps) => {
             </Button>
           </div>
 
-          {/* Status Badge */}
-          <div className="absolute top-2 left-2">
-            <Badge 
-              className={cn(
-                "text-xs px-2 py-0.5",
-                barberShop.isOpen 
-                  ? "bg-success text-success-foreground" 
-                  : "bg-destructive text-destructive-foreground"
-              )}
-            >
-              {barberShop.isOpen ? "Aberto" : "Fechado"}
-            </Badge>
-          </div>
 
           {/* Promotions */}
           {barberShop.promotions.length > 0 && (
