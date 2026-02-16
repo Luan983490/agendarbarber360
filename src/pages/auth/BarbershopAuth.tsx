@@ -234,7 +234,7 @@ const BarbershopAuth = () => {
         <div className="w-full max-w-md text-center">
           <img src={b360Logo} alt="B360" className="h-16 mx-auto mb-6" />
           <div className="bg-card border border-border rounded-2xl p-8 space-y-4">
-            <Mail className="h-12 w-12 text-purple-500 mx-auto" />
+            <Mail className="h-12 w-12 text-primary mx-auto" />
             <h2 className="text-xl font-bold">Cadastro Realizado!</h2>
             <p className="text-muted-foreground text-sm">Enviamos um email para <strong>{signupEmail}</strong></p>
             <div className="bg-muted p-4 rounded-lg text-sm space-y-2 text-left">
@@ -259,19 +259,19 @@ const BarbershopAuth = () => {
         className="hidden lg:flex lg:w-5/12 relative items-center justify-center p-12"
         style={{ backgroundImage: `url(${authHero})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
       >
-        <div className="absolute inset-0 bg-gradient-to-b from-purple-900/80 via-purple-800/70 to-purple-900/80" />
+        <div className="absolute inset-0 bg-black/40" />
         <div className="relative z-10 text-center space-y-6">
           <img src={b360Logo} alt="B360" className="h-14 mx-auto drop-shadow-lg" />
           <h1 className="text-3xl md:text-4xl font-bold text-white">
             {activeTab === 'login' ? 'Gerencie sua barbearia' : 'Comece agora!'}
           </h1>
-          <p className="text-purple-100 text-lg max-w-sm mx-auto">
+          <p className="text-white/70 text-lg max-w-sm mx-auto">
             {activeTab === 'login' ? 'Acesse o painel da sua barbearia' : '30 dias grátis para testar a plataforma'}
           </p>
           <Button
             variant="outline"
             onClick={() => setActiveTab(activeTab === 'login' ? 'signup' : 'login')}
-            className="border-white text-white hover:bg-white hover:text-purple-900 rounded-full px-8"
+            className="border-white text-white hover:bg-primary hover:text-primary-foreground hover:border-primary rounded-full px-8"
           >
             {activeTab === 'login' ? 'Criar Conta' : 'Já tenho conta'}
           </Button>
@@ -305,11 +305,11 @@ const BarbershopAuth = () => {
 
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input type="email" placeholder="Email" value={loginData.email} onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))} required disabled={isBlocked} className="pl-10 border-0 border-b border-border rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-purple-500" />
+                  <Input type="email" placeholder="Email" value={loginData.email} onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))} required disabled={isBlocked} className="pl-10 border-0 border-b border-border rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary" />
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input type={showPassword ? 'text' : 'password'} placeholder="Senha" value={loginData.password} onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))} required disabled={isBlocked} className="pl-10 pr-10 border-0 border-b border-border rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-purple-500" />
+                  <Input type={showPassword ? 'text' : 'password'} placeholder="Senha" value={loginData.password} onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))} required disabled={isBlocked} className="pl-10 pr-10 border-0 border-b border-border rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary" />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -322,17 +322,17 @@ const BarbershopAuth = () => {
                   </div>
                 )}
 
-                <Button type="submit" className="w-full rounded-full bg-purple-600 hover:bg-purple-700" disabled={loading || isBlocked || (requiresCaptcha && !captchaVerified) || serverRateLimited}>
+                <Button type="submit" className="w-full rounded-full bg-primary hover:bg-primary/85 text-primary-foreground" disabled={loading || isBlocked || (requiresCaptcha && !captchaVerified) || serverRateLimited}>
                   {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Entrando...</> : isBlocked ? <><Clock className="mr-2 h-4 w-4" />Aguarde {formatRemainingTime(remainingSeconds)}</> : 'Entrar'}
                 </Button>
 
                 <div className="flex flex-col gap-2 text-center text-sm">
-                  <button type="button" onClick={() => handleForgotPassword()} disabled={isRecovering} className="text-purple-500 hover:underline font-medium disabled:opacity-50">
+                  <button type="button" onClick={() => handleForgotPassword()} disabled={isRecovering} className="text-primary hover:underline font-medium disabled:opacity-50">
                     {isRecovering ? <><Loader2 className="inline mr-1 h-3 w-3 animate-spin" />Enviando...</> : 'Esqueceu a senha?'}
                   </button>
                   <p className="text-muted-foreground">
                     Não tem conta?{' '}
-                    <button type="button" onClick={() => setActiveTab('signup')} className="text-purple-500 hover:underline font-medium">Cadastrar barbearia</button>
+                    <button type="button" onClick={() => setActiveTab('signup')} className="text-primary hover:underline font-medium">Cadastrar barbearia</button>
                   </p>
                 </div>
               </form>
@@ -347,11 +347,11 @@ const BarbershopAuth = () => {
               <form onSubmit={handleSignup} className="space-y-4">
                 <div className="relative">
                   <Store className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input type="text" placeholder="Nome da Barbearia" value={signupData.barbershopName} onChange={(e) => setSignupData(prev => ({ ...prev, barbershopName: e.target.value }))} required className="pl-10 border-0 border-b border-border rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-purple-500" />
+                  <Input type="text" placeholder="Nome da Barbearia" value={signupData.barbershopName} onChange={(e) => setSignupData(prev => ({ ...prev, barbershopName: e.target.value }))} required className="pl-10 border-0 border-b border-border rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary" />
                 </div>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input type="text" placeholder="Nome do Contato" value={signupData.contactName} onChange={(e) => setSignupData(prev => ({ ...prev, contactName: e.target.value }))} required className="pl-10 border-0 border-b border-border rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-purple-500" />
+                  <Input type="text" placeholder="Nome do Contato" value={signupData.contactName} onChange={(e) => setSignupData(prev => ({ ...prev, contactName: e.target.value }))} required className="pl-10 border-0 border-b border-border rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary" />
                 </div>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -362,12 +362,12 @@ const BarbershopAuth = () => {
                     else if (raw.length > 0) masked = `(${raw}`;
                     if (raw.length > 7) masked = `(${raw.slice(0, 2)}) ${raw.slice(2, 7)}-${raw.slice(7)}`;
                     setSignupData(prev => ({ ...prev, contactPhone: masked }));
-                  }} required className="pl-10 border-0 border-b border-border rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-purple-500" />
+                  }} required className="pl-10 border-0 border-b border-border rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary" />
                 </div>
 
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input type="email" placeholder="E-mail Para Acesso" value={signupData.email} onChange={(e) => { setSignupData(prev => ({ ...prev, email: e.target.value })); setEmailAlreadyExists(false); }} required className={`pl-10 border-0 border-b border-border rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-purple-500 ${emailAlreadyExists ? 'border-destructive' : ''}`} />
+                  <Input type="email" placeholder="E-mail Para Acesso" value={signupData.email} onChange={(e) => { setSignupData(prev => ({ ...prev, email: e.target.value })); setEmailAlreadyExists(false); }} required className={`pl-10 border-0 border-b border-border rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary ${emailAlreadyExists ? 'border-destructive' : ''}`} />
                 </div>
                 {emailAlreadyExists && (
                   <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 space-y-2">
@@ -383,7 +383,7 @@ const BarbershopAuth = () => {
 
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input type={showPassword ? 'text' : 'password'} placeholder="Senha" value={signupData.password} onChange={(e) => setSignupData(prev => ({ ...prev, password: e.target.value }))} required maxLength={15} className="pl-10 pr-10 border-0 border-b border-border rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-purple-500" />
+                  <Input type={showPassword ? 'text' : 'password'} placeholder="Senha" value={signupData.password} onChange={(e) => setSignupData(prev => ({ ...prev, password: e.target.value }))} required maxLength={15} className="pl-10 pr-10 border-0 border-b border-border rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary" />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -405,7 +405,7 @@ const BarbershopAuth = () => {
 
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input type={showConfirmPassword ? 'text' : 'password'} placeholder="Confirmar Senha" value={signupData.confirmPassword} onChange={(e) => setSignupData(prev => ({ ...prev, confirmPassword: e.target.value }))} required className="pl-10 pr-10 border-0 border-b border-border rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-purple-500" />
+                  <Input type={showConfirmPassword ? 'text' : 'password'} placeholder="Confirmar Senha" value={signupData.confirmPassword} onChange={(e) => setSignupData(prev => ({ ...prev, confirmPassword: e.target.value }))} required className="pl-10 pr-10 border-0 border-b border-border rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary" />
                   <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                     {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -416,11 +416,11 @@ const BarbershopAuth = () => {
                 <div className="flex items-start space-x-2">
                   <Checkbox id="terms-barbershop" checked={signupData.acceptedTerms} onCheckedChange={(checked) => setSignupData(prev => ({ ...prev, acceptedTerms: checked === true }))} className="mt-0.5" />
                   <Label htmlFor="terms-barbershop" className="text-sm font-normal leading-snug cursor-pointer">
-                    Li e aceito o{' '}<Link to="/terms" className="text-purple-500 hover:underline" target="_blank">Termo de Condição de Uso</Link> *
+                    Li e aceito o{' '}<Link to="/terms" className="text-primary hover:underline" target="_blank">Termo de Condição de Uso</Link> *
                   </Label>
                 </div>
 
-                <Button type="submit" className="w-full rounded-full bg-purple-600 hover:bg-purple-700" disabled={loading || passwordStrength.strength === 'weak' || !signupData.acceptedTerms}>
+                <Button type="submit" className="w-full rounded-full bg-primary hover:bg-primary/85 text-primary-foreground" disabled={loading || passwordStrength.strength === 'weak' || !signupData.acceptedTerms}>
                   {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Cadastrando...</> : 'Criar Conta'}
                 </Button>
 
@@ -429,7 +429,7 @@ const BarbershopAuth = () => {
                 )}
 
                 <p className="text-center text-sm text-muted-foreground">
-                  Já tem uma conta?{' '}<button type="button" onClick={() => setActiveTab('login')} className="text-purple-500 hover:underline font-medium">Fazer login</button>
+                  Já tem uma conta?{' '}<button type="button" onClick={() => setActiveTab('login')} className="text-primary hover:underline font-medium">Fazer login</button>
                 </p>
               </form>
             </div>
