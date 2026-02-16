@@ -19,6 +19,9 @@ const ChooseUserType = () => {
     <div className="min-h-screen bg-[hsl(0,0%,7%)] flex flex-col">
       <Header hideMobileMenu={isMobile} />
       <div className={`flex-1 flex flex-col items-center justify-center px-4 py-12 mt-16 ${isMobile ? 'pb-24' : ''}`}>
+        <h1 className="text-xl md:text-2xl font-semibold text-white mb-6 text-center">
+          Faça login para continuar
+        </h1>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-[640px]">
           {/* Card Cliente */}
           <div
