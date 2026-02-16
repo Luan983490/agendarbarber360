@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -45,6 +46,7 @@ type BookingStep = "services" | "datetime";
 
 export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFromAutoOpen }: BookingFlowProps) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { toast } = useToast();
 
   const [isOpen, setIsOpen] = useState(autoOpen);
@@ -233,6 +235,7 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFrom
 
       resetForm();
       setIsOpen(false);
+      navigate('/my-bookings');
     } catch (error: any) {
       console.error("Erro ao criar agendamento:", error);
       toast({
