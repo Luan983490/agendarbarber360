@@ -72,7 +72,7 @@ const ChooseUserType = () => {
                 Sem cartão de crédito
               </span>
               <Button
-                className="mt-4 bg-[hsl(210,70%,50%)] hover:bg-[hsl(210,70%,43%)] text-white rounded-lg h-9 px-5 text-xs font-medium"
+                className="mt-4 bg-primary text-primary-foreground hover:bg-primary/85 rounded-lg h-9 px-5 text-xs font-medium"
               >
                 Continuar →
               </Button>
@@ -128,7 +128,7 @@ const ChooseUserType = () => {
                 Cancele quando quiser
               </span>
               <Button
-                className="mt-4 bg-[hsl(270,55%,50%)] hover:bg-[hsl(270,55%,43%)] text-white rounded-lg h-9 px-5 text-xs font-medium"
+                className="mt-4 bg-primary text-primary-foreground hover:bg-primary/85 rounded-lg h-9 px-5 text-xs font-medium"
               >
                 Continuar →
               </Button>
