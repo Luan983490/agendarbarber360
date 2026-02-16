@@ -52,15 +52,17 @@ const Profile = () => {
       city: ''
     }
   });
-  const [activeTab, setActiveTab] = useState<'data' | 'address' | 'security' | 'access'>('data');
+  const [activeTab, setActiveTab] = useState<'data' | 'address' | 'security'>('data');
+  const [mobileShowMenu, setMobileShowMenu] = useState(true);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
     const tab = new URLSearchParams(location.search).get('tab');
-    if (tab === 'data' || tab === 'address' || tab === 'security' || tab === 'access') {
+    if (tab === 'data' || tab === 'address' || tab === 'security') {
       setActiveTab(tab);
+      if (isMobile) setMobileShowMenu(false);
     }
   }, [location.search]);
 
@@ -198,9 +200,9 @@ const Profile = () => {
           </div>
 
           {/* Quick links for mobile - replaces header dropdown */}
-          {isMobile && (
+          {isMobile && mobileShowMenu && (
             <div className="mb-6 space-y-1">
-              <button onClick={() => { setActiveTab('data'); }} className={`flex items-center justify-between w-full px-3 py-3 rounded-lg hover:bg-muted transition-colors ${activeTab === 'data' ? 'bg-muted' : ''}`}>
+              <button onClick={() => { setActiveTab('data'); setMobileShowMenu(false); }} className="flex items-center justify-between w-full px-3 py-3 rounded-lg hover:bg-muted transition-colors">
                 <div className="flex items-center gap-3">
                   <User className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
                   <span className="text-sm">Dados de Cadastro</span>
@@ -221,7 +223,7 @@ const Profile = () => {
                 </div>
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </button>
-              <button onClick={() => { setActiveTab('security'); }} className={`flex items-center justify-between w-full px-3 py-3 rounded-lg hover:bg-muted transition-colors ${activeTab === 'security' ? 'bg-muted' : ''}`}>
+              <button onClick={() => { setActiveTab('security'); setMobileShowMenu(false); }} className="flex items-center justify-between w-full px-3 py-3 rounded-lg hover:bg-muted transition-colors">
                 <div className="flex items-center gap-3">
                   <Settings className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
                   <span className="text-sm">Configurações</span>
@@ -235,6 +237,14 @@ const Profile = () => {
                 </button>
               </div>
             </div>
+          )}
+
+          {/* Mobile back button when viewing content */}
+          {isMobile && !mobileShowMenu && (
+            <button onClick={() => setMobileShowMenu(true)} className="flex items-center gap-2 mb-4 text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <ChevronRight className="h-4 w-4 rotate-180" />
+              <span>Voltar ao menu</span>
+            </button>
           )}
 
           {!isMobile && (
@@ -263,18 +273,10 @@ const Profile = () => {
                 <Lock className="h-4 w-4 mr-2" />
                 Segurança
               </Button>
-              <Button
-                variant={activeTab === 'access' ? 'default' : 'ghost'}
-                className="rounded-b-none"
-                onClick={() => setActiveTab('access')}
-              >
-                <Key className="h-4 w-4 mr-2" />
-                Acessos
-              </Button>
             </div>
           )}
 
-          {activeTab === 'data' && (
+          {activeTab === 'data' && (!isMobile || !mobileShowMenu) && (
             <div className="space-y-6">
               <div>
                 <Label htmlFor="name">Nome completo *</Label>
@@ -458,7 +460,7 @@ const Profile = () => {
             </div>
           )}
 
-          {activeTab === 'address' && (
+          {activeTab === 'address' && (!isMobile || !mobileShowMenu) && (
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -590,7 +592,7 @@ const Profile = () => {
             </div>
           )}
 
-          {activeTab === 'security' && (
+          {activeTab === 'security' && (!isMobile || !mobileShowMenu) && (
             <div className="space-y-6">
               {/* MFA Settings Card */}
               <MFASettingsCard />
@@ -615,19 +617,6 @@ const Profile = () => {
             </div>
           )}
 
-          {activeTab === 'access' && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between p-4 bg-card rounded-lg">
-                <div>
-                  <p className="font-semibold">Google</p>
-                  <p className="text-sm text-muted-foreground">Conectar com Google</p>
-                </div>
-                <Button variant="outline" size="sm">
-                  <span className="px-2 py-1 bg-green-500 text-white text-xs rounded">Novo</span>
-                </Button>
-              </div>
-            </div>
-          )}
         </div>
       </main>
       {isMobile && <ClientBottomNav />}
