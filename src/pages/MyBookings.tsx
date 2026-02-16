@@ -113,22 +113,36 @@ const MyBookings = () => {
   };
 
   const isUpcoming = (booking: Booking) => {
-    // Parse date as local (not UTC) by splitting the string
+    // Parse date and time as local
     const [year, month, day] = booking.booking_date.split('-').map(Number);
-    const bookingDate = new Date(year, month - 1, day);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const [hours, minutes] = booking.booking_time.split(':').map(Number);
     
-    // Future date AND not in a "finished" status
-    const isFutureOrToday = bookingDate >= today;
+    // Add service duration to get end time
+    const bookingEnd = new Date(year, month - 1, day, hours, minutes);
+    bookingEnd.setMinutes(bookingEnd.getMinutes() + (booking.service?.duration || 30));
+    
+    const now = new Date();
+    
     const isFinishedStatus = ['completed', 'cancelled', 'no_show'].includes(booking.status);
     
-    return isFutureOrToday && !isFinishedStatus;
+    return bookingEnd > now && !isFinishedStatus;
   };
 
-  const upcomingBookings = bookings.filter(booking => isUpcoming(booking));
+  const upcomingBookings = bookings
+    .filter(booking => isUpcoming(booking))
+    .sort((a, b) => {
+      const dateA = new Date(`${a.booking_date}T${a.booking_time}`);
+      const dateB = new Date(`${b.booking_date}T${b.booking_time}`);
+      return dateA.getTime() - dateB.getTime();
+    });
 
-  const pastBookings = bookings.filter(booking => !isUpcoming(booking));
+  const pastBookings = bookings
+    .filter(booking => !isUpcoming(booking))
+    .sort((a, b) => {
+      const dateA = new Date(`${a.booking_date}T${a.booking_time}`);
+      const dateB = new Date(`${b.booking_date}T${b.booking_time}`);
+      return dateB.getTime() - dateA.getTime();
+    });
 
   if (authLoading || loading) {
     return (
