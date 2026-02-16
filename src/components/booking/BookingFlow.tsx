@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ServiceSelectionStep } from "./ServiceSelectionStep";
 import { DateTimeSelectionStep } from "./DateTimeSelectionStep";
+import { BookingAuthDialog } from "./BookingAuthDialog";
 import { enviarConfirmacaoWhatsApp } from "@/utils/whatsapp";
 
 interface BookingFlowProps {
@@ -57,6 +58,8 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFrom
   const [selectedBarber, setSelectedBarber] = useState("");
   const [loading, setLoading] = useState(false);
   const [notes, setNotes] = useState("");
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const pendingBookingRef = useRef(false);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -137,11 +140,14 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFrom
     }
   };
 
-  const handleContinue = async () => {
-    if (!user) {
+  const submitBooking = useCallback(async () => {
+    // Get current user from supabase directly (in case auth just happened)
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    
+    if (!currentUser) {
       toast({
         title: "Erro",
-        description: "Você precisa estar logado para fazer um agendamento",
+        description: "Não foi possível identificar o usuário.",
         variant: "destructive",
       });
       return;
@@ -189,7 +195,7 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFrom
       const { data: profileData } = await supabase
         .from("profiles")
         .select("display_name")
-        .eq("user_id", user.id)
+        .eq("user_id", currentUser.id)
         .single();
 
       const totalPrice = selectedServices.reduce((sum, item) => sum + item.service.price, 0);
@@ -197,7 +203,7 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFrom
       const { data: newBooking, error } = await supabase
         .from("bookings")
         .insert({
-          client_id: user.id,
+          client_id: currentUser.id,
           barbershop_id: barbershop.id,
           service_id: mainService.id,
           barber_id: selectedBarber || null,
@@ -237,7 +243,28 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFrom
     } finally {
       setLoading(false);
     }
+  }, [selectedDate, selectedTime, selectedServices, selectedBarber, barbershop.id, notes, toast]);
+
+  const handleContinue = async () => {
+    if (!user) {
+      // User not logged in - show auth dialog, booking will auto-submit after auth
+      pendingBookingRef.current = true;
+      setShowAuthDialog(true);
+      return;
+    }
+    await submitBooking();
   };
+
+  const handleAuthSuccess = useCallback(() => {
+    // Auth succeeded - auto-submit the booking
+    if (pendingBookingRef.current) {
+      pendingBookingRef.current = false;
+      // Small delay to let auth state propagate
+      setTimeout(() => {
+        submitBooking();
+      }, 300);
+    }
+  }, [submitBooking]);
 
   const resetForm = () => {
     setCurrentStep("services");
@@ -297,6 +324,12 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFrom
           )}
         </div>
       </div>
+
+      <BookingAuthDialog
+        open={showAuthDialog}
+        onOpenChange={setShowAuthDialog}
+        onAuthSuccess={handleAuthSuccess}
+      />
     </>
   );
 };
