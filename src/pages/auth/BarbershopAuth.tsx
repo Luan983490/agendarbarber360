@@ -172,19 +172,33 @@ const BarbershopAuth = () => {
       toast({ title: 'Login realizado!', description: 'Bem-vindo de volta.' });
     } catch (err: any) {
       logAuthEvent('auth_failure', emailUsed);
-      const currentCount = Number(localStorage.getItem('auth_failures') || '0');
-      const newCount = currentCount + 1;
-      localStorage.setItem('auth_failures', newCount.toString());
-      if (newCount >= 3) { localStorage.setItem('auth_blocked_until', (Date.now() + 60000).toString()); }
-      setForceUpdate(prev => prev + 1);
       const errorMessage = err?.message?.toLowerCase() || '';
+      
       if (err?.status === 429 || errorMessage.includes('too many requests')) {
         setServerRateLimited(true);
         toast({ title: 'Sistema protegido', description: 'Muitas tentativas. Aguarde.', variant: 'destructive' });
-      } else if (newCount >= 3) {
-        toast({ title: 'Muitas tentativas', description: 'Tente novamente em 1 minuto.', variant: 'destructive' });
+      } else if (errorMessage.includes('invalid login credentials')) {
+        const currentCount = Number(localStorage.getItem('auth_failures') || '0');
+        const newCount = currentCount + 1;
+        localStorage.setItem('auth_failures', newCount.toString());
+        if (newCount >= 3) { localStorage.setItem('auth_blocked_until', (Date.now() + 60000).toString()); }
+        setForceUpdate(prev => prev + 1);
+        if (newCount >= 3) {
+          toast({ title: 'Muitas tentativas', description: 'Tente novamente em 1 minuto.', variant: 'destructive' });
+        } else {
+          toast({
+            title: 'Email ou senha incorretos',
+            description: `Tentativa ${newCount}/3. Verifique seus dados ou crie uma conta.`,
+            variant: 'destructive',
+          });
+        }
       } else {
-        toast({ title: 'Credenciais inválidas', description: `Tentativa ${newCount}/3. Email ou senha incorretos.`, variant: 'destructive' });
+        const currentCount = Number(localStorage.getItem('auth_failures') || '0');
+        const newCount = currentCount + 1;
+        localStorage.setItem('auth_failures', newCount.toString());
+        if (newCount >= 3) { localStorage.setItem('auth_blocked_until', (Date.now() + 60000).toString()); }
+        setForceUpdate(prev => prev + 1);
+        toast({ title: 'Erro no login', description: err?.message || 'Erro inesperado.', variant: 'destructive' });
       }
     } finally { setLoading(false); }
   };
