@@ -59,6 +59,8 @@ const ChooseUserType = () => {
             <span className="text-[12px] font-medium text-white/70 tracking-wide uppercase">
               Entrar
             </span>
+          </div>
+        </div>
       </div>
 
       <button
@@ -67,8 +69,6 @@ const ChooseUserType = () => {
       >
         ← Voltar para o início
       </button>
-    </div>
-      </div>
     </div>
   );
 };
