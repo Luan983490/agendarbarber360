@@ -3,10 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { ArrowUpRight } from 'lucide-react';
 import { Header } from '@/components/Header';
+import { ClientBottomNav } from '@/components/ClientBottomNav';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const ChooseUserType = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (user) navigate('/', { replace: true });
@@ -14,8 +17,8 @@ const ChooseUserType = () => {
 
   return (
     <div className="min-h-screen bg-[hsl(0,0%,7%)] flex flex-col">
-      <Header />
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-12 mt-16">
+      <Header hideMobileMenu={isMobile} />
+      <div className={`flex-1 flex flex-col items-center justify-center px-4 py-12 mt-16 ${isMobile ? 'pb-24' : ''}`}>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-[640px]">
           {/* Card Cliente */}
           <div
@@ -66,6 +69,7 @@ const ChooseUserType = () => {
           </div>
         </div>
       </div>
+      {isMobile && <ClientBottomNav />}
     </div>
   );
 };
