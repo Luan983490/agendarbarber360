@@ -291,7 +291,7 @@ const ClientAuth = () => {
           {activeTab === 'login' ? (
             <div className="space-y-6">
               <div className="space-y-1">
-                <h1 className="text-2xl font-bold text-foreground">Login - Cliente</h1>
+                <h1 className="text-2xl font-bold text-foreground">Login</h1>
                 <p className="text-muted-foreground text-sm">Entre com sua conta de cliente</p>
               </div>
 
