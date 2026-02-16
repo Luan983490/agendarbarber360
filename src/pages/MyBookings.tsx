@@ -9,6 +9,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/Header';
 import { Calendar, Clock, MapPin, User, Scissors, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { ClientBottomNav } from '@/components/ClientBottomNav';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 
 interface Booking {
   id: string;
@@ -41,6 +44,7 @@ interface Booking {
 
 const MyBookings = () => {
   const { user, loading: authLoading } = useAuth();
+  const isMobile = useIsMobile();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -140,9 +144,9 @@ const MyBookings = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      {!isMobile && <Header />}
       
-      <main className="container mx-auto px-4 py-8 mt-16">
+      <main className={cn("container mx-auto px-4 py-8", isMobile ? "pb-24" : "mt-16")}>
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Meus Agendamentos</h1>
           <p className="text-muted-foreground">
@@ -351,6 +355,7 @@ const MyBookings = () => {
           </TabsContent>
         </Tabs>
       </main>
+      {isMobile && <ClientBottomNav />}
     </div>
   );
 };
