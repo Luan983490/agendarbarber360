@@ -60,14 +60,26 @@ export function ProfessionalsStep({ barbershopId, onComplete, onBack }: Professi
 
     setAddLoading(true);
     try {
-      const { error } = await supabase.from('barbers').insert({
+      const { data: newBarber, error } = await supabase.from('barbers').insert({
         barbershop_id: barbershopId,
         name: name.trim(),
         specialty: specialty.trim() || null,
         phone: phone.replace(/\D/g, '') || null,
         is_active: true,
-      });
+      }).select('id').single();
       if (error) throw error;
+
+      // Create default working hours (Mon-Sat: 09:00-11:00, 13:00-18:00; Sun: day off)
+      const defaultHours = Array.from({ length: 7 }, (_, i) => ({
+        barber_id: newBarber.id,
+        day_of_week: i,
+        is_day_off: i === 0, // Sunday off
+        period1_start: i === 0 ? null : '09:00',
+        period1_end: i === 0 ? null : '11:00',
+        period2_start: i === 0 ? null : '13:00',
+        period2_end: i === 0 ? null : '18:00',
+      }));
+      await supabase.from('barber_working_hours').insert(defaultHours);
       setName('');
       setSpecialty('');
       setPhone('');
