@@ -84,9 +84,6 @@ export const Header = ({ showBackButton = false, hideMobileMenu = false }: Heade
                 <Link to="/my-bookings" className="text-sm text-foreground hover:text-primary transition-colors">
                   Agendamentos
                 </Link>
-                <Link to="/login/barbershop" className="text-sm text-foreground hover:text-primary transition-colors">
-                  Área da Barbearia
-                </Link>
               </nav>
             )}
 
