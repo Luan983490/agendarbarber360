@@ -200,7 +200,7 @@ const Profile = () => {
           {/* Quick links for mobile - replaces header dropdown */}
           {isMobile && (
             <div className="mb-6 space-y-1">
-              <button onClick={() => { setActiveTab('data'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className={`flex items-center justify-between w-full px-3 py-3 rounded-lg hover:bg-muted transition-colors ${activeTab === 'data' || activeTab === 'address' || activeTab === 'security' || activeTab === 'access' ? 'bg-muted' : ''}`}>
+              <button onClick={() => { setActiveTab('data'); }} className={`flex items-center justify-between w-full px-3 py-3 rounded-lg hover:bg-muted transition-colors ${activeTab === 'data' ? 'bg-muted' : ''}`}>
                 <div className="flex items-center gap-3">
                   <User className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
                   <span className="text-sm">Dados de Cadastro</span>
@@ -214,13 +214,6 @@ const Profile = () => {
                 </div>
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </button>
-              <button onClick={() => navigate('/pacotes')} className="flex items-center justify-between w-full px-3 py-3 rounded-lg hover:bg-muted transition-colors">
-                <div className="flex items-center gap-3">
-                  <Package className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
-                  <span className="text-sm">Meus Pacotes</span>
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              </button>
               <button onClick={() => navigate('/favoritos')} className="flex items-center justify-between w-full px-3 py-3 rounded-lg hover:bg-muted transition-colors">
                 <div className="flex items-center gap-3">
                   <Heart className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
@@ -228,7 +221,7 @@ const Profile = () => {
                 </div>
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </button>
-              <button onClick={() => { setActiveTab('security'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="flex items-center justify-between w-full px-3 py-3 rounded-lg hover:bg-muted transition-colors">
+              <button onClick={() => { setActiveTab('security'); }} className={`flex items-center justify-between w-full px-3 py-3 rounded-lg hover:bg-muted transition-colors ${activeTab === 'security' ? 'bg-muted' : ''}`}>
                 <div className="flex items-center gap-3">
                   <Settings className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
                   <span className="text-sm">Configurações</span>
@@ -346,6 +339,120 @@ const Profile = () => {
                   </div>
                 </RadioGroup>
               </div>
+
+              {/* Address fields - always visible on mobile, separate tab on desktop */}
+              {isMobile && (
+                <>
+                  <div className="pt-4 border-t">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <MapPin className="h-5 w-5" />
+                      Endereço
+                    </h3>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="country-m">País *</Label>
+                      <Input
+                        id="country-m"
+                        value={profile.address?.country || ''}
+                        onChange={(e) => setProfile({ ...profile, address: { ...profile.address!, country: e.target.value } })}
+                        className="mt-2"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="postal_code-m">CEP *</Label>
+                      <Input
+                        id="postal_code-m"
+                        value={profile.address?.postal_code || ''}
+                        onChange={(e) => setProfile({ ...profile, address: { ...profile.address!, postal_code: e.target.value } })}
+                        placeholder="CEP"
+                        className="mt-2"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="street-m">Endereço *</Label>
+                    <Input
+                      id="street-m"
+                      value={profile.address?.street || ''}
+                      onChange={(e) => setProfile({ ...profile, address: { ...profile.address!, street: e.target.value } })}
+                      placeholder="Endereço"
+                      className="mt-2"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="neighborhood-m">Bairro *</Label>
+                      <Input
+                        id="neighborhood-m"
+                        value={profile.address?.neighborhood || ''}
+                        onChange={(e) => setProfile({ ...profile, address: { ...profile.address!, neighborhood: e.target.value } })}
+                        placeholder="Bairro"
+                        className="mt-2"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="number-m">Número</Label>
+                      <Input
+                        id="number-m"
+                        value={profile.address?.number || ''}
+                        onChange={(e) => setProfile({ ...profile, address: { ...profile.address!, number: e.target.value } })}
+                        placeholder="Número"
+                        className="mt-2"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="complement-m">Complemento</Label>
+                    <Input
+                      id="complement-m"
+                      value={profile.address?.complement || ''}
+                      onChange={(e) => setProfile({ ...profile, address: { ...profile.address!, complement: e.target.value } })}
+                      placeholder="Complemento"
+                      className="mt-2"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="state-m">Estado</Label>
+                      <Select
+                        value={profile.address?.state || ''}
+                        onValueChange={(value) => setProfile({ ...profile, address: { ...profile.address!, state: value } })}
+                      >
+                        <SelectTrigger className="mt-2">
+                          <SelectValue placeholder="Selecione um estado" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="RS">Rio Grande do Sul</SelectItem>
+                          <SelectItem value="SP">São Paulo</SelectItem>
+                          <SelectItem value="RJ">Rio de Janeiro</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="city-m">Cidade *</Label>
+                      <Select
+                        value={profile.address?.city || ''}
+                        onValueChange={(value) => setProfile({ ...profile, address: { ...profile.address!, city: value } })}
+                      >
+                        <SelectTrigger className="mt-2">
+                          <SelectValue placeholder="Selecione uma cidade" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="porto-alegre">Porto Alegre</SelectItem>
+                          <SelectItem value="sao-paulo">São Paulo</SelectItem>
+                          <SelectItem value="rio-de-janeiro">Rio de Janeiro</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </>
+              )}
 
               <Button onClick={handleSave} className="w-full">Salvar</Button>
             </div>
