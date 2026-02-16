@@ -166,8 +166,9 @@ export const AdvancedSearch = ({
   }, [onSearchChange]);
 
   return (
+    <>
+    <PWAInlineBanner />
     <div className="bg-card rounded-xl p-6 shadow-elegant mb-8">
-      <PWAInlineBanner />
       <h2 className="text-2xl font-semibold text-foreground mb-6">
         Encontre sua barbearia ideal
       </h2>
@@ -373,5 +374,6 @@ export const AdvancedSearch = ({
         )}
       </div>
     </div>
+    </>
   );
 };
