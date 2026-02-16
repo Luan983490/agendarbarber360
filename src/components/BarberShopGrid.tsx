@@ -6,6 +6,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { calculateDistanceKm, formatDistance } from "@/hooks/useGeolocation";
 import { SearchType } from "@/components/AdvancedSearch";
 
+/**
+ * Check if a barbershop is currently open based on its barbers' working hours.
+ * Returns true if ANY active barber is currently working.
+ */
+const checkIsOpenNow = (
+  workingHours: { day_of_week: number; is_day_off: boolean; period1_start: string | null; period1_end: string | null; period2_start: string | null; period2_end: string | null }[]
+): boolean => {
+  const now = new Date();
+  const currentDay = now.getDay(); // 0=Sunday
+  const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+  const todayHours = workingHours.filter(wh => wh.day_of_week === currentDay && !wh.is_day_off);
+  
+  return todayHours.some(wh => {
+    if (wh.period1_start && wh.period1_end && currentTime >= wh.period1_start && currentTime < wh.period1_end) return true;
+    if (wh.period2_start && wh.period2_end && currentTime >= wh.period2_start && currentTime < wh.period2_end) return true;
+    return false;
+  });
+};
+
 interface BarberShopGridProps {
   searchQuery: string;
   activeFilters: string[];
@@ -118,6 +138,28 @@ export const BarberShopGrid = ({
 
       if (error) throw error;
 
+      const shopIds = (data as DbBarbershop[] || []).map(s => s.id);
+
+      // Fetch working hours for all barbershops' active barbers
+      let workingHoursMap: Record<string, any[]> = {};
+      if (shopIds.length > 0) {
+        const { data: whData } = await supabase
+          .from('barber_working_hours')
+          .select('barber_id, day_of_week, is_day_off, period1_start, period1_end, period2_start, period2_end, barbers!inner(barbershop_id, is_active)')
+          .in('barbers.barbershop_id', shopIds)
+          .eq('barbers.is_active', true);
+
+        if (whData) {
+          for (const wh of whData) {
+            const bsId = (wh as any).barbers?.barbershop_id;
+            if (bsId) {
+              if (!workingHoursMap[bsId]) workingHoursMap[bsId] = [];
+              workingHoursMap[bsId].push(wh);
+            }
+          }
+        }
+      }
+
       // Transform database data to match BarberShop interface
       let transformedData: BarberShop[] = (data as DbBarbershop[] || []).map(shop => {
         let distanceKm: number | null = null;
@@ -132,6 +174,9 @@ export const BarberShopGrid = ({
           );
         }
 
+        const shopHours = workingHoursMap[shop.id] || [];
+        const isOpen = checkIsOpenNow(shopHours);
+
         return {
           id: shop.id,
           name: shop.name,
@@ -140,7 +185,7 @@ export const BarberShopGrid = ({
           reviewCount: shop.total_reviews || 0,
           distance: formatDistance(distanceKm),
           distanceKm,
-          isOpen: true,
+          isOpen,
           priceRange: "$$",
           specialties: ["Corte", "Barba"],
           nextAvailable: "Disponível",
