@@ -29,7 +29,15 @@ export function ClientBottomNav() {
           return (
             <button
               key={item.id}
-              onClick={() => navigate(item.path)}
+              onClick={() => {
+                navigate(item.path);
+                if (item.id === 'search') {
+                  setTimeout(() => {
+                    const input = document.getElementById('search-barbershop-input');
+                    if (input) input.focus();
+                  }, 100);
+                }
+              }}
               className={cn(
                 'flex flex-col items-center gap-0.5 px-2 py-1 rounded-md transition-colors min-w-0 flex-1',
                 active ? 'text-primary' : 'text-[#888888] hover:text-[#bbbbbb]'
