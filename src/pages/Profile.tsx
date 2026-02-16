@@ -181,9 +181,9 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {!isMobile && <Header showBackButton />}
+      <Header showBackButton />
       
-      <main className={`container mx-auto px-4 py-8 ${isMobile ? 'pb-24' : 'mt-14'}`}>
+      <main className={`container mx-auto px-4 py-8 mt-14 ${isMobile ? 'pb-24' : ''}`}>
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-8 mb-8">
             <Avatar className="h-24 w-24">
