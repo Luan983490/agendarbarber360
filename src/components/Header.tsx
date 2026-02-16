@@ -234,12 +234,12 @@ export const Header = ({ showBackButton = false }: HeaderProps) => {
                 </DropdownMenu>
               ) : (
                 <>
-                  <Link to="/auth">
+                  <Link to="/choose-type">
                     <Button variant="outline" size="sm" className="h-8 sm:h-9 text-xs sm:text-sm">
                       Entrar
                     </Button>
                   </Link>
-                  <Link to="/auth" className="hidden sm:block">
+                  <Link to="/choose-type" className="hidden sm:block">
                     <Button size="sm" className="h-8 sm:h-9 text-xs sm:text-sm">
                       Cadastrar-se
                     </Button>
@@ -294,10 +294,10 @@ export const Header = ({ showBackButton = false }: HeaderProps) => {
                           </>
                         ) : (
                           <>
-                            <Link to="/auth">
+                            <Link to="/choose-type">
                               <Button variant="outline" className="w-full">Entrar</Button>
                             </Link>
-                            <Link to="/auth">
+                            <Link to="/choose-type">
                               <Button className="w-full">Cadastrar-se</Button>
                             </Link>
                           </>
