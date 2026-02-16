@@ -10,7 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useLoginRateLimit } from '@/hooks/useLoginRateLimit';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { User, Store, Check, X, Eye, EyeOff, Loader2, Mail, AlertCircle, LogIn, Shield, Clock, Lock, ArrowLeft } from 'lucide-react';
+import { User, Store, Check, X, Eye, EyeOff, Loader2, Mail, AlertCircle, LogIn, Shield, Clock, Lock, ArrowLeft, Phone } from 'lucide-react';
 import { loginSchema, signUpSchema, validateWithSchema, formatValidationErrors } from '@/lib/validation-schemas';
 import { TurnstileCaptcha } from '@/components/TurnstileCaptcha';
 import b360Logo from '@/assets/b360-logo.png';
@@ -59,6 +59,7 @@ const ClientAuth = () => {
     email: '', password: '', confirmPassword: '',
     userType: 'client' as const,
     contactName: '',
+    contactPhone: '',
     acceptedTerms: false,
   });
 
@@ -219,7 +220,7 @@ const ClientAuth = () => {
       return;
     }
     setLoading(true);
-    const { error } = await signUp(signupData.email.trim().toLowerCase(), signupData.password, 'client');
+    const { error } = await signUp(signupData.email.trim().toLowerCase(), signupData.password, 'client', { contactName: signupData.contactName, contactPhone: signupData.contactPhone || undefined });
     setLoading(false);
     if (error) {
       if (error.code === 'AUTH_EMAIL_IN_USE' || error.message?.includes('already registered') || error.message?.includes('já está cadastrado')) {
@@ -406,6 +407,11 @@ const ClientAuth = () => {
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input type="email" placeholder="Email" value={signupData.email} onChange={(e) => { setSignupData(prev => ({ ...prev, email: e.target.value })); setEmailAlreadyExists(false); }} required className={`pl-10 border-0 border-b border-border rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary ${emailAlreadyExists ? 'border-destructive' : ''}`} />
+                </div>
+
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input type="tel" placeholder="Celular (ex: 11999999999)" value={signupData.contactPhone} onChange={(e) => setSignupData(prev => ({ ...prev, contactPhone: e.target.value.replace(/\D/g, '').slice(0, 11) }))} className="pl-10 border-0 border-b border-border rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary" />
                 </div>
                 {emailAlreadyExists && (
                   <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 space-y-2">
