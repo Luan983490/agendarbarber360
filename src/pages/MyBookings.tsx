@@ -113,17 +113,20 @@ const MyBookings = () => {
   };
 
   const isUpcoming = (booking: Booking) => {
-    // Parse date and time as local
     const [year, month, day] = booking.booking_date.split('-').map(Number);
-    const [hours, minutes] = booking.booking_time.split(':').map(Number);
+    const timeParts = booking.booking_time.split(':').map(Number);
+    const hours = timeParts[0] || 0;
+    const minutes = timeParts[1] || 0;
     
-    // Add service duration to get end time
-    const bookingEnd = new Date(year, month - 1, day, hours, minutes);
-    bookingEnd.setMinutes(bookingEnd.getMinutes() + (booking.service?.duration || 30));
+    const bookingStart = new Date(year, month - 1, day, hours, minutes);
+    const duration = booking.service?.duration || 30;
+    const bookingEnd = new Date(bookingStart.getTime() + duration * 60000);
     
     const now = new Date();
     
     const isFinishedStatus = ['completed', 'cancelled', 'no_show'].includes(booking.status);
+    
+    console.log(`[MyBookings] ${booking.id.slice(0,8)} | ${booking.booking_date} ${booking.booking_time} | end: ${bookingEnd.toISOString()} | now: ${now.toISOString()} | future: ${bookingEnd > now} | status: ${booking.status} | upcoming: ${bookingEnd > now && !isFinishedStatus}`);
     
     return bookingEnd > now && !isFinishedStatus;
   };
