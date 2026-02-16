@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
+import { isDisposableEmail } from '@/lib/disposable-email';
 import { useToast } from '@/hooks/use-toast';
 import { UserPlus } from 'lucide-react';
 
@@ -42,18 +43,15 @@ export const CreateClientDialog = ({
     }
 
     // Check disposable email
-    try {
-      const { data: isDisposable } = await supabase.rpc('is_disposable_email', { check_email: email });
-      if (isDisposable) {
-        toast({
-          title: 'Email não permitido',
-          description: 'Emails temporários/descartáveis não são permitidos. Use um email válido.',
-          variant: 'destructive'
-        });
-        return;
-      }
-    } catch (err) {
-      console.warn('Error checking disposable email:', err);
+    // Check disposable email (local list + DB)
+    const disposable = await isDisposableEmail(email);
+    if (disposable) {
+      toast({
+        title: 'Email não permitido',
+        description: 'Emails temporários/descartáveis não são permitidos. Use um email válido.',
+        variant: 'destructive'
+      });
+      return;
     }
 
     setLoading(true);
