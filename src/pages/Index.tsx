@@ -127,24 +127,7 @@ const Index = () => {
       
       <main className={showClientNav ? "pt-20 pb-24" : "pt-20"}>
         <section className="container mx-auto px-4 py-8">
-          {user ? (
-            <Tabs defaultValue="all" className="w-full">
-              <TabsList className="grid w-full max-w-md mx-auto mb-6 grid-cols-2">
-                <TabsTrigger value="all">Todas as Barbearias</TabsTrigger>
-                <TabsTrigger value="favorites">Meus Favoritos</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="all">
-                {renderSearchAndGrid()}
-              </TabsContent>
-              
-              <TabsContent value="favorites">
-                <FavoritesList userId={user.id} />
-              </TabsContent>
-            </Tabs>
-          ) : (
-            renderSearchAndGrid()
-          )}
+        {renderSearchAndGrid()}
         </section>
       </main>
       {showClientNav && <ClientBottomNav />}
