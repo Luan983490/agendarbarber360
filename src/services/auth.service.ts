@@ -101,6 +101,16 @@ export class AuthService {
     const timer = logger.startTimer();
     logger.info('signUp', 'Starting user registration', { email: sanitizedData.email, userType: sanitizedData.userType });
 
+    // Check disposable email
+    const isDisposable = await this.checkDisposableEmail(sanitizedData.email);
+    if (isDisposable) {
+      logger.warn('signUp', 'Disposable email blocked', { email: sanitizedData.email });
+      return failure(
+        ErrorCodes.VALIDATION_ERROR,
+        'Emails temporários/descartáveis não são permitidos. Use um email válido.'
+      );
+    }
+
     // Rate limit check
     try {
       await rateLimiterService.checkRateLimit('signup');
@@ -348,6 +358,25 @@ export class AuthService {
     } catch (err) {
       logger.error('getSession', 'Unexpected error', err);
       return failure(ErrorCodes.UNKNOWN_ERROR, 'Erro ao obter sessão');
+    }
+  }
+
+  /**
+   * Check if email domain is disposable using database RPC
+   */
+  private async checkDisposableEmail(email: string): Promise<boolean> {
+    try {
+      const { data, error } = await supabase.rpc('is_disposable_email', {
+        check_email: email,
+      });
+      if (error) {
+        console.warn('[AuthService] Error checking disposable email:', error.message);
+        return false; // Don't block signup on check failure
+      }
+      return data === true;
+    } catch (err) {
+      console.warn('[AuthService] Unexpected error checking disposable email:', err);
+      return false;
     }
   }
 

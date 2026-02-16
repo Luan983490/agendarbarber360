@@ -41,6 +41,21 @@ export const CreateClientDialog = ({
       return;
     }
 
+    // Check disposable email
+    try {
+      const { data: isDisposable } = await supabase.rpc('is_disposable_email', { check_email: email });
+      if (isDisposable) {
+        toast({
+          title: 'Email não permitido',
+          description: 'Emails temporários/descartáveis não são permitidos. Use um email válido.',
+          variant: 'destructive'
+        });
+        return;
+      }
+    } catch (err) {
+      console.warn('Error checking disposable email:', err);
+    }
+
     setLoading(true);
     try {
       // Criar usuário na autenticação
