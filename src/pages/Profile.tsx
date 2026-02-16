@@ -200,6 +200,13 @@ const Profile = () => {
           {/* Quick links for mobile - replaces header dropdown */}
           {isMobile && (
             <div className="mb-6 space-y-1">
+              <button onClick={() => setActiveTab('data')} className={`flex items-center justify-between w-full px-3 py-3 rounded-lg hover:bg-muted transition-colors ${activeTab === 'data' ? 'bg-muted' : ''}`}>
+                <div className="flex items-center gap-3">
+                  <User className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
+                  <span className="text-sm">Dados de Cadastro</span>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </button>
               <button onClick={() => navigate('/my-bookings')} className="flex items-center justify-between w-full px-3 py-3 rounded-lg hover:bg-muted transition-colors">
                 <div className="flex items-center gap-3">
                   <Calendar className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
@@ -258,40 +265,42 @@ const Profile = () => {
             </div>
           )}
 
-          <div className="flex gap-2 mb-8 border-b">
-            <Button
-              variant={activeTab === 'data' ? 'default' : 'ghost'}
-              className="rounded-b-none"
-              onClick={() => setActiveTab('data')}
-            >
-              <User className="h-4 w-4 mr-2" />
-              Meus Dados
-            </Button>
-            <Button
-              variant={activeTab === 'address' ? 'default' : 'ghost'}
-              className="rounded-b-none"
-              onClick={() => setActiveTab('address')}
-            >
-              <MapPin className="h-4 w-4 mr-2" />
-              Endereço
-            </Button>
-            <Button
-              variant={activeTab === 'security' ? 'default' : 'ghost'}
-              className="rounded-b-none"
-              onClick={() => setActiveTab('security')}
-            >
-              <Lock className="h-4 w-4 mr-2" />
-              Segurança
-            </Button>
-            <Button
-              variant={activeTab === 'access' ? 'default' : 'ghost'}
-              className="rounded-b-none"
-              onClick={() => setActiveTab('access')}
-            >
-              <Key className="h-4 w-4 mr-2" />
-              Acessos
-            </Button>
-          </div>
+          {!isMobile && (
+            <div className="flex gap-2 mb-8 border-b">
+              <Button
+                variant={activeTab === 'data' ? 'default' : 'ghost'}
+                className="rounded-b-none"
+                onClick={() => setActiveTab('data')}
+              >
+                <User className="h-4 w-4 mr-2" />
+                Meus Dados
+              </Button>
+              <Button
+                variant={activeTab === 'address' ? 'default' : 'ghost'}
+                className="rounded-b-none"
+                onClick={() => setActiveTab('address')}
+              >
+                <MapPin className="h-4 w-4 mr-2" />
+                Endereço
+              </Button>
+              <Button
+                variant={activeTab === 'security' ? 'default' : 'ghost'}
+                className="rounded-b-none"
+                onClick={() => setActiveTab('security')}
+              >
+                <Lock className="h-4 w-4 mr-2" />
+                Segurança
+              </Button>
+              <Button
+                variant={activeTab === 'access' ? 'default' : 'ghost'}
+                className="rounded-b-none"
+                onClick={() => setActiveTab('access')}
+              >
+                <Key className="h-4 w-4 mr-2" />
+                Acessos
+              </Button>
+            </div>
+          )}
 
           {activeTab === 'data' && (
             <div className="space-y-6">
