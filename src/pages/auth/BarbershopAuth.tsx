@@ -297,6 +297,14 @@ const BarbershopAuth = () => {
           <p className="text-white/70 text-sm max-w-xs mx-auto">
             {activeTab === 'login' ? 'Acesse o painel da sua barbearia' : '30 dias grátis para testar a plataforma'}
           </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setActiveTab(activeTab === 'login' ? 'signup' : 'login')}
+            className="border-white text-white hover:bg-primary hover:text-primary-foreground hover:border-primary rounded-full px-6"
+          >
+            {activeTab === 'login' ? 'Criar Conta' : 'Já tenho conta'}
+          </Button>
         </div>
       </div>
 
