@@ -2,23 +2,26 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Home, Search, CalendarDays, UserRound } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth';
 
 const navItems = [
-  { id: 'home', label: 'Início', icon: Home, path: '/' },
-  { id: 'search', label: 'Buscar', icon: Search, path: '/' },
-  { id: 'bookings', label: 'Agendamentos', icon: CalendarDays, path: '/my-bookings' },
-  { id: 'profile', label: 'Perfil', icon: UserRound, path: '/perfil' },
+  { id: 'home', label: 'Início', icon: Home, path: '/', requiresAuth: false },
+  { id: 'search', label: 'Buscar', icon: Search, path: '/', requiresAuth: false },
+  { id: 'bookings', label: 'Agendamentos', icon: CalendarDays, path: '/my-bookings', requiresAuth: true },
+  { id: 'profile', label: 'Perfil', icon: UserRound, path: '/perfil', requiresAuth: true },
 ];
 
 export function ClientBottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [lastClicked, setLastClicked] = useState<string | null>(null);
+  const { user } = useAuth();
+  const [lastClicked, setLastClicked] = useState<string | null>(() => {
+    return sessionStorage.getItem('client-nav-last-clicked');
+  });
 
   const isActive = (item: typeof navItems[0]) => {
     if (item.id === 'bookings') return location.pathname === '/my-bookings' || location.pathname === '/historico';
     if (item.id === 'profile') return location.pathname === '/perfil';
-    // Home and Search share the same path '/'
     if (location.pathname === '/') {
       if (lastClicked === 'search' && item.id === 'search') return true;
       if (lastClicked !== 'search' && item.id === 'home') return true;
@@ -29,6 +32,13 @@ export function ClientBottomNav() {
 
   const handleClick = (item: typeof navItems[0]) => {
     setLastClicked(item.id);
+    sessionStorage.setItem('client-nav-last-clicked', item.id);
+    
+    if (item.requiresAuth && !user) {
+      navigate('/choose-type');
+      return;
+    }
+    
     navigate(item.path);
     if (item.id === 'search') {
       setTimeout(() => {
