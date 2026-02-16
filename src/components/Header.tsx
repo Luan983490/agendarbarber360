@@ -89,159 +89,164 @@ export const Header = ({ showBackButton = false, hideMobileMenu = false }: Heade
 
             {/* Right side - User actions */}
             <div className="flex items-center gap-1 sm:gap-2">
-              {user ? (
-                <DropdownMenu modal={false}>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                      <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
-                        <AvatarFallback className="text-xs sm:text-sm bg-primary text-primary-foreground">
-                          {user.email?.charAt(0).toUpperCase() || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56 bg-popover" align="end" forceMount>
-                    <div className="px-2 py-1.5 text-xs sm:text-sm">
-                      <p className="font-medium truncate">{user.email?.split('@')[0] || 'Usuário'}</p>
-                      <p className="text-muted-foreground truncate text-xs">{user.email}</p>
-                    </div>
-                    <DropdownMenuSeparator />
-                    
-                    {role === 'owner' ? (
-                      <DropdownMenuItem 
-                        className="cursor-pointer"
-                        onSelect={(e) => {
-                          e.preventDefault();
-                          handleDashboard();
-                        }}
-                      >
-                        <Store className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                        <span>Dashboard</span>
-                      </DropdownMenuItem>
-                    ) : role === 'barber' ? (
-                      <>
+            {user ? (
+                <>
+                  {/* Hide avatar dropdown on mobile when bottom nav is active */}
+                  <div className={hideMobileMenu ? 'hidden md:block' : ''}>
+                    <DropdownMenu modal={false}>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                          <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
+                            <AvatarFallback className="text-xs sm:text-sm bg-primary text-primary-foreground">
+                              {user.email?.charAt(0).toUpperCase() || 'U'}
+                            </AvatarFallback>
+                          </Avatar>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-56 bg-popover" align="end" forceMount>
+                        <div className="px-2 py-1.5 text-xs sm:text-sm">
+                          <p className="font-medium truncate">{user.email?.split('@')[0] || 'Usuário'}</p>
+                          <p className="text-muted-foreground truncate text-xs">{user.email}</p>
+                        </div>
+                        <DropdownMenuSeparator />
+                        
+                        {role === 'owner' ? (
+                          <DropdownMenuItem 
+                            className="cursor-pointer"
+                            onSelect={(e) => {
+                              e.preventDefault();
+                              handleDashboard();
+                            }}
+                          >
+                            <Store className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                            <span>Dashboard</span>
+                          </DropdownMenuItem>
+                        ) : role === 'barber' ? (
+                          <>
+                            <DropdownMenuItem 
+                              className="cursor-pointer"
+                              onSelect={(e) => {
+                                e.preventDefault();
+                                navigate('/barber/hoje');
+                              }}
+                            >
+                              <Calendar className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                              <span>Hoje</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="cursor-pointer"
+                              onSelect={(e) => {
+                                e.preventDefault();
+                                navigate('/barber/agenda');
+                              }}
+                            >
+                              <CalendarDays className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                              <span>Minha Agenda</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                          </>
+                        ) : (
+                          <>
+                            <DropdownMenuItem 
+                              className="cursor-pointer"
+                              onSelect={(e) => {
+                                e.preventDefault();
+                                handleDashboard();
+                              }}
+                            >
+                              <Calendar className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                              <span>Meus Agendamentos</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="cursor-pointer"
+                              onSelect={(e) => {
+                                e.preventDefault();
+                                navigate('/historico');
+                              }}
+                            >
+                              <History className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                              <span>Histórico</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="cursor-pointer"
+                              onSelect={(e) => {
+                                e.preventDefault();
+                                navigate('/pacotes');
+                              }}
+                            >
+                              <Package className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                              <span>Meus Pacotes</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="cursor-pointer"
+                              onSelect={(e) => {
+                                e.preventDefault();
+                                navigate('/assinaturas');
+                              }}
+                            >
+                              <Calendar className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                              <span>Minhas Assinaturas</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="cursor-pointer"
+                              onSelect={(e) => {
+                                e.preventDefault();
+                                navigate('/cartoes');
+                              }}
+                            >
+                              <CreditCard className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                              <span>Meus Cartões</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="cursor-pointer"
+                              onSelect={(e) => {
+                                e.preventDefault();
+                                navigate('/favoritos');
+                              }}
+                            >
+                              <Heart className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                              <span>Favoritos</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                          </>
+                        )}
+
                         <DropdownMenuItem 
                           className="cursor-pointer"
                           onSelect={(e) => {
                             e.preventDefault();
-                            navigate('/barber/hoje');
+                            navigate('/perfil');
                           }}
                         >
-                          <Calendar className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                          <span>Hoje</span>
+                          <User className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                          <span>Perfil</span>
                         </DropdownMenuItem>
+
                         <DropdownMenuItem 
                           className="cursor-pointer"
                           onSelect={(e) => {
                             e.preventDefault();
-                            navigate('/barber/agenda');
+                            navigate('/perfil?tab=security');
                           }}
                         >
-                          <CalendarDays className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                          <span>Minha Agenda</span>
+                          <Settings className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                          <span>Configurações</span>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                      </>
-                    ) : (
-                      <>
                         <DropdownMenuItem 
-                          className="cursor-pointer"
+                          className="cursor-pointer text-destructive focus:text-destructive"
                           onSelect={(e) => {
                             e.preventDefault();
-                            handleDashboard();
+                            signOut();
                           }}
                         >
-                          <Calendar className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                          <span>Meus Agendamentos</span>
+                          <LogOut className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                          <span>Sair</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          className="cursor-pointer"
-                          onSelect={(e) => {
-                            e.preventDefault();
-                            navigate('/historico');
-                          }}
-                        >
-                          <History className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                          <span>Histórico</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          className="cursor-pointer"
-                          onSelect={(e) => {
-                            e.preventDefault();
-                            navigate('/pacotes');
-                          }}
-                        >
-                          <Package className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                          <span>Meus Pacotes</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          className="cursor-pointer"
-                          onSelect={(e) => {
-                            e.preventDefault();
-                            navigate('/assinaturas');
-                          }}
-                        >
-                          <Calendar className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                          <span>Minhas Assinaturas</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          className="cursor-pointer"
-                          onSelect={(e) => {
-                            e.preventDefault();
-                            navigate('/cartoes');
-                          }}
-                        >
-                          <CreditCard className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                          <span>Meus Cartões</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          className="cursor-pointer"
-                          onSelect={(e) => {
-                            e.preventDefault();
-                            navigate('/favoritos');
-                          }}
-                        >
-                          <Heart className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                          <span>Favoritos</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                      </>
-                    )}
-
-                    <DropdownMenuItem 
-                      className="cursor-pointer"
-                      onSelect={(e) => {
-                        e.preventDefault();
-                        navigate('/perfil');
-                      }}
-                    >
-                      <User className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                      <span>Perfil</span>
-                    </DropdownMenuItem>
-
-                    <DropdownMenuItem 
-                      className="cursor-pointer"
-                      onSelect={(e) => {
-                        e.preventDefault();
-                        navigate('/perfil?tab=security');
-                      }}
-                    >
-                      <Settings className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                      <span>Configurações</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem 
-                      className="cursor-pointer text-destructive focus:text-destructive"
-                      onSelect={(e) => {
-                        e.preventDefault();
-                        signOut();
-                      }}
-                    >
-                      <LogOut className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                      <span>Sair</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </>
               ) : (
                 <>
                   <Link to="/choose-type">
