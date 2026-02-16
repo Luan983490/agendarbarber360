@@ -13,7 +13,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useLoginRateLimit } from '@/hooks/useLoginRateLimit';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { User, Store, Check, X, Eye, EyeOff, Loader2, Mail, AlertCircle, LogIn, Shield, Clock } from 'lucide-react';
+import { User, Store, Check, X, Eye, EyeOff, Loader2, Mail, AlertCircle, LogIn, Shield, Clock, Phone, Lock } from 'lucide-react';
 import { loginSchema, signUpSchema, validateWithSchema, formatValidationErrors } from '@/lib/validation-schemas';
 import { TurnstileCaptcha } from '@/components/TurnstileCaptcha';
 import b360Logo from '@/assets/b360-logo.png';
@@ -682,14 +682,16 @@ const Auth = () => {
                     <div className="text-sm text-muted-foreground text-center">Tentativas: {failedAttempts}/3</div>
                   )}
 
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" placeholder="seu@email.com" value={loginData.email} onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))} required disabled={isBlocked} className="rounded-full" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Senha</Label>
+                  <div className="space-y-1">
                     <div className="relative">
-                      <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="Sua senha" value={loginData.password} onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))} required className="pr-10 rounded-full" disabled={isBlocked} />
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input id="email" type="email" placeholder="Email" value={loginData.email} onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))} required disabled={isBlocked} className="pl-10 border-0 border-b border-border rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary" />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="relative">
+                      <Shield className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="Senha" value={loginData.password} onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))} required className="pl-10 pr-10 border-0 border-b border-border rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary" disabled={isBlocked} />
                       <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
@@ -749,16 +751,16 @@ const Auth = () => {
                   {/* Barbershop fields */}
                   {signupData.userType === 'barbershop_owner' && (
                     <>
-                      <div className="space-y-2">
-                        <Label htmlFor="barbershop-name">Nome da Barbearia *</Label>
-                        <Input id="barbershop-name" type="text" placeholder="Ex: Barbearia Central" value={signupData.barbershopName} onChange={(e) => setSignupData(prev => ({ ...prev, barbershopName: e.target.value }))} required className="rounded-full" />
+                      <div className="relative">
+                        <Store className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input id="barbershop-name" type="text" placeholder="Nome da Barbearia" value={signupData.barbershopName} onChange={(e) => setSignupData(prev => ({ ...prev, barbershopName: e.target.value }))} required className="pl-10 border-0 border-b border-border rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary" />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="contact-name">Nome do Contato *</Label>
-                        <Input id="contact-name" type="text" placeholder="Seu nome completo" value={signupData.contactName} onChange={(e) => setSignupData(prev => ({ ...prev, contactName: e.target.value }))} required className="rounded-full" />
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input id="contact-name" type="text" placeholder="Nome do Contato" value={signupData.contactName} onChange={(e) => setSignupData(prev => ({ ...prev, contactName: e.target.value }))} required className="pl-10 border-0 border-b border-border rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary" />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="contact-phone">Telefone do Contato *</Label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input id="contact-phone" type="tel" placeholder="(00) 00000-0000" value={signupData.contactPhone} onChange={(e) => {
                           const raw = e.target.value.replace(/\D/g, '').slice(0, 11);
                           let masked = raw;
@@ -766,14 +768,16 @@ const Auth = () => {
                           else if (raw.length > 0) masked = `(${raw}`;
                           if (raw.length > 7) masked = `(${raw.slice(0, 2)}) ${raw.slice(2, 7)}-${raw.slice(7)}`;
                           setSignupData(prev => ({ ...prev, contactPhone: masked }));
-                        }} required className="rounded-full" />
+                        }} required className="pl-10 border-0 border-b border-border rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary" />
                       </div>
                     </>
                   )}
 
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">E-mail Para Acesso *</Label>
-                    <Input id="signup-email" type="email" placeholder="seu@email.com" value={signupData.email} onChange={(e) => { setSignupData(prev => ({ ...prev, email: e.target.value })); setEmailAlreadyExists(false); }} required className={`rounded-full ${emailAlreadyExists ? 'border-destructive' : ''}`} />
+                  <div className="space-y-1">
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input id="signup-email" type="email" placeholder="Email" value={signupData.email} onChange={(e) => { setSignupData(prev => ({ ...prev, email: e.target.value })); setEmailAlreadyExists(false); }} required className={`pl-10 border-0 border-b border-border rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary ${emailAlreadyExists ? 'border-destructive' : ''}`} />
+                    </div>
                     {emailAlreadyExists && (
                       <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 space-y-2">
                         <div className="flex items-center gap-2 text-destructive text-sm"><AlertCircle className="h-4 w-4" /><span className="font-medium">Este email já está cadastrado</span></div>
@@ -787,10 +791,10 @@ const Auth = () => {
                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Senha *</Label>
+                  <div className="space-y-1">
                     <div className="relative">
-                      <Input id="signup-password" type={showPassword ? 'text' : 'password'} placeholder="Mínimo de 8 caracteres" value={signupData.password} onChange={(e) => setSignupData(prev => ({ ...prev, password: e.target.value }))} required maxLength={signupData.userType === 'barbershop_owner' ? 15 : undefined} className="pr-10 rounded-full" />
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input id="signup-password" type={showPassword ? 'text' : 'password'} placeholder="Senha" value={signupData.password} onChange={(e) => setSignupData(prev => ({ ...prev, password: e.target.value }))} required maxLength={signupData.userType === 'barbershop_owner' ? 15 : undefined} className="pl-10 pr-10 border-0 border-b border-border rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary" />
                       <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
@@ -814,10 +818,10 @@ const Auth = () => {
                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="confirm-password">Confirmar Senha *</Label>
+                  <div className="space-y-1">
                     <div className="relative">
-                      <Input id="confirm-password" type={showConfirmPassword ? 'text' : 'password'} placeholder="Confirme sua senha" value={signupData.confirmPassword} onChange={(e) => setSignupData(prev => ({ ...prev, confirmPassword: e.target.value }))} required className="pr-10 rounded-full" />
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input id="confirm-password" type={showConfirmPassword ? 'text' : 'password'} placeholder="Confirmar Senha" value={signupData.confirmPassword} onChange={(e) => setSignupData(prev => ({ ...prev, confirmPassword: e.target.value }))} required className="pl-10 pr-10 border-0 border-b border-border rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary" />
                       <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                         {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
