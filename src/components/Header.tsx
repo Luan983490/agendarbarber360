@@ -68,9 +68,9 @@ export const Header = ({ showBackButton = false }: HeaderProps) => {
                 <a href="#" className="text-sm text-foreground hover:text-primary transition-colors">
                   Encontrar Barbearias
                 </a>
-                <a href="#" className="text-sm text-foreground hover:text-primary transition-colors">
-                  Para Empresas
-                </a>
+                <Link to="/login/barbershop" className="text-sm text-foreground hover:text-primary transition-colors">
+                  Área da Barbearia
+                </Link>
                 <a href="#" className="text-sm text-foreground hover:text-primary transition-colors">
                   Ajuda
                 </a>
@@ -260,9 +260,9 @@ export const Header = ({ showBackButton = false }: HeaderProps) => {
                       <a href="#" className="text-foreground hover:text-primary transition-colors">
                         Encontrar Barbearias
                       </a>
-                      <a href="#" className="text-foreground hover:text-primary transition-colors">
-                        Para Empresas
-                      </a>
+                      <Link to="/login/barbershop" className="text-foreground hover:text-primary transition-colors">
+                        Área da Barbearia
+                      </Link>
                       <a href="#" className="text-foreground hover:text-primary transition-colors">
                         Ajuda
                       </a>
