@@ -52,7 +52,7 @@ const ClientAuth = () => {
   const [forceUpdate, setForceUpdate] = useState(0);
   const [mfaPending, setMfaPending] = useState(false);
 
-  const { failedAttempts, isBlocked, remainingSeconds, requiresCaptcha, captchaVerified, recordFailedAttempt, resetOnSuccess, setCaptchaVerified, canAttemptLogin } = useLoginRateLimit();
+  const { failedAttempts, isBlocked, remainingSeconds, requiresCaptcha, captchaVerified, recordFailedAttempt, resetOnSuccess, setCaptchaVerified, canAttemptLogin } = useLoginRateLimit('client');
 
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [signupData, setSignupData] = useState({
@@ -119,16 +119,16 @@ const ClientAuth = () => {
     e.preventDefault();
     setServerRateLimited(false);
     const emailUsed = loginData.email.trim().toLowerCase();
-    const attempts = Number(localStorage.getItem('auth_failures') || '0');
-    const blockedUntil = Number(localStorage.getItem('auth_blocked_until') || '0');
+    const attempts = Number(localStorage.getItem('auth_failures_client') || '0');
+    const blockedUntil = Number(localStorage.getItem('auth_blocked_until_client') || '0');
     if (attempts >= 3) {
       if (Date.now() < blockedUntil) {
         const remainingSecs = Math.ceil((blockedUntil - Date.now()) / 1000);
         toast({ title: 'Muitas tentativas', description: `Tente novamente em ${remainingSecs > 60 ? '1 minuto' : remainingSecs + ' segundos'}.`, variant: 'destructive' });
         return;
       } else {
-        localStorage.setItem('auth_failures', '0');
-        localStorage.removeItem('auth_blocked_until');
+        localStorage.setItem('auth_failures_client', '0');
+        localStorage.removeItem('auth_blocked_until_client');
       }
     }
     const validation = validateWithSchema(loginSchema, loginData);
@@ -165,8 +165,8 @@ const ClientAuth = () => {
         return;
       }
       logAuthEvent('auth_success', emailUsed);
-      localStorage.setItem('auth_failures', '0');
-      localStorage.removeItem('auth_blocked_until');
+      localStorage.setItem('auth_failures_client', '0');
+      localStorage.removeItem('auth_blocked_until_client');
       resetOnSuccess();
       toast({ title: 'Login realizado!', description: 'Bem-vindo de volta.' });
     } catch (err: any) {
@@ -177,10 +177,10 @@ const ClientAuth = () => {
         setServerRateLimited(true);
         toast({ title: 'Sistema protegido', description: 'Muitas tentativas detectadas. Aguarde alguns minutos.', variant: 'destructive' });
       } else if (errorMessage.includes('invalid login credentials')) {
-        const currentCount = Number(localStorage.getItem('auth_failures') || '0');
+        const currentCount = Number(localStorage.getItem('auth_failures_client') || '0');
         const newCount = currentCount + 1;
-        localStorage.setItem('auth_failures', newCount.toString());
-        if (newCount >= 3) { localStorage.setItem('auth_blocked_until', (Date.now() + 60000).toString()); }
+        localStorage.setItem('auth_failures_client', newCount.toString());
+        if (newCount >= 3) { localStorage.setItem('auth_blocked_until_client', (Date.now() + 60000).toString()); }
         setForceUpdate(prev => prev + 1);
         if (newCount >= 3) {
           toast({ title: 'Muitas tentativas', description: 'Tente novamente em 1 minuto.', variant: 'destructive' });
@@ -192,10 +192,10 @@ const ClientAuth = () => {
           });
         }
       } else {
-        const currentCount = Number(localStorage.getItem('auth_failures') || '0');
+        const currentCount = Number(localStorage.getItem('auth_failures_client') || '0');
         const newCount = currentCount + 1;
-        localStorage.setItem('auth_failures', newCount.toString());
-        if (newCount >= 3) { localStorage.setItem('auth_blocked_until', (Date.now() + 60000).toString()); }
+        localStorage.setItem('auth_failures_client', newCount.toString());
+        if (newCount >= 3) { localStorage.setItem('auth_blocked_until_client', (Date.now() + 60000).toString()); }
         setForceUpdate(prev => prev + 1);
         toast({ title: 'Erro no login', description: err?.message || 'Erro inesperado.', variant: 'destructive' });
       }
