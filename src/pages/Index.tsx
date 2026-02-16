@@ -123,7 +123,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <Header hideMobileMenu={showClientNav} />
       
       <main className={showClientNav ? "pt-20 pb-24" : "pt-20"}>
         <section className="container mx-auto px-4 py-8">

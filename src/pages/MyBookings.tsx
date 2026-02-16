@@ -144,7 +144,7 @@ const MyBookings = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <Header hideMobileMenu={isMobile} />
       
       <main className={cn("container mx-auto px-4 py-8 mt-16", isMobile && "pb-24")}>
         <div className="mb-8">

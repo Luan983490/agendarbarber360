@@ -10,9 +10,10 @@ import b360Logo from "@/assets/b360-logo.png";
 
 interface HeaderProps {
   showBackButton?: boolean;
+  hideMobileMenu?: boolean;
 }
 
-export const Header = ({ showBackButton = false }: HeaderProps) => {
+export const Header = ({ showBackButton = false, hideMobileMenu = false }: HeaderProps) => {
   const { user, signOut } = useAuth();
   const { role } = useUserAccess();
   const navigate = useNavigate();
@@ -247,8 +248,8 @@ export const Header = ({ showBackButton = false }: HeaderProps) => {
                 </>
               )}
 
-              {/* Mobile Menu - Only for non-logged or clients */}
-              {(!user || (role !== 'owner' && role !== 'barber')) && (
+              {/* Mobile Menu - Only for non-logged or clients, hidden when bottom nav is active */}
+              {!hideMobileMenu && (!user || (role !== 'owner' && role !== 'barber')) && (
                 <Sheet>
                   <SheetTrigger asChild>
                     <Button variant="ghost" size="icon" className="md:hidden h-8 w-8 sm:h-9 sm:w-9">
