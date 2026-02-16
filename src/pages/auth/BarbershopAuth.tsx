@@ -283,7 +283,24 @@ const BarbershopAuth = () => {
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
-      {/* Left - Branding */}
+      {/* Mobile - Hero compact */}
+      <div
+        className="lg:hidden relative flex items-center justify-center p-6 min-h-[200px]"
+        style={{ backgroundImage: `url(${authHero})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+      >
+        <div className="absolute inset-0 bg-black/50" />
+        <div className="relative z-10 text-center space-y-3">
+          <img src={b360Logo} alt="B360" className="h-10 mx-auto drop-shadow-lg" />
+          <h1 className="text-xl font-bold text-white">
+            {activeTab === 'login' ? 'Gerencie sua barbearia' : 'Comece agora!'}
+          </h1>
+          <p className="text-white/70 text-sm max-w-xs mx-auto">
+            {activeTab === 'login' ? 'Acesse o painel da sua barbearia' : '30 dias grátis para testar a plataforma'}
+          </p>
+        </div>
+      </div>
+
+      {/* Desktop - Left Branding */}
       <div
         className="hidden lg:flex lg:w-5/12 relative items-center justify-center p-12"
         style={{ backgroundImage: `url(${authHero})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
@@ -310,9 +327,6 @@ const BarbershopAuth = () => {
       {/* Right - Form */}
       <div className="flex-1 flex items-start lg:items-center justify-center p-4 md:p-8 bg-background overflow-y-auto">
         <div className="w-full max-w-md">
-          <div className="lg:hidden text-center mb-6">
-            <img src={b360Logo} alt="B360" className="h-12 mx-auto mb-2" />
-          </div>
 
           {activeTab === 'login' ? (
             <div className="space-y-6">
