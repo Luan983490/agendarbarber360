@@ -208,6 +208,24 @@ export class AuthService {
         userType: sanitizedData.userType,
       };
 
+      // Un-confirm email so grace period logic works, then send verification email
+      try {
+        await supabase.functions.invoke('verify-email-setup');
+        console.log('✅ [SIGNUP] Email un-confirmed for grace period');
+        
+        // Send verification email
+        await supabase.auth.resend({
+          type: 'signup',
+          email: sanitizedData.email,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
+          },
+        });
+        console.log('✅ [SIGNUP] Verification email sent');
+      } catch (verifyErr) {
+        console.warn('⚠️ [SIGNUP] Email verification setup failed (non-blocking):', verifyErr);
+      }
+
       const duration = timer();
       logger.logWithDuration('info', 'signUp', 'User registered successfully', duration, { userId: user.id });
 

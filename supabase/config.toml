@@ -55,3 +55,6 @@ verify_jwt = false
 
 [functions.create-customer-portal]
 verify_jwt = false
+
+[functions.verify-email-setup]
+verify_jwt = true
