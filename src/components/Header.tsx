@@ -66,15 +66,27 @@ export const Header = ({ showBackButton = false, hideMobileMenu = false }: Heade
             {/* Desktop Navigation - Hidden for logged in owners/barbers */}
             {(!user || (role !== 'owner' && role !== 'barber')) && (
               <nav className="hidden md:flex items-center gap-6">
-                <a href="#" className="text-sm text-foreground hover:text-primary transition-colors">
-                  Encontrar Barbearias
-                </a>
+                <Link to="/" className="text-sm text-foreground hover:text-primary transition-colors">
+                  Início
+                </Link>
+                <button
+                  onClick={() => {
+                    navigate('/');
+                    setTimeout(() => {
+                      const input = document.getElementById('search-barbershop-input');
+                      if (input) input.focus();
+                    }, 100);
+                  }}
+                  className="text-sm text-foreground hover:text-primary transition-colors"
+                >
+                  Buscar
+                </button>
+                <Link to="/my-bookings" className="text-sm text-foreground hover:text-primary transition-colors">
+                  Agendamentos
+                </Link>
                 <Link to="/login/barbershop" className="text-sm text-foreground hover:text-primary transition-colors">
                   Área da Barbearia
                 </Link>
-                <a href="#" className="text-sm text-foreground hover:text-primary transition-colors">
-                  Ajuda
-                </a>
               </nav>
             )}
 
