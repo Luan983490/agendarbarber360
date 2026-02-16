@@ -17,6 +17,7 @@ import { User, Store, Check, X, Eye, EyeOff, Loader2, Mail, AlertCircle, LogIn, 
 import { loginSchema, signUpSchema, validateWithSchema, formatValidationErrors } from '@/lib/validation-schemas';
 import { TurnstileCaptcha } from '@/components/TurnstileCaptcha';
 import b360Logo from '@/assets/b360-logo.png';
+import authHero from '@/assets/auth-hero.jpg';
 // Password strength checker
 const checkPasswordStrength = (password: string) => {
   const checks = {
@@ -560,14 +561,11 @@ const Auth = () => {
   // Show success message after signup
   if (signupSuccess) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-accent/20 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <div className="flex items-center justify-center mb-4">
-              <img src={b360Logo} alt="B360" className="h-16" />
-            </div>
+            <img src={b360Logo} alt="B360" className="h-16 mx-auto mb-4" />
           </div>
-
           <Card>
             <CardHeader className="text-center">
               <div className="flex justify-center mb-4">
@@ -584,30 +582,10 @@ const Auth = () => {
                 <p>📁 Confira também a pasta de spam</p>
                 <p>⏰ O link expira em 24 horas</p>
               </div>
-              
-              <Button 
-                variant="outline" 
-                onClick={handleResendConfirmation} 
-                className="w-full"
-                disabled={isResending}
-              >
-                {isResending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Reenviando...
-                  </>
-                ) : (
-                  'Reenviar Email de Confirmação'
-                )}
+              <Button variant="outline" onClick={handleResendConfirmation} className="w-full" disabled={isResending}>
+                {isResending ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Reenviando...</>) : 'Reenviar Email de Confirmação'}
               </Button>
-              
-              <Button 
-                variant="ghost" 
-                onClick={() => setSignupSuccess(false)} 
-                className="w-full"
-              >
-                Voltar
-              </Button>
+              <Button variant="ghost" onClick={() => setSignupSuccess(false)} className="w-full">Voltar</Button>
             </CardContent>
           </Card>
         </div>
@@ -615,457 +593,268 @@ const Auth = () => {
     );
   }
 
+  // ── Left overlay panel content based on active tab ──
+  const overlayContent = activeTab === 'login' ? (
+    <div className="text-center space-y-6">
+      <h2 className="text-3xl md:text-4xl font-bold text-white">Ainda não tem conta?</h2>
+      <p className="text-white/80 text-sm md:text-base max-w-xs mx-auto">
+        Cadastre-se e descubra as melhores barbearias perto de você
+      </p>
+      <Button
+        variant="outline"
+        onClick={() => setActiveTab('signup')}
+        className="border-white text-white hover:bg-white hover:text-primary-foreground rounded-full px-8"
+      >
+        Cadastrar
+      </Button>
+    </div>
+  ) : (
+    <div className="text-center space-y-6">
+      <h2 className="text-3xl md:text-4xl font-bold text-white">Bem-vindo de volta!</h2>
+      <p className="text-white/80 text-sm md:text-base max-w-xs mx-auto">
+        Para continuar conectado, faça login com suas credenciais
+      </p>
+      <Button
+        variant="outline"
+        onClick={() => setActiveTab('login')}
+        className="border-white text-white hover:bg-white hover:text-primary-foreground rounded-full px-8"
+      >
+        Entrar
+      </Button>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-accent/20 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-4">
-            <img src={b360Logo} alt="B360" className="h-16" />
+    <div className="min-h-screen bg-background flex items-center justify-center p-2 md:p-4">
+      <div className="w-full max-w-5xl min-h-[600px] rounded-2xl overflow-hidden shadow-2xl flex flex-col md:flex-row bg-card border border-border relative">
+        
+        {/* ── Left overlay panel (hidden on mobile, shows as top banner) ── */}
+        <div
+          className="hidden md:flex md:w-5/12 relative items-center justify-center p-8 transition-all duration-700 ease-in-out"
+          style={{
+            backgroundImage: `url(${authHero})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        >
+          {/* dark overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/70" />
+          <div className="relative z-10 flex flex-col items-center gap-6">
+            <img src={b360Logo} alt="B360" className="h-14 drop-shadow-lg" />
+            {overlayContent}
           </div>
-          <p className="text-muted-foreground">Acesse sua conta ou cadastre-se</p>
         </div>
 
-        <Card>
-          <Tabs value={activeTab} onValueChange={setActiveTab} ref={tabsRef}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Entrar</TabsTrigger>
-              <TabsTrigger value="signup">Cadastrar</TabsTrigger>
-            </TabsList>
+        {/* Mobile top banner */}
+        <div className="md:hidden flex flex-col items-center gap-3 py-6 px-4 bg-gradient-to-r from-primary/90 to-primary">
+          <img src={b360Logo} alt="B360" className="h-10" />
+          <p className="text-primary-foreground text-sm">Acesse sua conta ou cadastre-se</p>
+        </div>
 
-            <TabsContent value="login">
-              <CardHeader>
-                <CardTitle>Entrar</CardTitle>
-                <CardDescription>Digite suas credenciais para acessar</CardDescription>
-              </CardHeader>
-              <CardContent>
+        {/* ── Right form panel ── */}
+        <div className="flex-1 flex items-start md:items-center justify-center p-4 md:p-8 overflow-y-auto max-h-[80vh] md:max-h-none">
+          <div className="w-full max-w-md">
+
+            {/* ─── LOGIN TAB ─── */}
+            {activeTab === 'login' && (
+              <div className="space-y-6">
+                <div className="text-center space-y-1">
+                  <h1 className="text-2xl font-bold text-foreground">Entrar</h1>
+                  <p className="text-muted-foreground text-sm">Digite suas credenciais para acessar</p>
+                </div>
+
                 <form onSubmit={handleLogin} className="space-y-4">
-                  {/* Alerta de Rate Limit do Servidor (429) */}
                   {serverRateLimited && (
                     <Alert variant="destructive">
                       <Shield className="h-4 w-4" />
-                      <AlertDescription>
-                        Sistema protegido contra ataques. Aguarde alguns minutos antes de tentar novamente.
-                      </AlertDescription>
+                      <AlertDescription>Sistema protegido contra ataques. Aguarde alguns minutos.</AlertDescription>
                     </Alert>
                   )}
-                  
-                  {/* Alerta de Bloqueio Temporário */}
                   {isBlocked && (
                     <Alert className="border-warning bg-warning/10">
                       <Clock className="h-4 w-4 text-warning" />
                       <AlertDescription className="text-warning-foreground">
-                        Muitas tentativas. Tente novamente em{' '}
-                        <span className="font-mono font-bold">{formatRemainingTime(remainingSeconds)}</span>
+                        Muitas tentativas. Tente novamente em <span className="font-mono font-bold">{formatRemainingTime(remainingSeconds)}</span>
                       </AlertDescription>
                     </Alert>
                   )}
-                  
-                  {/* Indicador de tentativas falhas */}
                   {failedAttempts > 0 && failedAttempts < 3 && !isBlocked && (
-                    <div className="text-sm text-muted-foreground text-center">
-                      Tentativas: {failedAttempts}/3
-                    </div>
+                    <div className="text-sm text-muted-foreground text-center">Tentativas: {failedAttempts}/3</div>
                   )}
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={loginData.email}
-                      onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
-                      required
-                      disabled={isBlocked}
-                    />
+                    <Input id="email" type="email" placeholder="seu@email.com" value={loginData.email} onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))} required disabled={isBlocked} className="rounded-full" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="password">Senha</Label>
                     <div className="relative">
-                      <Input
-                        id="password"
-                        type={showPassword ? 'text' : 'password'}
-                        value={loginData.password}
-                        onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
-                        required
-                        className="pr-10"
-                        disabled={isBlocked}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      >
+                      <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="Sua senha" value={loginData.password} onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))} required className="pr-10 rounded-full" disabled={isBlocked} />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
                   </div>
-                  
-                  {/* Captcha após 5 tentativas */}
+
                   {requiresCaptcha && !isBlocked && (
                     <div className="py-2">
-                      <TurnstileCaptcha
-                        onVerify={handleCaptchaVerify}
-                        onError={handleCaptchaError}
-                        onExpire={handleCaptchaExpire}
-                      />
+                      <TurnstileCaptcha onVerify={handleCaptchaVerify} onError={handleCaptchaError} onExpire={handleCaptchaExpire} />
                       {captchaVerified && (
-                        <div className="flex items-center justify-center gap-2 text-sm text-success mt-2">
-                          <Check className="h-4 w-4" />
-                          Verificação concluída
-                        </div>
+                        <div className="flex items-center justify-center gap-2 text-sm text-success mt-2"><Check className="h-4 w-4" />Verificação concluída</div>
                       )}
                     </div>
                   )}
-                  
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
-                    disabled={loading || isBlocked || (requiresCaptcha && !captchaVerified) || serverRateLimited}
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Entrando...
-                      </>
-                    ) : isBlocked ? (
-                      <>
-                        <Clock className="mr-2 h-4 w-4" />
-                        Aguarde {formatRemainingTime(remainingSeconds)}
-                      </>
-                    ) : (
-                      'Entrar'
-                    )}
+
+                  <Button type="submit" className="w-full rounded-full" disabled={loading || isBlocked || (requiresCaptcha && !captchaVerified) || serverRateLimited}>
+                    {loading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Entrando...</>) : isBlocked ? (<><Clock className="mr-2 h-4 w-4" />Aguarde {formatRemainingTime(remainingSeconds)}</>) : 'Entrar'}
                   </Button>
-                  
+
                   <div className="flex flex-col gap-2 text-center text-sm">
-                    <button
-                      type="button"
-                      onClick={() => handleForgotPassword()}
-                      disabled={isRecovering}
-                      className="text-primary hover:underline font-medium disabled:opacity-50"
-                    >
-                      {isRecovering ? (
-                        <>
-                          <Loader2 className="inline mr-1 h-3 w-3 animate-spin" />
-                          Enviando...
-                        </>
-                      ) : (
-                        'Esqueceu a senha?'
-                      )}
+                    <button type="button" onClick={() => handleForgotPassword()} disabled={isRecovering} className="text-primary hover:underline font-medium disabled:opacity-50">
+                      {isRecovering ? (<><Loader2 className="inline mr-1 h-3 w-3 animate-spin" />Enviando...</>) : 'Esqueceu a senha?'}
                     </button>
-                    
-                    <div className="text-muted-foreground">
+                    <div className="text-muted-foreground md:hidden">
                       Não tem uma conta?{' '}
-                      <button
-                        type="button"
-                        onClick={() => setActiveTab('signup')}
-                        className="text-primary hover:underline font-medium"
-                      >
-                        Cadastre-se
-                      </button>
+                      <button type="button" onClick={() => setActiveTab('signup')} className="text-primary hover:underline font-medium">Cadastre-se</button>
                     </div>
                   </div>
                 </form>
-              </CardContent>
-            </TabsContent>
+              </div>
+            )}
 
-            <TabsContent value="signup">
-              <CardHeader>
-                <CardTitle>Cadastrar</CardTitle>
-                <CardDescription>Crie sua conta gratuita</CardDescription>
-              </CardHeader>
-              <CardContent>
+            {/* ─── SIGNUP TAB ─── */}
+            {activeTab === 'signup' && (
+              <div className="space-y-5">
+                <div className="text-center space-y-1">
+                  <h1 className="text-2xl font-bold text-foreground">Criar Conta</h1>
+                  <p className="text-muted-foreground text-sm">Preencha os dados para se cadastrar</p>
+                </div>
+
                 <form onSubmit={handleSignup} className="space-y-4">
+                  {/* Account type */}
                   <div className="space-y-2">
                     <Label>Tipo de conta</Label>
-                    <RadioGroup
-                      value={signupData.userType}
-                      onValueChange={(value: 'client' | 'barbershop_owner') => 
-                        setSignupData(prev => ({ ...prev, userType: value }))
-                      }
-                      className="grid grid-cols-2 gap-4"
-                    >
-                      <div className="flex items-center space-x-2 rounded-lg border p-3 cursor-pointer hover:bg-accent">
+                    <RadioGroup value={signupData.userType} onValueChange={(value: 'client' | 'barbershop_owner') => setSignupData(prev => ({ ...prev, userType: value }))} className="grid grid-cols-2 gap-3">
+                      <div className="flex items-center space-x-2 rounded-xl border p-3 cursor-pointer hover:bg-accent transition-colors">
                         <RadioGroupItem value="client" id="client" />
-                        <Label htmlFor="client" className="flex items-center gap-2 cursor-pointer">
-                          <User className="h-4 w-4" />
-                          Cliente
-                        </Label>
+                        <Label htmlFor="client" className="flex items-center gap-2 cursor-pointer"><User className="h-4 w-4" />Cliente</Label>
                       </div>
-                      <div className="flex items-center space-x-2 rounded-lg border p-3 cursor-pointer hover:bg-accent">
+                      <div className="flex items-center space-x-2 rounded-xl border p-3 cursor-pointer hover:bg-accent transition-colors">
                         <RadioGroupItem value="barbershop_owner" id="barbershop_owner" />
-                        <Label htmlFor="barbershop_owner" className="flex items-center gap-2 cursor-pointer">
-                          <Store className="h-4 w-4" />
-                          Barbearia
-                        </Label>
+                        <Label htmlFor="barbershop_owner" className="flex items-center gap-2 cursor-pointer"><Store className="h-4 w-4" />Barbearia</Label>
                       </div>
                     </RadioGroup>
                   </div>
 
-                  {/* Barbershop-specific fields */}
+                  {/* Barbershop fields */}
                   {signupData.userType === 'barbershop_owner' && (
                     <>
                       <div className="space-y-2">
                         <Label htmlFor="barbershop-name">Nome da Barbearia *</Label>
-                        <Input
-                          id="barbershop-name"
-                          type="text"
-                          placeholder="Ex: Barbearia Central"
-                          value={signupData.barbershopName}
-                          onChange={(e) => setSignupData(prev => ({ ...prev, barbershopName: e.target.value }))}
-                          required
-                        />
+                        <Input id="barbershop-name" type="text" placeholder="Ex: Barbearia Central" value={signupData.barbershopName} onChange={(e) => setSignupData(prev => ({ ...prev, barbershopName: e.target.value }))} required className="rounded-full" />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="contact-name">Nome do Contato *</Label>
-                        <Input
-                          id="contact-name"
-                          type="text"
-                          placeholder="Seu nome completo"
-                          value={signupData.contactName}
-                          onChange={(e) => setSignupData(prev => ({ ...prev, contactName: e.target.value }))}
-                          required
-                        />
+                        <Input id="contact-name" type="text" placeholder="Seu nome completo" value={signupData.contactName} onChange={(e) => setSignupData(prev => ({ ...prev, contactName: e.target.value }))} required className="rounded-full" />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="contact-phone">Telefone do Contato *</Label>
-                        <Input
-                          id="contact-phone"
-                          type="tel"
-                          placeholder="(00) 00000-0000"
-                          value={signupData.contactPhone}
-                          onChange={(e) => {
-                            const raw = e.target.value.replace(/\D/g, '').slice(0, 11);
-                            let masked = raw;
-                            if (raw.length > 2) {
-                              masked = `(${raw.slice(0, 2)}) ${raw.slice(2)}`;
-                            } else if (raw.length > 0) {
-                              masked = `(${raw}`;
-                            }
-                            if (raw.length > 7) {
-                              masked = `(${raw.slice(0, 2)}) ${raw.slice(2, 7)}-${raw.slice(7)}`;
-                            }
-                            setSignupData(prev => ({ ...prev, contactPhone: masked }));
-                          }}
-                          required
-                        />
+                        <Input id="contact-phone" type="tel" placeholder="(00) 00000-0000" value={signupData.contactPhone} onChange={(e) => {
+                          const raw = e.target.value.replace(/\D/g, '').slice(0, 11);
+                          let masked = raw;
+                          if (raw.length > 2) masked = `(${raw.slice(0, 2)}) ${raw.slice(2)}`;
+                          else if (raw.length > 0) masked = `(${raw}`;
+                          if (raw.length > 7) masked = `(${raw.slice(0, 2)}) ${raw.slice(2, 7)}-${raw.slice(7)}`;
+                          setSignupData(prev => ({ ...prev, contactPhone: masked }));
+                        }} required className="rounded-full" />
                       </div>
                     </>
                   )}
 
                   <div className="space-y-2">
                     <Label htmlFor="signup-email">E-mail Para Acesso *</Label>
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      value={signupData.email}
-                      onChange={(e) => {
-                        setSignupData(prev => ({ ...prev, email: e.target.value }));
-                        setEmailAlreadyExists(false);
-                      }}
-                      required
-                      className={emailAlreadyExists ? 'border-destructive' : ''}
-                    />
-                    
+                    <Input id="signup-email" type="email" placeholder="seu@email.com" value={signupData.email} onChange={(e) => { setSignupData(prev => ({ ...prev, email: e.target.value })); setEmailAlreadyExists(false); }} required className={`rounded-full ${emailAlreadyExists ? 'border-destructive' : ''}`} />
                     {emailAlreadyExists && (
                       <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 space-y-2">
-                        <div className="flex items-center gap-2 text-destructive text-sm">
-                          <AlertCircle className="h-4 w-4" />
-                          <span className="font-medium">Este email já está cadastrado</span>
-                        </div>
+                        <div className="flex items-center gap-2 text-destructive text-sm"><AlertCircle className="h-4 w-4" /><span className="font-medium">Este email já está cadastrado</span></div>
                         <div className="flex gap-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={switchToLogin}
-                            className="flex-1"
-                          >
-                            <LogIn className="h-3 w-3 mr-1" />
-                            Fazer Login
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleForgotPassword(signupData.email)}
-                            disabled={isRecovering}
-                            className="flex-1 text-muted-foreground"
-                          >
-                            {isRecovering ? (
-                              <>
-                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                Enviando...
-                              </>
-                            ) : (
-                              'Recuperar Senha'
-                            )}
+                          <Button type="button" variant="outline" size="sm" onClick={switchToLogin} className="flex-1"><LogIn className="h-3 w-3 mr-1" />Fazer Login</Button>
+                          <Button type="button" variant="ghost" size="sm" onClick={() => handleForgotPassword(signupData.email)} disabled={isRecovering} className="flex-1 text-muted-foreground">
+                            {isRecovering ? (<><Loader2 className="h-3 w-3 mr-1 animate-spin" />Enviando...</>) : 'Recuperar Senha'}
                           </Button>
                         </div>
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="signup-password">Senha *</Label>
                     <div className="relative">
-                      <Input
-                        id="signup-password"
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="Mínimo de 8 caracteres"
-                        value={signupData.password}
-                        onChange={(e) => setSignupData(prev => ({ ...prev, password: e.target.value }))}
-                        required
-                        maxLength={signupData.userType === 'barbershop_owner' ? 15 : undefined}
-                        className="pr-10"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      >
+                      <Input id="signup-password" type={showPassword ? 'text' : 'password'} placeholder="Mínimo de 8 caracteres" value={signupData.password} onChange={(e) => setSignupData(prev => ({ ...prev, password: e.target.value }))} required maxLength={signupData.userType === 'barbershop_owner' ? 15 : undefined} className="pr-10 rounded-full" />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
-                    {signupData.userType === 'barbershop_owner' && (
-                      <p className="text-xs text-muted-foreground">Mínimo de 8 e máximo de 15 caracteres</p>
-                    )}
-                    
+                    {signupData.userType === 'barbershop_owner' && <p className="text-xs text-muted-foreground">Mínimo de 8 e máximo de 15 caracteres</p>}
                     {signupData.password && (
                       <div className="space-y-2 mt-2">
                         <div className="flex justify-between text-xs">
                           <span className="text-muted-foreground">Força da senha:</span>
-                          <span className={`font-medium ${
-                            passwordStrength.strength === 'strong' ? 'text-green-600' :
-                            passwordStrength.strength === 'good' ? 'text-blue-600' :
-                            passwordStrength.strength === 'fair' ? 'text-yellow-600' :
-                            'text-red-600'
-                          }`}>
-                            {getStrengthLabel(passwordStrength.strength)}
-                          </span>
+                          <span className={`font-medium ${passwordStrength.strength === 'strong' ? 'text-green-600' : passwordStrength.strength === 'good' ? 'text-blue-600' : passwordStrength.strength === 'fair' ? 'text-yellow-600' : 'text-red-600'}`}>{getStrengthLabel(passwordStrength.strength)}</span>
                         </div>
-                        <Progress 
-                          value={passwordStrength.percentage} 
-                          className={`h-2 ${getStrengthColor(passwordStrength.strength)}`}
-                        />
+                        <Progress value={passwordStrength.percentage} className={`h-2 ${getStrengthColor(passwordStrength.strength)}`} />
                         <div className="grid grid-cols-2 gap-1 text-xs">
-                          <div className={`flex items-center gap-1 ${passwordStrength.checks.length ? 'text-green-600' : 'text-muted-foreground'}`}>
-                            {passwordStrength.checks.length ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
-                            8+ caracteres
-                          </div>
-                          <div className={`flex items-center gap-1 ${passwordStrength.checks.uppercase ? 'text-green-600' : 'text-muted-foreground'}`}>
-                            {passwordStrength.checks.uppercase ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
-                            Letra maiúscula
-                          </div>
-                          <div className={`flex items-center gap-1 ${passwordStrength.checks.lowercase ? 'text-green-600' : 'text-muted-foreground'}`}>
-                            {passwordStrength.checks.lowercase ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
-                            Letra minúscula
-                          </div>
-                          <div className={`flex items-center gap-1 ${passwordStrength.checks.number ? 'text-green-600' : 'text-muted-foreground'}`}>
-                            {passwordStrength.checks.number ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
-                            Número
-                          </div>
-                          <div className={`flex items-center gap-1 ${passwordStrength.checks.special ? 'text-green-600' : 'text-muted-foreground'}`}>
-                            {passwordStrength.checks.special ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
-                            Caractere especial
-                          </div>
+                          <div className={`flex items-center gap-1 ${passwordStrength.checks.length ? 'text-green-600' : 'text-muted-foreground'}`}>{passwordStrength.checks.length ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}8+ caracteres</div>
+                          <div className={`flex items-center gap-1 ${passwordStrength.checks.uppercase ? 'text-green-600' : 'text-muted-foreground'}`}>{passwordStrength.checks.uppercase ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}Letra maiúscula</div>
+                          <div className={`flex items-center gap-1 ${passwordStrength.checks.lowercase ? 'text-green-600' : 'text-muted-foreground'}`}>{passwordStrength.checks.lowercase ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}Letra minúscula</div>
+                          <div className={`flex items-center gap-1 ${passwordStrength.checks.number ? 'text-green-600' : 'text-muted-foreground'}`}>{passwordStrength.checks.number ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}Número</div>
+                          <div className={`flex items-center gap-1 ${passwordStrength.checks.special ? 'text-green-600' : 'text-muted-foreground'}`}>{passwordStrength.checks.special ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}Caractere especial</div>
                         </div>
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="confirm-password">Confirmar Senha *</Label>
                     <div className="relative">
-                      <Input
-                        id="confirm-password"
-                        type={showConfirmPassword ? 'text' : 'password'}
-                        value={signupData.confirmPassword}
-                        onChange={(e) => setSignupData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                        required
-                        className="pr-10"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      >
+                      <Input id="confirm-password" type={showConfirmPassword ? 'text' : 'password'} placeholder="Confirme sua senha" value={signupData.confirmPassword} onChange={(e) => setSignupData(prev => ({ ...prev, confirmPassword: e.target.value }))} required className="pr-10 rounded-full" />
+                      <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                         {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
                     {signupData.confirmPassword && signupData.password !== signupData.confirmPassword && (
-                      <p className="text-xs text-destructive flex items-center gap-1">
-                        <X className="h-3 w-3" />
-                        As senhas não conferem
-                      </p>
+                      <p className="text-xs text-destructive flex items-center gap-1"><X className="h-3 w-3" />As senhas não conferem</p>
                     )}
                     {signupData.confirmPassword && signupData.password === signupData.confirmPassword && (
-                      <p className="text-xs text-success flex items-center gap-1">
-                        <Check className="h-3 w-3" />
-                        Senhas conferem
-                      </p>
+                      <p className="text-xs text-success flex items-center gap-1"><Check className="h-3 w-3" />Senhas conferem</p>
                     )}
                   </div>
 
-                  {/* Terms checkbox for barbershop */}
                   {signupData.userType === 'barbershop_owner' && (
                     <div className="flex items-start space-x-2">
-                      <Checkbox
-                        id="terms"
-                        checked={signupData.acceptedTerms}
-                        onCheckedChange={(checked) => 
-                          setSignupData(prev => ({ ...prev, acceptedTerms: checked === true }))
-                        }
-                        className="mt-0.5"
-                      />
+                      <Checkbox id="terms" checked={signupData.acceptedTerms} onCheckedChange={(checked) => setSignupData(prev => ({ ...prev, acceptedTerms: checked === true }))} className="mt-0.5" />
                       <Label htmlFor="terms" className="text-sm font-normal leading-snug cursor-pointer">
-                        Li e aceito o{' '}
-                        <Link to="/terms" className="text-primary hover:underline" target="_blank">
-                          Termo de Condição de Uso
-                        </Link>
-                        {' '}*
+                        Li e aceito o{' '}<Link to="/terms" className="text-primary hover:underline" target="_blank">Termo de Condição de Uso</Link> *
                       </Label>
                     </div>
                   )}
-                  
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
-                    disabled={loading || passwordStrength.strength === 'weak' || (signupData.userType === 'barbershop_owner' && !signupData.acceptedTerms)}
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Cadastrando...
-                      </>
-                    ) : (
-                      'Criar Conta'
-                    )}
+
+                  <Button type="submit" className="w-full rounded-full" disabled={loading || passwordStrength.strength === 'weak' || (signupData.userType === 'barbershop_owner' && !signupData.acceptedTerms)}>
+                    {loading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Cadastrando...</>) : 'Criar Conta'}
                   </Button>
-                  
+
                   {passwordStrength.strength === 'weak' && signupData.password && (
-                    <p className="text-xs text-center text-muted-foreground">
-                      A senha precisa atender aos requisitos acima para continuar
-                    </p>
+                    <p className="text-xs text-center text-muted-foreground">A senha precisa atender aos requisitos acima para continuar</p>
                   )}
-                  
-                  <div className="text-center text-sm text-muted-foreground">
-                    Já tem uma conta?{' '}
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('login')}
-                      className="text-primary hover:underline font-medium"
-                    >
-                      Fazer login
-                    </button>
+
+                  <div className="text-center text-sm text-muted-foreground md:hidden">
+                    Já tem uma conta?{' '}<button type="button" onClick={() => setActiveTab('login')} className="text-primary hover:underline font-medium">Fazer login</button>
                   </div>
                 </form>
-              </CardContent>
-            </TabsContent>
-          </Tabs>
-        </Card>
-        
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
