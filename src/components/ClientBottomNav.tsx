@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Home, Search, CalendarDays, UserRound } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -12,12 +13,29 @@ const navItems = [
 export function ClientBottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [lastClicked, setLastClicked] = useState<string | null>(null);
 
   const isActive = (item: typeof navItems[0]) => {
     if (item.id === 'bookings') return location.pathname === '/my-bookings' || location.pathname === '/historico';
     if (item.id === 'profile') return location.pathname === '/perfil';
-    if (item.id === 'home') return location.pathname === '/' && item.id === 'home';
+    // Home and Search share the same path '/'
+    if (location.pathname === '/') {
+      if (lastClicked === 'search' && item.id === 'search') return true;
+      if (lastClicked !== 'search' && item.id === 'home') return true;
+      return false;
+    }
     return false;
+  };
+
+  const handleClick = (item: typeof navItems[0]) => {
+    setLastClicked(item.id);
+    navigate(item.path);
+    if (item.id === 'search') {
+      setTimeout(() => {
+        const input = document.getElementById('search-barbershop-input');
+        if (input) input.focus();
+      }, 100);
+    }
   };
 
   return (
@@ -29,15 +47,7 @@ export function ClientBottomNav() {
           return (
             <button
               key={item.id}
-              onClick={() => {
-                navigate(item.path);
-                if (item.id === 'search') {
-                  setTimeout(() => {
-                    const input = document.getElementById('search-barbershop-input');
-                    if (input) input.focus();
-                  }, 100);
-                }
-              }}
+              onClick={() => handleClick(item)}
               className={cn(
                 'flex flex-col items-center gap-0.5 px-2 py-1 rounded-md transition-colors min-w-0 flex-1',
                 active ? 'text-primary' : 'text-[#888888] hover:text-[#bbbbbb]'
