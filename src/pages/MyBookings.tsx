@@ -123,10 +123,7 @@ const MyBookings = () => {
     const bookingEnd = new Date(bookingStart.getTime() + duration * 60000);
     
     const now = new Date();
-    
     const isFinishedStatus = ['completed', 'cancelled', 'no_show'].includes(booking.status);
-    
-    console.log(`[MyBookings] ${booking.id.slice(0,8)} | ${booking.booking_date} ${booking.booking_time} | end: ${bookingEnd.toISOString()} | now: ${now.toISOString()} | future: ${bookingEnd > now} | status: ${booking.status} | upcoming: ${bookingEnd > now && !isFinishedStatus}`);
     
     return bookingEnd > now && !isFinishedStatus;
   };
