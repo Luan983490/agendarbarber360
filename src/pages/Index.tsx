@@ -8,8 +8,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserAccess } from "@/hooks/useUserAccess";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import b360Logo from '@/assets/b360-logo.png';
+import { ClientBottomNav } from "@/components/ClientBottomNav";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Index = () => {
+  const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState("");
   const [searchType, setSearchType] = useState<SearchType>('name');
@@ -116,11 +119,13 @@ const Index = () => {
     </>
   );
 
+  const showClientNav = isMobile && (!user || role === 'client');
+
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      {!showClientNav && <Header />}
       
-      <main className="pt-20">
+      <main className={showClientNav ? "pt-4 pb-24" : "pt-20"}>
         <section className="container mx-auto px-4 py-8">
           {user ? (
             <Tabs defaultValue="all" className="w-full">
@@ -142,6 +147,7 @@ const Index = () => {
           )}
         </section>
       </main>
+      {showClientNav && <ClientBottomNav />}
     </div>
   );
 };

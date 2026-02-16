@@ -13,6 +13,8 @@ import { Header } from '@/components/Header';
 import { User, MapPin, Lock, Key } from 'lucide-react';
 import { profileUpdateSchema, validateWithSchema, formatValidationErrors, sanitizeString } from '@/lib/validation-schemas';
 import { MFASettingsCard } from '@/components/mfa';
+import { ClientBottomNav } from '@/components/ClientBottomNav';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Profile {
   display_name: string;
@@ -33,6 +35,7 @@ interface Profile {
 }
 
 const Profile = () => {
+  const isMobile = useIsMobile();
   const { user, signOut, loading: authLoading } = useAuth();
   const location = useLocation();
   const [profile, setProfile] = useState<Profile>({
@@ -178,9 +181,9 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header showBackButton />
+      {!isMobile && <Header showBackButton />}
       
-      <main className="container mx-auto px-4 py-8 mt-14">
+      <main className={`container mx-auto px-4 py-8 ${isMobile ? 'pb-24' : 'mt-14'}`}>
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-8 mb-8">
             <Avatar className="h-24 w-24">
@@ -471,6 +474,7 @@ const Profile = () => {
           )}
         </div>
       </main>
+      {isMobile && <ClientBottomNav />}
     </div>
   );
 };

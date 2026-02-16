@@ -7,8 +7,11 @@ import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/Header';
 import { HeartCrack } from 'lucide-react';
 import { BarberShopCard } from '@/components/BarberShopCard';
+import { ClientBottomNav } from '@/components/ClientBottomNav';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Favorites = () => {
+  const isMobile = useIsMobile();
   const { user, loading: authLoading } = useAuth();
   const [favorites, setFavorites] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,9 +62,9 @@ const Favorites = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      {!isMobile && <Header />}
       
-      <main className="container mx-auto px-4 py-8 mt-16">
+      <main className={`container mx-auto px-4 py-8 ${isMobile ? 'pb-24' : 'mt-16'}`}>
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Favoritos</h1>
         </div>
@@ -100,6 +103,7 @@ const Favorites = () => {
           </Card>
         )}
       </main>
+      {isMobile && <ClientBottomNav />}
     </div>
   );
 };
