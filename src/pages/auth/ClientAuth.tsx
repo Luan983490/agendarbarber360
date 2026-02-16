@@ -299,6 +299,14 @@ const ClientAuth = () => {
           <p className="text-white/70 text-sm max-w-xs mx-auto">
             {activeTab === 'login' ? 'Acesse as melhores barbearias da sua região' : 'Crie sua conta e comece a agendar agora'}
           </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setActiveTab(activeTab === 'login' ? 'signup' : 'login')}
+            className="border-white text-white hover:bg-primary hover:text-primary-foreground hover:border-primary rounded-full px-6"
+          >
+            {activeTab === 'login' ? 'Criar Conta' : 'Já tenho conta'}
+          </Button>
         </div>
       </div>
 
