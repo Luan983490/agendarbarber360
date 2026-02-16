@@ -9,7 +9,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { useSupabasePing } from "@/hooks/use-supabase-ping";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { EmailVerificationGuard } from "@/components/EmailVerificationGuard";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 
@@ -263,9 +263,7 @@ const App = () => (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider delayDuration={300} skipDelayDuration={100} disableHoverableContent>
-          <EmailVerificationGuard>
             <AppContent />
-          </EmailVerificationGuard>
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
