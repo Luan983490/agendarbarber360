@@ -29,7 +29,7 @@ const ChooseUserType = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-[640px]">
           {/* Card Cliente */}
           <div
-            className="relative overflow-hidden rounded-2xl p-5 min-h-[140px] md:min-h-[180px] md:p-6 flex flex-col justify-between cursor-pointer transition-transform duration-200 hover:scale-[1.02]"
+            className="relative overflow-hidden rounded-2xl p-4 min-h-[110px] md:min-h-[180px] md:p-6 flex flex-col justify-between cursor-pointer transition-transform duration-200 hover:scale-[1.02]"
             style={{
               background: 'linear-gradient(135deg, hsl(220, 25%, 18%) 0%, hsl(220, 30%, 12%) 100%)',
             }}
@@ -53,7 +53,7 @@ const ChooseUserType = () => {
 
           {/* Card Barbearia */}
           <div
-            className="relative overflow-hidden rounded-2xl p-5 min-h-[140px] md:min-h-[180px] md:p-6 flex flex-col justify-between cursor-pointer transition-transform duration-200 hover:scale-[1.02]"
+            className="relative overflow-hidden rounded-2xl p-4 min-h-[110px] md:min-h-[180px] md:p-6 flex flex-col justify-between cursor-pointer transition-transform duration-200 hover:scale-[1.02]"
             style={{
               background: 'linear-gradient(135deg, hsl(45, 60%, 28%) 0%, hsl(35, 40%, 14%) 100%)',
             }}
