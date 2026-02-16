@@ -22,6 +22,10 @@ export function ClientBottomNav() {
   const isActive = (item: typeof navItems[0]) => {
     if (item.id === 'bookings') return location.pathname === '/my-bookings' || location.pathname === '/historico';
     if (item.id === 'profile') return location.pathname === '/perfil';
+    // When redirected to /choose-type, highlight the item that was clicked
+    if (location.pathname === '/choose-type') {
+      return lastClicked === item.id;
+    }
     if (location.pathname === '/') {
       if (lastClicked === 'search' && item.id === 'search') return true;
       if (lastClicked !== 'search' && item.id === 'home') return true;
