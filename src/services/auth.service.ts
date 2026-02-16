@@ -23,6 +23,9 @@ export interface SignUpDTO {
   email: string;
   password: string;
   userType: 'client' | 'barbershop_owner';
+  barbershopName?: string;
+  contactName?: string;
+  contactPhone?: string;
 }
 
 export interface SignInDTO {
@@ -125,10 +128,19 @@ export class AuthService {
       // Use dedicated callback route for email confirmation
       const redirectUrl = `${window.location.origin}/auth/callback`;
 
-      const metadata = {
+      const metadata: Record<string, string> = {
         user_type: sanitizedData.userType,
-        full_name: '',
+        full_name: sanitizedData.contactName || '',
       };
+      if (sanitizedData.contactName) {
+        metadata.display_name = sanitizedData.contactName;
+      }
+      if (sanitizedData.contactPhone) {
+        metadata.phone = sanitizedData.contactPhone;
+      }
+      if (sanitizedData.barbershopName) {
+        metadata.barbershop_name = sanitizedData.barbershopName;
+      }
       console.log('📦 [SIGNUP] Metadata que será enviado:', metadata);
       console.log('🔗 [SIGNUP] Redirect URL:', redirectUrl);
 

@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -94,7 +95,11 @@ const Auth = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    userType: 'client' as 'client' | 'barbershop_owner'
+    userType: 'client' as 'client' | 'barbershop_owner',
+    barbershopName: '',
+    contactName: '',
+    contactPhone: '',
+    acceptedTerms: false,
   });
 
   const passwordStrength = useMemo(() => 
@@ -192,6 +197,16 @@ const Auth = () => {
         }
         
         if (barbershopId) {
+          // Update barbershop with metadata if available
+          const meta = user.user_metadata;
+          if (meta?.barbershop_name || meta?.phone) {
+            const updates: Record<string, string> = {};
+            if (meta.barbershop_name) updates.name = meta.barbershop_name;
+            if (meta.phone) updates.phone = meta.phone;
+            await supabase.from('barbershops').update(updates).eq('id', barbershopId);
+            console.log('✅ [Auth] Barbershop updated with metadata:', updates);
+          }
+          
           const { data: onboardingStatus } = await supabase
             .rpc('get_barbershop_onboarding_status', { p_barbershop_id: barbershopId });
           const status = (onboardingStatus as any)?.[0];
@@ -362,6 +377,32 @@ const Auth = () => {
     e.preventDefault();
     setEmailAlreadyExists(false);
     
+    const isBarbershop = signupData.userType === 'barbershop_owner';
+    
+    // Extra validations for barbershop
+    if (isBarbershop) {
+      if (signupData.barbershopName.trim().length < 3) {
+        toast({ title: 'Erro de validação', description: 'Nome da barbearia deve ter no mínimo 3 caracteres', variant: 'destructive' });
+        return;
+      }
+      if (signupData.contactName.trim().length < 3) {
+        toast({ title: 'Erro de validação', description: 'Nome do contato deve ter no mínimo 3 caracteres', variant: 'destructive' });
+        return;
+      }
+      if (!/^\(\d{2}\) \d{5}-\d{4}$/.test(signupData.contactPhone)) {
+        toast({ title: 'Erro de validação', description: 'Telefone inválido. Use o formato (00) 00000-0000', variant: 'destructive' });
+        return;
+      }
+      if (!signupData.acceptedTerms) {
+        toast({ title: 'Erro de validação', description: 'Você deve aceitar os termos de uso', variant: 'destructive' });
+        return;
+      }
+      if (signupData.password.length > 15) {
+        toast({ title: 'Erro de validação', description: 'Senha deve ter no máximo 15 caracteres', variant: 'destructive' });
+        return;
+      }
+    }
+    
     // Validação com Zod
     const validation = validateWithSchema(signUpSchema, signupData);
     if (!validation.success) {
@@ -377,12 +418,16 @@ const Auth = () => {
     const { error } = await signUp(
       signupData.email.trim().toLowerCase(), 
       signupData.password, 
-      signupData.userType
+      signupData.userType,
+      isBarbershop ? {
+        barbershopName: signupData.barbershopName.trim(),
+        contactName: signupData.contactName.trim(),
+        contactPhone: signupData.contactPhone,
+      } : undefined
     );
     setLoading(false);
     
     if (error) {
-      // Check if it's an email already exists error
       if (error.code === 'AUTH_EMAIL_IN_USE' || 
           error.message?.includes('already registered') ||
           error.message?.includes('já está cadastrado')) {
@@ -757,11 +802,63 @@ const Auth = () => {
                     </RadioGroup>
                   </div>
 
+                  {/* Barbershop-specific fields */}
+                  {signupData.userType === 'barbershop_owner' && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="barbershop-name">Nome da Barbearia *</Label>
+                        <Input
+                          id="barbershop-name"
+                          type="text"
+                          placeholder="Ex: Barbearia Central"
+                          value={signupData.barbershopName}
+                          onChange={(e) => setSignupData(prev => ({ ...prev, barbershopName: e.target.value }))}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="contact-name">Nome do Contato *</Label>
+                        <Input
+                          id="contact-name"
+                          type="text"
+                          placeholder="Seu nome completo"
+                          value={signupData.contactName}
+                          onChange={(e) => setSignupData(prev => ({ ...prev, contactName: e.target.value }))}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="contact-phone">Telefone do Contato *</Label>
+                        <Input
+                          id="contact-phone"
+                          type="tel"
+                          placeholder="(00) 00000-0000"
+                          value={signupData.contactPhone}
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/\D/g, '').slice(0, 11);
+                            let masked = raw;
+                            if (raw.length > 2) {
+                              masked = `(${raw.slice(0, 2)}) ${raw.slice(2)}`;
+                            } else if (raw.length > 0) {
+                              masked = `(${raw}`;
+                            }
+                            if (raw.length > 7) {
+                              masked = `(${raw.slice(0, 2)}) ${raw.slice(2, 7)}-${raw.slice(7)}`;
+                            }
+                            setSignupData(prev => ({ ...prev, contactPhone: masked }));
+                          }}
+                          required
+                        />
+                      </div>
+                    </>
+                  )}
+
                   <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
+                    <Label htmlFor="signup-email">E-mail Para Acesso *</Label>
                     <Input
                       id="signup-email"
                       type="email"
+                      placeholder="seu@email.com"
                       value={signupData.email}
                       onChange={(e) => {
                         setSignupData(prev => ({ ...prev, email: e.target.value }));
@@ -771,7 +868,6 @@ const Auth = () => {
                       className={emailAlreadyExists ? 'border-destructive' : ''}
                     />
                     
-                    {/* Email already exists warning */}
                     {emailAlreadyExists && (
                       <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 space-y-2">
                         <div className="flex items-center gap-2 text-destructive text-sm">
@@ -812,14 +908,16 @@ const Auth = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="signup-password">Senha</Label>
+                    <Label htmlFor="signup-password">Senha *</Label>
                     <div className="relative">
                       <Input
                         id="signup-password"
                         type={showPassword ? 'text' : 'password'}
+                        placeholder="Mínimo de 8 caracteres"
                         value={signupData.password}
                         onChange={(e) => setSignupData(prev => ({ ...prev, password: e.target.value }))}
                         required
+                        maxLength={signupData.userType === 'barbershop_owner' ? 15 : undefined}
                         className="pr-10"
                       />
                       <button
@@ -830,8 +928,10 @@ const Auth = () => {
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
+                    {signupData.userType === 'barbershop_owner' && (
+                      <p className="text-xs text-muted-foreground">Mínimo de 8 e máximo de 15 caracteres</p>
+                    )}
                     
-                    {/* Password strength indicator */}
                     {signupData.password && (
                       <div className="space-y-2 mt-2">
                         <div className="flex justify-between text-xs">
@@ -876,7 +976,7 @@ const Auth = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="confirm-password">Confirmar Senha</Label>
+                    <Label htmlFor="confirm-password">Confirmar Senha *</Label>
                     <div className="relative">
                       <Input
                         id="confirm-password"
@@ -907,11 +1007,32 @@ const Auth = () => {
                       </p>
                     )}
                   </div>
+
+                  {/* Terms checkbox for barbershop */}
+                  {signupData.userType === 'barbershop_owner' && (
+                    <div className="flex items-start space-x-2">
+                      <Checkbox
+                        id="terms"
+                        checked={signupData.acceptedTerms}
+                        onCheckedChange={(checked) => 
+                          setSignupData(prev => ({ ...prev, acceptedTerms: checked === true }))
+                        }
+                        className="mt-0.5"
+                      />
+                      <Label htmlFor="terms" className="text-sm font-normal leading-snug cursor-pointer">
+                        Li e aceito o{' '}
+                        <Link to="/terms" className="text-primary hover:underline" target="_blank">
+                          Termo de Condição de Uso
+                        </Link>
+                        {' '}*
+                      </Label>
+                    </div>
+                  )}
                   
                   <Button 
                     type="submit" 
                     className="w-full" 
-                    disabled={loading || passwordStrength.strength === 'weak'}
+                    disabled={loading || passwordStrength.strength === 'weak' || (signupData.userType === 'barbershop_owner' && !signupData.acceptedTerms)}
                   >
                     {loading ? (
                       <>
@@ -919,7 +1040,7 @@ const Auth = () => {
                         Cadastrando...
                       </>
                     ) : (
-                      'Cadastrar'
+                      'Criar Conta'
                     )}
                   </Button>
                   
