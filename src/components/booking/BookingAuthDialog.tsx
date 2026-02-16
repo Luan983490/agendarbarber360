@@ -183,18 +183,36 @@ export const BookingAuthDialog = ({ open, onOpenChange, onAuthSuccess }: Booking
       return;
     }
     setLoading(true);
-    const { error } = await signUp(signupData.email.trim().toLowerCase(), signupData.password, 'client', { contactName: signupData.contactName, contactPhone: signupData.contactPhone || undefined });
-    setLoading(false);
+    const emailUsed = signupData.email.trim().toLowerCase();
+    const { error } = await signUp(emailUsed, signupData.password, 'client', { contactName: signupData.contactName, contactPhone: signupData.contactPhone || undefined });
     if (error) {
+      setLoading(false);
       if (error.code === 'AUTH_EMAIL_IN_USE' || error.message?.includes('already registered') || error.message?.includes('já está cadastrado')) {
         setEmailAlreadyExists(true);
         toast({ title: 'Email já cadastrado', description: 'Este email já possui uma conta. Faça login.', variant: 'destructive' });
         return;
       }
     } else {
-      // For email confirmation flow, show message
-      toast({ title: 'Cadastro realizado!', description: 'Verifique seu email para confirmar a conta e depois tente agendar novamente.' });
-      onOpenChange(false);
+      // Try to auto-login right after signup
+      try {
+        const { error: loginError } = await supabase.auth.signInWithPassword({
+          email: emailUsed,
+          password: signupData.password,
+        });
+        if (loginError) {
+          // If auto-login fails (e.g. email confirmation required), show message
+          toast({ title: 'Cadastro realizado!', description: 'Verifique seu email para confirmar a conta e depois tente agendar novamente.' });
+          onOpenChange(false);
+        } else {
+          toast({ title: 'Conta criada!', description: 'Finalizando seu agendamento...' });
+          // onAuthSuccess will be triggered by the auth state listener
+        }
+      } catch {
+        toast({ title: 'Cadastro realizado!', description: 'Faça login para finalizar o agendamento.' });
+        setActiveTab('login');
+        setLoginData({ email: emailUsed, password: '' });
+      }
+      setLoading(false);
     }
   };
 
