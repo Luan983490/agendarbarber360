@@ -177,6 +177,7 @@ export const AdvancedSearch = ({
           size="sm"
           onClick={() => handleSearchTypeChange('name')}
           className="flex items-center gap-2"
+          style={searchType === 'name' ? { background: 'linear-gradient(135deg, hsl(45, 60%, 28%) 0%, hsl(35, 40%, 14%) 100%)', border: 'none' } : {}}
         >
           <Search className="h-4 w-4" />
           Por Nome
@@ -186,6 +187,7 @@ export const AdvancedSearch = ({
           size="sm"
           onClick={() => handleSearchTypeChange('city')}
           className="flex items-center gap-2"
+          style={searchType === 'city' ? { background: 'linear-gradient(135deg, hsl(45, 60%, 28%) 0%, hsl(35, 40%, 14%) 100%)', border: 'none' } : {}}
         >
           <Building2 className="h-4 w-4" />
           Por Cidade
@@ -195,6 +197,7 @@ export const AdvancedSearch = ({
           size="sm"
           onClick={() => handleSearchTypeChange('proximity')}
           className="flex items-center gap-2"
+          style={searchType === 'proximity' ? { background: 'linear-gradient(135deg, hsl(45, 60%, 28%) 0%, hsl(35, 40%, 14%) 100%)', border: 'none' } : {}}
         >
           <Navigation className="h-4 w-4" />
           Próximas
