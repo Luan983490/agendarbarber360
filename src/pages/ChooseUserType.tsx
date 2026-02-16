@@ -12,7 +12,7 @@ const ChooseUserType = () => {
   }, [user, navigate]);
 
   return (
-    <div className="min-h-screen bg-[hsl(0,0%,7%)] flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-[hsl(0,0%,7%)] flex flex-col items-center justify-center px-4 py-12">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-[640px]">
         {/* Card Cliente */}
         <div
@@ -59,8 +59,15 @@ const ChooseUserType = () => {
             <span className="text-[12px] font-medium text-white/70 tracking-wide uppercase">
               Entrar
             </span>
-          </div>
-        </div>
+      </div>
+
+      <button
+        onClick={() => navigate('/')}
+        className="mt-8 flex items-center gap-2 text-[13px] font-light text-white/30 hover:text-white/60 transition-colors"
+      >
+        ← Voltar para o início
+      </button>
+    </div>
       </div>
     </div>
   );
