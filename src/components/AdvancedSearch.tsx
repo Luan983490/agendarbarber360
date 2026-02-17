@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { 
-  SearchCheck, 
+  Search, 
   MapPin, 
   Compass, 
   Landmark, 
@@ -182,7 +182,7 @@ export const AdvancedSearch = ({
           className="flex items-center gap-2 text-white"
           style={searchType === 'name' ? { background: 'linear-gradient(135deg, hsl(45, 60%, 28%) 0%, hsl(35, 40%, 14%) 100%)', border: 'none' } : {}}
         >
-          <SearchCheck className="h-4 w-4" strokeWidth={1.5} />
+          <Search className="h-4 w-4" strokeWidth={1.5} />
           Por Nome
         </Button>
         <Button
@@ -211,7 +211,7 @@ export const AdvancedSearch = ({
       <div className="space-y-4">
         {searchType === 'name' && (
           <div className="relative">
-            <SearchCheck className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+            <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
             <Input
               id="search-barbershop-input"
               placeholder="Digite o nome da barbearia..."
