@@ -315,7 +315,10 @@ const ClientAuth = () => {
             variant="outline"
             size="sm"
             onClick={() => setActiveTab(activeTab === 'login' ? 'signup' : 'login')}
-            className="border-white text-white hover:bg-primary hover:text-primary-foreground hover:border-primary rounded-full px-6"
+            className="border-white text-white hover:text-white hover:border-transparent rounded-full px-6"
+            style={{ }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'linear-gradient(135deg, hsl(45, 60%, 28%) 0%, hsl(35, 40%, 14%) 100%)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = ''; }}
           >
             {activeTab === 'login' ? 'Criar Conta' : 'Já tenho conta'}
           </Button>
