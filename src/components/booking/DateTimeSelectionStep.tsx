@@ -471,12 +471,18 @@ export const DateTimeSelectionStep = ({
                   onClick={() => onBarberChange(barber.id)}
                   className="flex flex-col items-center min-w-[72px] flex-shrink-0 group transition-all gap-2"
                 >
-                  <div className={cn(
-                    "w-24 h-24 rounded-lg overflow-hidden border-2 transition-all",
-                    isSelected
-                      ? "border-primary ring-2 ring-primary/30"
-                      : "border-transparent group-hover:border-muted-foreground/30"
-                  )}>
+                  <div
+                    className={cn(
+                      "w-24 h-24 rounded-lg overflow-hidden border-2 transition-all",
+                      isSelected
+                        ? "ring-2"
+                        : "border-transparent group-hover:border-muted-foreground/30"
+                    )}
+                    style={isSelected ? {
+                      borderColor: 'hsl(45, 60%, 28%)',
+                      boxShadow: '0 0 0 2px hsla(45, 60%, 28%, 0.3)',
+                    } : undefined}
+                  >
                     {barber.image_url ? (
                       <img src={barber.image_url} alt={barber.name} className="w-full h-full object-cover" />
                     ) : (
