@@ -10,6 +10,27 @@ import { BookingSuccessDialog } from "./BookingSuccessDialog";
 import { enviarConfirmacaoWhatsApp } from "@/utils/whatsapp";
 import { savePendingBooking } from "@/hooks/usePendingBooking";
 
+interface BarbershopDetails {
+  slug?: string;
+  description?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  address?: string;
+  opening_hours?: any;
+  amenities?: string[] | null;
+  postal_code?: string | null;
+  neighborhood?: string | null;
+  street_number?: string | null;
+  city?: string | null;
+  state?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  whatsapp?: string | null;
+  instagram_url?: string | null;
+  facebook_url?: string | null;
+  payment_methods?: string[] | null;
+}
+
 interface BookingFlowProps {
   children: React.ReactNode;
   barbershop: {
@@ -22,6 +43,10 @@ interface BookingFlowProps {
   autoOpen?: boolean;
   onBackFromAutoOpen?: () => void;
   rescheduleBookingId?: string;
+  prefetchedServices?: Service[];
+  prefetchedBarbers?: Barber[];
+  prefetchedBarbershopDetails?: BarbershopDetails;
+  prefetchedWorkingHours?: any[] | null;
 }
 
 interface Service {
@@ -47,15 +72,15 @@ interface SelectedServiceItem {
 
 type BookingStep = "services" | "datetime";
 
-export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFromAutoOpen, rescheduleBookingId }: BookingFlowProps) => {
+export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFromAutoOpen, rescheduleBookingId, prefetchedServices, prefetchedBarbers, prefetchedBarbershopDetails, prefetchedWorkingHours }: BookingFlowProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const [isOpen, setIsOpen] = useState(autoOpen);
   const [currentStep, setCurrentStep] = useState<BookingStep>("services");
-  const [services, setServices] = useState<Service[]>([]);
-  const [barbers, setBarbers] = useState<Barber[]>([]);
+  const [services, setServices] = useState<Service[]>(prefetchedServices || []);
+  const [barbers, setBarbers] = useState<Barber[]>(prefetchedBarbers || []);
   const [selectedServices, setSelectedServices] = useState<SelectedServiceItem[]>([]);
   const [currentServiceIndex, setCurrentServiceIndex] = useState(0);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -82,8 +107,8 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFrom
 
   useEffect(() => {
     if (isOpen) {
-      fetchServices();
-      fetchBarbers();
+      if (!prefetchedServices) fetchServices();
+      if (!prefetchedBarbers) fetchBarbers();
     }
   }, [isOpen, barbershop.id]);
 
@@ -350,6 +375,8 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFrom
                   setIsOpen(false);
                 }
               }}
+              prefetchedBarbershopDetails={prefetchedBarbershopDetails}
+              prefetchedWorkingHoursData={prefetchedWorkingHours}
             />
           )}
 
