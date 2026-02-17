@@ -319,26 +319,23 @@ export const DateTimeSelectionStep = ({
   };
 
   return (
-    <div className="flex flex-col h-[100dvh] w-full bg-background">
-      {/* Dark header bar - flex-shrink-0 */}
-      <div className="w-full bg-foreground flex-shrink-0">
+    <div className="flex flex-col min-h-full w-full bg-background overflow-y-auto">
+      {/* Dark header bar */}
+      <div className="w-full bg-foreground">
         {/* Title bar */}
         <div className="flex items-center px-3 pt-4 pb-2">
-          <button
-            onClick={onBack}
-            className="p-2 rounded-lg transition-colors"
-          >
+          <button onClick={onBack} className="p-2 rounded-lg transition-colors">
             <ChevronLeft className="w-5 h-5 text-background" />
           </button>
-          <h1 className="flex-1 text-center text-background font-bold text-base tracking-wide uppercase">
+          <h1 className="flex-1 text-center text-background font-bold text-sm tracking-widest uppercase">
             Agendar Horário
           </h1>
           <div className="w-9" />
         </div>
 
-        {/* Month/Year navigation - bordered pill */}
+        {/* Month/Year pill */}
         <div className="flex items-center justify-center px-3 pb-3">
-          <div className="flex items-center gap-2 border border-background/20 rounded-full px-4 py-1.5">
+          <div className="inline-flex items-center gap-3 border-b border-t border-background/25 px-5 py-1.5">
             <button
               onClick={() => {
                 if (isCompact && dateContainerRef.current) {
@@ -353,11 +350,11 @@ export const DateTimeSelectionStep = ({
                   setDateScrollOffset(Math.max(0, dateScrollOffset - 30));
                 }
               }}
-              className="p-0.5 hover:bg-background/10 rounded-full transition-colors"
+              className="hover:bg-background/10 rounded-full transition-colors"
             >
-              <ChevronLeft className="w-4 h-4 text-background" />
+              <ChevronLeft className="w-4 h-4 text-background/70" />
             </button>
-            <span className="text-background text-sm font-medium min-w-[130px] text-center">
+            <span className="text-background text-xs font-medium tracking-wide min-w-[110px] text-center">
               {getMonthYearTitle()}
             </span>
             <button
@@ -374,21 +371,21 @@ export const DateTimeSelectionStep = ({
                   setDateScrollOffset(Math.min(allDates.length - visibleDatesCount, dateScrollOffset + 30));
                 }
               }}
-              className="p-0.5 hover:bg-background/10 rounded-full transition-colors"
+              className="hover:bg-background/10 rounded-full transition-colors"
             >
-              <ChevronRight className="w-4 h-4 text-background" />
+              <ChevronRight className="w-4 h-4 text-background/70" />
             </button>
           </div>
         </div>
 
-        {/* Date strip */}
-        <div className="flex items-center px-2 pb-4">
+        {/* Date strip - 7 days visible like image */}
+        <div className="flex items-center px-3 pb-4">
           {!isCompact && (
             <button
               onClick={() => handleDateScroll("left")}
               disabled={dateScrollOffset === 0}
               className={cn(
-                "w-7 h-7 flex items-center justify-center rounded-full flex-shrink-0",
+                "w-6 h-6 flex items-center justify-center rounded-full flex-shrink-0",
                 dateScrollOffset === 0 ? "opacity-30 pointer-events-none" : "hover:bg-background/10"
               )}
             >
@@ -399,8 +396,8 @@ export const DateTimeSelectionStep = ({
           <div
             ref={dateContainerRef}
             className={cn(
-              "flex-1 flex gap-0.5 py-1",
-              isCompact && "overflow-x-auto snap-x snap-mandatory scroll-smooth scrollbar-hide"
+              "flex-1 flex justify-between py-1",
+              isCompact && "overflow-x-auto snap-x snap-mandatory scroll-smooth scrollbar-hide gap-0"
             )}
             style={isCompact ? { scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" } : undefined}
           >
@@ -421,19 +418,19 @@ export const DateTimeSelectionStep = ({
                   onClick={() => !isDisabled && onDateChange(date)}
                   disabled={isDisabled}
                   className={cn(
-                    "flex flex-col items-center justify-center py-2 transition-all",
-                    isCompact ? "min-w-[46px] flex-shrink-0 snap-start" : "flex-1",
+                    "flex flex-col items-center justify-center transition-all",
+                    isCompact ? "min-w-[44px] flex-shrink-0 snap-start py-1" : "flex-1 py-1",
                     isDisabled && "opacity-30 pointer-events-none"
                   )}
                 >
                   <span className={cn(
-                    "text-[10px] font-bold tracking-wider mb-1",
-                    isSelected ? "text-background" : "text-background/50"
+                    "text-[10px] font-bold tracking-wider mb-1.5",
+                    isSelected ? "text-background" : "text-background/40"
                   )}>
                     {dayAbbr}
                   </span>
                   <div className={cn(
-                    "w-9 h-9 flex items-center justify-center rounded-full text-base font-bold transition-all",
+                    "w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold transition-all",
                     isSelected
                       ? "bg-background text-foreground"
                       : "text-background hover:bg-background/10"
@@ -450,7 +447,7 @@ export const DateTimeSelectionStep = ({
               onClick={() => handleDateScroll("right")}
               disabled={dateScrollOffset >= allDates.length - visibleDatesCount}
               className={cn(
-                "w-7 h-7 flex items-center justify-center rounded-full flex-shrink-0",
+                "w-6 h-6 flex items-center justify-center rounded-full flex-shrink-0",
                 dateScrollOffset >= allDates.length - visibleDatesCount ? "opacity-30 pointer-events-none" : "hover:bg-background/10"
               )}
             >
@@ -460,54 +457,12 @@ export const DateTimeSelectionStep = ({
         </div>
       </div>
 
-      {/* Scrollable content area - flex-1 overflow */}
-      <div className="flex-1 overflow-y-auto px-4 py-5 space-y-6">
-
-        {/* Choose Professional section - FIRST */}
-        <div>
-          <h3 className="text-sm font-bold text-foreground uppercase tracking-wide mb-4">Escolha o Profissional</h3>
-          <div className="flex gap-5 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
-            {barbers.map((barber) => (
-              <button
-                key={barber.id}
-                onClick={() => onBarberChange(barber.id)}
-                className="flex flex-col items-center gap-2 min-w-[76px] flex-shrink-0 group"
-              >
-                <div className={cn(
-                  "w-[68px] h-[68px] rounded-full overflow-hidden border-[3px] transition-all",
-                  selectedBarber === barber.id
-                    ? "border-foreground"
-                    : "border-border group-hover:border-foreground/40"
-                )}>
-                  {barber.image_url ? (
-                    <img
-                      src={barber.image_url}
-                      alt={barber.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-muted flex items-center justify-center">
-                      <User className="w-7 h-7 text-muted-foreground" />
-                    </div>
-                  )}
-                </div>
-                <span className={cn(
-                  "text-[11px] text-center line-clamp-2 max-w-[76px] leading-tight",
-                  selectedBarber === barber.id
-                    ? "font-bold text-foreground bg-foreground text-background px-2 py-0.5 rounded-full"
-                    : "font-medium text-muted-foreground"
-                )}>
-                  {barber.name}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Available Slots section */}
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">Horários Disponíveis</h3>
+      {/* White content area - all scrollable including button */}
+      <div className="flex-1 bg-background">
+        {/* Available Slots */}
+        <div className="px-4 pt-5 pb-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-base font-bold text-foreground uppercase tracking-wide">Horários Disponíveis</h3>
             {selectedBarber && (
               <button
                 onClick={handleRefreshSlots}
@@ -546,7 +501,7 @@ export const DateTimeSelectionStep = ({
                 ))}
               </div>
 
-              {/* Time slots grid - 3 columns */}
+              {/* Time slots grid - 3 columns like image */}
               <div className="grid grid-cols-3 gap-2.5">
                 {(slotsLoading || isFetching) ? (
                   <div className="col-span-3 flex items-center justify-center gap-2 text-muted-foreground py-6">
@@ -589,7 +544,7 @@ export const DateTimeSelectionStep = ({
                         key={time}
                         onClick={() => onTimeChange(time)}
                         className={cn(
-                          "py-3 rounded-full text-sm font-semibold transition-all border",
+                          "py-2.5 rounded-full text-sm font-semibold transition-all border",
                           isSelected
                             ? "bg-foreground text-background border-foreground"
                             : "bg-transparent text-foreground border-border hover:border-foreground"
@@ -605,52 +560,88 @@ export const DateTimeSelectionStep = ({
           )}
         </div>
 
-        {/* Service summary card */}
-        <div className="bg-card rounded-xl border border-border">
-          <div className="flex items-start justify-between p-4">
-            <h3 className="font-semibold text-foreground text-sm">
-              {currentService?.service.name}
-            </h3>
-            <div className="text-right">
-              <p className="font-bold text-foreground text-sm">
-                R$ {currentService?.service.price.toFixed(2).replace(".", ",")}
-              </p>
-              {selectedTime && (
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {selectedTime} - {getEndTime(selectedTime, currentService?.service.duration || 0)}
-                </p>
-              )}
-            </div>
-          </div>
-          {selectedBarberData && (
-            <div className="border-t border-border px-4 py-3">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Profissional:</span>
-                <div className="flex items-center gap-2">
-                  {selectedBarberData.image_url ? (
-                    <img src={selectedBarberData.image_url} alt={selectedBarberData.name} className="w-6 h-6 rounded-full object-cover" />
+        {/* Choose Professional */}
+        <div className="px-4 pb-4">
+          <h3 className="text-base font-bold text-foreground uppercase tracking-wide mb-4">Escolha o Profissional</h3>
+          <div className="flex gap-5 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+            {barbers.map((barber) => (
+              <button
+                key={barber.id}
+                onClick={() => onBarberChange(barber.id)}
+                className="flex flex-col items-center gap-2 min-w-[76px] flex-shrink-0 group"
+              >
+                <div className={cn(
+                  "w-[68px] h-[68px] rounded-full overflow-hidden border-[3px] transition-all",
+                  selectedBarber === barber.id
+                    ? "border-foreground"
+                    : "border-border group-hover:border-foreground/40"
+                )}>
+                  {barber.image_url ? (
+                    <img src={barber.image_url} alt={barber.name} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
-                      <User className="w-3 h-3 text-muted-foreground" />
+                    <div className="w-full h-full bg-muted flex items-center justify-center">
+                      <User className="w-7 h-7 text-muted-foreground" />
                     </div>
                   )}
-                  <span className="text-xs font-medium text-foreground">{selectedBarberData.name}</span>
                 </div>
-              </div>
-            </div>
-          )}
+                <span className={cn(
+                  "text-[11px] text-center line-clamp-2 max-w-[76px] leading-tight",
+                  selectedBarber === barber.id
+                    ? "font-bold bg-foreground text-background px-2.5 py-0.5 rounded-full"
+                    : "font-medium text-muted-foreground"
+                )}>
+                  {barber.name}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Add another service */}
-        <button
-          onClick={onAddService}
-          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-        >
-          + Adicionar outro serviço
-        </button>
+        {/* Service summary card */}
+        <div className="px-4 pb-4">
+          <div className="bg-card rounded-xl border border-border">
+            <div className="flex items-start justify-between p-4">
+              <h3 className="font-semibold text-foreground text-sm">{currentService?.service.name}</h3>
+              <div className="text-right">
+                <p className="font-bold text-foreground text-sm">
+                  R$ {currentService?.service.price.toFixed(2).replace(".", ",")}
+                </p>
+                {selectedTime && (
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {selectedTime} - {getEndTime(selectedTime, currentService?.service.duration || 0)}
+                  </p>
+                )}
+              </div>
+            </div>
+            {selectedBarberData && (
+              <div className="border-t border-border px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Profissional:</span>
+                  <div className="flex items-center gap-2">
+                    {selectedBarberData.image_url ? (
+                      <img src={selectedBarberData.image_url} alt={selectedBarberData.name} className="w-6 h-6 rounded-full object-cover" />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
+                        <User className="w-3 h-3 text-muted-foreground" />
+                      </div>
+                    )}
+                    <span className="text-xs font-medium text-foreground">{selectedBarberData.name}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={onAddService}
+            className="mt-4 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            + Adicionar outro serviço
+          </button>
+        </div>
 
         {/* Observations */}
-        <div className="pb-2">
+        <div className="px-4 pb-4">
           <label className="text-sm font-medium text-foreground mb-2 block">
             Observações (opcional)
           </label>
@@ -666,11 +657,9 @@ export const DateTimeSelectionStep = ({
             {notes.length}/500
           </span>
         </div>
-      </div>
 
-      {/* Footer - OUTSIDE scroll area, always visible */}
-      <div className="border-t border-border bg-background flex-shrink-0">
-        <div className="px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        {/* Footer - inside scroll, not fixed */}
+        <div className="border-t border-border px-4 pt-3 pb-6">
           <div className="flex items-center justify-end gap-3 mb-3">
             <span className="text-muted-foreground text-sm">Total:</span>
             <span className="text-xl font-bold text-foreground">
