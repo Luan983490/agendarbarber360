@@ -90,7 +90,7 @@ const MyBookings = () => {
   };
 
   const handleReschedule = (booking: Booking) => {
-    navigate(`/barbearia/${booking.barbershop.slug}?service=${booking.service_id}`);
+    navigate(`/barbearia/${booking.barbershop.slug}?service=${booking.service_id}&reschedule=${booking.id}`);
   };
 
   const getStatusInfo = (status: string) => {
