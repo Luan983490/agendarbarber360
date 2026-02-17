@@ -188,8 +188,9 @@ export const BookingAuthDialog = ({ open, onOpenChange, onAuthSuccess }: Booking
           password: signupData.password,
         });
         if (loginError) {
-          // If auto-login fails (e.g. email confirmation required), show message
-          toast({ title: 'Cadastro realizado!', description: 'Verifique seu email para confirmar a conta e depois tente agendar novamente.' });
+          // Auto-login failed (email confirmation required)
+          // Still show success dialog with email warning
+          onAuthSuccess(true);
           onOpenChange(false);
         } else {
           toast({ title: 'Conta criada!', description: 'Finalizando seu agendamento...' });
@@ -197,9 +198,9 @@ export const BookingAuthDialog = ({ open, onOpenChange, onAuthSuccess }: Booking
           onOpenChange(false);
         }
       } catch {
-        toast({ title: 'Cadastro realizado!', description: 'Faça login para finalizar o agendamento.' });
-        setActiveTab('login');
-        setLoginData({ email: emailUsed, password: '' });
+        // Even on error, show success with email warning
+        onAuthSuccess(true);
+        onOpenChange(false);
       }
       setLoading(false);
     }
