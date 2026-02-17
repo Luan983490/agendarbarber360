@@ -9,7 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/Header';
-import { Calendar, Clock, MapPin, User, Scissors, CheckCircle, XCircle, AlertCircle, RefreshCw, CalendarPlus } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, Scissors, CheckCircle, XCircle, AlertCircle, RefreshCw, CalendarPlus, Phone, MessageCircle } from 'lucide-react';
 import { ClientBottomNav } from '@/components/ClientBottomNav';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -26,6 +26,7 @@ interface Booking {
     name: string;
     address: string;
     phone: string;
+    whatsapp: string;
     slug: string;
   };
   service: {
@@ -54,6 +55,7 @@ const MyBookings = () => {
   const [cancellingBooking, setCancellingBooking] = useState<Booking | null>(null);
   const [cancelLoading, setCancelLoading] = useState(false);
   const [cancelledBooking, setCancelledBooking] = useState<Booking | null>(null);
+  const [contactBooking, setContactBooking] = useState<Booking | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -68,7 +70,7 @@ const MyBookings = () => {
         .from('bookings')
         .select(`
           *,
-          barbershop:barbershops(name, address, phone, slug),
+          barbershop:barbershops(name, address, phone, whatsapp, slug),
           service:services(name, duration),
           barber:barbers(name, specialty),
           booking_products(
@@ -319,7 +321,7 @@ const MyBookings = () => {
                         <Button variant="outline" size="sm" className="text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3 text-destructive hover:text-destructive" onClick={() => setCancellingBooking(booking)}>
                           Cancelar
                         </Button>
-                        <Button variant="outline" size="sm" className="text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3">
+                        <Button variant="outline" size="sm" className="text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3" onClick={() => setContactBooking(booking)}>
                           Contato
                         </Button>
                       </div>
@@ -484,6 +486,54 @@ const MyBookings = () => {
                 Fechar
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Contact Options Dialog */}
+      <Dialog open={!!contactBooking} onOpenChange={(open) => !open && setContactBooking(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Entrar em Contato</DialogTitle>
+            <DialogDescription>
+              {contactBooking?.barbershop.name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 py-2">
+            {contactBooking?.barbershop.whatsapp && (
+              <Button
+                className="w-full gap-2 justify-start"
+                variant="outline"
+                onClick={() => {
+                  const phone = contactBooking.barbershop.whatsapp.replace(/\D/g, '');
+                  const formatted = phone.startsWith('55') ? phone : `55${phone}`;
+                  window.open(`https://wa.me/${formatted}`, '_blank');
+                  setContactBooking(null);
+                }}
+              >
+                <MessageCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                WhatsApp
+              </Button>
+            )}
+            {contactBooking?.barbershop.phone && (
+              <Button
+                className="w-full gap-2 justify-start"
+                variant="outline"
+                onClick={() => {
+                  const phone = contactBooking.barbershop.phone.replace(/\D/g, '');
+                  window.open(`tel:+55${phone}`, '_self');
+                  setContactBooking(null);
+                }}
+              >
+                <Phone className="h-5 w-5 text-primary" />
+                Ligação
+              </Button>
+            )}
+            {!contactBooking?.barbershop.whatsapp && !contactBooking?.barbershop.phone && (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                Este estabelecimento não possui telefone ou WhatsApp cadastrado.
+              </p>
+            )}
           </div>
         </DialogContent>
       </Dialog>
