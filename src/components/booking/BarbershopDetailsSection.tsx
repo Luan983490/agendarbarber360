@@ -282,12 +282,14 @@ export const BarbershopDetailsSection = ({ barbershopId, barbershop, compact = f
                   {openingHours.map((day: any, index: number) => (
                     <div key={index} className="flex justify-between text-sm">
                       <span className="text-muted-foreground">{day.day}</span>
-                      <span className={cn(
-                        "text-right",
+                      <div className={cn(
+                        "text-right flex flex-col",
                         day.periods ? "text-foreground" : "text-muted-foreground"
                       )}>
-                        {day.periods ? day.periods.join(" | ") : "Fechado"}
-                      </span>
+                        {day.periods ? day.periods.map((period: string, i: number) => (
+                          <span key={i}>{period}</span>
+                        )) : <span>Fechado</span>}
+                      </div>
                     </div>
                   ))}
                 </div>
