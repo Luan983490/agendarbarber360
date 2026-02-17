@@ -53,7 +53,7 @@ export function ClientBottomNav() {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden border-t border-[#3a3939]" style={{ backgroundColor: '#1a1a1a' }}>
+    <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden border-t border-[#3a3939]" style={{ backgroundColor: '#000000' }}>
       <div className="flex items-center justify-around py-1.5 px-1">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -75,7 +75,7 @@ export function ClientBottomNav() {
           );
         })}
       </div>
-      <div className="h-[env(safe-area-inset-bottom)]" style={{ backgroundColor: '#1a1a1a' }} />
+      <div className="h-[env(safe-area-inset-bottom)]" style={{ backgroundColor: '#000000' }} />
     </nav>
   );
 }
