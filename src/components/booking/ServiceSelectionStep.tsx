@@ -205,54 +205,44 @@ export const ServiceSelectionStep = ({
     return Scissors;
   };
 
-  // Fetch barbershop details AND working hours together on mount
+  // Fetch barbershop details AND working hours fully in parallel on mount
   useEffect(() => {
     const fetchAllDetails = async () => {
       setLoadingDetails(true);
       try {
-        // Fetch barbershop details and first active barber in parallel
-        const [detailsResult, barbersResult] = await Promise.all([
+        // Fetch barbershop details AND working hours (via join) in a single parallel call
+        const [detailsResult, hoursResult] = await Promise.all([
           supabase
             .from("barbershops")
             .select("slug, description, phone, email, address, opening_hours, amenities, postal_code, neighborhood, street_number, city, state, latitude, longitude, whatsapp, instagram_url, facebook_url, payment_methods")
             .eq("id", barbershop.id)
             .single(),
           supabase
-            .from("barbers")
-            .select("id")
-            .eq("barbershop_id", barbershop.id)
-            .eq("is_active", true),
+            .from("barber_working_hours")
+            .select("barber_id, day_of_week, is_day_off, period1_start, period1_end, period2_start, period2_end, barbers!inner(barbershop_id, is_active)")
+            .eq("barbers.barbershop_id", barbershop.id)
+            .eq("barbers.is_active", true)
+            .order("day_of_week"),
         ]);
 
         setBarbershopDetails(detailsResult.data);
 
-        // Fetch working hours for ALL active barbers and aggregate
-        if (barbersResult.data && barbersResult.data.length > 0) {
-          const barberIds = barbersResult.data.map(b => b.id);
-          const { data: hours } = await supabase
-            .from("barber_working_hours")
-            .select("barber_id, day_of_week, is_day_off, period1_start, period1_end, period2_start, period2_end")
-            .in("barber_id", barberIds)
-            .order("day_of_week");
-          
-          // Aggregate: earliest start, latest end per day
-          const dayMap = new Map<number, any>();
-          for (const h of (hours || [])) {
-            const existing = dayMap.get(h.day_of_week);
-            if (!existing) {
-              dayMap.set(h.day_of_week, { ...h });
-            } else {
-              if (!h.is_day_off) existing.is_day_off = false;
-              if (h.period1_start && (!existing.period1_start || h.period1_start < existing.period1_start)) existing.period1_start = h.period1_start;
-              if (h.period1_end && (!existing.period1_end || h.period1_end > existing.period1_end)) existing.period1_end = h.period1_end;
-              if (h.period2_start && (!existing.period2_start || h.period2_start < existing.period2_start)) existing.period2_start = h.period2_start;
-              if (h.period2_end && (!existing.period2_end || h.period2_end > existing.period2_end)) existing.period2_end = h.period2_end;
-            }
+        // Aggregate: earliest start, latest end per day
+        const hours = hoursResult.data || [];
+        const dayMap = new Map<number, any>();
+        for (const h of hours) {
+          const existing = dayMap.get(h.day_of_week);
+          if (!existing) {
+            dayMap.set(h.day_of_week, { ...h });
+          } else {
+            if (!h.is_day_off) existing.is_day_off = false;
+            if (h.period1_start && (!existing.period1_start || h.period1_start < existing.period1_start)) existing.period1_start = h.period1_start;
+            if (h.period1_end && (!existing.period1_end || h.period1_end > existing.period1_end)) existing.period1_end = h.period1_end;
+            if (h.period2_start && (!existing.period2_start || h.period2_start < existing.period2_start)) existing.period2_start = h.period2_start;
+            if (h.period2_end && (!existing.period2_end || h.period2_end > existing.period2_end)) existing.period2_end = h.period2_end;
           }
-          setPrefetchedWorkingHours(Array.from(dayMap.values()).sort((a: any, b: any) => a.day_of_week - b.day_of_week));
-        } else {
-          setPrefetchedWorkingHours([]);
         }
+        setPrefetchedWorkingHours(Array.from(dayMap.values()).sort((a: any, b: any) => a.day_of_week - b.day_of_week));
       } catch (error) {
         console.error("Error fetching barbershop details:", error);
         setPrefetchedWorkingHours([]);
