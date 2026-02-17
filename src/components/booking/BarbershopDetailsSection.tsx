@@ -298,7 +298,7 @@ export const BarbershopDetailsSection = ({ barbershopId, barbershop, compact = f
       {hasLocation && (
         <div className="space-y-3">
           <div className="flex items-start gap-3">
-            <MapPin className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+            <MapPin className="h-5 w-5 mt-0.5 flex-shrink-0" strokeWidth={1.5} style={{ color: "hsl(45, 60%, 28%)" }} />
             <div className="flex-1 min-w-0">
               <h4 className="font-medium text-foreground text-sm">Localização</h4>
               <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
@@ -323,7 +323,7 @@ export const BarbershopDetailsSection = ({ barbershopId, barbershop, compact = f
         <Separator />
         <div className="space-y-3">
           <div className="flex items-start gap-3">
-            <Clock className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+            <Clock className="h-5 w-5 mt-0.5 flex-shrink-0" strokeWidth={1.5} style={{ color: "hsl(45, 60%, 28%)" }} />
             <div className="flex-1">
               <h4 className="font-medium text-foreground text-sm">Horário de Funcionamento</h4>
               {loadingHours ? (
@@ -358,7 +358,7 @@ export const BarbershopDetailsSection = ({ barbershopId, barbershop, compact = f
           <Separator />
           <div className="space-y-3">
             <div className="flex items-start gap-3">
-              <Phone className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+              <Phone className="h-5 w-5 mt-0.5 flex-shrink-0" strokeWidth={1.5} style={{ color: "hsl(45, 60%, 28%)" }} />
               <div className="flex-1">
                 <h4 className="font-medium text-foreground text-sm">Contato</h4>
                 <div className="flex flex-wrap gap-2 mt-3">
@@ -397,7 +397,7 @@ export const BarbershopDetailsSection = ({ barbershopId, barbershop, compact = f
           <Separator />
           <div className="space-y-3">
             <div className="flex items-start gap-3">
-              <CreditCard className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+              <CreditCard className="h-5 w-5 mt-0.5 flex-shrink-0" strokeWidth={1.5} style={{ color: "hsl(45, 60%, 28%)" }} />
               <div className="flex-1">
                 <h4 className="font-medium text-foreground text-sm">Formas de Pagamento</h4>
                 <div className="flex flex-wrap gap-3 mt-3">
@@ -410,7 +410,7 @@ export const BarbershopDetailsSection = ({ barbershopId, barbershop, compact = f
                         key={method}
                         className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg"
                       >
-                        <IconComponent className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
+                        <IconComponent className="h-4 w-4" strokeWidth={1.5} style={{ color: "hsl(45, 60%, 28%)" }} />
                         <span className="text-sm text-foreground">{config.label}</span>
                       </div>
                     );
@@ -436,7 +436,7 @@ export const BarbershopDetailsSection = ({ barbershopId, barbershop, compact = f
                   className="h-10 w-10 rounded-full"
                   onClick={() => window.open(barbershop.instagram_url, "_blank")}
                 >
-                  <Instagram className="h-5 w-5" strokeWidth={1.5} />
+                  <Instagram className="h-5 w-5" strokeWidth={1.5} style={{ color: "hsl(45, 60%, 28%)" }} />
                 </Button>
               )}
               {barbershop.facebook_url && (
@@ -446,7 +446,7 @@ export const BarbershopDetailsSection = ({ barbershopId, barbershop, compact = f
                   className="h-10 w-10 rounded-full"
                   onClick={() => window.open(barbershop.facebook_url, "_blank")}
                 >
-                  <Facebook className="h-5 w-5" strokeWidth={1.5} />
+                  <Facebook className="h-5 w-5" strokeWidth={1.5} style={{ color: "hsl(45, 60%, 28%)" }} />
                 </Button>
               )}
               {barbershop.whatsapp && (
@@ -456,7 +456,7 @@ export const BarbershopDetailsSection = ({ barbershopId, barbershop, compact = f
                   className="h-10 w-10 rounded-full"
                   onClick={openWhatsApp}
                 >
-                  <MessageCircle className="h-5 w-5" strokeWidth={1.5} />
+                  <MessageCircle className="h-5 w-5" strokeWidth={1.5} style={{ color: "hsl(45, 60%, 28%)" }} />
                 </Button>
               )}
             </div>
