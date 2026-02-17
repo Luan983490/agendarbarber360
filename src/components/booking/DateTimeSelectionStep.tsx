@@ -320,278 +320,237 @@ export const DateTimeSelectionStep = ({
 
   return (
     <div className="flex flex-col h-full w-full bg-background overflow-y-auto">
-      {/* Header with back arrow and month/year */}
-      <div className="w-full py-4">
-        <div className="flex items-center px-2">
+      {/* Dark header bar */}
+      <div className="w-full bg-foreground py-4 px-3">
+        <div className="flex items-center">
           <button
             onClick={onBack}
-            className="p-2 hover:bg-muted rounded-lg transition-colors"
+            className="p-2 rounded-lg transition-colors"
           >
-            <ChevronLeft className="w-6 h-6 text-foreground" />
+            <ChevronLeft className="w-5 h-5 text-background" />
           </button>
-          <div className="flex-1 flex items-center justify-center gap-2">
-            <button
-              onClick={() => {
-                if (isCompact && dateContainerRef.current) {
-                  const refDate = mobileVisibleMonth || selectedDate;
-                  const prevMonth = new Date(refDate.getFullYear(), refDate.getMonth() - 1, 1);
-                  const idx = allDates.findIndex(d => d.getMonth() === prevMonth.getMonth() && d.getFullYear() === prevMonth.getFullYear());
-                  if (idx >= 0) {
-                    const btn = dateContainerRef.current.children[idx] as HTMLElement;
-                    dateContainerRef.current.scrollTo({ left: btn.offsetLeft, behavior: 'smooth' });
-                  }
-                } else {
-                  // Desktop: jump back one month worth of days
-                  const newOffset = Math.max(0, dateScrollOffset - 30);
-                  setDateScrollOffset(newOffset);
-                }
-              }}
-              className="p-1 hover:bg-muted rounded-full transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5 text-foreground" strokeWidth={1.5} />
-            </button>
-            <h2 className="text-xl md:text-2xl font-bold text-foreground italic min-w-[140px] text-center">
-              {getMonthYearTitle()}
-            </h2>
-            <button
-              onClick={() => {
-                if (isCompact && dateContainerRef.current) {
-                  const refDate = mobileVisibleMonth || selectedDate;
-                  const nextMonth = new Date(refDate.getFullYear(), refDate.getMonth() + 1, 1);
-                  const idx = allDates.findIndex(d => d.getMonth() === nextMonth.getMonth() && d.getFullYear() === nextMonth.getFullYear());
-                  if (idx >= 0) {
-                    const btn = dateContainerRef.current.children[idx] as HTMLElement;
-                    dateContainerRef.current.scrollTo({ left: btn.offsetLeft, behavior: 'smooth' });
-                  }
-                } else {
-                  // Desktop: jump forward one month worth of days
-                  const newOffset = Math.min(allDates.length - visibleDatesCount, dateScrollOffset + 30);
-                  setDateScrollOffset(newOffset);
-                }
-              }}
-              className="p-1 hover:bg-muted rounded-full transition-colors"
-            >
-              <ChevronRight className="w-5 h-5 text-foreground" strokeWidth={1.5} />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Horizontal date picker - full width with circular arrows */}
-      <div className="w-full flex items-center gap-1">
-        {/* Left arrow - desktop only */}
-        {!isCompact && (
-          <button
-            onClick={() => handleDateScroll("left")}
-            disabled={dateScrollOffset === 0}
-            className={cn(
-              "w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full border border-border bg-background transition-colors flex-shrink-0",
-              dateScrollOffset === 0 ? "opacity-30 pointer-events-none" : "hover:bg-muted"
-            )}
-          >
-            <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
-          </button>
-        )}
-
-        <div 
-          ref={dateContainerRef}
-          className={cn(
-            "flex-1 flex gap-1 sm:gap-1.5 md:gap-2 py-2",
-            isCompact && "overflow-x-auto snap-x snap-mandatory scroll-smooth scrollbar-hide -mx-1 px-1"
-          )}
-          style={isCompact ? { scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" } : undefined}
-        >
-          {visibleDates.map((date, index) => {
-            const isPast = isBefore(startOfDay(date), startOfDay(today));
-            const isSunday = date.getDay() === 0;
-            const isSelected = isSameDay(date, selectedDate);
-            const isDisabled = isPast || isSunday;
-            const availability = getDateAvailability(date);
-
-            const dayAbbr = format(date, "EEE", { locale: ptBR })
-              .replace(".", "")
-              .charAt(0).toUpperCase() + format(date, "EEE", { locale: ptBR }).replace(".", "").slice(1);
-
-            return (
-              <button
-                key={date.toISOString()}
-                onClick={() => !isDisabled && onDateChange(date)}
-                disabled={isDisabled}
-                className={cn(
-                  "flex flex-col items-center py-2.5 sm:py-3 rounded-xl transition-all",
-                  isCompact ? "min-w-[52px] flex-shrink-0 px-1.5 snap-start" : "flex-1 px-1",
-                  isSelected
-                    ? "bg-[#3d9a9b] text-white"
-                    : "bg-card border border-border hover:bg-muted text-foreground",
-                  isDisabled && "opacity-40 pointer-events-none"
-                )}
-              >
-                <span className="text-xs font-medium capitalize">
-                  {dayAbbr}
-                </span>
-                <span className="text-lg md:text-xl font-bold mt-1">
-                  {format(date, "d")}
-                </span>
-                {!isDisabled && (
-                  <div
-                    className="w-5 h-1.5 rounded-full mt-1.5"
-                    style={{ 
-                      backgroundColor: isSelected 
-                        ? "white" 
-                        : availability === "available" 
-                          ? "#22c55e" 
-                          : availability === "limited" 
-                            ? "#eab308" 
-                            : "#ef4444"
-                    }}
-                  />
-                )}
-              </button>
-            );
-          })}
+          <h1 className="flex-1 text-center text-background font-bold text-base tracking-wide uppercase">
+            Agendar Horário
+          </h1>
+          <div className="w-9" /> {/* spacer */}
         </div>
 
-        {/* Right arrow - desktop only */}
-        {!isCompact && (
+        {/* Month/Year navigation inside dark header */}
+        <div className="flex items-center justify-center gap-3 mt-3">
           <button
-            onClick={() => handleDateScroll("right")}
-            disabled={dateScrollOffset >= allDates.length - visibleDatesCount}
-            className={cn(
-              "w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full border border-border bg-background transition-colors flex-shrink-0",
-              dateScrollOffset >= allDates.length - visibleDatesCount ? "opacity-30 pointer-events-none" : "hover:bg-muted"
-            )}
+            onClick={() => {
+              if (isCompact && dateContainerRef.current) {
+                const refDate = mobileVisibleMonth || selectedDate;
+                const prevMonth = new Date(refDate.getFullYear(), refDate.getMonth() - 1, 1);
+                const idx = allDates.findIndex(d => d.getMonth() === prevMonth.getMonth() && d.getFullYear() === prevMonth.getFullYear());
+                if (idx >= 0) {
+                  const btn = dateContainerRef.current.children[idx] as HTMLElement;
+                  dateContainerRef.current.scrollTo({ left: btn.offsetLeft, behavior: 'smooth' });
+                }
+              } else {
+                const newOffset = Math.max(0, dateScrollOffset - 30);
+                setDateScrollOffset(newOffset);
+              }
+            }}
+            className="p-1 rounded-full transition-colors hover:bg-background/10"
           >
-            <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
+            <ChevronLeft className="w-4 h-4 text-background" />
           </button>
-        )}
-      </div>
+          <span className="text-background/90 text-sm font-medium italic min-w-[120px] text-center">
+            {getMonthYearTitle()}
+          </span>
+          <button
+            onClick={() => {
+              if (isCompact && dateContainerRef.current) {
+                const refDate = mobileVisibleMonth || selectedDate;
+                const nextMonth = new Date(refDate.getFullYear(), refDate.getMonth() + 1, 1);
+                const idx = allDates.findIndex(d => d.getMonth() === nextMonth.getMonth() && d.getFullYear() === nextMonth.getFullYear());
+                if (idx >= 0) {
+                  const btn = dateContainerRef.current.children[idx] as HTMLElement;
+                  dateContainerRef.current.scrollTo({ left: btn.offsetLeft, behavior: 'smooth' });
+                }
+              } else {
+                const newOffset = Math.min(allDates.length - visibleDatesCount, dateScrollOffset + 30);
+                setDateScrollOffset(newOffset);
+              }
+            }}
+            className="p-1 rounded-full transition-colors hover:bg-background/10"
+          >
+            <ChevronRight className="w-4 h-4 text-background" />
+          </button>
+        </div>
 
-      {/* Barber selection - visible cards with photo and name */}
-      <div className="w-full mt-6 px-3">
-        <h3 className="text-sm font-medium text-muted-foreground mb-3">Escolha o profissional</h3>
-        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
-          {barbers.map((barber) => (
+        {/* Date strip inside dark header */}
+        <div className="flex items-center gap-1 mt-3">
+          {!isCompact && (
             <button
-              key={barber.id}
-              onClick={() => onBarberChange(barber.id)}
+              onClick={() => handleDateScroll("left")}
+              disabled={dateScrollOffset === 0}
               className={cn(
-                "flex flex-col items-center p-3 rounded-xl transition-all min-w-[80px] flex-shrink-0 border",
-                selectedBarber === barber.id
-                  ? "bg-[#3d9a9b] text-white border-[#3d9a9b]"
-                  : "bg-card border-border hover:border-foreground"
+                "w-7 h-7 flex items-center justify-center rounded-full transition-colors flex-shrink-0",
+                dateScrollOffset === 0 ? "opacity-30 pointer-events-none" : "hover:bg-background/10"
               )}
             >
-              {barber.image_url ? (
-                <img
-                  src={barber.image_url}
-                  alt={barber.name}
-                  className="w-12 h-12 rounded-full object-cover mb-2"
-                />
-              ) : (
-                <div className={cn(
-                  "w-12 h-12 rounded-full flex items-center justify-center mb-2",
-                  selectedBarber === barber.id ? "bg-white/20" : "bg-muted"
-                )}>
-                  <User className={cn(
-                    "w-6 h-6",
-                    selectedBarber === barber.id ? "text-white" : "text-muted-foreground"
-                  )} />
-                </div>
-              )}
-              <span className={cn(
-                "text-xs font-medium text-center line-clamp-2",
-                selectedBarber === barber.id ? "text-white" : "text-foreground"
-              )}>
-                {barber.name}
-              </span>
+              <ChevronLeft className="w-4 h-4 text-background" />
             </button>
-          ))}
+          )}
+
+          <div
+            ref={dateContainerRef}
+            className={cn(
+              "flex-1 flex gap-1 py-1",
+              isCompact && "overflow-x-auto snap-x snap-mandatory scroll-smooth scrollbar-hide -mx-1 px-1"
+            )}
+            style={isCompact ? { scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" } : undefined}
+          >
+            {visibleDates.map((date) => {
+              const isPast = isBefore(startOfDay(date), startOfDay(today));
+              const isSunday = date.getDay() === 0;
+              const isSelected = isSameDay(date, selectedDate);
+              const isDisabled = isPast || isSunday;
+
+              const dayAbbr = format(date, "EEE", { locale: ptBR })
+                .replace(".", "")
+                .substring(0, 3)
+                .toUpperCase();
+
+              return (
+                <button
+                  key={date.toISOString()}
+                  onClick={() => !isDisabled && onDateChange(date)}
+                  disabled={isDisabled}
+                  className={cn(
+                    "flex flex-col items-center py-2 rounded-lg transition-all",
+                    isCompact ? "min-w-[48px] flex-shrink-0 px-1 snap-start" : "flex-1 px-0.5",
+                    isSelected
+                      ? "bg-background text-foreground"
+                      : "text-background/70 hover:bg-background/10",
+                    isDisabled && "opacity-30 pointer-events-none"
+                  )}
+                >
+                  <span className="text-[10px] font-semibold tracking-wider">
+                    {dayAbbr}
+                  </span>
+                  <span className={cn(
+                    "text-lg font-bold mt-0.5",
+                    isSelected ? "text-foreground" : "text-background"
+                  )}>
+                    {format(date, "d")}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {!isCompact && (
+            <button
+              onClick={() => handleDateScroll("right")}
+              disabled={dateScrollOffset >= allDates.length - visibleDatesCount}
+              className={cn(
+                "w-7 h-7 flex items-center justify-center rounded-full transition-colors flex-shrink-0",
+                dateScrollOffset >= allDates.length - visibleDatesCount ? "opacity-30 pointer-events-none" : "hover:bg-background/10"
+              )}
+            >
+              <ChevronRight className="w-4 h-4 text-background" />
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Conditional: Show message if no barber selected, or show time slots */}
-      {!selectedBarber ? (
-        <div className="w-full mt-8 px-3">
-          <div className="flex items-center gap-3 p-4 rounded-xl bg-muted/50 border border-border">
-            <AlertCircle className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-            <p className="text-sm text-muted-foreground">
-              Escolha um profissional para ver os horários disponíveis
-            </p>
+      {/* Content area */}
+      <div className="flex-1 px-4 py-5 space-y-6">
+
+        {/* Available Slots section */}
+        {!selectedBarber ? (
+          <div>
+            <h3 className="text-sm font-bold text-foreground uppercase tracking-wide mb-3">Horários Disponíveis</h3>
+            <div className="flex items-center gap-3 p-4 rounded-xl bg-muted/50 border border-border">
+              <AlertCircle className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+              <p className="text-sm text-muted-foreground">
+                Escolha um profissional para ver os horários disponíveis
+              </p>
+            </div>
           </div>
-        </div>
-      ) : (
-        <>
-          {/* Period selector - pill style */}
-          <div className="w-full flex justify-center mt-6">
-            <div className="inline-flex rounded-full border border-border overflow-hidden bg-card">
-              {(["Manhã", "Tarde", "Noite"] as TimePeriod[]).map((period, idx) => (
+        ) : (
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">Horários Disponíveis</h3>
+              {selectedBarber && (
+                <button
+                  onClick={handleRefreshSlots}
+                  className="p-1.5 rounded-md hover:bg-muted transition-colors"
+                  title="Atualizar horários"
+                >
+                  <RefreshCw className={cn("w-4 h-4 text-muted-foreground", isFetching && "animate-spin")} />
+                </button>
+              )}
+            </div>
+
+            {/* Period selector pills */}
+            <div className="flex gap-2 mb-4">
+              {(["Manhã", "Tarde", "Noite"] as TimePeriod[]).map((period) => (
                 <button
                   key={period}
                   onClick={() => setSelectedPeriod(period)}
                   className={cn(
-                    "px-6 md:px-10 py-3 text-sm md:text-base font-medium transition-colors",
+                    "px-4 py-1.5 rounded-full text-xs font-semibold transition-colors border",
                     selectedPeriod === period
-                      ? "bg-background text-foreground"
-                      : "bg-transparent text-muted-foreground hover:text-foreground",
-                    idx !== 0 && "border-l border-border"
+                      ? "bg-foreground text-background border-foreground"
+                      : "bg-transparent text-muted-foreground border-border hover:border-foreground"
                   )}
                 >
                   {period}
                 </button>
               ))}
             </div>
-          </div>
 
-          {/* Time slots - horizontal scroll with circular arrows */}
-          <div className="w-full mt-6">
-            <div className="flex flex-wrap justify-center gap-2 py-2">
+            {/* Time slots grid - 3 columns like reference */}
+            <div className="grid grid-cols-3 gap-2">
               {(slotsLoading || isFetching) ? (
-                <div className="flex items-center gap-2 text-muted-foreground">
+                <div className="col-span-3 flex items-center justify-center gap-2 text-muted-foreground py-6">
                   <Clock className="w-4 h-4 animate-pulse" />
                   <span className="text-sm">Carregando horários...</span>
                 </div>
               ) : isError ? (
-                <div className="flex items-center gap-3 text-destructive py-3">
-                  <AlertCircle className="w-4 h-4" />
+                <div className="col-span-3 flex flex-col items-center gap-2 text-destructive py-4">
+                  <AlertCircle className="w-5 h-5" />
                   <span className="text-sm">Erro ao carregar horários.</span>
                   <button
                     onClick={handleRefreshSlots}
-                    className="flex items-center gap-1 px-3 py-1 text-xs bg-destructive/10 hover:bg-destructive/20 rounded-md transition-colors"
+                    className="flex items-center gap-1 px-3 py-1.5 text-xs bg-destructive/10 hover:bg-destructive/20 rounded-md transition-colors"
                   >
                     <RefreshCw className="w-3 h-3" />
                     Tentar novamente
                   </button>
                 </div>
               ) : availableTimes.length === 0 ? (
-                <div className="flex items-center gap-3 text-muted-foreground py-3">
-                  <AlertCircle className="w-4 h-4" />
-                  <span className="text-sm">Nenhum horário disponível para esta data</span>
+                <div className="col-span-3 flex flex-col items-center gap-2 text-muted-foreground py-4">
+                  <AlertCircle className="w-5 h-5" />
+                  <span className="text-sm">Nenhum horário disponível</span>
                   <button
                     onClick={handleRefreshSlots}
-                    className="flex items-center gap-1 px-3 py-1 text-xs bg-muted hover:bg-muted/80 rounded-md transition-colors"
+                    className="flex items-center gap-1 px-3 py-1.5 text-xs bg-muted hover:bg-muted/80 rounded-md transition-colors"
                   >
                     <RefreshCw className="w-3 h-3" />
                     Atualizar
                   </button>
                 </div>
               ) : filteredTimes.length === 0 ? (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground py-3">
+                <div className="col-span-3 flex items-center justify-center gap-2 text-sm text-muted-foreground py-4">
                   <span>Nenhum horário no período "{selectedPeriod}"</span>
-                  <span className="text-xs">({availableTimes.length} em outros períodos)</span>
                 </div>
               ) : (
                 filteredTimes.map((time) => {
                   const isSelected = selectedTime === time;
-
                   return (
                     <button
                       key={time}
                       onClick={() => onTimeChange(time)}
                       className={cn(
-                        "px-4 py-2.5 rounded-lg text-sm font-medium transition-all border",
+                        "py-3 rounded-full text-sm font-semibold transition-all border",
                         isSelected
-                          ? "bg-[#3d9a9b] text-white border-[#3d9a9b]"
-                          : "bg-card text-foreground border-border hover:border-foreground"
+                          ? "bg-foreground text-background border-foreground"
+                          : "bg-transparent text-foreground border-border hover:border-foreground"
                       )}
                     >
                       {time}
@@ -601,102 +560,128 @@ export const DateTimeSelectionStep = ({
               )}
             </div>
           </div>
-        </>
-      )}
+        )}
 
-      {/* Service summary card */}
-      <div className="flex-1 mt-6 px-3">
-        <div className="w-full">
-          <div className="bg-card rounded-xl border border-border">
-            {/* Service header */}
-            <div className="flex items-start justify-between p-4 md:p-5">
-              <h3 className="font-semibold text-foreground text-base md:text-lg">
-                {currentService?.service.name}
-              </h3>
-              <div className="text-right">
-                <p className="font-bold text-foreground text-base md:text-lg">
-                  R$ {currentService?.service.price.toFixed(2).replace(".", ",")}
+        {/* Choose Professional section */}
+        <div>
+          <h3 className="text-sm font-bold text-foreground uppercase tracking-wide mb-4">Escolha o Profissional</h3>
+          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+            {barbers.map((barber) => (
+              <button
+                key={barber.id}
+                onClick={() => onBarberChange(barber.id)}
+                className="flex flex-col items-center gap-2 min-w-[72px] flex-shrink-0 group"
+              >
+                <div className={cn(
+                  "w-16 h-16 rounded-full overflow-hidden border-2 transition-all",
+                  selectedBarber === barber.id
+                    ? "border-foreground ring-2 ring-foreground/20"
+                    : "border-border group-hover:border-foreground/50"
+                )}>
+                  {barber.image_url ? (
+                    <img
+                      src={barber.image_url}
+                      alt={barber.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-muted flex items-center justify-center">
+                      <User className="w-7 h-7 text-muted-foreground" />
+                    </div>
+                  )}
+                </div>
+                <span className={cn(
+                  "text-xs font-medium text-center line-clamp-2 max-w-[72px]",
+                  selectedBarber === barber.id ? "text-foreground font-bold" : "text-muted-foreground"
+                )}>
+                  {barber.name}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Service summary card */}
+        <div className="bg-card rounded-xl border border-border">
+          <div className="flex items-start justify-between p-4">
+            <h3 className="font-semibold text-foreground text-sm">
+              {currentService?.service.name}
+            </h3>
+            <div className="text-right">
+              <p className="font-bold text-foreground text-sm">
+                R$ {currentService?.service.price.toFixed(2).replace(".", ",")}
+              </p>
+              {selectedTime && (
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {selectedTime} - {getEndTime(selectedTime, currentService?.service.duration || 0)}
                 </p>
-                {selectedTime && (
-                  <p className="text-sm text-muted-foreground mt-0.5">
-                    {selectedTime} - {getEndTime(selectedTime, currentService?.service.duration || 0)}
-                  </p>
-                )}
-              </div>
+              )}
             </div>
-
-            {/* Selected barber display */}
-            {selectedBarberData && (
-              <div className="border-t border-border px-4 md:px-5 py-4">
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-muted-foreground">Profissional:</span>
-                  <div className="flex items-center gap-2">
-                    {selectedBarberData.image_url ? (
-                      <img
-                        src={selectedBarberData.image_url}
-                        alt={selectedBarberData.name}
-                        className="w-7 h-7 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center">
-                        <User className="w-4 h-4 text-muted-foreground" />
-                      </div>
-                    )}
-                    <span className="text-sm font-medium text-foreground">
-                      {selectedBarberData.name}
-                    </span>
-                  </div>
+          </div>
+          {selectedBarberData && (
+            <div className="border-t border-border px-4 py-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Profissional:</span>
+                <div className="flex items-center gap-2">
+                  {selectedBarberData.image_url ? (
+                    <img src={selectedBarberData.image_url} alt={selectedBarberData.name} className="w-6 h-6 rounded-full object-cover" />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
+                      <User className="w-3 h-3 text-muted-foreground" />
+                    </div>
+                  )}
+                  <span className="text-xs font-medium text-foreground">{selectedBarberData.name}</span>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
+        </div>
 
-          {/* Add another service link */}
-          <button
-            onClick={onAddService}
-            className="mt-5 text-[#3d9a9b] hover:text-[#2d8a8b] font-medium text-sm md:text-base flex items-center gap-1"
-          >
-            + Adicionar outro serviço
-          </button>
+        {/* Add another service */}
+        <button
+          onClick={onAddService}
+          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+        >
+          + Adicionar outro serviço
+        </button>
 
-          {/* Observations field */}
-          <div className="mt-5">
-            <label className="text-sm font-medium text-foreground mb-2 block">
-              Observações (opcional)
-            </label>
-            <textarea
-              value={notes}
-              onChange={(e) => onNotesChange?.(e.target.value)}
-              placeholder="Ex: Quero o corte mais curto nas laterais, tenho alergia a certos produtos..."
-              maxLength={500}
-              className="w-full min-h-[80px] px-4 py-3 rounded-xl border border-border bg-card text-foreground text-sm placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-[#3d9a9b] focus:border-transparent transition-all"
-              rows={3}
-            />
-            <span className="text-xs text-muted-foreground mt-1 block text-right">
-              {notes.length}/500
-            </span>
-          </div>
+        {/* Observations */}
+        <div>
+          <label className="text-sm font-medium text-foreground mb-2 block">
+            Observações (opcional)
+          </label>
+          <textarea
+            value={notes}
+            onChange={(e) => onNotesChange?.(e.target.value)}
+            placeholder="Ex: Quero o corte mais curto nas laterais..."
+            maxLength={500}
+            className="w-full min-h-[80px] px-4 py-3 rounded-xl border border-border bg-card text-foreground text-sm placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
+            rows={3}
+          />
+          <span className="text-xs text-muted-foreground mt-1 block text-right">
+            {notes.length}/500
+          </span>
         </div>
       </div>
 
-      {/* Footer with total and continue button */}
+      {/* Footer */}
       <div className="border-t border-border bg-background mt-auto flex-shrink-0">
-        <div className="w-full px-3 py-4 md:py-5">
-          <div className="flex items-center justify-end gap-4 mb-4">
-            <span className="text-muted-foreground">Total :</span>
-            <span className="text-2xl md:text-3xl font-bold text-foreground">
+        <div className="px-4 py-4">
+          <div className="flex items-center justify-end gap-3 mb-3">
+            <span className="text-muted-foreground text-sm">Total:</span>
+            <span className="text-xl font-bold text-foreground">
               R$ {totalPrice.toFixed(2).replace(".", ",")}
             </span>
-            <span className="text-muted-foreground text-sm">
+            <span className="text-muted-foreground text-xs">
               {formatDuration(totalDuration)}
             </span>
           </div>
           <Button
             onClick={onContinue}
             disabled={!selectedTime || !selectedBarber || loading}
-            className="w-full h-12 md:h-14 bg-[#3d9a9b] hover:bg-[#2d8a8b] text-white font-semibold text-base md:text-lg rounded-xl"
+            className="w-full h-12 font-bold text-base rounded-xl uppercase tracking-wide"
           >
-            {loading ? "Agendando..." : "Continuar"}
+            {loading ? "Agendando..." : "Agendar"}
           </Button>
         </div>
       </div>
