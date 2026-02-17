@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Menu, User, Settings, LogOut, Calendar, Store, History, Package, CreditCard, Heart, CalendarDays, ArrowLeft } from "lucide-react";
+import { Menu, User, Settings, LogOut, Calendar, Store, History, Package, CreditCard, Heart, CalendarDays, ArrowLeft, House, Search, BookOpen, MapPinned } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserAccess } from "@/hooks/useUserAccess";
 import b360Logo from "@/assets/b360-logo.png";
@@ -66,8 +66,9 @@ export const Header = ({ showBackButton = false, hideMobileMenu = false }: Heade
             {/* Desktop Navigation - Hidden for logged in owners/barbers */}
             {(!user || (role !== 'owner' && role !== 'barber')) && (
               <nav className="hidden md:flex items-center gap-6">
-                <Link to="/" className="text-sm text-foreground hover:text-primary transition-colors">
-                  Início
+                <Link to="/" className="flex items-center gap-1.5 text-sm text-foreground hover:text-primary transition-colors">
+                  <House size={24} strokeWidth={1} />
+                  <span>Início</span>
                 </Link>
                 <button
                   onClick={() => {
@@ -77,12 +78,18 @@ export const Header = ({ showBackButton = false, hideMobileMenu = false }: Heade
                       if (input) input.focus();
                     }, 100);
                   }}
-                  className="text-sm text-foreground hover:text-primary transition-colors"
+                  className="flex items-center gap-1.5 text-sm text-foreground hover:text-primary transition-colors"
                 >
-                  Buscar
+                  <Search size={24} strokeWidth={1} />
+                  <span>Buscar</span>
                 </button>
-                <Link to="/my-bookings" className="text-sm text-foreground hover:text-primary transition-colors">
-                  Agendamentos
+                <Link to="/" className="flex items-center gap-1.5 text-sm text-foreground hover:text-primary transition-colors">
+                  <MapPinned size={24} strokeWidth={1} />
+                  <span>Próximas</span>
+                </Link>
+                <Link to="/my-bookings" className="flex items-center gap-1.5 text-sm text-foreground hover:text-primary transition-colors">
+                  <BookOpen size={24} strokeWidth={1} />
+                  <span>Agendamentos</span>
                 </Link>
               </nav>
             )}
