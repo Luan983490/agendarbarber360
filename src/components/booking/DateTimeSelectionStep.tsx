@@ -459,8 +459,57 @@ export const DateTimeSelectionStep = ({
 
       {/* White content area - all scrollable including button */}
       <div className="bg-background">
-        {/* Available Slots */}
+        {/* Choose Professional - first */}
         <div className="px-4 pt-5 pb-4">
+          <h3 className="text-base font-bold text-foreground uppercase tracking-wide mb-4">Escolha o Profissional</h3>
+          <div className="flex gap-5 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+            {barbers.map((barber) => (
+              <button
+                key={barber.id}
+                onClick={() => onBarberChange(barber.id)}
+                className="flex flex-col items-center gap-2 min-w-[76px] flex-shrink-0 group"
+              >
+                <div className={cn(
+                  "w-[68px] h-[68px] rounded-full overflow-hidden border-[3px] transition-all",
+                  selectedBarber === barber.id
+                    ? "border-foreground"
+                    : "border-border group-hover:border-foreground/40"
+                )}>
+                  {barber.image_url ? (
+                    <img src={barber.image_url} alt={barber.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-muted flex items-center justify-center">
+                      <User className="w-7 h-7 text-muted-foreground" />
+                    </div>
+                  )}
+                </div>
+                <span className={cn(
+                  "text-[11px] text-center line-clamp-2 max-w-[76px] leading-tight",
+                  selectedBarber === barber.id
+                    ? "font-bold bg-foreground text-background px-2.5 py-0.5 rounded-full"
+                    : "font-medium text-muted-foreground"
+                )}>
+                  {barber.name}
+                </span>
+              </button>
+            ))}
+          </div>
+          {/* Pagination dots like reference */}
+          <div className="flex justify-center gap-1.5 mt-3">
+            {barbers.map((barber, idx) => (
+              <div
+                key={barber.id}
+                className={cn(
+                  "w-1.5 h-1.5 rounded-full transition-all",
+                  selectedBarber === barber.id ? "bg-foreground" : "bg-border"
+                )}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Available Slots - after professional */}
+        <div className="px-4 pb-4">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-base font-bold text-foreground uppercase tracking-wide">Horários Disponíveis</h3>
             {selectedBarber && (
@@ -558,55 +607,6 @@ export const DateTimeSelectionStep = ({
               </div>
             </>
           )}
-        </div>
-
-        {/* Choose Professional */}
-        <div className="px-4 pb-4">
-          <h3 className="text-base font-bold text-foreground uppercase tracking-wide mb-4">Escolha o Profissional</h3>
-          <div className="flex gap-5 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
-            {barbers.map((barber) => (
-              <button
-                key={barber.id}
-                onClick={() => onBarberChange(barber.id)}
-                className="flex flex-col items-center gap-2 min-w-[76px] flex-shrink-0 group"
-              >
-                <div className={cn(
-                  "w-[68px] h-[68px] rounded-full overflow-hidden border-[3px] transition-all",
-                  selectedBarber === barber.id
-                    ? "border-foreground"
-                    : "border-border group-hover:border-foreground/40"
-                )}>
-                  {barber.image_url ? (
-                    <img src={barber.image_url} alt={barber.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full bg-muted flex items-center justify-center">
-                      <User className="w-7 h-7 text-muted-foreground" />
-                    </div>
-                  )}
-                </div>
-                <span className={cn(
-                  "text-[11px] text-center line-clamp-2 max-w-[76px] leading-tight",
-                  selectedBarber === barber.id
-                    ? "font-bold bg-foreground text-background px-2.5 py-0.5 rounded-full"
-                    : "font-medium text-muted-foreground"
-                )}>
-                  {barber.name}
-                </span>
-              </button>
-            ))}
-          </div>
-          {/* Pagination dots like reference */}
-          <div className="flex justify-center gap-1.5 mt-3">
-            {barbers.map((barber, idx) => (
-              <div
-                key={barber.id}
-                className={cn(
-                  "w-1.5 h-1.5 rounded-full transition-all",
-                  selectedBarber === barber.id ? "bg-foreground" : "bg-border"
-                )}
-              />
-            ))}
-          </div>
         </div>
 
         {/* Service summary card */}
