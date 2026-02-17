@@ -8,7 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/Header';
-import { Calendar, Clock, MapPin, User, Scissors, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, Scissors, CheckCircle, XCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import { ClientBottomNav } from '@/components/ClientBottomNav';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -93,7 +93,11 @@ const MyBookings = () => {
     navigate(`/barbearia/${booking.barbershop.slug}?service=${booking.service_id}&reschedule=${booking.id}`);
   };
 
-  const getStatusInfo = (status: string) => {
+  const getStatusInfo = (status: string, notes?: string) => {
+    // Check if it's a rescheduled booking (cancelled with "Reagendado" note)
+    if (status === 'cancelled' && notes && notes.includes('Reagendado')) {
+      return { label: 'Reagendado', variant: 'secondary' as const, icon: RefreshCw };
+    }
     switch (status) {
       case 'confirmed':
         return { label: 'Confirmado', variant: 'default' as const, icon: CheckCircle };
@@ -196,7 +200,7 @@ const MyBookings = () => {
           <TabsContent value="upcoming" className="space-y-3 sm:space-y-4">
             {upcomingBookings.length > 0 ? (
               upcomingBookings.map((booking) => {
-                const statusInfo = getStatusInfo(booking.status);
+                const statusInfo = getStatusInfo(booking.status, booking.notes);
                 const StatusIcon = statusInfo.icon;
 
                 return (
@@ -312,7 +316,7 @@ const MyBookings = () => {
           <TabsContent value="past" className="space-y-3 sm:space-y-4">
             {pastBookings.length > 0 ? (
               pastBookings.map((booking) => {
-                const statusInfo = getStatusInfo(booking.status);
+                const statusInfo = getStatusInfo(booking.status, booking.notes);
                 const StatusIcon = statusInfo.icon;
 
                 return (
