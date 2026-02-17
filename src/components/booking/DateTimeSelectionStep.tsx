@@ -462,16 +462,14 @@ export const DateTimeSelectionStep = ({
         {/* Choose Professional - dark background, square photos, name overlay */}
         <div className="w-full bg-foreground py-5 px-4">
           <h3 className="text-sm font-bold text-background uppercase tracking-widest text-center mb-5">Escolha o Profissional</h3>
-          <div className="flex justify-center gap-4 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+          <div className="flex justify-center gap-4 overflow-x-auto scrollbar-hide" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
             {barbers.map((barber) => {
               const isSelected = selectedBarber === barber.id;
               return (
                 <button
                   key={barber.id}
                   onClick={() => onBarberChange(barber.id)}
-                  className={cn(
-                    "flex flex-col items-center min-w-[90px] flex-shrink-0 group transition-all"
-                  )}
+                  className="flex flex-col items-center min-w-[90px] flex-shrink-0 group transition-all"
                 >
                   <div className={cn(
                     "relative w-[90px] h-[110px] rounded-lg overflow-hidden border-2 transition-all",
@@ -486,7 +484,6 @@ export const DateTimeSelectionStep = ({
                         <User className="w-8 h-8 text-muted-foreground" />
                       </div>
                     )}
-                    {/* Name overlay on top of image */}
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent pt-4 pb-1.5 px-1">
                       <span className="text-[10px] text-white font-bold uppercase tracking-wide text-center block truncate">
                         {barber.name}
@@ -496,18 +493,6 @@ export const DateTimeSelectionStep = ({
                 </button>
               );
             })}
-          </div>
-          {/* Pagination dots */}
-          <div className="flex justify-center gap-1.5 mt-3">
-            {barbers.map((barber) => (
-              <div
-                key={barber.id}
-                className={cn(
-                  "w-1.5 h-1.5 rounded-full transition-all",
-                  selectedBarber === barber.id ? "bg-primary" : "bg-background/30"
-                )}
-              />
-            ))}
           </div>
         </div>
 
