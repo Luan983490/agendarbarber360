@@ -299,9 +299,9 @@ const ClientAuth = () => {
     <div className="min-h-screen flex flex-col lg:flex-row">
       {/* Mobile - Hero compact */}
       <div
-        className="lg:hidden relative flex items-center justify-center p-6 min-h-[200px]"
-        style={{ backgroundImage: `url(${authHero})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+        className="lg:hidden relative flex items-center justify-center p-6 min-h-[200px] overflow-hidden"
       >
+        <img src={authHero} alt="" className="absolute inset-0 w-full h-full object-cover" fetchPriority="high" loading="eager" decoding="async" />
         <div className="absolute inset-0 bg-black/50" />
         <div className="relative z-10 text-center space-y-3">
           <img src={b360Logo} alt="B360" className="h-10 mx-auto drop-shadow-lg" />
@@ -327,9 +327,9 @@ const ClientAuth = () => {
 
       {/* Desktop - Left Branding */}
       <div
-        className="hidden lg:flex lg:w-5/12 relative items-center justify-center p-12"
-        style={{ backgroundImage: `url(${authHero})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+        className="hidden lg:flex lg:w-5/12 relative items-center justify-center p-12 overflow-hidden"
       >
+        <img src={authHero} alt="" className="absolute inset-0 w-full h-full object-cover" fetchPriority="high" loading="eager" decoding="async" />
         <div className="absolute inset-0 bg-black/40" />
         <div className="relative z-10 text-center space-y-6">
           <img src={b360Logo} alt="B360" className="h-14 mx-auto drop-shadow-lg" />
