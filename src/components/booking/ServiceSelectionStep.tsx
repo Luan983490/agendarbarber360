@@ -352,13 +352,13 @@ export const ServiceSelectionStep = ({
               {/* Right: Book + Favorite & Share Buttons */}
               <div className="flex gap-2 flex-shrink-0 items-center">
                 <Button
-                  size="sm"
-                  className="rounded-full gap-1.5 text-xs font-semibold"
+                  className="hidden md:inline-flex rounded-lg gap-2 text-sm font-semibold px-6 h-11"
                   onClick={() => {
                     const servicesSection = document.getElementById("services-list");
                     servicesSection?.scrollIntoView({ behavior: "smooth" });
                   }}
                 >
+                  <Calendar className="w-4 h-4" />
                   Agendar
                 </Button>
                 <Button
@@ -398,6 +398,19 @@ export const ServiceSelectionStep = ({
                 alt={barbershop.name}
                 className="w-full h-full object-cover"
               />
+              {/* Mobile-only Agendar button overlaying bottom of image */}
+              <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent md:hidden">
+                <Button
+                  className="w-full rounded-lg gap-2 text-sm font-semibold h-11"
+                  onClick={() => {
+                    const servicesSection = document.getElementById("services-list");
+                    servicesSection?.scrollIntoView({ behavior: "smooth" });
+                  }}
+                >
+                  <Calendar className="w-4 h-4" />
+                  Agendar
+                </Button>
+              </div>
             </div>
           )}
 
