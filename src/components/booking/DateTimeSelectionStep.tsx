@@ -474,7 +474,7 @@ export const DateTimeSelectionStep = ({
                   <div className={cn(
                     "w-24 h-24 rounded-lg overflow-hidden border-2 transition-all",
                     isSelected
-                      ? "border-foreground ring-2 ring-foreground/30"
+                      ? "border-primary ring-2 ring-primary/30"
                       : "border-transparent group-hover:border-muted-foreground/30"
                   )}>
                     {barber.image_url ? (
