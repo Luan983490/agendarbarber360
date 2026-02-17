@@ -1,21 +1,22 @@
 import { useEffect, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, CalendarCheck } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CheckCircle2, CalendarCheck, Mail } from "lucide-react";
 import confetti from "canvas-confetti";
 
 interface BookingSuccessDialogProps {
   open: boolean;
   onContinue: () => void;
+  isNewSignup?: boolean;
 }
 
-export const BookingSuccessDialog = ({ open, onContinue }: BookingSuccessDialogProps) => {
+export const BookingSuccessDialog = ({ open, onContinue, isNewSignup = false }: BookingSuccessDialogProps) => {
   const hasFired = useRef(false);
 
   useEffect(() => {
     if (open && !hasFired.current) {
       hasFired.current = true;
-      // Fire confetti bursts
       const fire = (opts: confetti.Options) =>
         confetti({
           ...opts,
@@ -62,13 +63,22 @@ export const BookingSuccessDialog = ({ open, onContinue }: BookingSuccessDialogP
             </p>
           </div>
 
+          {isNewSignup && (
+            <Alert className="border-primary/30 bg-primary/5 text-left">
+              <Mail className="h-4 w-4 text-primary" />
+              <AlertDescription className="text-sm text-foreground">
+                <strong>Importante:</strong> Para acessar o sistema e gerenciar seus agendamentos, confirme seu e-mail clicando no link que enviamos para sua caixa de entrada.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <Button
             onClick={onContinue}
             className="w-full mt-2 gap-2"
             size="lg"
           >
             <CalendarCheck className="w-5 h-5" />
-            Ver meus agendamentos
+            {isNewSignup ? "Entendi" : "Ver meus agendamentos"}
           </Button>
         </div>
       </DialogContent>
