@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { House, Search, CalendarRange, CircleUserRound } from 'lucide-react';
+import { House, Search, CalendarRange, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -8,7 +8,7 @@ const navItems = [
   { id: 'home', label: 'Início', icon: House, path: '/', requiresAuth: false },
   { id: 'search', label: 'Buscar', icon: Search, path: '/', requiresAuth: false },
   { id: 'bookings', label: 'Agendamentos', icon: CalendarRange, path: '/my-bookings', requiresAuth: true },
-  { id: 'profile', label: 'Perfil', icon: CircleUserRound, path: '/perfil', requiresAuth: true },
+  { id: 'profile', label: 'Perfil', icon: User, path: '/perfil', requiresAuth: true },
 ];
 
 export function ClientBottomNav() {
@@ -67,7 +67,7 @@ export function ClientBottomNav() {
                 active ? 'text-primary' : 'text-[#888888] hover:text-[#bbbbbb]'
               )}
             >
-              <Icon className="h-5 w-5" strokeWidth={1.5} />
+              <Icon size={48} strokeWidth={1} />
               <span className="text-[10px] leading-tight truncate w-full text-center">
                 {item.label}
               </span>
