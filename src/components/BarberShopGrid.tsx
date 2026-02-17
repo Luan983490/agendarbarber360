@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { BarberShopCard } from "@/components/BarberShopCard";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Filter, Navigation, Loader2, Search } from "lucide-react";
+import { MapPin, SlidersHorizontal, Compass, Loader2, SearchCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateDistanceKm, formatDistance } from "@/hooks/useGeolocation";
 import { SearchType } from "@/components/AdvancedSearch";
@@ -284,7 +284,7 @@ export const BarberShopGrid = ({
     return (
       <div className="text-center py-16">
         <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-6">
-          <Search className="h-10 w-10 text-primary" />
+          <SearchCheck className="h-10 w-10 text-primary" />
         </div>
         <h3 className="text-xl font-semibold text-foreground mb-2">
           Encontre sua barbearia ideal
@@ -314,7 +314,7 @@ export const BarberShopGrid = ({
           {getLocationLabel() && !loading && (
             <div className="flex items-center text-muted-foreground">
               {searchType === 'proximity' ? (
-                <Navigation className="h-4 w-4 mr-1 text-primary" />
+                <Compass className="h-4 w-4 mr-1 text-primary" />
               ) : (
                 <MapPin className="h-4 w-4 mr-1" />
               )}
@@ -326,13 +326,13 @@ export const BarberShopGrid = ({
         <div className="flex items-center space-x-2">
           {searchType === 'proximity' && userLatitude && (
             <Badge variant="outline" className="text-primary border-primary">
-              <Navigation className="h-3 w-3 mr-1" />
+              <Compass className="h-3 w-3 mr-1" />
               Até {MAX_PROXIMITY_DISTANCE_KM}km · Por distância
             </Badge>
           )}
           {searchType !== 'proximity' && filteredShops.length > 0 && (
             <Badge variant="outline" className="text-muted-foreground border-border">
-              <Filter className="h-3 w-3 mr-1" />
+              <SlidersHorizontal className="h-3 w-3 mr-1" />
               Ordenado por nome
             </Badge>
           )}
@@ -355,7 +355,7 @@ export const BarberShopGrid = ({
       ) : (
         <div className="text-center py-12">
           <div className="text-muted-foreground mb-4">
-            <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <SearchCheck className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p className="text-lg font-medium">{getEmptyMessage()}</p>
             <p className="text-sm mt-2">
               {searchType === 'proximity' 

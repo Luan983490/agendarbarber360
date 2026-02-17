@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, Search, CalendarDays, UserRound } from 'lucide-react';
+import { House, SearchCheck, CalendarRange, CircleUserRound } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 
 const navItems = [
-  { id: 'home', label: 'Início', icon: Home, path: '/', requiresAuth: false },
-  { id: 'search', label: 'Buscar', icon: Search, path: '/', requiresAuth: false },
-  { id: 'bookings', label: 'Agendamentos', icon: CalendarDays, path: '/my-bookings', requiresAuth: true },
-  { id: 'profile', label: 'Perfil', icon: UserRound, path: '/perfil', requiresAuth: true },
+  { id: 'home', label: 'Início', icon: House, path: '/', requiresAuth: false },
+  { id: 'search', label: 'Buscar', icon: SearchCheck, path: '/', requiresAuth: false },
+  { id: 'bookings', label: 'Agendamentos', icon: CalendarRange, path: '/my-bookings', requiresAuth: true },
+  { id: 'profile', label: 'Perfil', icon: CircleUserRound, path: '/perfil', requiresAuth: true },
 ];
 
 export function ClientBottomNav() {
