@@ -460,7 +460,7 @@ export const DateTimeSelectionStep = ({
       {/* White content area - all scrollable including button */}
       <div className="bg-background">
         {/* Choose Professional - white card like reference */}
-        <div className="w-full bg-card py-5 px-4">
+        <div className="w-full bg-white py-5 px-4">
           <h3 className="text-sm font-bold text-foreground uppercase tracking-widest text-center mb-5">Escolha o Profissional</h3>
           <div className="flex justify-center gap-6 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
             {barbers.map((barber) => {
