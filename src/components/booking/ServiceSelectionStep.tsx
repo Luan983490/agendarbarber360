@@ -87,8 +87,23 @@ export const ServiceSelectionStep = ({
   const [prefetchedWorkingHours, setPrefetchedWorkingHours] = useState<any[] | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(true);
   const [loadingBarbers, setLoadingBarbers] = useState(false);
+  const [showMobileCta, setShowMobileCta] = useState(true);
 
   const isFav = isFavorited(barbershop.id);
+
+  // Hide mobile CTA on scroll down, show on scroll up
+  useEffect(() => {
+    let lastScrollY = 0;
+    const container = document.getElementById("service-selection-scroll");
+    if (!container) return;
+    const onScroll = () => {
+      const currentY = container.scrollTop;
+      setShowMobileCta(currentY <= lastScrollY || currentY < 50);
+      lastScrollY = currentY;
+    };
+    container.addEventListener("scroll", onScroll, { passive: true });
+    return () => container.removeEventListener("scroll", onScroll);
+  }, []);
 
   const handleToggleFavorite = () => {
     toggleFavorite(barbershop.id);
@@ -271,7 +286,7 @@ export const ServiceSelectionStep = ({
   }, [activeTab, barbershop.id, barbers.length]);
 
   return (
-    <div className="flex flex-col min-h-full bg-background overflow-y-auto">
+    <div id="service-selection-scroll" className="flex flex-col min-h-full bg-background overflow-y-auto">
       {/* Back button */}
       <div className="w-full px-4 md:px-8 lg:px-12 pt-4">
         <button
@@ -398,19 +413,6 @@ export const ServiceSelectionStep = ({
                 alt={barbershop.name}
                 className="w-full h-full object-cover"
               />
-              {/* Mobile-only Agendar button overlaying bottom of image */}
-              <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent md:hidden">
-                <Button
-                  className="w-full rounded-lg gap-2 text-sm font-semibold h-11"
-                  onClick={() => {
-                    const servicesSection = document.getElementById("services-list");
-                    servicesSection?.scrollIntoView({ behavior: "smooth" });
-                  }}
-                >
-                  <Calendar className="w-4 h-4" />
-                  Agendar
-                </Button>
-              </div>
             </div>
           )}
 
@@ -668,6 +670,25 @@ export const ServiceSelectionStep = ({
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Fixed bottom mobile CTA - hides on scroll down */}
+      <div
+        className={cn(
+          "fixed bottom-0 left-0 right-0 p-3 bg-background/95 backdrop-blur-sm border-t border-border md:hidden transition-transform duration-300 z-50",
+          showMobileCta ? "translate-y-0" : "translate-y-full"
+        )}
+      >
+        <Button
+          className="w-full rounded-lg gap-2 text-sm font-semibold h-12"
+          onClick={() => {
+            const servicesSection = document.getElementById("services-list");
+            servicesSection?.scrollIntoView({ behavior: "smooth" });
+          }}
+        >
+          <Calendar className="w-4 h-4" />
+          Agendar
+        </Button>
       </div>
     </div>
   );
