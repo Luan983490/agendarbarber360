@@ -7,6 +7,7 @@ import { defaultQueryClientConfig } from "@/lib/query-config";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { useSupabasePing } from "@/hooks/use-supabase-ping";
+import { usePendingBooking } from "@/hooks/usePendingBooking";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
@@ -68,15 +69,20 @@ const Onboarding = lazy(() => import("./pages/Onboarding"));
 
 const queryClient = new QueryClient(defaultQueryClientConfig);
 
+const PendingBookingHandler = () => {
+  usePendingBooking();
+  return null;
+};
+
 const AppContent = () => {
   useSupabasePing();
-  
   return (
     <>
       <Toaster />
       <Sonner />
       <PWAInstallPrompt />
       <BrowserRouter>
+        <PendingBookingHandler />
         <Suspense fallback={<PageLoader />}>
           <Routes>
             {/* Public Routes */}

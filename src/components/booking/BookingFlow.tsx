@@ -8,6 +8,7 @@ import { DateTimeSelectionStep } from "./DateTimeSelectionStep";
 import { BookingAuthDialog } from "./BookingAuthDialog";
 import { BookingSuccessDialog } from "./BookingSuccessDialog";
 import { enviarConfirmacaoWhatsApp } from "@/utils/whatsapp";
+import { savePendingBooking } from "@/hooks/usePendingBooking";
 
 interface BookingFlowProps {
   children: React.ReactNode;
@@ -261,8 +262,22 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFrom
     if (pendingBookingRef.current) {
       pendingBookingRef.current = false;
       if (isSignup) {
-        // Signup requires email confirmation — no valid session yet
-        // Show success dialog informing user to confirm email and book again
+        // Save booking data to localStorage so it auto-submits after email confirmation
+        if (selectedServices.length > 0 && selectedDate && selectedTime) {
+          const mainService = selectedServices[0].service;
+          const bookingDate = selectedDate.toISOString().split("T")[0];
+          const totalPrice = selectedServices.reduce((sum, item) => sum + item.service.price, 0);
+          savePendingBooking({
+            barbershopId: barbershop.id,
+            serviceId: mainService.id,
+            barberId: selectedBarber || null,
+            bookingDate,
+            bookingTime: selectedTime,
+            totalPrice,
+            notes: notes.trim() || null,
+            createdAt: Date.now(),
+          });
+        }
         resetForm();
         setIsOpen(false);
         setShowSuccessDialog(true);
@@ -273,7 +288,7 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFrom
         }, 300);
       }
     }
-  }, [submitBooking]);
+  }, [submitBooking, selectedServices, selectedDate, selectedTime, selectedBarber, barbershop.id, notes]);
 
   const resetForm = () => {
     setCurrentStep("services");
