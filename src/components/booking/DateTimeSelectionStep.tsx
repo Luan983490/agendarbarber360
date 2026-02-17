@@ -461,7 +461,7 @@ export const DateTimeSelectionStep = ({
       <div className="bg-background">
         {/* Choose Professional - light background, round photos, name below */}
         <div className="w-full py-5 px-4">
-          <h3 className="text-sm font-bold text-foreground tracking-wide text-center mb-5">Escolha o Profissional</h3>
+          <h3 className="text-sm font-bold text-foreground tracking-wide text-left mb-5">Escolha o Profissional</h3>
           <div className="flex justify-start gap-6 overflow-x-auto scrollbar-hide" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
             {barbers.map((barber) => {
               const isSelected = selectedBarber === barber.id;
