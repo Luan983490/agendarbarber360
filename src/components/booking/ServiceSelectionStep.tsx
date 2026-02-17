@@ -68,6 +68,8 @@ interface ServiceSelectionStepProps {
   services: Service[];
   onSelectService: (service: Service) => void;
   onBack: () => void;
+  prefetchedBarbershopDetails?: BarbershopDetails | null;
+  prefetchedWorkingHoursData?: any[] | null;
 }
 
 export const ServiceSelectionStep = ({
@@ -75,6 +77,8 @@ export const ServiceSelectionStep = ({
   services,
   onSelectService,
   onBack,
+  prefetchedBarbershopDetails,
+  prefetchedWorkingHoursData,
 }: ServiceSelectionStepProps) => {
   const { user } = useAuth();
   const { isFavorited, toggleFavorite } = useFavorites(user?.id);
@@ -83,9 +87,9 @@ export const ServiceSelectionStep = ({
   const [isExpanded, setIsExpanded] = useState(true);
   const [activeTab, setActiveTab] = useState("services");
   const [barbers, setBarbers] = useState<Barber[]>([]);
-  const [barbershopDetails, setBarbershopDetails] = useState<BarbershopDetails | null>(null);
-  const [prefetchedWorkingHours, setPrefetchedWorkingHours] = useState<any[] | null>(null);
-  const [loadingDetails, setLoadingDetails] = useState(true);
+  const [barbershopDetails, setBarbershopDetails] = useState<BarbershopDetails | null>(prefetchedBarbershopDetails || null);
+  const [prefetchedWorkingHours, setPrefetchedWorkingHours] = useState<any[] | null>(prefetchedWorkingHoursData ?? null);
+  const [loadingDetails, setLoadingDetails] = useState(!prefetchedBarbershopDetails);
   const [loadingBarbers, setLoadingBarbers] = useState(false);
   const [showMobileCta, setShowMobileCta] = useState(true);
   const [ctaDismissed, setCtaDismissed] = useState(false);
@@ -205,12 +209,13 @@ export const ServiceSelectionStep = ({
     return Scissors;
   };
 
-  // Fetch barbershop details AND working hours fully in parallel on mount
+  // Fetch barbershop details AND working hours fully in parallel on mount (skip if prefetched)
   useEffect(() => {
+    if (prefetchedBarbershopDetails) return; // Already have data from parent
+
     const fetchAllDetails = async () => {
       setLoadingDetails(true);
       try {
-        // Fetch barbershop details AND working hours (via join) in a single parallel call
         const [detailsResult, hoursResult] = await Promise.all([
           supabase
             .from("barbershops")
@@ -227,7 +232,6 @@ export const ServiceSelectionStep = ({
 
         setBarbershopDetails(detailsResult.data);
 
-        // Aggregate: earliest start, latest end per day
         const hours = hoursResult.data || [];
         const dayMap = new Map<number, any>();
         for (const h of hours) {
@@ -252,7 +256,7 @@ export const ServiceSelectionStep = ({
     };
     
     fetchAllDetails();
-  }, [barbershop.id]);
+  }, [barbershop.id, prefetchedBarbershopDetails]);
 
   // Fetch barbers when tab changes
   useEffect(() => {
