@@ -258,13 +258,20 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFrom
 
   const handleAuthSuccess = useCallback((isSignup?: boolean) => {
     setIsNewSignup(!!isSignup);
-    // Auth succeeded - auto-submit the booking
     if (pendingBookingRef.current) {
       pendingBookingRef.current = false;
-      // Small delay to let auth state propagate
-      setTimeout(() => {
-        submitBooking();
-      }, 300);
+      if (isSignup) {
+        // New signup — no valid session (email confirmation required)
+        // Skip booking submission, just show success dialog with email warning
+        resetForm();
+        setIsOpen(false);
+        setShowSuccessDialog(true);
+      } else {
+        // Login — session is valid, submit the booking
+        setTimeout(() => {
+          submitBooking();
+        }, 300);
+      }
     }
   }, [submitBooking]);
 
