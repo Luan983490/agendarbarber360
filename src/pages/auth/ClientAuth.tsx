@@ -483,7 +483,7 @@ const ClientAuth = () => {
                   </Label>
                 </div>
 
-                <Button type="submit" className="w-full rounded-full bg-primary hover:bg-primary/85 text-primary-foreground" disabled={loading || passwordStrength.strength === 'weak' || !signupData.acceptedTerms}>
+                <Button type="submit" className="w-full rounded-full bg-primary hover:bg-primary/85 text-white" disabled={loading || passwordStrength.strength === 'weak' || !signupData.acceptedTerms}>
                   {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Cadastrando...</> : 'Criar Conta'}
                 </Button>
 
