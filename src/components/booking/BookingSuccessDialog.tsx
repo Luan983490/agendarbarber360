@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle2, CalendarCheck, Mail } from "lucide-react";
+import { CheckCircle2, CalendarCheck, Mail, Clock } from "lucide-react";
 import confetti from "canvas-confetti";
 
 interface BookingSuccessDialogProps {
@@ -48,26 +48,41 @@ export const BookingSuccessDialog = ({ open, onContinue, isNewSignup = false }: 
         <div className="flex flex-col items-center gap-4 py-4">
           <div className="relative">
             <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center animate-scale-in">
-              <CheckCircle2 className="w-12 h-12 text-primary" />
+              {isNewSignup ? (
+                <Clock className="w-12 h-12 text-primary" />
+              ) : (
+                <CheckCircle2 className="w-12 h-12 text-primary" />
+              )}
             </div>
-            <div className="absolute -top-1 -right-1 text-2xl animate-bounce">🎉</div>
+            <div className="absolute -top-1 -right-1 text-2xl animate-bounce">
+              {isNewSignup ? "📧" : "🎉"}
+            </div>
           </div>
 
-          <div className="space-y-2 animate-fade-in">
-            <h2 className="text-2xl font-bold text-foreground">Parabéns! 🎊</h2>
-            <p className="text-lg text-muted-foreground">
-              Seu agendamento foi realizado com sucesso!
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Você receberá uma confirmação em breve.
-            </p>
-          </div>
+          {isNewSignup ? (
+            <div className="space-y-2 animate-fade-in">
+              <h2 className="text-2xl font-bold text-foreground">Quase lá! ⏳</h2>
+              <p className="text-lg text-muted-foreground">
+                Seu agendamento está quase finalizado!
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2 animate-fade-in">
+              <h2 className="text-2xl font-bold text-foreground">Parabéns! 🎊</h2>
+              <p className="text-lg text-muted-foreground">
+                Seu agendamento foi realizado com sucesso!
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Você receberá uma confirmação em breve.
+              </p>
+            </div>
+          )}
 
           {isNewSignup && (
             <Alert className="border-primary/30 bg-primary/5 text-left">
               <Mail className="h-4 w-4 text-primary" />
               <AlertDescription className="text-sm text-foreground">
-                <strong>Importante:</strong> Para acessar o sistema e gerenciar seus agendamentos, confirme seu e-mail clicando no link que enviamos para sua caixa de entrada.
+                <strong>Para finalizar seu agendamento:</strong> confirme seu e-mail clicando no link que enviamos para sua caixa de entrada. Assim que confirmar, seu agendamento será criado automaticamente!
               </AlertDescription>
             </Alert>
           )}
@@ -78,7 +93,7 @@ export const BookingSuccessDialog = ({ open, onContinue, isNewSignup = false }: 
             size="lg"
           >
             <CalendarCheck className="w-5 h-5" />
-            {isNewSignup ? "Entendi" : "Ver meus agendamentos"}
+            {isNewSignup ? "Entendi, vou confirmar meu email" : "Ver meus agendamentos"}
           </Button>
         </div>
       </DialogContent>
