@@ -149,9 +149,9 @@ export const BarberShopCard = ({ barberShop }: BarberShopCardProps) => {
             }}
           >
             <Button 
-              className="flex-1 h-8 text-sm"
-              variant="gradient"
+              className="flex-1 h-8 text-sm text-white"
               size="sm"
+              style={{ background: "linear-gradient(135deg, hsl(45, 60%, 28%) 0%, hsl(35, 40%, 14%) 100%)" }}
             >
               <Calendar className="mr-1.5 h-3.5 w-3.5" />
               Agendar
