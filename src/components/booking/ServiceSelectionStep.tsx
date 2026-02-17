@@ -88,22 +88,24 @@ export const ServiceSelectionStep = ({
   const [loadingDetails, setLoadingDetails] = useState(true);
   const [loadingBarbers, setLoadingBarbers] = useState(false);
   const [showMobileCta, setShowMobileCta] = useState(true);
+  const [ctaDismissed, setCtaDismissed] = useState(false);
 
   const isFav = isFavorited(barbershop.id);
 
-  // Hide mobile CTA on scroll down, show on scroll up
+  // Hide mobile CTA permanently on first scroll
   useEffect(() => {
-    let lastScrollY = 0;
+    if (ctaDismissed) return;
     const container = document.getElementById("service-selection-scroll");
     if (!container) return;
     const onScroll = () => {
-      const currentY = container.scrollTop;
-      setShowMobileCta(currentY <= lastScrollY || currentY < 50);
-      lastScrollY = currentY;
+      if (container.scrollTop > 50) {
+        setShowMobileCta(false);
+        setCtaDismissed(true);
+      }
     };
     container.addEventListener("scroll", onScroll, { passive: true });
     return () => container.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [ctaDismissed]);
 
   const handleToggleFavorite = () => {
     toggleFavorite(barbershop.id);
@@ -682,6 +684,8 @@ export const ServiceSelectionStep = ({
         <Button
           className="w-full rounded-lg gap-2 text-sm font-semibold h-12"
           onClick={() => {
+            setShowMobileCta(false);
+            setCtaDismissed(true);
             const servicesSection = document.getElementById("services-list");
             servicesSection?.scrollIntoView({ behavior: "smooth" });
           }}
