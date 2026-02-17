@@ -15,6 +15,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 const BLOCK_DURATION_MS = 60000; // 60 segundos
 const ATTEMPTS_FOR_BLOCK = 3;
 const ATTEMPTS_FOR_CAPTCHA = 5;
+const RESET_WINDOW_MS = 2 * 60 * 60 * 1000; // 2 horas - reseta tentativas após este período
 
 interface UseLoginRateLimitResult {
   /** Número de tentativas falhas */
@@ -40,6 +41,7 @@ interface UseLoginRateLimitResult {
 export function useLoginRateLimit(namespace: string = 'default'): UseLoginRateLimitResult {
   const FAILURES_KEY = `auth_failures_${namespace}`;
   const BLOCKED_KEY = `auth_blocked_until_${namespace}`;
+  const FIRST_FAIL_KEY = `auth_first_fail_${namespace}`;
 
   const getFailures = (): number => {
     const val = localStorage.getItem(FAILURES_KEY);
@@ -62,6 +64,7 @@ export function useLoginRateLimit(namespace: string = 'default'): UseLoginRateLi
   const clearAll = (): void => {
     localStorage.setItem(FAILURES_KEY, '0');
     localStorage.removeItem(BLOCKED_KEY);
+    localStorage.removeItem(FIRST_FAIL_KEY);
   };
   // Estado local para forçar re-renders
   const [failedAttempts, setFailedAttempts] = useState(() => getFailures());
@@ -79,13 +82,23 @@ export function useLoginRateLimit(namespace: string = 'default'): UseLoginRateLi
   useEffect(() => {
     const failures = getFailures();
     const blocked = getBlockedUntil();
+    const firstFail = Number(localStorage.getItem(FIRST_FAIL_KEY) || '0');
     
-    console.log('[RateLimit] Carregando estado:', { failures, blocked });
+    console.log('[RateLimit] Carregando estado:', { failures, blocked, firstFail });
+    
+    // Se a primeira falha foi há mais de 2 horas, resetar tudo
+    if (failures > 0 && firstFail > 0 && (Date.now() - firstFail) > RESET_WINDOW_MS) {
+      console.log('[RateLimit] Janela de 2h expirou, resetando tentativas...');
+      clearAll();
+      setFailedAttempts(0);
+      setBlockedUntilState(0);
+      return;
+    }
     
     setFailedAttempts(failures);
     setBlockedUntilState(blocked);
     
-    // Se está bloqueado mas o tempo passou, resetar
+    // Se está bloqueado mas o tempo passou, resetar bloqueio (mas manter contagem)
     if (failures >= ATTEMPTS_FOR_BLOCK && blocked > 0 && Date.now() >= blocked) {
       console.log('[RateLimit] Bloqueio expirou, resetando...');
       clearAll();
@@ -133,6 +146,23 @@ export function useLoginRateLimit(namespace: string = 'default'): UseLoginRateLi
     
     console.log('[RateLimit] recordFailedAttempt:', { anterior: currentFailures, novo: newCount });
     
+    // Registrar timestamp da primeira falha da sequência
+    if (currentFailures === 0) {
+      localStorage.setItem(FIRST_FAIL_KEY, Date.now().toString());
+    } else {
+      // Verificar se a janela de 2h expirou desde a primeira falha
+      const firstFail = Number(localStorage.getItem(FIRST_FAIL_KEY) || '0');
+      if (firstFail > 0 && (Date.now() - firstFail) > RESET_WINDOW_MS) {
+        console.log('[RateLimit] Janela de 2h expirou, reiniciando contagem...');
+        clearAll();
+        setFailuresLS(1);
+        localStorage.setItem(FIRST_FAIL_KEY, Date.now().toString());
+        setFailedAttempts(1);
+        setBlockedUntilState(0);
+        return;
+      }
+    }
+
     // Salvar no localStorage
     setFailuresLS(newCount);
     
