@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 
 interface Booking {
   id: string;
+  service_id: string;
   booking_date: string;
   booking_time: string;
   status: string;
@@ -24,6 +25,7 @@ interface Booking {
     name: string;
     address: string;
     phone: string;
+    slug: string;
   };
   service: {
     name: string;
@@ -44,6 +46,7 @@ interface Booking {
 
 const MyBookings = () => {
   const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,7 +64,7 @@ const MyBookings = () => {
         .from('bookings')
         .select(`
           *,
-          barbershop:barbershops(name, address, phone),
+          barbershop:barbershops(name, address, phone, slug),
           service:services(name, duration),
           barber:barbers(name, specialty),
           booking_products(
@@ -84,6 +87,10 @@ const MyBookings = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleReschedule = (booking: Booking) => {
+    navigate(`/barbearia/${booking.barbershop.slug}?service=${booking.service_id}`);
   };
 
   const getStatusInfo = (status: string) => {
@@ -269,7 +276,7 @@ const MyBookings = () => {
                       )}
 
                       <div className="flex flex-wrap gap-1.5 sm:gap-2 pt-1 sm:pt-2">
-                        <Button variant="outline" size="sm" className="text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3">
+                        <Button variant="outline" size="sm" className="text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3" onClick={() => handleReschedule(booking)}>
                           Reagendar
                         </Button>
                         <Button variant="outline" size="sm" className="text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3">
@@ -341,7 +348,7 @@ const MyBookings = () => {
                       </div>
                       
                       {booking.status === 'completed' && (
-                        <Button variant="outline" size="sm" className="mt-2 sm:mt-3 text-xs sm:text-sm h-8 sm:h-9">
+                        <Button variant="outline" size="sm" className="mt-2 sm:mt-3 text-xs sm:text-sm h-8 sm:h-9" onClick={() => handleReschedule(booking)}>
                           Agendar Novamente
                         </Button>
                       )}
