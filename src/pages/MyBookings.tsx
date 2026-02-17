@@ -500,13 +500,13 @@ const MyBookings = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-3 py-2">
-            {contactBooking?.barbershop.whatsapp && (
+            {(contactBooking?.barbershop.whatsapp || contactBooking?.barbershop.phone) && (
               <Button
                 className="w-full gap-2 justify-start"
                 variant="outline"
                 onClick={() => {
-                  const phone = contactBooking.barbershop.whatsapp.replace(/\D/g, '');
-                  const formatted = phone.startsWith('55') ? phone : `55${phone}`;
+                  const rawNumber = (contactBooking.barbershop.whatsapp || contactBooking.barbershop.phone).replace(/\D/g, '');
+                  const formatted = rawNumber.startsWith('55') ? rawNumber : `55${rawNumber}`;
                   window.open(`https://wa.me/${formatted}`, '_blank');
                   setContactBooking(null);
                 }}
