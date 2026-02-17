@@ -469,12 +469,15 @@ export const DateTimeSelectionStep = ({
                 <button
                   key={barber.id}
                   onClick={() => onBarberChange(barber.id)}
-                  className="flex flex-col items-center gap-2 min-w-[76px] flex-shrink-0 group"
+                  className={cn(
+                    "flex flex-col items-center gap-2 min-w-[76px] flex-shrink-0 group rounded-lg p-2 transition-all",
+                    isSelected ? "bg-foreground" : "bg-transparent"
+                  )}
                 >
                   {/* Dark circle background when selected */}
                   <div className={cn(
                     "w-[72px] h-[72px] rounded-full flex items-center justify-center transition-all",
-                    isSelected ? "bg-foreground" : "bg-transparent"
+                    "bg-transparent"
                   )}>
                     <div className={cn(
                       "w-[62px] h-[62px] rounded-full overflow-hidden border-2 transition-all",
@@ -494,7 +497,7 @@ export const DateTimeSelectionStep = ({
                   <span className={cn(
                     "text-[10px] text-center line-clamp-1 max-w-[80px] leading-tight uppercase tracking-wide",
                     isSelected
-                      ? "font-bold bg-foreground text-background px-3 py-0.5 rounded-sm"
+                      ? "font-bold text-background px-3 py-0.5"
                       : "font-medium text-muted-foreground"
                   )}>
                     {barber.name}
