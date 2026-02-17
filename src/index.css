@@ -24,6 +24,9 @@ All colors MUST be HSL.
     --primary: 45 93% 58%;
     --primary-foreground: 0 0% 8%;
 
+    /* Gold gradient for decorative icons */
+    --icon-gold: 45 60% 28%;
+
     /* Secondary elements */
     --secondary: 0 0% 20%;
     --secondary-foreground: 0 0% 90%;
