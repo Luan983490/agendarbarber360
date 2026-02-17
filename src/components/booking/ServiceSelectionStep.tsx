@@ -614,8 +614,8 @@ export const ServiceSelectionStep = ({
             </TabsContent>
           </Tabs>
 
-          {/* Bottom padding for scroll */}
-          <div className="pb-8" />
+          {/* Bottom padding for scroll - accounts for mobile bottom nav + CTA */}
+          <div className="pb-24 md:pb-8" />
         </div>
 
         {/* Right column: Sticky sidebar (Desktop only) */}
@@ -668,13 +668,11 @@ export const ServiceSelectionStep = ({
         </div>
       </div>
 
-      {/* Fixed bottom mobile CTA - hides on scroll down */}
-      <div
-        className={cn(
-          "fixed bottom-16 left-0 right-0 p-3 bg-background/95 backdrop-blur-sm border-t border-border md:hidden transition-transform duration-300 z-40",
-          showMobileCta ? "translate-y-0" : "translate-y-full"
-        )}
-      >
+      {/* Fixed bottom mobile CTA - hides on scroll down, fully hidden when dismissed */}
+      {showMobileCta && (
+        <div
+          className="fixed bottom-0 left-0 right-0 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] bg-background/95 backdrop-blur-sm border-t border-border md:hidden z-[60]"
+        >
         <Button
           className="w-full rounded-lg gap-2 text-sm font-semibold h-12"
           onClick={() => {
@@ -687,7 +685,8 @@ export const ServiceSelectionStep = ({
           <Calendar className="w-4 h-4" />
           Agendar
         </Button>
-      </div>
+        </div>
+      )}
     </div>
   );
 };
