@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Search, 
   MapPin, 
-  Compass, 
+  MapPinned, 
   Landmark, 
   Loader2,
   X,
@@ -202,7 +202,7 @@ export const AdvancedSearch = ({
           className="flex items-center gap-2 text-white"
           style={searchType === 'proximity' ? { background: 'linear-gradient(135deg, hsl(45, 60%, 28%) 0%, hsl(35, 40%, 14%) 100%)', border: 'none' } : {}}
         >
-          <Compass className="h-4 w-4" strokeWidth={1} />
+          <MapPinned className="h-4 w-4" strokeWidth={1} />
           Próximas
         </Button>
       </div>
@@ -340,7 +340,7 @@ export const AdvancedSearch = ({
                 </>
               ) : (
                 <>
-                  <Compass className="h-4 w-4 mr-2" />
+                  <MapPinned className="h-4 w-4 mr-2" />
                   Usar minha localização
                 </>
               )}
