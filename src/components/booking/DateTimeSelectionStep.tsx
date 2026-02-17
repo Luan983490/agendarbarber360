@@ -379,7 +379,7 @@ export const DateTimeSelectionStep = ({
         </div>
 
         {/* Date strip - 7 days visible like image */}
-        <div className="flex items-center px-3 pb-4 bg-secondary rounded-lg mx-3 mb-3">
+        <div className="flex items-center px-3 pb-4">
           {!isCompact && (
             <button
               onClick={() => handleDateScroll("left")}
@@ -389,7 +389,7 @@ export const DateTimeSelectionStep = ({
                 dateScrollOffset === 0 ? "opacity-30 pointer-events-none" : "hover:bg-background/10"
               )}
             >
-              <ChevronLeft className="w-4 h-4 text-secondary-foreground" />
+              <ChevronLeft className="w-4 h-4 text-background" />
             </button>
           )}
 
@@ -425,15 +425,15 @@ export const DateTimeSelectionStep = ({
                 >
                   <span className={cn(
                     "text-[10px] font-bold tracking-wider mb-1.5",
-                    isSelected ? "text-primary" : "text-secondary-foreground/50"
+                    isSelected ? "text-background" : "text-background/40"
                   )}>
                     {dayAbbr}
                   </span>
                   <div className={cn(
                     "w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold transition-all",
                     isSelected
-                      ? "bg-primary text-primary-foreground"
-                      : "text-secondary-foreground hover:bg-secondary-foreground/10"
+                      ? "bg-background text-foreground"
+                      : "text-background hover:bg-background/10"
                   )}>
                     {format(date, "d")}
                   </div>
@@ -451,7 +451,7 @@ export const DateTimeSelectionStep = ({
                 dateScrollOffset >= allDates.length - visibleDatesCount ? "opacity-30 pointer-events-none" : "hover:bg-background/10"
               )}
             >
-              <ChevronRight className="w-4 h-4 text-secondary-foreground" />
+              <ChevronRight className="w-4 h-4 text-background" />
             </button>
           )}
         </div>
