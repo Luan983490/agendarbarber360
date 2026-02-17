@@ -320,6 +320,7 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFrom
         <BookingSuccessDialog
           open={showSuccessDialog}
           isNewSignup={isNewSignup}
+          isReschedule={!!rescheduleBookingId}
           onContinue={() => {
             setShowSuccessDialog(false);
             setIsNewSignup(false);
@@ -384,6 +385,7 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFrom
       <BookingSuccessDialog
         open={showSuccessDialog}
         isNewSignup={isNewSignup}
+        isReschedule={!!rescheduleBookingId}
         onContinue={() => {
           setShowSuccessDialog(false);
           setIsNewSignup(false);

@@ -9,9 +9,10 @@ interface BookingSuccessDialogProps {
   open: boolean;
   onContinue: () => void;
   isNewSignup?: boolean;
+  isReschedule?: boolean;
 }
 
-export const BookingSuccessDialog = ({ open, onContinue, isNewSignup = false }: BookingSuccessDialogProps) => {
+export const BookingSuccessDialog = ({ open, onContinue, isNewSignup = false, isReschedule = false }: BookingSuccessDialogProps) => {
   const hasFired = useRef(false);
 
   useEffect(() => {
@@ -64,6 +65,16 @@ export const BookingSuccessDialog = ({ open, onContinue, isNewSignup = false }: 
               <h2 className="text-2xl font-bold text-foreground">Quase lá! ⏳</h2>
               <p className="text-lg text-muted-foreground">
                 Seu agendamento está quase finalizado!
+              </p>
+            </div>
+          ) : isReschedule ? (
+            <div className="space-y-2 animate-fade-in">
+              <h2 className="text-2xl font-bold text-foreground">Reagendado! 🔄</h2>
+              <p className="text-lg text-muted-foreground">
+                Seu agendamento foi reagendado com sucesso!
+              </p>
+              <p className="text-sm text-muted-foreground">
+                O horário anterior foi cancelado automaticamente.
               </p>
             </div>
           ) : (
