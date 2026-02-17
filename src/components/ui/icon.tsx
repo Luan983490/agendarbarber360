@@ -10,7 +10,8 @@ export interface IconProps extends LucideProps {
  * Default strokeWidth is 1.5 for a refined look
  */
 export const Icon = forwardRef<SVGSVGElement, IconProps>(
-  ({ icon: IconComponent, strokeWidth = 1.5, size = 24, ...props }, ref) => {
+  ({ icon: IconComponent, strokeWidth = 1.5, size = 32, color = 'currentColor', ...props }, ref) => {
+    return <IconComponent ref={ref} strokeWidth={strokeWidth} size={size} color={color} {...props} />;
     return <IconComponent ref={ref} strokeWidth={strokeWidth} size={size} {...props} />;
   }
 );
