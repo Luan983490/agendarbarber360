@@ -365,6 +365,17 @@ export const ServiceSelectionStep = ({
             </div>
           </div>
 
+          {/* Barbershop Image Banner */}
+          {barbershop.image && (
+            <div className="relative w-full aspect-[16/9] md:aspect-[21/9] rounded-lg overflow-hidden bg-muted mb-4">
+              <img
+                src={barbershop.image}
+                alt={barbershop.name}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             {/* Scrollable tabs container for mobile */}
