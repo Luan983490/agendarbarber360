@@ -163,27 +163,27 @@ const MyBookings = () => {
     <div className="min-h-screen bg-background">
       <Header hideMobileMenu={isMobile} />
       
-      <main className={cn("container mx-auto px-4 py-8 mt-16", isMobile && "pb-24")}>
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Meus Agendamentos</h1>
-          <p className="text-muted-foreground">
-            Acompanhe seus agendamentos e histórico de serviços
+      <main className={cn("container mx-auto px-3 sm:px-4 py-4 sm:py-8 mt-14 sm:mt-16", isMobile && "pb-24")}>
+        <div className="mb-4 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">Meus Agendamentos</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
+            Acompanhe seus agendamentos e histórico
           </p>
         </div>
 
-        <Tabs defaultValue="upcoming" className="space-y-6">
+        <Tabs defaultValue="upcoming" className="space-y-4 sm:space-y-6">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="upcoming" className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
+            <TabsTrigger value="upcoming" className="flex items-center gap-1.5 text-xs sm:text-sm">
+              <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               Próximos ({upcomingBookings.length})
             </TabsTrigger>
-            <TabsTrigger value="past" className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
+            <TabsTrigger value="past" className="flex items-center gap-1.5 text-xs sm:text-sm">
+              <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               Histórico ({pastBookings.length})
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="upcoming" className="space-y-4">
+          <TabsContent value="upcoming" className="space-y-3 sm:space-y-4">
             {upcomingBookings.length > 0 ? (
               upcomingBookings.map((booking) => {
                 const statusInfo = getStatusInfo(booking.status);
@@ -191,62 +191,55 @@ const MyBookings = () => {
 
                 return (
                   <Card key={booking.id}>
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <CardTitle className="flex items-center gap-2">
-                            {booking.barbershop.name}
-                            <Badge variant={statusInfo.variant}>
-                              <StatusIcon className="h-3 w-3 mr-1" />
+                    <CardHeader className="p-3 sm:p-6">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <CardTitle className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-base sm:text-lg">
+                            <span className="truncate">{booking.barbershop.name}</span>
+                            <Badge variant={statusInfo.variant} className="text-[10px] sm:text-xs shrink-0">
+                              <StatusIcon className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
                               {statusInfo.label}
                             </Badge>
                           </CardTitle>
-                          <CardDescription className="flex items-center gap-1 mt-1">
-                            <MapPin className="h-4 w-4" />
-                            {booking.barbershop.address}
+                          <CardDescription className="flex items-center gap-1 mt-1 text-xs sm:text-sm">
+                            <MapPin className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
+                            <span className="truncate">{booking.barbershop.address}</span>
                           </CardDescription>
                         </div>
-                        <div className="text-right">
-                          <p className="font-bold text-primary">
-                            R$ {booking.total_price.toFixed(2)}
-                          </p>
-                        </div>
+                        <p className="font-bold text-primary text-sm sm:text-base whitespace-nowrap">
+                          R$ {booking.total_price.toFixed(2)}
+                        </p>
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-primary" />
+                    <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0 space-y-3 sm:space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
+                        <div className="space-y-1.5 sm:space-y-2">
+                          <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+                            <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary shrink-0" />
                             <span className="font-medium">Data:</span>
-                            <span>{formatDate(booking.booking_date)}</span>
+                            <span className="truncate">{formatDate(booking.booking_date)}</span>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-primary" />
+                          <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+                            <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary shrink-0" />
                             <span className="font-medium">Horário:</span>
                             <span>{formatTime(booking.booking_time)}</span>
                           </div>
                         </div>
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <Scissors className="h-4 w-4 text-primary" />
+                        <div className="space-y-1.5 sm:space-y-2">
+                          <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+                            <Scissors className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary shrink-0" />
                             <span className="font-medium">Serviço:</span>
-                            <span>{booking.service.name}</span>
+                            <span className="truncate">{booking.service.name}</span>
                           </div>
                           {booking.barber && (
-                            <div className="flex items-center gap-2">
-                              <User className="h-4 w-4 text-primary" />
-                              <span className="font-medium">Profissional:</span>
-                              <span>{booking.barber.name}</span>
-                              {booking.barber.specialty && (
-                                <span className="text-sm text-muted-foreground">
-                                  - {booking.barber.specialty}
-                                </span>
-                              )}
+                            <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+                              <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary shrink-0" />
+                              <span className="font-medium">Prof.:</span>
+                              <span className="truncate">{booking.barber.name}</span>
                             </div>
                           )}
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-primary" />
+                          <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+                            <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary shrink-0" />
                             <span className="font-medium">Duração:</span>
                             <span>{booking.service.duration} min</span>
                           </div>
@@ -254,13 +247,13 @@ const MyBookings = () => {
                       </div>
                       
                       {booking.booking_products && booking.booking_products.length > 0 && (
-                        <div className="p-3 bg-muted rounded-lg">
-                          <p className="font-medium text-sm mb-2">Produtos adquiridos:</p>
-                          <div className="space-y-1">
+                        <div className="p-2 sm:p-3 bg-muted rounded-lg">
+                          <p className="font-medium text-xs sm:text-sm mb-1.5 sm:mb-2">Produtos:</p>
+                          <div className="space-y-0.5 sm:space-y-1">
                             {booking.booking_products.map((bp, index) => (
-                              <div key={index} className="flex justify-between text-sm">
-                                <span>{bp.quantity}x {bp.product.name}</span>
-                                <span>R$ {(bp.quantity * bp.unit_price).toFixed(2)}</span>
+                              <div key={index} className="flex justify-between text-xs sm:text-sm">
+                                <span className="truncate mr-2">{bp.quantity}x {bp.product.name}</span>
+                                <span className="whitespace-nowrap">R$ {(bp.quantity * bp.unit_price).toFixed(2)}</span>
                               </div>
                             ))}
                           </div>
@@ -268,22 +261,22 @@ const MyBookings = () => {
                       )}
 
                       {booking.notes && (
-                        <div className="p-3 bg-muted rounded-lg">
-                          <p className="text-sm">
-                            <span className="font-medium">Observações:</span> {booking.notes}
+                        <div className="p-2 sm:p-3 bg-muted rounded-lg">
+                          <p className="text-xs sm:text-sm">
+                            <span className="font-medium">Obs:</span> {booking.notes}
                           </p>
                         </div>
                       )}
 
-                      <div className="flex gap-2 pt-2">
-                        <Button variant="outline" size="sm">
+                      <div className="flex flex-wrap gap-1.5 sm:gap-2 pt-1 sm:pt-2">
+                        <Button variant="outline" size="sm" className="text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3">
                           Reagendar
                         </Button>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" className="text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3">
                           Cancelar
                         </Button>
-                        <Button variant="outline" size="sm">
-                          Contato: {booking.barbershop.phone}
+                        <Button variant="outline" size="sm" className="text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3">
+                          Contato
                         </Button>
                       </div>
                     </CardContent>
@@ -292,13 +285,13 @@ const MyBookings = () => {
               })
             ) : (
               <Card>
-                <CardContent className="text-center py-12">
-                  <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="font-semibold mb-2">Nenhum agendamento próximo</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Que tal agendar um serviço em uma de nossas barbearias?
+                <CardContent className="text-center py-8 sm:py-12">
+                  <Calendar className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 sm:mb-4 text-muted-foreground" />
+                  <h3 className="font-semibold mb-1.5 sm:mb-2 text-sm sm:text-base">Nenhum agendamento próximo</h3>
+                  <p className="text-muted-foreground mb-3 sm:mb-4 text-xs sm:text-sm">
+                    Que tal agendar um serviço?
                   </p>
-                  <Button onClick={() => window.location.href = '/'}>
+                  <Button size="sm" onClick={() => window.location.href = '/'}>
                     Encontrar Barbearias
                   </Button>
                 </CardContent>
@@ -306,7 +299,7 @@ const MyBookings = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="past" className="space-y-4">
+          <TabsContent value="past" className="space-y-3 sm:space-y-4">
             {pastBookings.length > 0 ? (
               pastBookings.map((booking) => {
                 const statusInfo = getStatusInfo(booking.status);
@@ -314,43 +307,41 @@ const MyBookings = () => {
 
                 return (
                   <Card key={booking.id} className="opacity-80">
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <CardTitle className="flex items-center gap-2">
-                            {booking.barbershop.name}
-                            <Badge variant={statusInfo.variant}>
-                              <StatusIcon className="h-3 w-3 mr-1" />
+                    <CardHeader className="p-3 sm:p-6">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <CardTitle className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-base sm:text-lg">
+                            <span className="truncate">{booking.barbershop.name}</span>
+                            <Badge variant={statusInfo.variant} className="text-[10px] sm:text-xs shrink-0">
+                              <StatusIcon className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
                               {statusInfo.label}
                             </Badge>
                           </CardTitle>
-                          <CardDescription>
+                          <CardDescription className="text-xs sm:text-sm mt-0.5 truncate">
                             {formatDate(booking.booking_date)} às {formatTime(booking.booking_time)}
                           </CardDescription>
                         </div>
-                        <div className="text-right">
-                          <p className="font-bold text-primary">
-                            R$ {booking.total_price.toFixed(2)}
-                          </p>
-                        </div>
+                        <p className="font-bold text-primary text-sm sm:text-base whitespace-nowrap">
+                          R$ {booking.total_price.toFixed(2)}
+                        </p>
                       </div>
                     </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Scissors className="h-4 w-4" />
-                        <span>{booking.service.name}</span>
+                    <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
+                        <Scissors className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                        <span className="truncate">{booking.service.name}</span>
                         <span>•</span>
                         <span>{booking.service.duration} min</span>
                         {booking.barber && (
                           <>
                             <span>•</span>
-                            <span>{booking.barber.name}</span>
+                            <span className="truncate">{booking.barber.name}</span>
                           </>
                         )}
                       </div>
                       
                       {booking.status === 'completed' && (
-                        <Button variant="outline" size="sm" className="mt-3">
+                        <Button variant="outline" size="sm" className="mt-2 sm:mt-3 text-xs sm:text-sm h-8 sm:h-9">
                           Agendar Novamente
                         </Button>
                       )}
@@ -360,10 +351,10 @@ const MyBookings = () => {
               })
             ) : (
               <Card>
-                <CardContent className="text-center py-12">
-                  <Clock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="font-semibold mb-2">Nenhum histórico ainda</h3>
-                  <p className="text-muted-foreground">
+                <CardContent className="text-center py-8 sm:py-12">
+                  <Clock className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 sm:mb-4 text-muted-foreground" />
+                  <h3 className="font-semibold mb-1.5 sm:mb-2 text-sm sm:text-base">Nenhum histórico ainda</h3>
+                  <p className="text-muted-foreground text-xs sm:text-sm">
                     Seus agendamentos passados aparecerão aqui
                   </p>
                 </CardContent>
