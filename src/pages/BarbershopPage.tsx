@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { BookingFlow } from "@/components/booking/BookingFlow";
 import b360Logo from "@/assets/b360-logo.png";
@@ -15,6 +15,8 @@ interface BarbershopData {
 const BarbershopPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const rescheduleBookingId = searchParams.get("reschedule") || undefined;
   const [barbershop, setBarbershop] = useState<BarbershopData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -89,6 +91,7 @@ const BarbershopPage = () => {
       }}
       autoOpen
       onBackFromAutoOpen={() => navigate("/")}
+      rescheduleBookingId={rescheduleBookingId}
     >
       <div />
     </BookingFlow>

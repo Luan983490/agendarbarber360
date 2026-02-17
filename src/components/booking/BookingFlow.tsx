@@ -21,6 +21,7 @@ interface BookingFlowProps {
   };
   autoOpen?: boolean;
   onBackFromAutoOpen?: () => void;
+  rescheduleBookingId?: string;
 }
 
 interface Service {
@@ -46,7 +47,7 @@ interface SelectedServiceItem {
 
 type BookingStep = "services" | "datetime";
 
-export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFromAutoOpen }: BookingFlowProps) => {
+export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFromAutoOpen, rescheduleBookingId }: BookingFlowProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -224,6 +225,18 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFrom
         .single();
 
       if (error) throw error;
+
+      // If rescheduling, cancel the old booking
+      if (rescheduleBookingId) {
+        const { error: cancelError } = await supabase
+          .from("bookings")
+          .update({ status: "cancelled", notes: `Reagendado para ${bookingDate} às ${selectedTime}` })
+          .eq("id", rescheduleBookingId);
+
+        if (cancelError) {
+          console.error("Erro ao cancelar agendamento anterior:", cancelError);
+        }
+      }
 
       // Send WhatsApp confirmation (fire-and-forget)
       if (newBooking?.id) {
