@@ -319,10 +319,11 @@ export const DateTimeSelectionStep = ({
   };
 
   return (
-    <div className="flex flex-col h-full w-full bg-background overflow-y-auto">
-      {/* Dark header bar */}
-      <div className="w-full bg-foreground py-4 px-3">
-        <div className="flex items-center">
+    <div className="flex flex-col h-[100dvh] w-full bg-background">
+      {/* Dark header bar - flex-shrink-0 */}
+      <div className="w-full bg-foreground flex-shrink-0">
+        {/* Title bar */}
+        <div className="flex items-center px-3 pt-4 pb-2">
           <button
             onClick={onBack}
             className="p-2 rounded-lg transition-colors"
@@ -332,62 +333,62 @@ export const DateTimeSelectionStep = ({
           <h1 className="flex-1 text-center text-background font-bold text-base tracking-wide uppercase">
             Agendar Horário
           </h1>
-          <div className="w-9" /> {/* spacer */}
+          <div className="w-9" />
         </div>
 
-        {/* Month/Year navigation inside dark header */}
-        <div className="flex items-center justify-center gap-3 mt-3">
-          <button
-            onClick={() => {
-              if (isCompact && dateContainerRef.current) {
-                const refDate = mobileVisibleMonth || selectedDate;
-                const prevMonth = new Date(refDate.getFullYear(), refDate.getMonth() - 1, 1);
-                const idx = allDates.findIndex(d => d.getMonth() === prevMonth.getMonth() && d.getFullYear() === prevMonth.getFullYear());
-                if (idx >= 0) {
-                  const btn = dateContainerRef.current.children[idx] as HTMLElement;
-                  dateContainerRef.current.scrollTo({ left: btn.offsetLeft, behavior: 'smooth' });
+        {/* Month/Year navigation - bordered pill */}
+        <div className="flex items-center justify-center px-3 pb-3">
+          <div className="flex items-center gap-2 border border-background/20 rounded-full px-4 py-1.5">
+            <button
+              onClick={() => {
+                if (isCompact && dateContainerRef.current) {
+                  const refDate = mobileVisibleMonth || selectedDate;
+                  const prevMonth = new Date(refDate.getFullYear(), refDate.getMonth() - 1, 1);
+                  const idx = allDates.findIndex(d => d.getMonth() === prevMonth.getMonth() && d.getFullYear() === prevMonth.getFullYear());
+                  if (idx >= 0) {
+                    const btn = dateContainerRef.current.children[idx] as HTMLElement;
+                    dateContainerRef.current.scrollTo({ left: btn.offsetLeft, behavior: 'smooth' });
+                  }
+                } else {
+                  setDateScrollOffset(Math.max(0, dateScrollOffset - 30));
                 }
-              } else {
-                const newOffset = Math.max(0, dateScrollOffset - 30);
-                setDateScrollOffset(newOffset);
-              }
-            }}
-            className="p-1 rounded-full transition-colors hover:bg-background/10"
-          >
-            <ChevronLeft className="w-4 h-4 text-background" />
-          </button>
-          <span className="text-background/90 text-sm font-medium italic min-w-[120px] text-center">
-            {getMonthYearTitle()}
-          </span>
-          <button
-            onClick={() => {
-              if (isCompact && dateContainerRef.current) {
-                const refDate = mobileVisibleMonth || selectedDate;
-                const nextMonth = new Date(refDate.getFullYear(), refDate.getMonth() + 1, 1);
-                const idx = allDates.findIndex(d => d.getMonth() === nextMonth.getMonth() && d.getFullYear() === nextMonth.getFullYear());
-                if (idx >= 0) {
-                  const btn = dateContainerRef.current.children[idx] as HTMLElement;
-                  dateContainerRef.current.scrollTo({ left: btn.offsetLeft, behavior: 'smooth' });
+              }}
+              className="p-0.5 hover:bg-background/10 rounded-full transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4 text-background" />
+            </button>
+            <span className="text-background text-sm font-medium min-w-[130px] text-center">
+              {getMonthYearTitle()}
+            </span>
+            <button
+              onClick={() => {
+                if (isCompact && dateContainerRef.current) {
+                  const refDate = mobileVisibleMonth || selectedDate;
+                  const nextMonth = new Date(refDate.getFullYear(), refDate.getMonth() + 1, 1);
+                  const idx = allDates.findIndex(d => d.getMonth() === nextMonth.getMonth() && d.getFullYear() === nextMonth.getFullYear());
+                  if (idx >= 0) {
+                    const btn = dateContainerRef.current.children[idx] as HTMLElement;
+                    dateContainerRef.current.scrollTo({ left: btn.offsetLeft, behavior: 'smooth' });
+                  }
+                } else {
+                  setDateScrollOffset(Math.min(allDates.length - visibleDatesCount, dateScrollOffset + 30));
                 }
-              } else {
-                const newOffset = Math.min(allDates.length - visibleDatesCount, dateScrollOffset + 30);
-                setDateScrollOffset(newOffset);
-              }
-            }}
-            className="p-1 rounded-full transition-colors hover:bg-background/10"
-          >
-            <ChevronRight className="w-4 h-4 text-background" />
-          </button>
+              }}
+              className="p-0.5 hover:bg-background/10 rounded-full transition-colors"
+            >
+              <ChevronRight className="w-4 h-4 text-background" />
+            </button>
+          </div>
         </div>
 
-        {/* Date strip inside dark header */}
-        <div className="flex items-center gap-1 mt-3">
+        {/* Date strip */}
+        <div className="flex items-center px-2 pb-4">
           {!isCompact && (
             <button
               onClick={() => handleDateScroll("left")}
               disabled={dateScrollOffset === 0}
               className={cn(
-                "w-7 h-7 flex items-center justify-center rounded-full transition-colors flex-shrink-0",
+                "w-7 h-7 flex items-center justify-center rounded-full flex-shrink-0",
                 dateScrollOffset === 0 ? "opacity-30 pointer-events-none" : "hover:bg-background/10"
               )}
             >
@@ -398,8 +399,8 @@ export const DateTimeSelectionStep = ({
           <div
             ref={dateContainerRef}
             className={cn(
-              "flex-1 flex gap-1 py-1",
-              isCompact && "overflow-x-auto snap-x snap-mandatory scroll-smooth scrollbar-hide -mx-1 px-1"
+              "flex-1 flex gap-0.5 py-1",
+              isCompact && "overflow-x-auto snap-x snap-mandatory scroll-smooth scrollbar-hide"
             )}
             style={isCompact ? { scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" } : undefined}
           >
@@ -420,23 +421,25 @@ export const DateTimeSelectionStep = ({
                   onClick={() => !isDisabled && onDateChange(date)}
                   disabled={isDisabled}
                   className={cn(
-                    "flex flex-col items-center py-2 rounded-lg transition-all",
-                    isCompact ? "min-w-[48px] flex-shrink-0 px-1 snap-start" : "flex-1 px-0.5",
-                    isSelected
-                      ? "bg-background text-foreground"
-                      : "text-background/70 hover:bg-background/10",
+                    "flex flex-col items-center justify-center py-2 transition-all",
+                    isCompact ? "min-w-[46px] flex-shrink-0 snap-start" : "flex-1",
                     isDisabled && "opacity-30 pointer-events-none"
                   )}
                 >
-                  <span className="text-[10px] font-semibold tracking-wider">
+                  <span className={cn(
+                    "text-[10px] font-bold tracking-wider mb-1",
+                    isSelected ? "text-background" : "text-background/50"
+                  )}>
                     {dayAbbr}
                   </span>
-                  <span className={cn(
-                    "text-lg font-bold mt-0.5",
-                    isSelected ? "text-foreground" : "text-background"
+                  <div className={cn(
+                    "w-9 h-9 flex items-center justify-center rounded-full text-base font-bold transition-all",
+                    isSelected
+                      ? "bg-background text-foreground"
+                      : "text-background hover:bg-background/10"
                   )}>
                     {format(date, "d")}
-                  </span>
+                  </div>
                 </button>
               );
             })}
@@ -447,7 +450,7 @@ export const DateTimeSelectionStep = ({
               onClick={() => handleDateScroll("right")}
               disabled={dateScrollOffset >= allDates.length - visibleDatesCount}
               className={cn(
-                "w-7 h-7 flex items-center justify-center rounded-full transition-colors flex-shrink-0",
+                "w-7 h-7 flex items-center justify-center rounded-full flex-shrink-0",
                 dateScrollOffset >= allDates.length - visibleDatesCount ? "opacity-30 pointer-events-none" : "hover:bg-background/10"
               )}
             >
@@ -457,24 +460,24 @@ export const DateTimeSelectionStep = ({
         </div>
       </div>
 
-      {/* Content area */}
-      <div className="flex-1 px-4 py-5 space-y-6 pb-4">
+      {/* Scrollable content area - flex-1 overflow */}
+      <div className="flex-1 overflow-y-auto px-4 py-5 space-y-6">
 
         {/* Choose Professional section - FIRST */}
         <div>
           <h3 className="text-sm font-bold text-foreground uppercase tracking-wide mb-4">Escolha o Profissional</h3>
-          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+          <div className="flex gap-5 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
             {barbers.map((barber) => (
               <button
                 key={barber.id}
                 onClick={() => onBarberChange(barber.id)}
-                className="flex flex-col items-center gap-2 min-w-[72px] flex-shrink-0 group"
+                className="flex flex-col items-center gap-2 min-w-[76px] flex-shrink-0 group"
               >
                 <div className={cn(
-                  "w-16 h-16 rounded-full overflow-hidden border-2 transition-all",
+                  "w-[68px] h-[68px] rounded-full overflow-hidden border-[3px] transition-all",
                   selectedBarber === barber.id
-                    ? "border-foreground ring-2 ring-foreground/20"
-                    : "border-border group-hover:border-foreground/50"
+                    ? "border-foreground"
+                    : "border-border group-hover:border-foreground/40"
                 )}>
                   {barber.image_url ? (
                     <img
@@ -489,8 +492,10 @@ export const DateTimeSelectionStep = ({
                   )}
                 </div>
                 <span className={cn(
-                  "text-xs font-medium text-center line-clamp-2 max-w-[72px]",
-                  selectedBarber === barber.id ? "text-foreground font-bold" : "text-muted-foreground"
+                  "text-[11px] text-center line-clamp-2 max-w-[76px] leading-tight",
+                  selectedBarber === barber.id
+                    ? "font-bold text-foreground bg-foreground text-background px-2 py-0.5 rounded-full"
+                    : "font-medium text-muted-foreground"
                 )}>
                   {barber.name}
                 </span>
@@ -499,107 +504,106 @@ export const DateTimeSelectionStep = ({
           </div>
         </div>
 
-        {/* Available Slots section - AFTER professional */}
-        {!selectedBarber ? (
-          <div>
-            <h3 className="text-sm font-bold text-foreground uppercase tracking-wide mb-3">Horários Disponíveis</h3>
+        {/* Available Slots section */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">Horários Disponíveis</h3>
+            {selectedBarber && (
+              <button
+                onClick={handleRefreshSlots}
+                className="p-1.5 rounded-md hover:bg-muted transition-colors"
+                title="Atualizar horários"
+              >
+                <RefreshCw className={cn("w-4 h-4 text-muted-foreground", isFetching && "animate-spin")} />
+              </button>
+            )}
+          </div>
+
+          {!selectedBarber ? (
             <div className="flex items-center gap-3 p-4 rounded-xl bg-muted/50 border border-border">
               <AlertCircle className="w-5 h-5 text-muted-foreground flex-shrink-0" />
               <p className="text-sm text-muted-foreground">
                 Escolha um profissional para ver os horários disponíveis
               </p>
             </div>
-          </div>
-        ) : (
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">Horários Disponíveis</h3>
-              {selectedBarber && (
-                <button
-                  onClick={handleRefreshSlots}
-                  className="p-1.5 rounded-md hover:bg-muted transition-colors"
-                  title="Atualizar horários"
-                >
-                  <RefreshCw className={cn("w-4 h-4 text-muted-foreground", isFetching && "animate-spin")} />
-                </button>
-              )}
-            </div>
-
-            {/* Period selector pills */}
-            <div className="flex gap-2 mb-4">
-              {(["Manhã", "Tarde", "Noite"] as TimePeriod[]).map((period) => (
-                <button
-                  key={period}
-                  onClick={() => setSelectedPeriod(period)}
-                  className={cn(
-                    "px-4 py-1.5 rounded-full text-xs font-semibold transition-colors border",
-                    selectedPeriod === period
-                      ? "bg-foreground text-background border-foreground"
-                      : "bg-transparent text-muted-foreground border-border hover:border-foreground"
-                  )}
-                >
-                  {period}
-                </button>
-              ))}
-            </div>
-
-            {/* Time slots grid - 3 columns */}
-            <div className="grid grid-cols-3 gap-2">
-              {(slotsLoading || isFetching) ? (
-                <div className="col-span-3 flex items-center justify-center gap-2 text-muted-foreground py-6">
-                  <Clock className="w-4 h-4 animate-pulse" />
-                  <span className="text-sm">Carregando horários...</span>
-                </div>
-              ) : isError ? (
-                <div className="col-span-3 flex flex-col items-center gap-2 text-destructive py-4">
-                  <AlertCircle className="w-5 h-5" />
-                  <span className="text-sm">Erro ao carregar horários.</span>
+          ) : (
+            <>
+              {/* Period selector pills */}
+              <div className="flex gap-2 mb-4">
+                {(["Manhã", "Tarde", "Noite"] as TimePeriod[]).map((period) => (
                   <button
-                    onClick={handleRefreshSlots}
-                    className="flex items-center gap-1 px-3 py-1.5 text-xs bg-destructive/10 hover:bg-destructive/20 rounded-md transition-colors"
+                    key={period}
+                    onClick={() => setSelectedPeriod(period)}
+                    className={cn(
+                      "px-4 py-1.5 rounded-full text-xs font-semibold transition-colors border",
+                      selectedPeriod === period
+                        ? "bg-foreground text-background border-foreground"
+                        : "bg-transparent text-muted-foreground border-border hover:border-foreground"
+                    )}
                   >
-                    <RefreshCw className="w-3 h-3" />
-                    Tentar novamente
+                    {period}
                   </button>
-                </div>
-              ) : availableTimes.length === 0 ? (
-                <div className="col-span-3 flex flex-col items-center gap-2 text-muted-foreground py-4">
-                  <AlertCircle className="w-5 h-5" />
-                  <span className="text-sm">Nenhum horário disponível</span>
-                  <button
-                    onClick={handleRefreshSlots}
-                    className="flex items-center gap-1 px-3 py-1.5 text-xs bg-muted hover:bg-muted/80 rounded-md transition-colors"
-                  >
-                    <RefreshCw className="w-3 h-3" />
-                    Atualizar
-                  </button>
-                </div>
-              ) : filteredTimes.length === 0 ? (
-                <div className="col-span-3 flex items-center justify-center gap-2 text-sm text-muted-foreground py-4">
-                  <span>Nenhum horário no período "{selectedPeriod}"</span>
-                </div>
-              ) : (
-                filteredTimes.map((time) => {
-                  const isSelected = selectedTime === time;
-                  return (
+                ))}
+              </div>
+
+              {/* Time slots grid - 3 columns */}
+              <div className="grid grid-cols-3 gap-2.5">
+                {(slotsLoading || isFetching) ? (
+                  <div className="col-span-3 flex items-center justify-center gap-2 text-muted-foreground py-6">
+                    <Clock className="w-4 h-4 animate-pulse" />
+                    <span className="text-sm">Carregando horários...</span>
+                  </div>
+                ) : isError ? (
+                  <div className="col-span-3 flex flex-col items-center gap-2 text-destructive py-4">
+                    <AlertCircle className="w-5 h-5" />
+                    <span className="text-sm">Erro ao carregar horários.</span>
                     <button
-                      key={time}
-                      onClick={() => onTimeChange(time)}
-                      className={cn(
-                        "py-3 rounded-full text-sm font-semibold transition-all border",
-                        isSelected
-                          ? "bg-foreground text-background border-foreground"
-                          : "bg-transparent text-foreground border-border hover:border-foreground"
-                      )}
+                      onClick={handleRefreshSlots}
+                      className="flex items-center gap-1 px-3 py-1.5 text-xs bg-destructive/10 hover:bg-destructive/20 rounded-md transition-colors"
                     >
-                      {time}
+                      <RefreshCw className="w-3 h-3" />
+                      Tentar novamente
                     </button>
-                  );
-                })
-              )}
-            </div>
-          </div>
-        )}
+                  </div>
+                ) : availableTimes.length === 0 ? (
+                  <div className="col-span-3 flex flex-col items-center gap-2 text-muted-foreground py-4">
+                    <AlertCircle className="w-5 h-5" />
+                    <span className="text-sm">Nenhum horário disponível</span>
+                    <button
+                      onClick={handleRefreshSlots}
+                      className="flex items-center gap-1 px-3 py-1.5 text-xs bg-muted hover:bg-muted/80 rounded-md transition-colors"
+                    >
+                      <RefreshCw className="w-3 h-3" />
+                      Atualizar
+                    </button>
+                  </div>
+                ) : filteredTimes.length === 0 ? (
+                  <div className="col-span-3 flex items-center justify-center gap-2 text-sm text-muted-foreground py-4">
+                    <span>Nenhum horário no período "{selectedPeriod}"</span>
+                  </div>
+                ) : (
+                  filteredTimes.map((time) => {
+                    const isSelected = selectedTime === time;
+                    return (
+                      <button
+                        key={time}
+                        onClick={() => onTimeChange(time)}
+                        className={cn(
+                          "py-3 rounded-full text-sm font-semibold transition-all border",
+                          isSelected
+                            ? "bg-foreground text-background border-foreground"
+                            : "bg-transparent text-foreground border-border hover:border-foreground"
+                        )}
+                      >
+                        {time}
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            </>
+          )}
+        </div>
 
         {/* Service summary card */}
         <div className="bg-card rounded-xl border border-border">
@@ -646,7 +650,7 @@ export const DateTimeSelectionStep = ({
         </button>
 
         {/* Observations */}
-        <div>
+        <div className="pb-2">
           <label className="text-sm font-medium text-foreground mb-2 block">
             Observações (opcional)
           </label>
@@ -664,9 +668,9 @@ export const DateTimeSelectionStep = ({
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="border-t border-border bg-background mt-auto flex-shrink-0 sticky bottom-0 z-10">
-        <div className="px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      {/* Footer - OUTSIDE scroll area, always visible */}
+      <div className="border-t border-border bg-background flex-shrink-0">
+        <div className="px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <div className="flex items-center justify-end gap-3 mb-3">
             <span className="text-muted-foreground text-sm">Total:</span>
             <span className="text-xl font-bold text-foreground">
