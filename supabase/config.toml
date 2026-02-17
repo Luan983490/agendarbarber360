@@ -56,3 +56,6 @@ verify_jwt = false
 [functions.create-customer-portal]
 verify_jwt = false
 
+[functions.load-test]
+verify_jwt = false
+
