@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { BarberShopCard } from "@/components/BarberShopCard";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, SlidersHorizontal, Compass, Loader2, SearchCheck } from "lucide-react";
+import { MapPin, SlidersHorizontal, Compass, Loader2, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateDistanceKm, formatDistance } from "@/hooks/useGeolocation";
 import { SearchType } from "@/components/AdvancedSearch";
@@ -284,7 +284,7 @@ export const BarberShopGrid = ({
     return (
       <div className="text-center py-16">
         <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-6">
-          <SearchCheck className="h-10 w-10 text-primary" />
+          <Search className="h-10 w-10 text-primary" />
         </div>
         <h3 className="text-xl font-semibold text-foreground mb-2">
           Encontre sua barbearia ideal
@@ -355,7 +355,7 @@ export const BarberShopGrid = ({
       ) : (
         <div className="text-center py-12">
           <div className="text-muted-foreground mb-4">
-            <SearchCheck className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p className="text-lg font-medium">{getEmptyMessage()}</p>
             <p className="text-sm mt-2">
               {searchType === 'proximity' 
