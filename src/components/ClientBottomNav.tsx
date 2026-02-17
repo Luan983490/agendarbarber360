@@ -67,7 +67,7 @@ export function ClientBottomNav() {
                 active ? 'text-primary' : 'text-[#888888] hover:text-[#bbbbbb]'
               )}
             >
-              <Icon size={25} strokeWidth={1} />
+              <Icon size={24} strokeWidth={1} />
               <span className="text-[10px] leading-tight truncate w-full text-center">
                 {item.label}
               </span>
