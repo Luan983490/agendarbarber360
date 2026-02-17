@@ -4,11 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/Header';
-import { Calendar, Clock, MapPin, User, Scissors, CheckCircle, XCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, Scissors, CheckCircle, XCircle, AlertCircle, RefreshCw, CalendarPlus } from 'lucide-react';
 import { ClientBottomNav } from '@/components/ClientBottomNav';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -50,6 +51,9 @@ const MyBookings = () => {
   const isMobile = useIsMobile();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cancellingBooking, setCancellingBooking] = useState<Booking | null>(null);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [cancelledBooking, setCancelledBooking] = useState<Booking | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -91,6 +95,32 @@ const MyBookings = () => {
 
   const handleReschedule = (booking: Booking) => {
     navigate(`/barbearia/${booking.barbershop.slug}?service=${booking.service_id}&reschedule=${booking.id}`);
+  };
+
+  const handleCancelConfirm = async () => {
+    if (!cancellingBooking) return;
+    setCancelLoading(true);
+    try {
+      const { error } = await supabase
+        .from('bookings')
+        .update({ status: 'cancelled' })
+        .eq('id', cancellingBooking.id);
+
+      if (error) throw error;
+
+      const cancelled = cancellingBooking;
+      setCancellingBooking(null);
+      setCancelledBooking(cancelled);
+      await fetchBookings();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao cancelar",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setCancelLoading(false);
+    }
   };
 
   const getStatusInfo = (status: string, notes?: string) => {
@@ -286,7 +316,7 @@ const MyBookings = () => {
                         <Button variant="outline" size="sm" className="text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3" onClick={() => handleReschedule(booking)}>
                           Reagendar
                         </Button>
-                        <Button variant="outline" size="sm" className="text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3">
+                        <Button variant="outline" size="sm" className="text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3 text-destructive hover:text-destructive" onClick={() => setCancellingBooking(booking)}>
                           Cancelar
                         </Button>
                         <Button variant="outline" size="sm" className="text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3">
@@ -378,6 +408,85 @@ const MyBookings = () => {
         </Tabs>
       </main>
       {isMobile && <ClientBottomNav />}
+
+      {/* Cancel Confirmation Dialog */}
+      <Dialog open={!!cancellingBooking} onOpenChange={(open) => !open && setCancellingBooking(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <XCircle className="h-5 w-5 text-destructive" />
+              Cancelar Agendamento
+            </DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja cancelar este agendamento?
+            </DialogDescription>
+          </DialogHeader>
+          {cancellingBooking && (
+            <div className="space-y-2 p-3 bg-muted rounded-lg text-sm">
+              <p><span className="font-medium">Serviço:</span> {cancellingBooking.service.name}</p>
+              <p><span className="font-medium">Data:</span> {formatDate(cancellingBooking.booking_date)}</p>
+              <p><span className="font-medium">Horário:</span> {formatTime(cancellingBooking.booking_time)}</p>
+              {cancellingBooking.barber && (
+                <p><span className="font-medium">Profissional:</span> {cancellingBooking.barber.name}</p>
+              )}
+            </div>
+          )}
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setCancellingBooking(null)} disabled={cancelLoading}>
+              Voltar
+            </Button>
+            <Button variant="destructive" onClick={handleCancelConfirm} disabled={cancelLoading}>
+              {cancelLoading ? "Cancelando..." : "Confirmar Cancelamento"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cancel Success + New Booking Suggestion Dialog */}
+      <Dialog open={!!cancelledBooking} onOpenChange={(open) => !open && setCancelledBooking(null)}>
+        <DialogContent className="sm:max-w-md text-center">
+          <div className="flex flex-col items-center gap-4 py-4">
+            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
+              <CheckCircle className="w-10 h-10 text-destructive" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-xl font-bold text-foreground">Agendamento Cancelado</h2>
+              <p className="text-sm text-muted-foreground">
+                Seu agendamento foi cancelado com sucesso.
+              </p>
+            </div>
+            {cancelledBooking && (
+              <div className="w-full p-3 bg-primary/5 border border-primary/20 rounded-lg text-left space-y-1">
+                <p className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                  <CalendarPlus className="h-4 w-4 text-primary" />
+                  Que tal reagendar?
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Você pode agendar um novo horário na mesma barbearia.
+                </p>
+              </div>
+            )}
+            <div className="flex flex-col w-full gap-2 mt-2">
+              {cancelledBooking && (
+                <Button
+                  className="w-full gap-2"
+                  onClick={() => {
+                    const booking = cancelledBooking;
+                    setCancelledBooking(null);
+                    navigate(`/barbearia/${booking.barbershop.slug}?service=${booking.service_id}`);
+                  }}
+                >
+                  <CalendarPlus className="h-4 w-4" />
+                  Fazer Novo Agendamento
+                </Button>
+              )}
+              <Button variant="outline" className="w-full" onClick={() => setCancelledBooking(null)}>
+                Fechar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
