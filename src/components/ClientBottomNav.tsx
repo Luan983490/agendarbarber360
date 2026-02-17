@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { House, Search, CalendarRange, User } from 'lucide-react';
+import { House, Search, BookOpen, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 
 const navItems = [
   { id: 'home', label: 'Início', icon: House, path: '/', requiresAuth: false },
   { id: 'search', label: 'Buscar', icon: Search, path: '/', requiresAuth: false },
-  { id: 'bookings', label: 'Agendamentos', icon: CalendarRange, path: '/my-bookings', requiresAuth: true },
+  { id: 'bookings', label: 'Agendamentos', icon: BookOpen, path: '/my-bookings', requiresAuth: true },
   { id: 'profile', label: 'Perfil', icon: User, path: '/perfil', requiresAuth: true },
 ];
 
