@@ -335,9 +335,9 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFrom
     <>
       <div onClick={() => setIsOpen(true)}>{children}</div>
       
-      <div className="fixed inset-0 z-50 bg-background flex flex-col overflow-hidden">
-        {/* Content - full height, no scroll container */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="fixed inset-0 z-50 bg-background flex flex-col">
+        {/* Content */}
+        <div className="flex-1 flex flex-col overflow-y-auto">
           {currentStep === "services" && (
             <ServiceSelectionStep
               barbershop={barbershop}

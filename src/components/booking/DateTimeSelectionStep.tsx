@@ -319,7 +319,7 @@ export const DateTimeSelectionStep = ({
   };
 
   return (
-    <div className="flex flex-col min-h-full w-full bg-background overflow-y-auto">
+    <div className="flex flex-col h-full w-full bg-background overflow-y-auto">
       {/* Dark header bar */}
       <div className="w-full bg-foreground">
         {/* Title bar */}
@@ -458,7 +458,7 @@ export const DateTimeSelectionStep = ({
       </div>
 
       {/* White content area - all scrollable including button */}
-      <div className="flex-1 bg-background">
+      <div className="bg-background">
         {/* Available Slots */}
         <div className="px-4 pt-5 pb-4">
           <div className="flex items-center justify-between mb-4">
@@ -595,6 +595,18 @@ export const DateTimeSelectionStep = ({
               </button>
             ))}
           </div>
+          {/* Pagination dots like reference */}
+          <div className="flex justify-center gap-1.5 mt-3">
+            {barbers.map((barber, idx) => (
+              <div
+                key={barber.id}
+                className={cn(
+                  "w-1.5 h-1.5 rounded-full transition-all",
+                  selectedBarber === barber.id ? "bg-foreground" : "bg-border"
+                )}
+              />
+            ))}
+          </div>
         </div>
 
         {/* Service summary card */}
@@ -659,7 +671,7 @@ export const DateTimeSelectionStep = ({
         </div>
 
         {/* Footer - inside scroll, not fixed */}
-        <div className="border-t border-border px-4 pt-3 pb-6">
+        <div className="border-t border-border px-4 pt-3 pb-12">
           <div className="flex items-center justify-end gap-3 mb-3">
             <span className="text-muted-foreground text-sm">Total:</span>
             <span className="text-xl font-bold text-foreground">
@@ -677,6 +689,8 @@ export const DateTimeSelectionStep = ({
             {loading ? "Agendando..." : "Agendar"}
           </Button>
         </div>
+        {/* Spacer to ensure button is never cut off on mobile */}
+        <div className="h-16 flex-shrink-0" aria-hidden="true" />
       </div>
     </div>
   );
