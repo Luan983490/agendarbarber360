@@ -459,37 +459,38 @@ export const DateTimeSelectionStep = ({
 
       {/* White content area - all scrollable including button */}
       <div className="bg-background">
-        {/* Choose Professional - dark background, square photos, name overlay */}
-        <div className="w-full bg-foreground py-5 px-4">
-          <h3 className="text-sm font-bold text-background uppercase tracking-widest text-center mb-5">Escolha o Profissional</h3>
-          <div className="flex justify-center gap-4 overflow-x-auto scrollbar-hide" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+        {/* Choose Professional - light background, round photos, name below */}
+        <div className="w-full py-5 px-4">
+          <h3 className="text-sm font-bold text-foreground tracking-wide text-center mb-5">Escolha o Profissional</h3>
+          <div className="flex justify-center gap-6 overflow-x-auto scrollbar-hide" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
             {barbers.map((barber) => {
               const isSelected = selectedBarber === barber.id;
               return (
                 <button
                   key={barber.id}
                   onClick={() => onBarberChange(barber.id)}
-                  className="flex flex-col items-center min-w-[90px] flex-shrink-0 group transition-all"
+                  className="flex flex-col items-center min-w-[72px] flex-shrink-0 group transition-all gap-2"
                 >
                   <div className={cn(
-                    "relative w-[90px] h-[110px] rounded-lg overflow-hidden border-2 transition-all",
+                    "w-16 h-16 rounded-full overflow-hidden border-2 transition-all",
                     isSelected
-                      ? "border-primary ring-2 ring-primary/40"
-                      : "border-background/20 group-hover:border-background/50"
+                      ? "border-primary ring-2 ring-primary/30"
+                      : "border-transparent group-hover:border-muted-foreground/30"
                   )}>
                     {barber.image_url ? (
                       <img src={barber.image_url} alt={barber.name} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full bg-muted flex items-center justify-center">
-                        <User className="w-8 h-8 text-muted-foreground" />
+                        <User className="w-6 h-6 text-muted-foreground" />
                       </div>
                     )}
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent pt-4 pb-1.5 px-1">
-                      <span className="text-[10px] text-white font-bold uppercase tracking-wide text-center block truncate">
-                        {barber.name}
-                      </span>
-                    </div>
                   </div>
+                  <span className={cn(
+                    "text-xs text-center truncate max-w-[80px] transition-colors",
+                    isSelected ? "font-bold text-foreground" : "font-medium text-muted-foreground"
+                  )}>
+                    {barber.name}
+                  </span>
                 </button>
               );
             })}
