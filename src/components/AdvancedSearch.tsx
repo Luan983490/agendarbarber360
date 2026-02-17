@@ -7,7 +7,7 @@ import {
   Search, 
   MapPin, 
   MapPinned, 
-  Landmark, 
+  Map as MapIcon, 
   Loader2,
   X,
   AlertCircle
@@ -192,7 +192,7 @@ export const AdvancedSearch = ({
           className="flex items-center gap-2 text-white"
           style={searchType === 'city' ? { background: 'linear-gradient(135deg, hsl(45, 60%, 28%) 0%, hsl(35, 40%, 14%) 100%)', border: 'none' } : {}}
         >
-          <Landmark className="h-4 w-4" strokeWidth={1} />
+          <MapIcon className="h-4 w-4" strokeWidth={1} />
           Por Cidade
         </Button>
         <Button
