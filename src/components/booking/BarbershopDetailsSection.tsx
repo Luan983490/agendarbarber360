@@ -5,6 +5,16 @@ import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+interface BarberWorkingHoursRaw {
+  barber_id?: string;
+  day_of_week: number;
+  is_day_off: boolean;
+  period1_start: string | null;
+  period1_end: string | null;
+  period2_start: string | null;
+  period2_end: string | null;
+}
+
 interface BarberWorkingHours {
   day_of_week: number;
   is_day_off: boolean;
@@ -13,6 +23,45 @@ interface BarberWorkingHours {
   period2_start: string | null;
   period2_end: string | null;
 }
+
+// Aggregate working hours across all barbers: earliest start, latest end per day
+const aggregateWorkingHours = (hours: BarberWorkingHoursRaw[]): BarberWorkingHours[] => {
+  const dayMap = new Map<number, BarberWorkingHours>();
+
+  for (const h of hours) {
+    const existing = dayMap.get(h.day_of_week);
+    if (!existing) {
+      dayMap.set(h.day_of_week, {
+        day_of_week: h.day_of_week,
+        is_day_off: h.is_day_off,
+        period1_start: h.period1_start,
+        period1_end: h.period1_end,
+        period2_start: h.period2_start,
+        period2_end: h.period2_end,
+      });
+    } else {
+      // If any barber works this day, it's not a day off
+      if (!h.is_day_off) {
+        existing.is_day_off = false;
+      }
+      // Use earliest start and latest end for each period
+      if (h.period1_start && (!existing.period1_start || h.period1_start < existing.period1_start)) {
+        existing.period1_start = h.period1_start;
+      }
+      if (h.period1_end && (!existing.period1_end || h.period1_end > existing.period1_end)) {
+        existing.period1_end = h.period1_end;
+      }
+      if (h.period2_start && (!existing.period2_start || h.period2_start < existing.period2_start)) {
+        existing.period2_start = h.period2_start;
+      }
+      if (h.period2_end && (!existing.period2_end || h.period2_end > existing.period2_end)) {
+        existing.period2_end = h.period2_end;
+      }
+    }
+  }
+
+  return Array.from(dayMap.values()).sort((a, b) => a.day_of_week - b.day_of_week);
+};
 
 interface BarbershopDetailsSectionProps {
   barbershopId: string;
@@ -66,17 +115,19 @@ export const BarbershopDetailsSection = ({ barbershopId, barbershop, compact = f
           .from("barbers")
           .select("id")
           .eq("barbershop_id", barbershopId)
-          .eq("is_active", true)
-          .limit(1);
+          .eq("is_active", true);
         
         if (barbers && barbers.length > 0) {
+          const barberIds = barbers.map(b => b.id);
           const { data: hours } = await supabase
             .from("barber_working_hours")
-            .select("day_of_week, is_day_off, period1_start, period1_end, period2_start, period2_end")
-            .eq("barber_id", barbers[0].id)
+            .select("barber_id, day_of_week, is_day_off, period1_start, period1_end, period2_start, period2_end")
+            .in("barber_id", barberIds)
             .order("day_of_week");
           
-          setWorkingHours(hours || []);
+          // Aggregate: for each day, use earliest start and latest end across all barbers
+          const aggregated = aggregateWorkingHours(hours || []);
+          setWorkingHours(aggregated);
         } else {
           setWorkingHours([]);
         }

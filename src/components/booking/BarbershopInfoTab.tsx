@@ -103,19 +103,39 @@ export const BarbershopInfoTab = ({ barbershopId, barbershop }: BarbershopInfoTa
           .from("barbers")
           .select("id")
           .eq("barbershop_id", barbershopId)
-          .eq("is_active", true)
-          .limit(1);
+          .eq("is_active", true);
 
         if (barbers && barbers.length > 0) {
-          const barberId = barbers[0].id;
+          const barberIds = barbers.map(b => b.id);
           const { data: hours } = await supabase
             .from("barber_working_hours")
-            .select("day_of_week, is_day_off, period1_start, period1_end, period2_start, period2_end")
-            .eq("barber_id", barberId)
+            .select("barber_id, day_of_week, is_day_off, period1_start, period1_end, period2_start, period2_end")
+            .in("barber_id", barberIds)
             .order("day_of_week");
 
           if (hours && hours.length > 0) {
-            setWorkingHours(hours);
+            // Aggregate across all barbers: earliest start, latest end per day
+            const dayMap = new Map<number, WorkingHours>();
+            for (const h of hours) {
+              const existing = dayMap.get(h.day_of_week);
+              if (!existing) {
+                dayMap.set(h.day_of_week, {
+                  day_of_week: h.day_of_week,
+                  is_day_off: h.is_day_off,
+                  period1_start: h.period1_start,
+                  period1_end: h.period1_end,
+                  period2_start: h.period2_start,
+                  period2_end: h.period2_end,
+                });
+              } else {
+                if (!h.is_day_off) existing.is_day_off = false;
+                if (h.period1_start && (!existing.period1_start || h.period1_start < existing.period1_start)) existing.period1_start = h.period1_start;
+                if (h.period1_end && (!existing.period1_end || h.period1_end > existing.period1_end)) existing.period1_end = h.period1_end;
+                if (h.period2_start && (!existing.period2_start || h.period2_start < existing.period2_start)) existing.period2_start = h.period2_start;
+                if (h.period2_end && (!existing.period2_end || h.period2_end > existing.period2_end)) existing.period2_end = h.period2_end;
+              }
+            }
+            setWorkingHours(Array.from(dayMap.values()).sort((a, b) => a.day_of_week - b.day_of_week));
           }
         }
       } catch (error) {
