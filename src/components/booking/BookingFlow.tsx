@@ -63,6 +63,7 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFrom
   const [notes, setNotes] = useState("");
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [isNewSignup, setIsNewSignup] = useState(false);
   const pendingBookingRef = useRef(false);
 
   // Prevent body scroll when modal is open
@@ -255,7 +256,8 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFrom
     await submitBooking();
   };
 
-  const handleAuthSuccess = useCallback(() => {
+  const handleAuthSuccess = useCallback((isSignup?: boolean) => {
+    setIsNewSignup(!!isSignup);
     // Auth succeeded - auto-submit the booking
     if (pendingBookingRef.current) {
       pendingBookingRef.current = false;
@@ -282,9 +284,11 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFrom
         <div onClick={() => setIsOpen(true)}>{children}</div>
         <BookingSuccessDialog
           open={showSuccessDialog}
+          isNewSignup={isNewSignup}
           onContinue={() => {
             setShowSuccessDialog(false);
-            navigate('/my-bookings');
+            setIsNewSignup(false);
+            if (!isNewSignup) navigate('/my-bookings');
           }}
         />
       </>
@@ -344,9 +348,11 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFrom
 
       <BookingSuccessDialog
         open={showSuccessDialog}
+        isNewSignup={isNewSignup}
         onContinue={() => {
           setShowSuccessDialog(false);
-          navigate('/my-bookings');
+          setIsNewSignup(false);
+          if (!isNewSignup) navigate('/my-bookings');
         }}
       />
     </>

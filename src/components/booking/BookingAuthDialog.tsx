@@ -35,7 +35,7 @@ const checkPasswordStrength = (password: string) => {
 interface BookingAuthDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAuthSuccess: () => void;
+  onAuthSuccess: (isNewSignup?: boolean) => void;
 }
 
 export const BookingAuthDialog = ({ open, onOpenChange, onAuthSuccess }: BookingAuthDialogProps) => {
@@ -72,22 +72,7 @@ export const BookingAuthDialog = ({ open, onOpenChange, onAuthSuccess }: Booking
   const getStrengthColor = (s: string) => s === 'strong' ? 'bg-green-500' : s === 'good' ? 'bg-blue-500' : s === 'fair' ? 'bg-yellow-500' : 'bg-red-500';
   const getStrengthLabel = (s: string) => s === 'strong' ? 'Forte' : s === 'good' ? 'Boa' : s === 'fair' ? 'Regular' : 'Fraca';
 
-  // Listen for auth state changes to detect successful login/signup
-  useEffect(() => {
-    if (!open) return;
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
-        // Small delay to ensure state is propagated
-        setTimeout(() => {
-          onAuthSuccess();
-          onOpenChange(false);
-        }, 500);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [open, onAuthSuccess, onOpenChange]);
+  // No longer using onAuthStateChange listener - we call onAuthSuccess directly from login/signup handlers
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,6 +125,8 @@ export const BookingAuthDialog = ({ open, onOpenChange, onAuthSuccess }: Booking
       localStorage.setItem('auth_failures_client', '0');
       localStorage.removeItem('auth_blocked_until_client');
       resetOnSuccess();
+      onAuthSuccess(false);
+      onOpenChange(false);
       toast({ title: 'Login realizado!', description: 'Finalizando seu agendamento...' });
       // onAuthSuccess will be triggered by the auth state listener
     } catch (err: any) {
@@ -206,7 +193,8 @@ export const BookingAuthDialog = ({ open, onOpenChange, onAuthSuccess }: Booking
           onOpenChange(false);
         } else {
           toast({ title: 'Conta criada!', description: 'Finalizando seu agendamento...' });
-          // onAuthSuccess will be triggered by the auth state listener
+          onAuthSuccess(true);
+          onOpenChange(false);
         }
       } catch {
         toast({ title: 'Cadastro realizado!', description: 'Faça login para finalizar o agendamento.' });
