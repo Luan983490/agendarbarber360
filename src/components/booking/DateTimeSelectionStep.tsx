@@ -506,7 +506,7 @@ export const DateTimeSelectionStep = ({
         {/* Available Slots - after professional */}
         <div className="px-4 pb-4">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-bold text-foreground uppercase tracking-wide">Horários Disponíveis</h3>
+            <h3 className="text-sm font-bold text-foreground tracking-wide">Horários Disponíveis</h3>
             {selectedBarber && (
               <button
                 onClick={handleRefreshSlots}
