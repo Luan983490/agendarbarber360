@@ -534,7 +534,7 @@ export const DateTimeSelectionStep = ({
                     key={period}
                     onClick={() => setSelectedPeriod(period)}
                     className={cn(
-                      "px-4 py-1.5 rounded-full text-xs font-semibold transition-colors border",
+                      "px-4 py-1.5 rounded-md text-xs font-semibold transition-colors border",
                       selectedPeriod === period
                         ? "bg-foreground text-background border-foreground"
                         : "bg-transparent text-muted-foreground border-border hover:border-foreground"
@@ -588,7 +588,7 @@ export const DateTimeSelectionStep = ({
                         key={time}
                         onClick={() => onTimeChange(time)}
                         className={cn(
-                          "py-2.5 rounded-full text-sm font-semibold transition-all border",
+                          "py-2.5 rounded-md text-sm font-semibold transition-all border",
                           isSelected
                             ? "bg-foreground text-background border-foreground"
                             : "bg-transparent text-foreground border-border hover:border-foreground"
