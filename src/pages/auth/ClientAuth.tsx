@@ -387,7 +387,7 @@ const ClientAuth = () => {
                   </div>
                 )}
 
-                <Button type="submit" className="w-full rounded-full bg-primary hover:bg-primary/85 text-primary-foreground" disabled={loading || isBlocked || (requiresCaptcha && !captchaVerified) || serverRateLimited}>
+                <Button type="submit" className="w-full rounded-full bg-primary hover:bg-primary/85 text-white" disabled={loading || isBlocked || (requiresCaptcha && !captchaVerified) || serverRateLimited}>
                   {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Entrando...</> : isBlocked ? <><Clock className="mr-2 h-4 w-4" />Aguarde {formatRemainingTime(remainingSeconds)}</> : 'Entrar'}
                 </Button>
 
