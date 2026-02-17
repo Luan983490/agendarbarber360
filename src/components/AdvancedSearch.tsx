@@ -4,10 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Search, 
+  SearchCheck, 
   MapPin, 
-  Navigation, 
-  Building2, 
+  Compass, 
+  Landmark, 
   Loader2,
   X,
   AlertCircle
@@ -182,7 +182,7 @@ export const AdvancedSearch = ({
           className="flex items-center gap-2 text-white"
           style={searchType === 'name' ? { background: 'linear-gradient(135deg, hsl(45, 60%, 28%) 0%, hsl(35, 40%, 14%) 100%)', border: 'none' } : {}}
         >
-          <Search className="h-4 w-4" strokeWidth={1.5} />
+          <SearchCheck className="h-4 w-4" strokeWidth={1.5} />
           Por Nome
         </Button>
         <Button
@@ -192,7 +192,7 @@ export const AdvancedSearch = ({
           className="flex items-center gap-2 text-white"
           style={searchType === 'city' ? { background: 'linear-gradient(135deg, hsl(45, 60%, 28%) 0%, hsl(35, 40%, 14%) 100%)', border: 'none' } : {}}
         >
-          <Building2 className="h-4 w-4" strokeWidth={1.5} />
+          <Landmark className="h-4 w-4" strokeWidth={1.5} />
           Por Cidade
         </Button>
         <Button
@@ -202,7 +202,7 @@ export const AdvancedSearch = ({
           className="flex items-center gap-2 text-white"
           style={searchType === 'proximity' ? { background: 'linear-gradient(135deg, hsl(45, 60%, 28%) 0%, hsl(35, 40%, 14%) 100%)', border: 'none' } : {}}
         >
-          <Navigation className="h-4 w-4" strokeWidth={1.5} />
+          <Compass className="h-4 w-4" strokeWidth={1.5} />
           Próximas
         </Button>
       </div>
@@ -211,7 +211,7 @@ export const AdvancedSearch = ({
       <div className="space-y-4">
         {searchType === 'name' && (
           <div className="relative">
-            <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+            <SearchCheck className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
             <Input
               id="search-barbershop-input"
               placeholder="Digite o nome da barbearia..."
@@ -340,7 +340,7 @@ export const AdvancedSearch = ({
                 </>
               ) : (
                 <>
-                  <Navigation className="h-4 w-4 mr-2" />
+                  <Compass className="h-4 w-4 mr-2" />
                   Usar minha localização
                 </>
               )}
