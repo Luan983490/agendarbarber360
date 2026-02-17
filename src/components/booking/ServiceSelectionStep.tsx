@@ -349,8 +349,18 @@ export const ServiceSelectionStep = ({
                 </div>
               </div>
 
-              {/* Right: Favorite & Share Buttons */}
-              <div className="flex gap-2 flex-shrink-0">
+              {/* Right: Book + Favorite & Share Buttons */}
+              <div className="flex gap-2 flex-shrink-0 items-center">
+                <Button
+                  size="sm"
+                  className="rounded-full gap-1.5 text-xs font-semibold"
+                  onClick={() => {
+                    const servicesSection = document.getElementById("services-list");
+                    servicesSection?.scrollIntoView({ behavior: "smooth" });
+                  }}
+                >
+                  Agendar
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -465,7 +475,7 @@ export const ServiceSelectionStep = ({
             )}
 
             {/* Services Tab Content */}
-            <TabsContent value="services" className="mt-4">
+            <TabsContent value="services" className="mt-4" id="services-list">
               {/* Search bar */}
               <div className="pb-4">
                 <div className="relative">
