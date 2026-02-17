@@ -675,7 +675,7 @@ export const ServiceSelectionStep = ({
       {/* Fixed bottom mobile CTA - hides on scroll down */}
       <div
         className={cn(
-          "fixed bottom-0 left-0 right-0 p-3 bg-background/95 backdrop-blur-sm border-t border-border md:hidden transition-transform duration-300 z-50",
+          "fixed bottom-16 left-0 right-0 p-3 bg-background/95 backdrop-blur-sm border-t border-border md:hidden transition-transform duration-300 z-40",
           showMobileCta ? "translate-y-0" : "translate-y-full"
         )}
       >
