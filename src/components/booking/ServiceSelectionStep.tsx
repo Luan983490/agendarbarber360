@@ -367,11 +367,11 @@ export const ServiceSelectionStep = ({
 
           {/* Barbershop Image Banner */}
           {barbershop.image && (
-            <div className="relative w-full rounded-lg overflow-hidden bg-muted mb-4">
+            <div className="relative w-full max-h-[400px] aspect-square rounded-lg overflow-hidden bg-muted mb-4">
               <img
                 src={barbershop.image}
                 alt={barbershop.name}
-                className="w-full h-auto object-contain"
+                className="w-full h-full object-cover"
               />
             </div>
           )}
