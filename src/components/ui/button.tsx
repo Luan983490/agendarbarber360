@@ -9,7 +9,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        default: "text-white hover:opacity-90 transition-all duration-300",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
@@ -39,9 +39,12 @@ export interface ButtonProps
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, style, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
-    return <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />;
+    const defaultGradientStyle = variant === "default" || variant === undefined
+      ? { background: "linear-gradient(135deg, hsl(45, 60%, 28%) 0%, hsl(35, 40%, 14%) 100%)", ...style }
+      : style;
+    return <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} style={defaultGradientStyle} {...props} />;
   },
 );
 Button.displayName = "Button";
