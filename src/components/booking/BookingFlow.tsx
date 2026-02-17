@@ -260,10 +260,18 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFrom
     setIsNewSignup(!!isSignup);
     if (pendingBookingRef.current) {
       pendingBookingRef.current = false;
-      // Both login and signup now have a valid session, submit the booking
-      setTimeout(() => {
-        submitBooking();
-      }, 300);
+      if (isSignup) {
+        // Signup requires email confirmation — no valid session yet
+        // Show success dialog informing user to confirm email and book again
+        resetForm();
+        setIsOpen(false);
+        setShowSuccessDialog(true);
+      } else {
+        // Login — session is valid, submit the booking
+        setTimeout(() => {
+          submitBooking();
+        }, 300);
+      }
     }
   }, [submitBooking]);
 
