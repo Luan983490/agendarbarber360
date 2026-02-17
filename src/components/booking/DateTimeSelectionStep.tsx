@@ -321,13 +321,13 @@ export const DateTimeSelectionStep = ({
   return (
     <div className="flex flex-col h-full w-full bg-background overflow-y-auto">
       {/* Dark header bar */}
-      <div className="w-full bg-foreground">
+      <div className="w-full bg-background">
         {/* Title bar */}
         <div className="flex items-center px-3 pt-4 pb-2">
           <button onClick={onBack} className="p-2 rounded-lg transition-colors">
-            <ChevronLeft className="w-5 h-5 text-background" />
+            <ChevronLeft className="w-5 h-5 text-foreground" />
           </button>
-          <h1 className="flex-1 text-center text-background font-bold text-sm tracking-widest uppercase">
+          <h1 className="flex-1 text-center text-foreground font-bold text-sm tracking-widest uppercase">
             Agendar Horário
           </h1>
           <div className="w-9" />
@@ -335,7 +335,7 @@ export const DateTimeSelectionStep = ({
 
         {/* Month/Year pill */}
         <div className="flex items-center justify-center px-3 pb-3">
-          <div className="inline-flex items-center gap-3 border-b border-t border-background/25 px-5 py-1.5">
+          <div className="inline-flex items-center gap-3 border-b border-t border-foreground/25 px-5 py-1.5">
             <button
               onClick={() => {
                 if (isCompact && dateContainerRef.current) {
@@ -350,11 +350,11 @@ export const DateTimeSelectionStep = ({
                   setDateScrollOffset(Math.max(0, dateScrollOffset - 30));
                 }
               }}
-              className="hover:bg-background/10 rounded-full transition-colors"
+              className="hover:bg-foreground/10 rounded-full transition-colors"
             >
-              <ChevronLeft className="w-4 h-4 text-background/70" />
+              <ChevronLeft className="w-4 h-4 text-foreground/70" />
             </button>
-            <span className="text-background text-xs font-medium tracking-wide min-w-[110px] text-center">
+            <span className="text-foreground text-xs font-medium tracking-wide min-w-[110px] text-center">
               {getMonthYearTitle()}
             </span>
             <button
@@ -371,9 +371,9 @@ export const DateTimeSelectionStep = ({
                   setDateScrollOffset(Math.min(allDates.length - visibleDatesCount, dateScrollOffset + 30));
                 }
               }}
-              className="hover:bg-background/10 rounded-full transition-colors"
+              className="hover:bg-foreground/10 rounded-full transition-colors"
             >
-              <ChevronRight className="w-4 h-4 text-background/70" />
+              <ChevronRight className="w-4 h-4 text-foreground/70" />
             </button>
           </div>
         </div>
@@ -386,10 +386,10 @@ export const DateTimeSelectionStep = ({
               disabled={dateScrollOffset === 0}
               className={cn(
                 "w-6 h-6 flex items-center justify-center rounded-full flex-shrink-0",
-                dateScrollOffset === 0 ? "opacity-30 pointer-events-none" : "hover:bg-background/10"
+                dateScrollOffset === 0 ? "opacity-30 pointer-events-none" : "hover:bg-foreground/10"
               )}
             >
-              <ChevronLeft className="w-4 h-4 text-background" />
+              <ChevronLeft className="w-4 h-4 text-foreground" />
             </button>
           )}
 
@@ -425,15 +425,15 @@ export const DateTimeSelectionStep = ({
                 >
                   <span className={cn(
                     "text-[10px] font-bold tracking-wider mb-1.5",
-                    isSelected ? "text-background" : "text-background/40"
+                    isSelected ? "text-foreground" : "text-foreground/40"
                   )}>
                     {dayAbbr}
                   </span>
                   <div className={cn(
                     "w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold transition-all",
                     isSelected
-                      ? "bg-background text-foreground"
-                      : "text-background hover:bg-background/10"
+                      ? "bg-foreground text-background"
+                      : "text-foreground hover:bg-foreground/10"
                   )}>
                     {format(date, "d")}
                   </div>
@@ -448,10 +448,10 @@ export const DateTimeSelectionStep = ({
               disabled={dateScrollOffset >= allDates.length - visibleDatesCount}
               className={cn(
                 "w-6 h-6 flex items-center justify-center rounded-full flex-shrink-0",
-                dateScrollOffset >= allDates.length - visibleDatesCount ? "opacity-30 pointer-events-none" : "hover:bg-background/10"
+                dateScrollOffset >= allDates.length - visibleDatesCount ? "opacity-30 pointer-events-none" : "hover:bg-foreground/10"
               )}
             >
-              <ChevronRight className="w-4 h-4 text-background" />
+              <ChevronRight className="w-4 h-4 text-foreground" />
             </button>
           )}
         </div>
