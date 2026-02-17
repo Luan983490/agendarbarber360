@@ -459,10 +459,10 @@ export const DateTimeSelectionStep = ({
 
       {/* White content area - all scrollable including button */}
       <div className="bg-background">
-        {/* Choose Professional - white card like reference */}
-        <div className="w-full bg-white py-5 px-4">
-          <h3 className="text-sm font-bold text-foreground uppercase tracking-widest text-center mb-5">Escolha o Profissional</h3>
-          <div className="flex justify-center gap-6 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+        {/* Choose Professional - dark background, square photos, name overlay */}
+        <div className="w-full bg-foreground py-5 px-4">
+          <h3 className="text-sm font-bold text-background uppercase tracking-widest text-center mb-5">Escolha o Profissional</h3>
+          <div className="flex justify-center gap-4 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
             {barbers.map((barber) => {
               const isSelected = selectedBarber === barber.id;
               return (
@@ -470,38 +470,29 @@ export const DateTimeSelectionStep = ({
                   key={barber.id}
                   onClick={() => onBarberChange(barber.id)}
                   className={cn(
-                    "flex flex-col items-center gap-2 min-w-[76px] flex-shrink-0 group rounded-lg p-2 transition-all",
-                    isSelected ? "bg-foreground" : "bg-transparent"
+                    "flex flex-col items-center min-w-[90px] flex-shrink-0 group transition-all"
                   )}
                 >
-                  {/* Dark circle background when selected */}
                   <div className={cn(
-                    "w-[72px] h-[72px] rounded-full flex items-center justify-center transition-all",
-                    "bg-transparent"
+                    "relative w-[90px] h-[110px] rounded-lg overflow-hidden border-2 transition-all",
+                    isSelected
+                      ? "border-primary ring-2 ring-primary/40"
+                      : "border-background/20 group-hover:border-background/50"
                   )}>
-                    <div className={cn(
-                      "w-[62px] h-[62px] rounded-full overflow-hidden border-2 transition-all",
-                      isSelected
-                        ? "border-background"
-                        : "border-border group-hover:border-foreground/40"
-                    )}>
-                      {barber.image_url ? (
-                        <img src={barber.image_url} alt={barber.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-muted flex items-center justify-center">
-                          <User className="w-7 h-7 text-muted-foreground" />
-                        </div>
-                      )}
+                    {barber.image_url ? (
+                      <img src={barber.image_url} alt={barber.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-muted flex items-center justify-center">
+                        <User className="w-8 h-8 text-muted-foreground" />
+                      </div>
+                    )}
+                    {/* Name overlay on top of image */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent pt-4 pb-1.5 px-1">
+                      <span className="text-[10px] text-white font-bold uppercase tracking-wide text-center block truncate">
+                        {barber.name}
+                      </span>
                     </div>
                   </div>
-                  <span className={cn(
-                    "text-[10px] text-center line-clamp-1 max-w-[80px] leading-tight uppercase tracking-wide",
-                    isSelected
-                      ? "font-bold text-background px-3 py-0.5"
-                      : "font-medium text-muted-foreground"
-                  )}>
-                    {barber.name}
-                  </span>
                 </button>
               );
             })}
@@ -513,7 +504,7 @@ export const DateTimeSelectionStep = ({
                 key={barber.id}
                 className={cn(
                   "w-1.5 h-1.5 rounded-full transition-all",
-                  selectedBarber === barber.id ? "bg-foreground" : "bg-border"
+                  selectedBarber === barber.id ? "bg-primary" : "bg-background/30"
                 )}
               />
             ))}
