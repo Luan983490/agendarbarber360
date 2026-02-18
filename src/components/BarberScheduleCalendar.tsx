@@ -1380,7 +1380,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
 
                 {/* Grid rows com time label sticky à esquerda */}
                 <div 
-                  className="divide-y divide-gray-500/30"
+                  className=""
                   style={{ 
                     minWidth: displayDays.length > 1 ? `${displayDays.length * 90 + 48}px` : 'auto',
                   }}

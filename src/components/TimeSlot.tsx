@@ -51,27 +51,24 @@ export const TimeSlot = ({
 
     switch (type) {
       case 'available':
-        return 'text-white cursor-pointer [&]:bg-[#558b90] [&]:border-[#456f73] [&]:hover:bg-[#456f73]';
+        return 'text-white cursor-pointer bg-[#558b90] border-[#456f73] hover:bg-[#456f73]';
       case 'booked':
         return cn(
-          'text-white cursor-pointer [&]:bg-[#066d3e] [&]:hover:bg-[#055530]',
-          '[&]:border-y-[#066d3e]',
+          'text-white cursor-pointer bg-[#066d3e] hover:bg-[#055530]',
           seamlessBorder
         );
       case 'booked-external':
         return cn(
-          'text-white cursor-pointer [&]:bg-[#d19102] [&]:hover:bg-[#a87502]',
-          '[&]:border-y-[#d19102]',
+          'text-white cursor-pointer bg-[#d19102] hover:bg-[#a87502]',
           seamlessBorder
         );
       case 'blocked':
         return cn(
-          'text-white cursor-pointer [&]:bg-[#6a1f1f] [&]:hover:bg-[#521818]',
-          '[&]:border-y-[#6a1f1f]',
+          'text-white cursor-pointer bg-[#6a1f1f] hover:bg-[#521818]',
           seamlessBorder
         );
       case 'off-hours':
-        return '[&]:bg-[#000000] [&]:border-[#000000] cursor-not-allowed';
+        return 'bg-black border-black cursor-not-allowed';
       default:
         return 'bg-muted border-border';
     }
