@@ -35,7 +35,7 @@ import { cn } from '@/lib/utils';
 
 type ViewMode = 'day' | 'week' | 'month';
 
-type SlotType = 'available' | 'booked' | 'booked-confirmed' | 'booked-external' | 'booked-noshow' | 'blocked' | 'off-hours';
+type SlotType = 'available' | 'booked' | 'booked-confirmed' | 'booked-external' | 'booked-noshow' | 'booked-encaixe' | 'blocked' | 'off-hours';
 
 interface Booking {
   id: string;
@@ -49,6 +49,7 @@ interface Booking {
   client_display_name?: string;
   service_display_name?: string;
   service_duration?: number;
+  notes?: string | null;
 }
 
 interface BarberBlock {
@@ -594,7 +595,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
   };
 
   const getSlotType = (date: Date, time: string): {
-    type: 'available' | 'booked' | 'booked-confirmed' | 'booked-external' | 'booked-noshow' | 'blocked' | 'off-hours';
+    type: SlotType;
     booking?: any;
     block?: any;
     isBookingStart?: boolean;
@@ -638,7 +639,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
       const isMiddle = !isStart && !isEnd;
       
       return {
-        type: matchingBooking.status === 'no_show' ? 'booked-noshow' : matchingBooking.is_external_booking ? 'booked-external' : matchingBooking.status === 'confirmed' ? 'booked-confirmed' : 'booked',
+        type: matchingBooking.status === 'no_show' ? 'booked-noshow' : matchingBooking.notes?.includes('[Encaixe]') ? 'booked-encaixe' : matchingBooking.is_external_booking ? 'booked-external' : matchingBooking.status === 'confirmed' ? 'booked-confirmed' : 'booked',
         booking: {
           client_name: matchingBooking.client_display_name || 'Cliente',
           service_name: matchingBooking.service_display_name || 'Serviço',
@@ -686,7 +687,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
       return;
     }
 
-    if (slotInfo.type === 'booked' || slotInfo.type === 'booked-confirmed' || slotInfo.type === 'booked-external' || slotInfo.type === 'booked-noshow') {
+    if (slotInfo.type === 'booked' || slotInfo.type === 'booked-confirmed' || slotInfo.type === 'booked-external' || slotInfo.type === 'booked-noshow' || slotInfo.type === 'booked-encaixe') {
       const booking = slotInfo.bookingId 
         ? bookings.find((b: Booking) => b.id === slotInfo.bookingId)
         : bookings.find((b: Booking) => {
@@ -1153,8 +1154,16 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                             <span>Confirmado</span>
                           </div>
                           <div className="flex items-center gap-1.5">
+                            <div className="w-2.5 h-2.5 shrink-0" style={{ backgroundColor: '#2563eb' }} />
+                            <span>Encaixe</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
                             <div className="w-2.5 h-2.5 shrink-0" style={{ backgroundColor: '#d19102' }} />
                             <span>Sem Cadastro</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-2.5 h-2.5 shrink-0" style={{ backgroundColor: '#4a4a4a' }} />
+                            <span>Ausência</span>
                           </div>
                           <div className="flex items-center gap-1.5">
                             <div className="w-2.5 h-2.5 shrink-0" style={{ backgroundColor: '#6a1f1f' }} />
@@ -1258,8 +1267,16 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                           <span>Confirmado</span>
                         </div>
                         <div className="flex items-center gap-1.5">
+                          <div className="w-2.5 h-2.5" style={{ backgroundColor: '#2563eb' }} />
+                          <span>Encaixe</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
                           <div className="w-2.5 h-2.5" style={{ backgroundColor: '#d19102' }} />
                           <span>Sem Cadastro</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2.5 h-2.5" style={{ backgroundColor: '#4a4a4a' }} />
+                          <span>Ausência</span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           <div className="w-2.5 h-2.5" style={{ backgroundColor: '#6a1f1f' }} />
