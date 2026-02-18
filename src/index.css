@@ -167,7 +167,7 @@ All colors MUST be HSL.
 
   /* Modern icons - applies to all Lucide SVG icons */
   svg.lucide {
-    stroke-width: 1.8;
+    stroke-width: 2.2;
   }
 
   /* Hide scrollbar but keep scroll functionality */
