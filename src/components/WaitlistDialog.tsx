@@ -2,14 +2,15 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Plus, Pencil, X, Loader2, Search, Clock } from 'lucide-react';
+import { Plus, Pencil, X, Loader2, Search, Clock, MessageCircle } from 'lucide-react';
 import { AddToWaitlistDialog } from './AddToWaitlistDialog';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+
 
 interface WaitlistItem {
   id: string;
@@ -80,17 +81,41 @@ export function WaitlistDialog({ open, onOpenChange, barbershopId, selectedDate,
     }
   };
 
-  const handleContact = async (id: string) => {
+  const handleStatusChange = async (id: string, newStatus: string) => {
     try {
+      const updateData: any = { status: newStatus };
+      if (newStatus === 'contacted') {
+        updateData.contacted_at = new Date().toISOString();
+      }
       const { error } = await supabase
         .from('waitlist')
-        .update({ status: 'contacted', contacted_at: new Date().toISOString() } as any)
+        .update(updateData)
         .eq('id', id);
       if (error) throw error;
-      toast({ title: 'Marcado como contatado' });
+      toast({ title: `Status atualizado para ${statusLabel(newStatus)}` });
       fetchItems();
     } catch (err: any) {
-      toast({ title: 'Erro', description: err.message, variant: 'destructive' });
+      toast({ title: 'Erro ao atualizar status', description: err.message, variant: 'destructive' });
+    }
+  };
+
+  const openWhatsApp = (phone: string | null) => {
+    if (!phone) {
+      toast({ title: 'Telefone não informado', variant: 'destructive' });
+      return;
+    }
+    const cleaned = phone.replace(/\D/g, '');
+    const number = cleaned.startsWith('55') ? cleaned : `55${cleaned}`;
+    window.open(`https://wa.me/${number}`, '_blank');
+  };
+
+  const statusLabel = (status: string) => {
+    switch (status) {
+      case 'waiting': return 'Aguardando';
+      case 'contacted': return 'Contatado';
+      case 'scheduled': return 'Agendado';
+      case 'cancelled': return 'Cancelado';
+      default: return status;
     }
   };
 
@@ -100,15 +125,6 @@ export function WaitlistDialog({ open, onOpenChange, barbershopId, selectedDate,
     item.service_name?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const statusBadge = (status: string) => {
-    switch (status) {
-      case 'waiting': return <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50">Aguardando</Badge>;
-      case 'contacted': return <Badge variant="outline" className="text-blue-600 border-blue-300 bg-blue-50">Contatado</Badge>;
-      case 'scheduled': return <Badge variant="outline" className="text-green-600 border-green-300 bg-green-50">Agendado</Badge>;
-      case 'cancelled': return <Badge variant="outline" className="text-red-600 border-red-300 bg-red-50">Cancelado</Badge>;
-      default: return <Badge variant="outline">{status}</Badge>;
-    }
-  };
 
   return (
     <>
@@ -161,6 +177,7 @@ export function WaitlistDialog({ open, onOpenChange, barbershopId, selectedDate,
                     <TableHead>Celular</TableHead>
                     <TableHead>Serviço</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead className="text-center">WhatsApp</TableHead>
                     <TableHead className="text-center">Alterar</TableHead>
                     <TableHead className="text-center">Remover</TableHead>
                   </TableRow>
@@ -178,7 +195,34 @@ export function WaitlistDialog({ open, onOpenChange, barbershopId, selectedDate,
                       <TableCell>{item.client_name}</TableCell>
                       <TableCell>{item.client_phone || '-'}</TableCell>
                       <TableCell>{item.service_name || '-'}</TableCell>
-                      <TableCell>{statusBadge(item.status)}</TableCell>
+                      <TableCell>
+                        <Select
+                          value={item.status}
+                          onValueChange={(value) => handleStatusChange(item.id, value)}
+                        >
+                          <SelectTrigger className="h-8 w-[130px] text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="waiting">🟡 Aguardando</SelectItem>
+                            <SelectItem value="contacted">🔵 Contatado</SelectItem>
+                            <SelectItem value="scheduled">🟢 Agendado</SelectItem>
+                            <SelectItem value="cancelled">🔴 Cancelado</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0 text-green-600 hover:text-green-700"
+                          onClick={() => openWhatsApp(item.client_phone)}
+                          disabled={!item.client_phone}
+                          title={item.client_phone ? 'Abrir WhatsApp' : 'Telefone não informado'}
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
                       <TableCell className="text-center">
                         <Button
                           variant="ghost"
