@@ -6,6 +6,8 @@ import { BarberShopProfile } from "./BarberShopProfile";
 import { BookingFlow } from "./booking";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { toSlug } from "@/lib/slug";
 import { cn } from "@/lib/utils";
 interface BarberShop {
   id: string;
@@ -28,12 +30,50 @@ interface BarberShopCardProps {
 
 export const BarberShopCard = ({ barberShop }: BarberShopCardProps) => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const { isFavorited, toggleFavorite } = useFavorites(user?.id);
   const isFav = isFavorited(barberShop.id);
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation();
     toggleFavorite(barberShop.id);
+  };
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const slug = toSlug(barberShop.name);
+    const barbershopUrl = `https://barber360.lovable.app/barbearia/${slug}`;
+    const shareData = {
+      title: barberShop.name,
+      text: `Confira ${barberShop.name} no Barber360!`,
+      url: barbershopUrl,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        return;
+      }
+    } catch (error) {
+      if ((error as DOMException)?.name === 'AbortError') return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(barbershopUrl);
+    } catch {
+      const textArea = document.createElement('textarea');
+      textArea.value = barbershopUrl;
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+    }
+    toast({
+      title: "Link copiado!",
+      description: "O link foi copiado para a área de transferência.",
+    });
   };
 
   return (
@@ -63,7 +103,7 @@ export const BarberShopCard = ({ barberShop }: BarberShopCardProps) => {
                 isFav && "fill-white text-white"
               )} />
             </Button>
-            <Button variant="secondary" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background">
+            <Button variant="secondary" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background" onClick={handleShare}>
               <Share2 className="h-3.5 w-3.5" />
             </Button>
           </div>
