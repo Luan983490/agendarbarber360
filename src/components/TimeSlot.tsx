@@ -5,7 +5,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 interface TimeSlotProps {
   time: string;
-  type: 'available' | 'booked' | 'booked-external' | 'blocked' | 'off-hours';
+  type: 'available' | 'booked' | 'booked-confirmed' | 'booked-external' | 'blocked' | 'off-hours';
   booking?: {
     client_name: string;
     service_name: string;
@@ -35,7 +35,7 @@ export const TimeSlot = ({
   compact = false
 }: TimeSlotProps) => {
   const isMobile = useIsMobile();
-  const isBooked = type === 'booked' || type === 'booked-external';
+  const isBooked = type === 'booked' || type === 'booked-confirmed' || type === 'booked-external';
   const isContinuation = isBooked && !isBookingStart;
 
   const getSlotStyles = () => {
@@ -55,6 +55,11 @@ export const TimeSlot = ({
       case 'booked':
         return cn(
           'text-white cursor-pointer bg-[#066d3e] hover:bg-[#055530]',
+          seamlessBorder
+        );
+      case 'booked-confirmed':
+        return cn(
+          'text-white cursor-pointer bg-[#7c3aed] hover:bg-[#6d28d9]',
           seamlessBorder
         );
       case 'booked-external':
@@ -154,7 +159,7 @@ export const TimeSlot = ({
         <HoverCardContent className="w-56 p-3">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
-              <User className={cn("h-3.5 w-3.5", type === 'booked-external' ? "text-yellow-500" : "text-green-500")} />
+              <User className={cn("h-3.5 w-3.5", type === 'booked-external' ? "text-yellow-500" : type === 'booked-confirmed' ? "text-purple-500" : "text-green-500")} />
               <p className="text-sm font-semibold">{booking.client_name}</p>
             </div>
             <p className="text-xs text-muted-foreground">{booking.service_name}</p>
