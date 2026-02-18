@@ -1258,8 +1258,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="flex gap-1 text-xs text-white h-7 px-2 rounded-none"
-                      style={{ backgroundColor: '#d97706' }}
+                      className="flex gap-1 text-xs h-7 px-2 rounded-none bg-background text-card-foreground hover:bg-card"
                       onClick={() => setWaitlistOpen(true)}
                     >
                       <Clock className="h-3 w-3" strokeWidth={1.5} />
