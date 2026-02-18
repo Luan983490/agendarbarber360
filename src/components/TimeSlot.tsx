@@ -129,7 +129,7 @@ export const TimeSlot = ({
       )}
       {isContinuation && isBookingEnd && (
         <div className="w-full flex items-center justify-center">
-          <div className="w-3/4 h-[2px] rounded-full bg-white/50" />
+          <div className="w-2 h-2 rounded-full bg-white/60" />
         </div>
       )}
       {!isBooked && type === 'available' && (
