@@ -96,19 +96,22 @@ export const ServiceSelectionStep = ({
 
   const isFav = isFavorited(barbershop.id);
 
-  // Hide mobile CTA permanently on first scroll
+  // Hide mobile CTA when services section is visible in viewport
   useEffect(() => {
     if (ctaDismissed) return;
-    const container = document.getElementById("service-selection-scroll");
-    if (!container) return;
-    const onScroll = () => {
-      if (container.scrollTop > 50) {
-        setShowMobileCta(false);
-        setCtaDismissed(true);
-      }
-    };
-    container.addEventListener("scroll", onScroll, { passive: true });
-    return () => container.removeEventListener("scroll", onScroll);
+    const servicesEl = document.getElementById("services-list");
+    if (!servicesEl) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShowMobileCta(false);
+          setCtaDismissed(true);
+        }
+      },
+      { threshold: 0.1 }
+    );
+    observer.observe(servicesEl);
+    return () => observer.disconnect();
   }, [ctaDismissed]);
 
   const handleToggleFavorite = () => {
