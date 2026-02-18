@@ -35,7 +35,7 @@ import { cn } from '@/lib/utils';
 
 type ViewMode = 'day' | 'week' | 'month';
 
-type SlotType = 'available' | 'booked' | 'booked-confirmed' | 'booked-external' | 'blocked' | 'off-hours';
+type SlotType = 'available' | 'booked' | 'booked-confirmed' | 'booked-external' | 'booked-noshow' | 'blocked' | 'off-hours';
 
 interface Booking {
   id: string;
@@ -594,7 +594,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
   };
 
   const getSlotType = (date: Date, time: string): {
-    type: 'available' | 'booked' | 'booked-confirmed' | 'booked-external' | 'blocked' | 'off-hours';
+    type: 'available' | 'booked' | 'booked-confirmed' | 'booked-external' | 'booked-noshow' | 'blocked' | 'off-hours';
     booking?: any;
     block?: any;
     isBookingStart?: boolean;
@@ -638,7 +638,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
       const isMiddle = !isStart && !isEnd;
       
       return {
-        type: matchingBooking.is_external_booking ? 'booked-external' : matchingBooking.status === 'confirmed' ? 'booked-confirmed' : 'booked',
+        type: matchingBooking.status === 'no_show' ? 'booked-noshow' : matchingBooking.is_external_booking ? 'booked-external' : matchingBooking.status === 'confirmed' ? 'booked-confirmed' : 'booked',
         booking: {
           client_name: matchingBooking.client_display_name || 'Cliente',
           service_name: matchingBooking.service_display_name || 'Serviço',
@@ -686,7 +686,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
       return;
     }
 
-    if (slotInfo.type === 'booked' || slotInfo.type === 'booked-confirmed' || slotInfo.type === 'booked-external') {
+    if (slotInfo.type === 'booked' || slotInfo.type === 'booked-confirmed' || slotInfo.type === 'booked-external' || slotInfo.type === 'booked-noshow') {
       const booking = slotInfo.bookingId 
         ? bookings.find((b: Booking) => b.id === slotInfo.bookingId)
         : bookings.find((b: Booking) => {

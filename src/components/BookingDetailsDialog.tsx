@@ -83,7 +83,7 @@ export const BookingDetailsDialog = ({
 
   const handleAbsence = () => {
     if (!booking) return;
-    onUpdateStatus(booking.id, 'cancelled');
+    onUpdateStatus(booking.id, 'no_show');
     toast({
       title: "Ausência registrada",
       description: "O cliente foi marcado como ausente.",
