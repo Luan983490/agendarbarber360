@@ -54,13 +54,13 @@ export const TimeSlot = ({
         return 'text-white cursor-pointer [&]:bg-[#558b90] [&]:border-[#456f73] [&]:hover:bg-[#456f73]';
       case 'booked':
         return cn(
-          'text-white cursor-pointer [&]:bg-[#066d3e] [&]:hover:bg-[#055530] border-l-[3px] border-l-white/60',
+          'text-white cursor-pointer [&]:bg-[#066d3e] [&]:hover:bg-[#055530]',
           '[&]:border-y-[#066d3e]',
           seamlessBorder
         );
       case 'booked-external':
         return cn(
-          'text-white cursor-pointer [&]:bg-[#d19102] [&]:hover:bg-[#a87502] border-l-[3px] border-l-white/60',
+          'text-white cursor-pointer [&]:bg-[#d19102] [&]:hover:bg-[#a87502]',
           '[&]:border-y-[#d19102]',
           seamlessBorder
         );
