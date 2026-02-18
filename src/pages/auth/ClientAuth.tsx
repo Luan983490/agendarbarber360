@@ -361,6 +361,16 @@ const ClientAuth = () => {
       <div className="flex-1 flex items-center justify-center p-4 md:p-8 bg-background">
         <div className="w-full max-w-md">
 
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/')}
+            className="mb-4 -ml-2 text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="mr-1 h-4 w-4" />
+            Voltar
+          </Button>
+
           {activeTab === 'login' ? (
             <div className="space-y-6">
               <div className="space-y-1">
