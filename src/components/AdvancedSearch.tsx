@@ -165,6 +165,14 @@ export const AdvancedSearch = ({
     onSearchChange("");
   }, [onSearchChange]);
 
+  const handleProximitySearch = useCallback(() => {
+    if (isProximityActive) {
+      onClearProximity();
+    } else if (!geolocation.loading) {
+      geolocation.requestLocation();
+    }
+  }, [isProximityActive, onClearProximity, geolocation]);
+
   return (
     <>
     <PWAInlineBanner />
@@ -173,42 +181,42 @@ export const AdvancedSearch = ({
         Agende seu Corte
       </h2>
 
-      {/* Search Type Tabs */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        <Button
-          variant={searchType === 'name' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => handleSearchTypeChange('name')}
-          className="flex items-center gap-2 text-white"
-          style={searchType === 'name' ? { background: 'linear-gradient(135deg, hsl(45, 60%, 28%) 0%, hsl(35, 40%, 14%) 100%)', border: 'none' } : {}}
-        >
-          <Search className="h-4 w-4" strokeWidth={1} />
-          Por Nome
-        </Button>
-        <Button
-          variant={searchType === 'city' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => handleSearchTypeChange('city')}
-          className="flex items-center gap-2 text-white"
-          style={searchType === 'city' ? { background: 'linear-gradient(135deg, hsl(45, 60%, 28%) 0%, hsl(35, 40%, 14%) 100%)', border: 'none' } : {}}
-        >
-          <MapIcon className="h-4 w-4" strokeWidth={1} />
-          Por Cidade
-        </Button>
-        <Button
-          variant={searchType === 'proximity' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => handleSearchTypeChange('proximity')}
-          className="flex items-center gap-2 text-white"
-          style={searchType === 'proximity' ? { background: 'linear-gradient(135deg, hsl(45, 60%, 28%) 0%, hsl(35, 40%, 14%) 100%)', border: 'none' } : {}}
-        >
-          <MapPinned className="h-4 w-4" strokeWidth={1} />
-          Próximas
-        </Button>
-      </div>
+      {/* Search Type Tabs + Input inline */}
+      <div className="flex flex-col md:flex-row gap-3 mb-6 items-stretch md:items-center">
+        <div className="flex gap-2 flex-shrink-0">
+          <Button
+            variant={searchType === 'name' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => handleSearchTypeChange('name')}
+            className="flex items-center gap-2 text-white"
+            style={searchType === 'name' ? { background: 'linear-gradient(135deg, hsl(45, 60%, 28%) 0%, hsl(35, 40%, 14%) 100%)', border: 'none' } : {}}
+          >
+            <Search className="h-4 w-4" strokeWidth={1} />
+            Por Nome
+          </Button>
+          <Button
+            variant={searchType === 'city' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => handleSearchTypeChange('city')}
+            className="flex items-center gap-2 text-white"
+            style={searchType === 'city' ? { background: 'linear-gradient(135deg, hsl(45, 60%, 28%) 0%, hsl(35, 40%, 14%) 100%)', border: 'none' } : {}}
+          >
+            <MapIcon className="h-4 w-4" strokeWidth={1} />
+            Por Cidade
+          </Button>
+          <Button
+            variant={searchType === 'proximity' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => handleSearchTypeChange('proximity')}
+            className="flex items-center gap-2 text-white"
+            style={searchType === 'proximity' ? { background: 'linear-gradient(135deg, hsl(45, 60%, 28%) 0%, hsl(35, 40%, 14%) 100%)', border: 'none' } : {}}
+          >
+            <MapPinned className="h-4 w-4" strokeWidth={1} />
+            Próximas
+          </Button>
+        </div>
 
-      {/* Search Input based on type */}
-      <div className="space-y-4">
+        <div className="flex-1">
         {searchType === 'name' && (
           <div className="relative">
             <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
@@ -296,37 +304,26 @@ export const AdvancedSearch = ({
             </Popover>
 
             {selectedCity && (
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  <MapPin className="h-3 w-3" />
-                  {selectedCity}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-4 w-4 p-0 ml-1 hover:bg-transparent"
-                    onClick={() => onCityChange(null)}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </Badge>
-              </div>
-            )}
-            
-            {!selectedCity && citySearchQuery.length < MIN_SEARCH_CHARS && (
-              <p className="text-sm text-muted-foreground text-center">
-                Digite pelo menos {MIN_SEARCH_CHARS} letras para buscar uma cidade.
-              </p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onCityChange('')}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4 mr-1" />
+                Limpar filtro de cidade
+              </Button>
             )}
           </div>
         )}
 
         {searchType === 'proximity' && (
-          <div className="space-y-4">
+          <div className="space-y-3">
             <Button
-              variant={isProximityActive ? "secondary" : "default"}
-              onClick={handleProximityClick}
+              variant={isProximityActive ? "secondary" : "outline"}
+              className="w-full justify-center gap-2"
+              onClick={handleProximitySearch}
               disabled={geolocation.loading}
-              className="w-full"
             >
               {geolocation.loading ? (
                 <>
@@ -372,6 +369,7 @@ export const AdvancedSearch = ({
             )}
           </div>
         )}
+        </div>
       </div>
     </div>
     </>
