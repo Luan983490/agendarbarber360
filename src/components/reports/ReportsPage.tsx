@@ -156,7 +156,10 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
   }, [isOwnerOrAdmin, barbershopId]);
 
   useEffect(() => {
-    fetchReports();
+    // Only fetch reports when role is resolved (not null/loading)
+    if (role) {
+      fetchReports();
+    }
   }, [currentMonth, selectedBarberId, role, barberId]);
 
   const fetchBarbers = async () => {
@@ -186,17 +189,21 @@ export function ReportsPage({ barbershopId }: ReportsPageProps) {
     const previousStartStr = format(previousStart, 'yyyy-MM-dd');
     const previousEndStr = format(previousEnd, 'yyyy-MM-dd');
 
-    Promise.all([
-      fetchRevenueReport(startDateStr, endDateStr, barberFilter),
-      fetchBookingsReport(startDateStr, endDateStr, barberFilter),
-      fetchServicesReport(startDateStr, endDateStr, barberFilter),
-      isOwnerOrAdmin ? fetchPerformanceReport(startDateStr, endDateStr) : Promise.resolve(),
-      fetchComparisonReport(startDateStr, endDateStr, previousStartStr, previousEndStr, barberFilter),
-      fetchCancellationReport(startDateStr, endDateStr, barberFilter),
-      isOwnerOrAdmin ? fetchOccupancyReport(startDateStr, endDateStr, barberFilter) : Promise.resolve(),
-      fetchTopClientsReport(startDateStr, endDateStr),
-      isOwnerOrAdmin ? fetchAuditTimeline(startDateStr, endDateStr) : Promise.resolve(),
-    ]);
+    try {
+      await Promise.all([
+        fetchRevenueReport(startDateStr, endDateStr, barberFilter),
+        fetchBookingsReport(startDateStr, endDateStr, barberFilter),
+        fetchServicesReport(startDateStr, endDateStr, barberFilter),
+        isOwnerOrAdmin ? fetchPerformanceReport(startDateStr, endDateStr) : Promise.resolve(),
+        fetchComparisonReport(startDateStr, endDateStr, previousStartStr, previousEndStr, barberFilter),
+        fetchCancellationReport(startDateStr, endDateStr, barberFilter),
+        isOwnerOrAdmin ? fetchOccupancyReport(startDateStr, endDateStr, barberFilter) : Promise.resolve(),
+        fetchTopClientsReport(startDateStr, endDateStr),
+        isOwnerOrAdmin ? fetchAuditTimeline(startDateStr, endDateStr) : Promise.resolve(),
+      ]);
+    } catch (error) {
+      console.error('Erro ao carregar relatórios:', error);
+    }
   };
 
   const fetchRevenueReport = async (start: string, end: string, barberFilter: string | null) => {
