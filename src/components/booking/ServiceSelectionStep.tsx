@@ -363,16 +363,6 @@ export const ServiceSelectionStep = ({
               {/* Right: Book + Favorite & Share Buttons */}
               <div className="flex gap-2 flex-shrink-0 items-center">
                 <Button
-                  className="hidden md:inline-flex rounded-lg gap-2 text-sm font-semibold px-6 h-11"
-                  onClick={() => {
-                    const servicesSection = document.getElementById("services-list");
-                    servicesSection?.scrollIntoView({ behavior: "smooth" });
-                  }}
-                >
-                  <Calendar className="w-4 h-4" />
-                  Agendar
-                </Button>
-                <Button
                   variant="ghost"
                   size="icon"
                   className={cn(
