@@ -12,8 +12,9 @@ import { BlockOptionsDialog } from './BlockOptionsDialog';
 import { SlotActionMenu } from './SlotActionMenu';
 import { EncaixeDialog } from './EncaixeDialog';
 import { MultiBlockDialog } from './MultiBlockDialog';
+import { WaitlistDialog } from './WaitlistDialog';
 import { useUserAccess } from '@/hooks/useUserAccess';
-import { ChevronLeft, ChevronRight, Loader2, ChevronDown, ChevronUp, Plus, Minus, MoreVertical } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, ChevronDown, ChevronUp, Plus, Minus, MoreVertical, Clock } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -157,6 +158,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
   const [multiBlockOpen, setMultiBlockOpen] = useState(false);
   const [encaixeOpen, setEncaixeOpen] = useState(false);
   const [mobileLegendOpen, setMobileLegendOpen] = useState(false);
+  const [waitlistOpen, setWaitlistOpen] = useState(false);
   const [selectedSlots, setSelectedSlots] = useState<Array<{ date: Date; time: string }>>([]);
   
   // Estado para horários de trabalho do barbeiro
@@ -1111,17 +1113,29 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                   })()}
                 </div>
 
-                {/* Center: Encaixe button */}
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="flex gap-1 text-xs text-white h-7 px-2 rounded-none"
-                  style={{ backgroundColor: '#2d044a' }}
-                  onClick={() => setEncaixeOpen(true)}
-                >
-                  <Plus className="h-3 w-3" strokeWidth={1.5} />
-                  <span>Encaixe</span>
-                </Button>
+                {/* Center: Encaixe + Lista de Espera buttons */}
+                <div className="flex gap-1">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="flex gap-1 text-xs text-white h-7 px-2 rounded-none"
+                    style={{ backgroundColor: '#2d044a' }}
+                    onClick={() => setEncaixeOpen(true)}
+                  >
+                    <Plus className="h-3 w-3" strokeWidth={1.5} />
+                    <span>Encaixe</span>
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="flex gap-1 text-xs text-white h-7 px-2 rounded-none"
+                    style={{ backgroundColor: '#d97706' }}
+                    onClick={() => setWaitlistOpen(true)}
+                  >
+                    <Clock className="h-3 w-3" strokeWidth={1.5} />
+                    <span>Espera</span>
+                  </Button>
+                </div>
 
                 {/* Right: Three dots menu */}
                 <DropdownMenu>
@@ -1230,16 +1244,28 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                     </div>
                   </div>
 
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="flex gap-1 text-xs text-white h-7 px-2 rounded-none"
-                    style={{ backgroundColor: '#2d044a' }}
-                    onClick={() => setEncaixeOpen(true)}
-                  >
-                    <Plus className="h-3 w-3" strokeWidth={1.5} />
-                    <span>Encaixe</span>
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="flex gap-1 text-xs text-white h-7 px-2 rounded-none"
+                      style={{ backgroundColor: '#2d044a' }}
+                      onClick={() => setEncaixeOpen(true)}
+                    >
+                      <Plus className="h-3 w-3" strokeWidth={1.5} />
+                      <span>Encaixe</span>
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="flex gap-1 text-xs text-white h-7 px-2 rounded-none"
+                      style={{ backgroundColor: '#d97706' }}
+                      onClick={() => setWaitlistOpen(true)}
+                    >
+                      <Clock className="h-3 w-3" strokeWidth={1.5} />
+                      <span>Lista de Espera</span>
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Linha 2: Legenda */}
@@ -1660,6 +1686,13 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
             });
           }
         }}
+      />
+      <WaitlistDialog
+        open={waitlistOpen}
+        onOpenChange={setWaitlistOpen}
+        barbershopId={barbershopId}
+        selectedDate={currentDate}
+        barberId={selectedBarber || undefined}
       />
     </div>
   );

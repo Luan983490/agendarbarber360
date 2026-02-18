@@ -2795,6 +2795,86 @@ export type Database = {
           },
         ]
       }
+      waitlist: {
+        Row: {
+          barber_id: string | null
+          barbershop_id: string
+          client_name: string
+          client_phone: string | null
+          contacted_at: string | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          description: string | null
+          desired_date: string
+          id: string
+          service_name: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          barber_id?: string | null
+          barbershop_id: string
+          client_name: string
+          client_phone?: string | null
+          contacted_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          desired_date: string
+          id?: string
+          service_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          barber_id?: string | null
+          barbershop_id?: string
+          client_name?: string
+          client_phone?: string | null
+          contacted_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          desired_date?: string
+          id?: string
+          service_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waitlist_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "barbers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "vw_barber_permissions_summary"
+            referencedColumns: ["barber_id"]
+          },
+          {
+            foreignKeyName: "waitlist_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "vw_barbershop_onboarding_status"
+            referencedColumns: ["barbershop_id"]
+          },
+        ]
+      }
     }
     Views: {
       recent_errors: {
