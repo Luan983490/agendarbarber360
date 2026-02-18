@@ -106,14 +106,48 @@ export function AddToWaitlistDialog({ open, onOpenChange, barbershopId, selected
   }, [open, editItem]);
 
   const fetchClients = async () => {
-    const { data } = await supabase
+    // 1. Clientes cadastrados na barbearia
+    const { data: registeredClients } = await supabase
       .from('barbershop_clients')
       .select('id, client_name, client_phone')
       .eq('barbershop_id', barbershopId)
       .eq('is_active', true)
       .is('deleted_at', null)
       .order('client_name');
-    setClients((data as Client[]) || []);
+
+    // 2. Clientes que já agendaram nesta barbearia (via profiles)
+    const { data: bookingClients } = await supabase
+      .from('bookings')
+      .select('client_id, client_name, profiles:client_id(display_name, phone)')
+      .eq('barbershop_id', barbershopId)
+      .not('client_id', 'is', null)
+      .is('deleted_at', null);
+
+    // Merge e deduplica
+    const clientMap = new Map<string, Client>();
+
+    // Adiciona cadastrados primeiro (prioridade)
+    (registeredClients || []).forEach((c: any) => {
+      const key = c.client_phone?.replace(/\D/g, '') || c.id;
+      clientMap.set(key, { id: c.id, client_name: c.client_name, client_phone: c.client_phone || '' });
+    });
+
+    // Adiciona clientes de agendamentos que não estão cadastrados
+    (bookingClients || []).forEach((b: any) => {
+      if (!b.client_id) return;
+      const profile = b.profiles;
+      const name = profile?.display_name || b.client_name || '';
+      const phone = profile?.phone || '';
+      if (!name) return;
+
+      const key = phone?.replace(/\D/g, '') || b.client_id;
+      if (!clientMap.has(key)) {
+        clientMap.set(key, { id: `profile_${b.client_id}`, client_name: name, client_phone: phone });
+      }
+    });
+
+    const merged = Array.from(clientMap.values()).sort((a, b) => a.client_name.localeCompare(b.client_name));
+    setClients(merged);
   };
 
   const fetchServices = async () => {
