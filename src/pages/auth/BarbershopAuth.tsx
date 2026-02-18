@@ -300,6 +300,10 @@ const BarbershopAuth = () => {
         <img src={authHero} alt="" className="absolute inset-0 w-full h-full object-cover" fetchPriority="high" loading="eager" decoding="async" />
         <div className="absolute inset-0 bg-black/50" />
         <div className="relative z-10 text-center space-y-3">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 text-white text-[11px] font-medium tracking-wide uppercase mb-2">
+            <Store className="h-3 w-3" />
+            Área da Barbearia
+          </div>
           <img src={b360Logo} alt="B360" className="h-10 mx-auto drop-shadow-lg" />
           <h1 className="text-xl font-bold text-white">
             {activeTab === 'login' ? 'Gerencie sua barbearia' : 'Comece agora!'}
@@ -327,6 +331,10 @@ const BarbershopAuth = () => {
         <img src={authHero} alt="" className="absolute inset-0 w-full h-full object-cover" fetchPriority="high" loading="eager" decoding="async" />
         <div className="absolute inset-0 bg-black/40" />
         <div className="relative z-10 text-center space-y-6">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 text-white text-xs font-medium tracking-wide uppercase mb-1">
+            <Store className="h-3.5 w-3.5" />
+            Área da Barbearia
+          </div>
           <img src={b360Logo} alt="B360" className="h-14 mx-auto drop-shadow-lg" />
           <h1 className="text-3xl md:text-4xl font-bold text-white">
             {activeTab === 'login' ? 'Gerencie sua barbearia' : 'Comece agora!'}
