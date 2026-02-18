@@ -97,11 +97,9 @@ export const TimeSlot = ({
     onClick?.(event);
   };
 
-  // Altura: slots com booking usam min-height para nunca cortar conteúdo
+  // Altura uniforme para todos os slots
   const isStartWithInfo = isBookingStart && isBooked && booking;
-  const slotHeight = isStartWithInfo
-    ? 'min-h-[38px] sm:min-h-[34px]'
-    : (compact ? 'h-[20px]' : 'h-[24px] sm:h-[22px]');
+  const slotHeight = compact ? 'h-[20px]' : 'h-[24px] sm:h-[22px]';
 
   const clientLabel = booking?.client_name?.trim() || 'Cliente';
   // Pega apenas o primeiro nome para mobile
@@ -113,16 +111,17 @@ export const TimeSlot = ({
   const slotContent = (
     <div
       className={cn(
-        // Layout fixo: largura total da célula, overflow hidden para não empurrar outras colunas
-        'w-full overflow-hidden px-1 sm:px-1 transition-all flex items-center',
+        'w-full px-1 sm:px-1 transition-all flex items-center',
+        // Booking start: relative + overflow-visible para o conteúdo fluir no próximo slot
+        isStartWithInfo ? 'relative overflow-visible z-10' : 'overflow-hidden',
         getSlotStyles(),
         slotHeight,
         continuationStyle
       )}
       onClick={handleClick}
     >
-      {isBookingStart && isBooked && booking && (
-        <div className="min-w-0 w-full px-1 py-0.5">
+      {isStartWithInfo && (
+        <div className="absolute inset-x-0 top-0 px-1.5 py-0.5 pointer-events-none" style={{ height: compact ? '40px' : '46px' }}>
           <div className="flex items-center gap-1 min-w-0">
             {getStatusDot()}
             <span
