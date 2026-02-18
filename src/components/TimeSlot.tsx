@@ -51,17 +51,17 @@ export const TimeSlot = ({
         // Disponível - #558b90
         return 'text-white cursor-pointer [&]:bg-[#558b90] [&]:border-[#456f73] [&]:hover:bg-[#456f73]';
       case 'booked':
-        // Agendado - #066d3e (verde escuro)
+        // Agendado - #066d3e (verde escuro) com borda esquerda branca para destaque
         return cn(
-          'text-white cursor-pointer [&]:bg-[#066d3e] [&]:border-[#055530] [&]:hover:bg-[#055530]',
+          'text-white cursor-pointer [&]:bg-[#066d3e] [&]:border-[#055530] [&]:hover:bg-[#055530] border-l-[3px] border-l-white/60',
           isBookingStart && !isBookingEnd && 'border-b-0',
           isBookingEnd && !isBookingStart && 'border-t-0',
           isBookingMiddle && 'border-t-0 border-b-0'
         );
       case 'booked-external':
-        // Sem Cadastro - #d19102 (amarelo/dourado)
+        // Sem Cadastro - #d19102 (amarelo/dourado) com borda esquerda para destaque
         return cn(
-          'text-white cursor-pointer [&]:bg-[#d19102] [&]:border-[#a87502] [&]:hover:bg-[#a87502]',
+          'text-white cursor-pointer [&]:bg-[#d19102] [&]:border-[#a87502] [&]:hover:bg-[#a87502] border-l-[3px] border-l-white/60',
           isBookingStart && !isBookingEnd && 'border-b-0',
           isBookingEnd && !isBookingStart && 'border-t-0',
           isBookingMiddle && 'border-t-0 border-b-0'
@@ -97,8 +97,11 @@ export const TimeSlot = ({
     onClick?.(event);
   };
 
-  // Altura fixa e uniforme para TODOS os slots
-  const slotHeight = compact ? 'h-[20px]' : 'h-[24px] sm:h-[22px]';
+  // Altura: slots com booking no início precisam de mais espaço para mostrar info
+  const isStartWithInfo = isBookingStart && isBooked && booking;
+  const slotHeight = compact 
+    ? (isStartWithInfo ? 'h-[32px]' : 'h-[20px]') 
+    : (isStartWithInfo ? 'h-[38px] sm:h-[34px]' : 'h-[24px] sm:h-[22px]');
 
   const clientLabel = booking?.client_name?.trim() || 'Cliente';
   // Pega apenas o primeiro nome para mobile
@@ -119,27 +122,25 @@ export const TimeSlot = ({
       onClick={handleClick}
     >
       {isBookingStart && isBooked && booking && (
-        <div className="min-w-0 w-full overflow-hidden px-0.5">
+        <div className="min-w-0 w-full overflow-hidden px-1">
           <div className="flex items-center gap-1 min-w-0">
             {getStatusDot()}
             <span
-              className="min-w-0 flex-1 text-xs sm:text-xs font-bold leading-tight truncate"
+              className="min-w-0 flex-1 text-[11px] sm:text-xs font-bold leading-tight truncate drop-shadow-sm"
               title={clientLabel}
             >
-              {/* Mostra nome curto em mobile, completo em desktop */}
               <span className="sm:hidden">{clientShort}</span>
               <span className="hidden sm:inline">{clientLabel}</span>
             </span>
           </div>
 
-          {/* Mostra duração em todas as telas */}
           {(booking.duration || booking.end_time) && (
             <div className={cn(
-              "mt-0.5 text-[9px] sm:text-[10px] leading-none truncate font-medium",
-              type === 'booked' ? 'text-white/80' : 'text-amber-950/70'
+              "text-[10px] sm:text-[11px] leading-tight truncate font-semibold tracking-wide",
+              type === 'booked' ? 'text-white/90' : 'text-amber-950/80'
             )}>
-              {booking.duration ? `${booking.duration}min` : ''}
-              {booking.end_time ? ` • ${booking.end_time}` : ''}
+              {booking.end_time ? `${time.substring(0, 5)}–${booking.end_time}` : ''}
+              {booking.duration ? ` · ${booking.duration}min` : ''}
             </div>
           )}
         </div>
