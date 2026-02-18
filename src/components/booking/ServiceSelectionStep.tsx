@@ -134,15 +134,33 @@ export const ServiceSelectionStep = ({
     try {
       if (navigator.share) {
         await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(barbershopUrl);
-        toast({
-          title: "Link copiado!",
-          description: "O link foi copiado para a área de transferência.",
-        });
+        return;
       }
     } catch (error) {
-      console.error("Error sharing:", error);
+      // Share was cancelled or failed, fall through to clipboard
+      if ((error as DOMException)?.name === 'AbortError') return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(barbershopUrl);
+      toast({
+        title: "Link copiado!",
+        description: "O link foi copiado para a área de transferência.",
+      });
+    } catch {
+      // Final fallback - select and copy
+      const textArea = document.createElement('textarea');
+      textArea.value = barbershopUrl;
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      toast({
+        title: "Link copiado!",
+        description: "O link foi copiado para a área de transferência.",
+      });
     }
   };
 
