@@ -665,7 +665,7 @@ export const ServiceSelectionStep = ({
       {/* Fixed bottom mobile CTA - hides on scroll down, fully hidden when dismissed */}
       {showMobileCta && (
         <div
-          className="fixed bottom-[calc(3rem+env(safe-area-inset-bottom))] left-0 right-0 p-3 md:hidden z-[60]"
+          className="fixed bottom-[calc(3rem+env(safe-area-inset-bottom))] left-0 right-0 p-3 z-[60] md:bottom-6 md:left-auto md:right-6 md:w-auto md:p-0"
         >
         <Button
           className="w-full rounded-lg gap-2 text-sm font-semibold h-12"
