@@ -119,6 +119,14 @@ const Dashboard = () => {
   const { toast } = useToast();
   const { subscription, trial } = useSubscription(barbershop?.id || null);
   const isMobile = useIsMobile();
+  const [isLgUp, setIsLgUp] = React.useState(false);
+  React.useEffect(() => {
+    const mql = window.matchMedia('(min-width: 1024px)');
+    const onChange = () => setIsLgUp(mql.matches);
+    mql.addEventListener('change', onChange);
+    setIsLgUp(mql.matches);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
   
   // Ref para função de refresh do calendário
   const calendarRefreshRef = useRef<(() => void) | null>(null);
@@ -774,14 +782,14 @@ const Dashboard = () => {
   }
 
   const isAgendaTab = currentTab === 'bookings';
-  const Wrapper = isMobile ? React.Fragment : SidebarProvider;
+  const Wrapper = isLgUp ? SidebarProvider : React.Fragment;
 
   const content = (
     <div className={cn("min-h-screen bg-background flex flex-col w-full", isAgendaTab && "max-lg:h-[100dvh] max-lg:overflow-hidden max-lg:min-h-0")}>
       {dashboardHeaderJSX}
       
       <div className={cn("flex flex-1 w-full", isAgendaTab && "max-lg:min-h-0 max-lg:overflow-hidden")} style={{ paddingTop: headerHeight }}>
-        {!isMobile && (
+        {isLgUp && (
           <>
             <div className="fixed left-0 z-40" style={{ top: headerHeight, height: `calc(100vh - ${headerHeight}px)` }}>
               <DashboardSidebar currentTab={currentTab} onTabChange={setCurrentTab} />
