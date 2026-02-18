@@ -165,9 +165,9 @@ All colors MUST be HSL.
     @apply font-display font-semibold;
   }
 
-  /* Modern thin icons - applies to all Lucide SVG icons */
+  /* Modern icons - applies to all Lucide SVG icons */
   svg.lucide {
-    stroke-width: 1.5;
+    stroke-width: 1.8;
   }
 
   /* Hide scrollbar but keep scroll functionality */
