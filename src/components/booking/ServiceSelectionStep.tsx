@@ -124,10 +124,11 @@ export const ServiceSelectionStep = ({
 
   const handleShare = async () => {
     const slug = barbershopDetails?.slug || toSlug(barbershop.name);
-    const barbershopUrl = `${window.location.origin}/barbearia/${slug}`;
+    const productionOrigin = 'https://barber360.lovable.app';
+    const barbershopUrl = `${productionOrigin}/barbearia/${slug}`;
     const shareData = {
       title: barbershop.name,
-      text: `Confira ${barbershop.name}!`,
+      text: `Confira ${barbershop.name} no Barber360!`,
       url: barbershopUrl,
     };
 
@@ -137,18 +138,13 @@ export const ServiceSelectionStep = ({
         return;
       }
     } catch (error) {
-      // Share was cancelled or failed, fall through to clipboard
       if ((error as DOMException)?.name === 'AbortError') return;
     }
 
+    // Fallback: copy to clipboard
     try {
       await navigator.clipboard.writeText(barbershopUrl);
-      toast({
-        title: "Link copiado!",
-        description: "O link foi copiado para a área de transferência.",
-      });
     } catch {
-      // Final fallback - select and copy
       const textArea = document.createElement('textarea');
       textArea.value = barbershopUrl;
       textArea.style.position = 'fixed';
@@ -157,11 +153,11 @@ export const ServiceSelectionStep = ({
       textArea.select();
       document.execCommand('copy');
       document.body.removeChild(textArea);
-      toast({
-        title: "Link copiado!",
-        description: "O link foi copiado para a área de transferência.",
-      });
     }
+    toast({
+      title: "Link copiado!",
+      description: "O link foi copiado para a área de transferência.",
+    });
   };
 
   const filteredServices = services.filter((service) =>
