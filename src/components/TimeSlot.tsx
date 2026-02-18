@@ -115,26 +115,19 @@ export const TimeSlot = ({
     >
       {isStartWithInfo && (
         <div className="absolute inset-x-0 top-0 px-1.5 py-0.5 pointer-events-none" style={{ height: compact ? '40px' : '46px' }}>
+          {/* Linha 1: horário (ex: 09:15 - 10:00) */}
           <div className="flex items-center gap-1 min-w-0">
             {getStatusDot()}
-            <span
-              className="min-w-0 flex-1 text-[11px] sm:text-xs font-bold leading-tight truncate drop-shadow-sm"
-              title={clientLabel}
-            >
-              <span className="sm:hidden">{clientShort}</span>
-              <span className="hidden sm:inline">{clientLabel}</span>
+            <span className="text-[10px] sm:text-[11px] font-semibold leading-tight whitespace-nowrap text-white/90">
+              {time.substring(0, 5)}{booking.end_time ? ` - ${booking.end_time}` : ''}
             </span>
           </div>
 
-          {(booking.duration || booking.end_time) && (
-            <div className={cn(
-              "text-[10px] sm:text-[11px] leading-snug font-semibold whitespace-nowrap",
-              type === 'booked' ? 'text-white/90' : 'text-amber-950/80'
-            )}>
-              {booking.end_time ? `${time.substring(0, 5)}–${booking.end_time}` : ''}
-              {booking.duration ? ` · ${booking.duration}min` : ''}
-            </div>
-          )}
+          {/* Linha 2: nome do cliente - serviço */}
+          <div className="text-[11px] sm:text-xs font-bold leading-tight truncate text-white drop-shadow-sm">
+            {isMobile ? clientShort : clientLabel}
+            {booking.service_name ? ` - ${booking.service_name}` : ''}
+          </div>
         </div>
       )}
       {isContinuation && null}
