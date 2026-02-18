@@ -170,7 +170,7 @@ export const AdvancedSearch = ({
     <PWAInlineBanner />
     <div className="bg-card rounded-xl p-6 shadow-elegant mb-8">
       <h2 className="text-2xl font-semibold text-foreground mb-6">
-        Encontre sua barbearia ideal
+        Bem vindo
       </h2>
 
       {/* Search Type Tabs */}
