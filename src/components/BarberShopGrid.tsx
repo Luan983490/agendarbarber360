@@ -287,7 +287,7 @@ export const BarberShopGrid = ({
           <Search className="h-10 w-10 text-primary" />
         </div>
         <h3 className="text-xl font-semibold text-foreground mb-2">
-          Encontre sua barbearia ideal
+          Encontre sua barbearia
         </h3>
         <p className="text-muted-foreground max-w-md mx-auto">
           Use os filtros acima para buscar por nome (mínimo {MIN_SEARCH_CHARS} letras), cidade ou encontrar as barbearias mais próximas de você (até {MAX_PROXIMITY_DISTANCE_KM}km).
