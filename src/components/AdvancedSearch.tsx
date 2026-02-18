@@ -176,13 +176,11 @@ export const AdvancedSearch = ({
   return (
     <>
     <PWAInlineBanner />
-    <div className="bg-card rounded-xl p-6 shadow-elegant mb-8">
-      <h2 className="text-2xl font-semibold text-foreground mb-6">
+    <div className="bg-card rounded-xl p-4 shadow-elegant mb-8">
+      <h2 className="text-lg font-semibold text-foreground mb-3">
         Agende seu Corte
       </h2>
-
-      {/* Search Type Tabs + Input inline */}
-      <div className="flex flex-col md:flex-row gap-3 mb-6 items-stretch md:items-center">
+      <div className="flex flex-col md:flex-row gap-2 items-stretch md:items-center">
         <div className="flex gap-1.5 md:gap-2 flex-shrink-0 w-full md:w-auto">
           <Button
             variant={searchType === 'name' ? 'default' : 'outline'}
