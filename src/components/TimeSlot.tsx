@@ -51,7 +51,7 @@ export const TimeSlot = ({
 
     switch (type) {
       case 'available':
-        return 'text-white cursor-pointer bg-[#558b90] border-[#456f73] hover:bg-[#456f73]';
+        return 'text-white cursor-pointer bg-[#558b90] border-b border-[#456f73]/40 hover:bg-[#456f73]';
       case 'booked':
         return cn(
           'text-white cursor-pointer bg-[#066d3e] hover:bg-[#055530]',
