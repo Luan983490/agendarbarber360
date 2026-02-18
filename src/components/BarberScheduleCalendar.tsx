@@ -35,7 +35,7 @@ import { cn } from '@/lib/utils';
 
 type ViewMode = 'day' | 'week' | 'month';
 
-type SlotType = 'available' | 'booked' | 'booked-external' | 'blocked' | 'off-hours';
+type SlotType = 'available' | 'booked' | 'booked-confirmed' | 'booked-external' | 'blocked' | 'off-hours';
 
 interface Booking {
   id: string;
@@ -594,7 +594,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
   };
 
   const getSlotType = (date: Date, time: string): {
-    type: 'available' | 'booked' | 'booked-external' | 'blocked' | 'off-hours';
+    type: 'available' | 'booked' | 'booked-confirmed' | 'booked-external' | 'blocked' | 'off-hours';
     booking?: any;
     block?: any;
     isBookingStart?: boolean;
@@ -638,7 +638,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
       const isMiddle = !isStart && !isEnd;
       
       return {
-        type: matchingBooking.is_external_booking ? 'booked-external' : 'booked',
+        type: matchingBooking.is_external_booking ? 'booked-external' : matchingBooking.status === 'confirmed' ? 'booked-confirmed' : 'booked',
         booking: {
           client_name: matchingBooking.client_display_name || 'Cliente',
           service_name: matchingBooking.service_display_name || 'Serviço',
@@ -1149,6 +1149,10 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                             <span>Agendado</span>
                           </div>
                           <div className="flex items-center gap-1.5">
+                            <div className="w-2.5 h-2.5 shrink-0" style={{ backgroundColor: '#7c3aed' }} />
+                            <span>Confirmado</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
                             <div className="w-2.5 h-2.5 shrink-0" style={{ backgroundColor: '#d19102' }} />
                             <span>Sem Cadastro</span>
                           </div>
@@ -1248,6 +1252,10 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                         <div className="flex items-center gap-1.5">
                           <div className="w-2.5 h-2.5" style={{ backgroundColor: '#066d3e' }} />
                           <span>Agendado</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2.5 h-2.5" style={{ backgroundColor: '#7c3aed' }} />
+                          <span>Confirmado</span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           <div className="w-2.5 h-2.5" style={{ backgroundColor: '#d19102' }} />

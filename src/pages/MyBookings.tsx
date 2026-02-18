@@ -56,6 +56,7 @@ const MyBookings = () => {
   const [cancelLoading, setCancelLoading] = useState(false);
   const [cancelledBooking, setCancelledBooking] = useState<Booking | null>(null);
   const [contactBooking, setContactBooking] = useState<Booking | null>(null);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -122,6 +123,32 @@ const MyBookings = () => {
       });
     } finally {
       setCancelLoading(false);
+    }
+  };
+
+  const handleConfirmPresence = async (bookingId: string) => {
+    setConfirmingId(bookingId);
+    try {
+      const { error } = await supabase
+        .from('bookings')
+        .update({ status: 'confirmed' })
+        .eq('id', bookingId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Presença confirmada!",
+        description: "Sua presença foi confirmada com sucesso.",
+      });
+      await fetchBookings();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao confirmar presença",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setConfirmingId(null);
     }
   };
 
@@ -315,6 +342,24 @@ const MyBookings = () => {
                       )}
 
                       <div className="flex flex-wrap gap-1.5 sm:gap-2 pt-1 sm:pt-2">
+                        {booking.status === 'pending' && (
+                          <Button 
+                            size="sm" 
+                            className="text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3"
+                            style={{ background: '#7c3aed' }}
+                            disabled={confirmingId === booking.id}
+                            onClick={() => handleConfirmPresence(booking.id)}
+                          >
+                            <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                            {confirmingId === booking.id ? 'Confirmando...' : 'Confirmar Presença'}
+                          </Button>
+                        )}
+                        {booking.status === 'confirmed' && (
+                          <Badge className="text-xs h-8 sm:h-9 px-2.5 sm:px-3 flex items-center gap-1" style={{ background: '#7c3aed' }}>
+                            <CheckCircle className="h-3.5 w-3.5" />
+                            Presença Confirmada
+                          </Badge>
+                        )}
                         <Button variant="outline" size="sm" className="text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3" onClick={() => handleReschedule(booking)}>
                           Reagendar
                         </Button>
