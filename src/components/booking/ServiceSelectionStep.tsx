@@ -102,17 +102,19 @@ export const ServiceSelectionStep = ({
     const servicesEl = document.getElementById("services-list");
     const container = document.getElementById("service-selection-scroll");
     if (!servicesEl || !container) return;
+    
+    // Record initial position of services section
+    const initialTop = servicesEl.getBoundingClientRect().top;
+    
     const onScroll = () => {
       const servicesRect = servicesEl.getBoundingClientRect();
-      // Services section top is within the visible viewport
-      if (servicesRect.top < window.innerHeight) {
+      // Only hide when user has scrolled enough that services moved up significantly
+      if (servicesRect.top < initialTop - 100 && servicesRect.top < window.innerHeight) {
         setShowMobileCta(false);
         setCtaDismissed(true);
       }
     };
     container.addEventListener("scroll", onScroll, { passive: true });
-    // Also check on mount in case already visible
-    onScroll();
     return () => container.removeEventListener("scroll", onScroll);
   }, [ctaDismissed]);
 
