@@ -39,38 +39,38 @@ export const TimeSlot = ({
   const isContinuation = isBooked && !isBookingStart;
 
   const getSlotStyles = () => {
-    // Cores conforme solicitado:
-    // #0a007e (azul escuro) = disponível
-    // #00700b (verde escuro) = agendado (com cadastro)
-    // Amarelo = agendado externo (sem cadastro)
-    // #5e0000 (vermelho escuro) = bloqueado
-    // Preto = fora de funcionamento/dias de folga
-    
+    const isGroupedSlot = isBooked || type === 'blocked';
+    // Slots agendados/bloqueados: sem bordas internas para ficarem "colados"
+    const seamlessBorder = isGroupedSlot
+      ? cn(
+          !isBookingStart && 'border-t-0',
+          !isBookingEnd && 'border-b-0',
+          isBookingMiddle && 'border-t-0 border-b-0'
+        )
+      : '';
+
     switch (type) {
       case 'available':
-        // Disponível - #558b90
         return 'text-white cursor-pointer [&]:bg-[#558b90] [&]:border-[#456f73] [&]:hover:bg-[#456f73]';
       case 'booked':
-        // Agendado - #066d3e (verde escuro) com borda esquerda branca para destaque
         return cn(
-          'text-white cursor-pointer [&]:bg-[#066d3e] [&]:border-[#055530] [&]:hover:bg-[#055530] border-l-[3px] border-l-white/60',
-          isBookingStart && !isBookingEnd && 'border-b-0',
-          isBookingEnd && !isBookingStart && 'border-t-0',
-          isBookingMiddle && 'border-t-0 border-b-0'
+          'text-white cursor-pointer [&]:bg-[#066d3e] [&]:hover:bg-[#055530] border-l-[3px] border-l-white/60',
+          '[&]:border-y-[#066d3e]',
+          seamlessBorder
         );
       case 'booked-external':
-        // Sem Cadastro - #d19102 (amarelo/dourado) com borda esquerda para destaque
         return cn(
-          'text-white cursor-pointer [&]:bg-[#d19102] [&]:border-[#a87502] [&]:hover:bg-[#a87502] border-l-[3px] border-l-white/60',
-          isBookingStart && !isBookingEnd && 'border-b-0',
-          isBookingEnd && !isBookingStart && 'border-t-0',
-          isBookingMiddle && 'border-t-0 border-b-0'
+          'text-white cursor-pointer [&]:bg-[#d19102] [&]:hover:bg-[#a87502] border-l-[3px] border-l-white/60',
+          '[&]:border-y-[#d19102]',
+          seamlessBorder
         );
       case 'blocked':
-        // Bloqueado - #6a1f1f (vermelho escuro/marrom)
-        return 'text-white cursor-pointer [&]:bg-[#6a1f1f] [&]:border-[#521818] [&]:hover:bg-[#521818]';
+        return cn(
+          'text-white cursor-pointer [&]:bg-[#6a1f1f] [&]:hover:bg-[#521818]',
+          '[&]:border-y-[#6a1f1f]',
+          seamlessBorder
+        );
       case 'off-hours':
-        // Fora do expediente - #000000 (preto)
         return '[&]:bg-[#000000] [&]:border-[#000000] cursor-not-allowed';
       default:
         return 'bg-muted border-border';
@@ -97,26 +97,19 @@ export const TimeSlot = ({
     onClick?.(event);
   };
 
-  // Altura uniforme para todos os slots
   const isStartWithInfo = isBookingStart && isBooked && booking;
   const slotHeight = compact ? 'h-[20px]' : 'h-[24px] sm:h-[22px]';
 
   const clientLabel = booking?.client_name?.trim() || 'Cliente';
-  // Pega apenas o primeiro nome para mobile
   const clientShort = clientLabel.split(' ')[0] || clientLabel;
-
-  // Continuação de booking usa margem negativa para "colar" no slot anterior
-  const continuationStyle = isContinuation ? '-mt-0.5' : '';
 
   const slotContent = (
     <div
       className={cn(
         'w-full px-1 sm:px-1 transition-all flex items-center',
-        // Booking start: relative + overflow-visible para o conteúdo fluir no próximo slot
         isStartWithInfo ? 'relative overflow-visible z-10' : 'overflow-hidden',
         getSlotStyles(),
         slotHeight,
-        continuationStyle
       )}
       onClick={handleClick}
     >
@@ -144,19 +137,12 @@ export const TimeSlot = ({
           )}
         </div>
       )}
-      {isContinuation && (
-        <div className="w-full flex justify-center">
-          <div className={cn(
-            "w-1 h-2 sm:h-3 rounded-full",
-            type === 'booked' ? "bg-white/40" : "bg-amber-950/30"
-          )} />
-        </div>
-      )}
+      {isContinuation && null}
       {!isBooked && type === 'available' && (
         <Clock className="h-3 w-3 sm:h-2.5 sm:w-2.5 text-white/70 mx-auto" />
       )}
-      {type === 'blocked' && (
-        <Ban className="h-3 w-3 sm:h-2.5 sm:w-2.5 text-white/70 mx-auto" />
+      {type === 'blocked' && isBookingStart && block?.reason && (
+        <span className="text-[9px] text-white/70 truncate mx-auto">{block.reason}</span>
       )}
       {type === 'off-hours' && (
         <span className="text-white/50 text-[8px] mx-auto">—</span>
