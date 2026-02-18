@@ -14,7 +14,7 @@ import { User, Store, Check, X, Eye, EyeOff, Loader2, Mail, AlertCircle, LogIn, 
 import { loginSchema, signUpSchema, validateWithSchema, formatValidationErrors } from '@/lib/validation-schemas';
 import { TurnstileCaptcha } from '@/components/TurnstileCaptcha';
 import b360Logo from '@/assets/b360-logo.png';
-import clientAuthHero from '@/assets/client-auth-hero.jpg';
+// client auth hero image removed
 
 const checkPasswordStrength = (password: string) => {
   const checks = {
@@ -301,7 +301,7 @@ const ClientAuth = () => {
       <div
         className="lg:hidden relative flex items-center justify-center p-6 min-h-[200px] overflow-hidden"
       >
-        <img src={clientAuthHero} alt="" className="absolute inset-0 w-full h-full object-cover" fetchPriority="high" loading="eager" decoding="async" />
+        <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-gray-900 to-black" />
         <div className="absolute inset-0 bg-black/45" />
         <div className="relative z-10 text-center space-y-3">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 text-white text-[11px] font-medium tracking-wide uppercase mb-2">
@@ -333,7 +333,7 @@ const ClientAuth = () => {
       <div
         className="hidden lg:flex lg:w-5/12 relative items-center justify-center p-12 overflow-hidden"
       >
-        <img src={clientAuthHero} alt="" className="absolute inset-0 w-full h-full object-cover" fetchPriority="high" loading="eager" decoding="async" />
+        <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-gray-900 to-black" />
         <div className="absolute inset-0 bg-black/40" />
         <div className="relative z-10 text-center space-y-6">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 text-white text-xs font-medium tracking-wide uppercase mb-1">

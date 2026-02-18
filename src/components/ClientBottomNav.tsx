@@ -22,8 +22,7 @@ export function ClientBottomNav() {
   const isActive = (item: typeof navItems[0]) => {
     if (item.id === 'bookings') return location.pathname === '/my-bookings' || location.pathname === '/historico';
     if (item.id === 'profile') return location.pathname === '/perfil';
-    // When redirected to /choose-type, highlight the item that was clicked
-    if (location.pathname === '/choose-type') {
+    if (location.pathname === '/login' || location.pathname === '/signup') {
       return lastClicked === item.id;
     }
     if (location.pathname === '/') {
@@ -39,7 +38,7 @@ export function ClientBottomNav() {
     sessionStorage.setItem('client-nav-last-clicked', item.id);
     
     if (item.requiresAuth && !user) {
-      navigate('/choose-type');
+      navigate('/login');
       return;
     }
     
