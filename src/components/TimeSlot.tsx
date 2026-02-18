@@ -97,11 +97,11 @@ export const TimeSlot = ({
     onClick?.(event);
   };
 
-  // Altura: slots com booking no início precisam de mais espaço para mostrar info
+  // Altura: slots com booking usam min-height para nunca cortar conteúdo
   const isStartWithInfo = isBookingStart && isBooked && booking;
-  const slotHeight = compact 
-    ? (isStartWithInfo ? 'h-[32px]' : 'h-[20px]') 
-    : (isStartWithInfo ? 'h-[38px] sm:h-[34px]' : 'h-[24px] sm:h-[22px]');
+  const slotHeight = isStartWithInfo
+    ? 'min-h-[38px] sm:min-h-[34px]'
+    : (compact ? 'h-[20px]' : 'h-[24px] sm:h-[22px]');
 
   const clientLabel = booking?.client_name?.trim() || 'Cliente';
   // Pega apenas o primeiro nome para mobile
@@ -122,7 +122,7 @@ export const TimeSlot = ({
       onClick={handleClick}
     >
       {isBookingStart && isBooked && booking && (
-        <div className="min-w-0 w-full overflow-hidden px-1">
+        <div className="min-w-0 w-full px-1 py-0.5">
           <div className="flex items-center gap-1 min-w-0">
             {getStatusDot()}
             <span
@@ -136,7 +136,7 @@ export const TimeSlot = ({
 
           {(booking.duration || booking.end_time) && (
             <div className={cn(
-              "text-[10px] sm:text-[11px] leading-tight truncate font-semibold tracking-wide",
+              "text-[10px] sm:text-[11px] leading-snug font-semibold whitespace-nowrap",
               type === 'booked' ? 'text-white/90' : 'text-amber-950/80'
             )}>
               {booking.end_time ? `${time.substring(0, 5)}–${booking.end_time}` : ''}
