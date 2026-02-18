@@ -183,7 +183,7 @@ export const AdvancedSearch = ({
 
       {/* Search Type Tabs + Input inline */}
       <div className="flex flex-col md:flex-row gap-3 mb-6 items-stretch md:items-center">
-        <div className="flex gap-2 flex-shrink-0">
+        <div className="flex gap-2 flex-shrink-0 overflow-x-auto scrollbar-hide">
           <Button
             variant={searchType === 'name' ? 'default' : 'outline'}
             size="sm"
