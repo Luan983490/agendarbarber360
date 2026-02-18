@@ -96,22 +96,23 @@ export const ServiceSelectionStep = ({
 
   const isFav = isFavorited(barbershop.id);
 
-  // Hide mobile CTA when user scrolls to services section
+  // Hide mobile CTA when services section becomes visible on screen
   useEffect(() => {
     if (ctaDismissed) return;
-    const container = document.getElementById("service-selection-scroll");
     const servicesEl = document.getElementById("services-list");
-    if (!container || !servicesEl) return;
+    const container = document.getElementById("service-selection-scroll");
+    if (!servicesEl || !container) return;
     const onScroll = () => {
-      const containerRect = container.getBoundingClientRect();
       const servicesRect = servicesEl.getBoundingClientRect();
-      // Services section is visible within the scroll container
-      if (servicesRect.top < containerRect.bottom) {
+      // Services section top is within the visible viewport
+      if (servicesRect.top < window.innerHeight) {
         setShowMobileCta(false);
         setCtaDismissed(true);
       }
     };
     container.addEventListener("scroll", onScroll, { passive: true });
+    // Also check on mount in case already visible
+    onScroll();
     return () => container.removeEventListener("scroll", onScroll);
   }, [ctaDismissed]);
 
