@@ -3,9 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Menu, User, Settings, LogOut, Calendar, Store, History, Package, CreditCard, Heart, CalendarDays, ArrowLeft } from "lucide-react";
+import { Menu, User, Settings, LogOut, Calendar, Store, History, Package, CreditCard, Heart, CalendarDays, ArrowLeft, Download } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserAccess } from "@/hooks/useUserAccess";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
+import { toast } from "sonner";
 import b360Logo from "@/assets/b360-logo.png";
 
 interface HeaderProps {
@@ -16,6 +18,7 @@ interface HeaderProps {
 export const Header = ({ showBackButton = false, hideMobileMenu = false }: HeaderProps) => {
   const { user, signOut } = useAuth();
   const { role } = useUserAccess();
+  const { isInstallable, isInstalled, isIOS, installApp } = usePWAInstall();
   const navigate = useNavigate();
 
   const handleDashboard = () => {
@@ -37,6 +40,24 @@ export const Header = ({ showBackButton = false, hideMobileMenu = false }: Heade
       navigate('/barber/hoje');
     } else {
       navigate(-1);
+    }
+  };
+
+  const handleInstallApp = async () => {
+    if (isInstallable) {
+      const success = await installApp();
+      if (success) toast.success('App instalado com sucesso!');
+      return;
+    }
+    if (isIOS) {
+      toast.info('Toque no botão compartilhar (⬆️) do Safari e selecione "Adicionar à Tela de Início"', { duration: 8000 });
+      return;
+    }
+    const isAndroid = /Android/.test(navigator.userAgent);
+    if (isAndroid) {
+      toast.info('Toque no menu (⋮) do Chrome e selecione "Adicionar à tela inicial"', { duration: 8000 });
+    } else {
+      toast.info('Para instalar como app, acesse este site pelo celular', { duration: 5000 });
     }
   };
 
@@ -89,6 +110,17 @@ export const Header = ({ showBackButton = false, hideMobileMenu = false }: Heade
 
             {/* Right side - User actions */}
             <div className="flex items-center gap-1 sm:gap-2">
+              {!isInstalled && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 sm:h-9 px-2 sm:px-3 text-xs gap-1"
+                  onClick={handleInstallApp}
+                >
+                  <Download className="h-4 w-4" strokeWidth={1.5} />
+                  <span className="hidden sm:inline">Baixar App</span>
+                </Button>
+              )}
             {user ? (
                 <>
                   {/* Hide avatar dropdown on mobile when bottom nav is active */}
