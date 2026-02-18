@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -55,8 +55,53 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState<'data' | 'address' | 'security'>('data');
   const [mobileShowMenu, setMobileShowMenu] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [cepLoading, setCepLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  const BR_STATES = [
+    { value: 'AC', label: 'Acre' }, { value: 'AL', label: 'Alagoas' },
+    { value: 'AP', label: 'Amapá' }, { value: 'AM', label: 'Amazonas' },
+    { value: 'BA', label: 'Bahia' }, { value: 'CE', label: 'Ceará' },
+    { value: 'DF', label: 'Distrito Federal' }, { value: 'ES', label: 'Espírito Santo' },
+    { value: 'GO', label: 'Goiás' }, { value: 'MA', label: 'Maranhão' },
+    { value: 'MT', label: 'Mato Grosso' }, { value: 'MS', label: 'Mato Grosso do Sul' },
+    { value: 'MG', label: 'Minas Gerais' }, { value: 'PA', label: 'Pará' },
+    { value: 'PB', label: 'Paraíba' }, { value: 'PR', label: 'Paraná' },
+    { value: 'PE', label: 'Pernambuco' }, { value: 'PI', label: 'Piauí' },
+    { value: 'RJ', label: 'Rio de Janeiro' }, { value: 'RN', label: 'Rio Grande do Norte' },
+    { value: 'RS', label: 'Rio Grande do Sul' }, { value: 'RO', label: 'Rondônia' },
+    { value: 'RR', label: 'Roraima' }, { value: 'SC', label: 'Santa Catarina' },
+    { value: 'SP', label: 'São Paulo' }, { value: 'SE', label: 'Sergipe' },
+    { value: 'TO', label: 'Tocantins' },
+  ];
+
+  const fetchAddressByCep = useCallback(async (cep: string) => {
+    const cleanCep = cep.replace(/\D/g, '');
+    if (cleanCep.length !== 8) return;
+    setCepLoading(true);
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+      const data = await res.json();
+      if (!data.erro) {
+        setProfile(prev => ({
+          ...prev,
+          address: {
+            ...prev.address!,
+            street: data.logradouro || prev.address?.street || '',
+            neighborhood: data.bairro || prev.address?.neighborhood || '',
+            city: data.localidade || prev.address?.city || '',
+            state: data.uf || prev.address?.state || '',
+            complement: data.complemento || prev.address?.complement || '',
+          }
+        }));
+      }
+    } catch {
+      // silently fail, user can fill manually
+    } finally {
+      setCepLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     const tab = new URLSearchParams(location.search).get('tab');
@@ -367,9 +412,14 @@ const Profile = () => {
                       <Input
                         id="postal_code-m"
                         value={profile.address?.postal_code || ''}
-                        onChange={(e) => setProfile({ ...profile, address: { ...profile.address!, postal_code: e.target.value } })}
-                        placeholder="CEP"
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setProfile({ ...profile, address: { ...profile.address!, postal_code: val } });
+                          fetchAddressByCep(val);
+                        }}
+                        placeholder="00000-000"
                         className="mt-2"
+                        disabled={cepLoading}
                       />
                     </div>
                   </div>
@@ -427,30 +477,24 @@ const Profile = () => {
                         onValueChange={(value) => setProfile({ ...profile, address: { ...profile.address!, state: value } })}
                       >
                         <SelectTrigger className="mt-2">
-                          <SelectValue placeholder="Selecione um estado" />
+                          <SelectValue placeholder="Selecione" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="RS">Rio Grande do Sul</SelectItem>
-                          <SelectItem value="SP">São Paulo</SelectItem>
-                          <SelectItem value="RJ">Rio de Janeiro</SelectItem>
+                          {BR_STATES.map(s => (
+                            <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
                     <div>
                       <Label htmlFor="city-m">Cidade *</Label>
-                      <Select
+                      <Input
+                        id="city-m"
                         value={profile.address?.city || ''}
-                        onValueChange={(value) => setProfile({ ...profile, address: { ...profile.address!, city: value } })}
-                      >
-                        <SelectTrigger className="mt-2">
-                          <SelectValue placeholder="Selecione uma cidade" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="porto-alegre">Porto Alegre</SelectItem>
-                          <SelectItem value="sao-paulo">São Paulo</SelectItem>
-                          <SelectItem value="rio-de-janeiro">Rio de Janeiro</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        onChange={(e) => setProfile({ ...profile, address: { ...profile.address!, city: e.target.value } })}
+                        placeholder="Cidade"
+                        className="mt-2"
+                      />
                     </div>
                   </div>
                 </>
@@ -480,12 +524,17 @@ const Profile = () => {
                   <Input
                     id="postal_code"
                     value={profile.address?.postal_code || ''}
-                    onChange={(e) => setProfile({
-                      ...profile,
-                      address: { ...profile.address!, postal_code: e.target.value }
-                    })}
-                    placeholder="CEP"
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setProfile({
+                        ...profile,
+                        address: { ...profile.address!, postal_code: val }
+                      });
+                      fetchAddressByCep(val);
+                    }}
+                    placeholder="00000-000"
                     className="mt-2"
+                    disabled={cepLoading}
                   />
                 </div>
               </div>
@@ -558,33 +607,27 @@ const Profile = () => {
                     })}
                   >
                     <SelectTrigger className="mt-2">
-                      <SelectValue placeholder="Selecione um estado" />
+                      <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="RS">Rio Grande do Sul</SelectItem>
-                      <SelectItem value="SP">São Paulo</SelectItem>
-                      <SelectItem value="RJ">Rio de Janeiro</SelectItem>
+                      {BR_STATES.map(s => (
+                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
                   <Label htmlFor="city">Cidade *</Label>
-                  <Select
+                  <Input
+                    id="city"
                     value={profile.address?.city || ''}
-                    onValueChange={(value) => setProfile({
+                    onChange={(e) => setProfile({
                       ...profile,
-                      address: { ...profile.address!, city: value }
+                      address: { ...profile.address!, city: e.target.value }
                     })}
-                  >
-                    <SelectTrigger className="mt-2">
-                      <SelectValue placeholder="Selecione uma cidade" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="porto-alegre">Porto Alegre</SelectItem>
-                      <SelectItem value="sao-paulo">São Paulo</SelectItem>
-                      <SelectItem value="rio-de-janeiro">Rio de Janeiro</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    placeholder="Cidade"
+                    className="mt-2"
+                  />
                 </div>
               </div>
 
