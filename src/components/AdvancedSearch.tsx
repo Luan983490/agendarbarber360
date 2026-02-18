@@ -183,35 +183,35 @@ export const AdvancedSearch = ({
 
       {/* Search Type Tabs + Input inline */}
       <div className="flex flex-col md:flex-row gap-3 mb-6 items-stretch md:items-center">
-        <div className="flex gap-2 flex-shrink-0 overflow-x-auto scrollbar-hide">
+        <div className="flex gap-1.5 md:gap-2 flex-shrink-0 w-full md:w-auto">
           <Button
             variant={searchType === 'name' ? 'default' : 'outline'}
             size="sm"
             onClick={() => handleSearchTypeChange('name')}
-            className="flex items-center gap-2 text-white"
+            className="flex-1 md:flex-none flex items-center justify-center gap-1.5 md:gap-2 text-white text-xs md:text-sm px-2 md:px-3"
             style={searchType === 'name' ? { background: 'linear-gradient(135deg, hsl(45, 60%, 28%) 0%, hsl(35, 40%, 14%) 100%)', border: 'none' } : {}}
           >
-            <Search className="h-4 w-4" strokeWidth={1} />
+            <Search className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1} />
             Por Nome
           </Button>
           <Button
             variant={searchType === 'city' ? 'default' : 'outline'}
             size="sm"
             onClick={() => handleSearchTypeChange('city')}
-            className="flex items-center gap-2 text-white"
+            className="flex-1 md:flex-none flex items-center justify-center gap-1.5 md:gap-2 text-white text-xs md:text-sm px-2 md:px-3"
             style={searchType === 'city' ? { background: 'linear-gradient(135deg, hsl(45, 60%, 28%) 0%, hsl(35, 40%, 14%) 100%)', border: 'none' } : {}}
           >
-            <MapIcon className="h-4 w-4" strokeWidth={1} />
+            <MapIcon className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1} />
             Por Cidade
           </Button>
           <Button
             variant={searchType === 'proximity' ? 'default' : 'outline'}
             size="sm"
             onClick={() => handleSearchTypeChange('proximity')}
-            className="flex items-center gap-2 text-white"
+            className="flex-1 md:flex-none flex items-center justify-center gap-1.5 md:gap-2 text-white text-xs md:text-sm px-2 md:px-3"
             style={searchType === 'proximity' ? { background: 'linear-gradient(135deg, hsl(45, 60%, 28%) 0%, hsl(35, 40%, 14%) 100%)', border: 'none' } : {}}
           >
-            <MapPinned className="h-4 w-4" strokeWidth={1} />
+            <MapPinned className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1} />
             Próximas
           </Button>
         </div>
