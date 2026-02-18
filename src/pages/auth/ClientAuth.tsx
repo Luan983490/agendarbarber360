@@ -14,7 +14,7 @@ import { User, Store, Check, X, Eye, EyeOff, Loader2, Mail, AlertCircle, LogIn, 
 import { loginSchema, signUpSchema, validateWithSchema, formatValidationErrors } from '@/lib/validation-schemas';
 import { TurnstileCaptcha } from '@/components/TurnstileCaptcha';
 import b360Logo from '@/assets/b360-logo.png';
-import authHero from '@/assets/auth-hero.jpg';
+import clientAuthHero from '@/assets/client-auth-hero.jpg';
 
 const checkPasswordStrength = (password: string) => {
   const checks = {
@@ -301,15 +301,19 @@ const ClientAuth = () => {
       <div
         className="lg:hidden relative flex items-center justify-center p-6 min-h-[200px] overflow-hidden"
       >
-        <img src={authHero} alt="" className="absolute inset-0 w-full h-full object-cover" fetchPriority="high" loading="eager" decoding="async" />
-        <div className="absolute inset-0 bg-black/50" />
+        <img src={clientAuthHero} alt="" className="absolute inset-0 w-full h-full object-cover" fetchPriority="high" loading="eager" decoding="async" />
+        <div className="absolute inset-0 bg-black/45" />
         <div className="relative z-10 text-center space-y-3">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 text-white text-[11px] font-medium tracking-wide uppercase mb-2">
+            <User className="h-3 w-3" />
+            Área do Cliente
+          </div>
           <img src={b360Logo} alt="B360" className="h-10 mx-auto drop-shadow-lg" />
           <h1 className="text-xl font-bold text-white">
             {activeTab === 'login' ? 'Agende seu corte em segundos' : 'Junte-se a nós!'}
           </h1>
           <p className="text-white/70 text-sm max-w-xs mx-auto">
-            {activeTab === 'login' ? 'Acesse as melhores barbearias da sua região' : 'Crie sua conta e comece a agendar agora'}
+            {activeTab === 'login' ? 'Encontre as melhores barbearias perto de você' : 'Crie sua conta e comece a agendar agora'}
           </p>
           <Button
             variant="outline"
@@ -329,15 +333,19 @@ const ClientAuth = () => {
       <div
         className="hidden lg:flex lg:w-5/12 relative items-center justify-center p-12 overflow-hidden"
       >
-        <img src={authHero} alt="" className="absolute inset-0 w-full h-full object-cover" fetchPriority="high" loading="eager" decoding="async" />
+        <img src={clientAuthHero} alt="" className="absolute inset-0 w-full h-full object-cover" fetchPriority="high" loading="eager" decoding="async" />
         <div className="absolute inset-0 bg-black/40" />
         <div className="relative z-10 text-center space-y-6">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 text-white text-xs font-medium tracking-wide uppercase mb-1">
+            <User className="h-3.5 w-3.5" />
+            Área do Cliente
+          </div>
           <img src={b360Logo} alt="B360" className="h-14 mx-auto drop-shadow-lg" />
           <h1 className="text-3xl md:text-4xl font-bold text-white">
             {activeTab === 'login' ? 'Agende seu corte em segundos' : 'Junte-se a nós!'}
           </h1>
           <p className="text-white/70 text-lg max-w-sm mx-auto">
-            {activeTab === 'login' ? 'Acesse as melhores barbearias da sua região' : 'Crie sua conta e comece a agendar agora'}
+            {activeTab === 'login' ? 'Encontre as melhores barbearias perto de você' : 'Crie sua conta e comece a agendar agora'}
           </p>
           <Button
             variant="outline"
