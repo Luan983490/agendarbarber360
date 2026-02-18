@@ -516,12 +516,6 @@ const ClientAuth = () => {
             </div>
           )}
 
-          {/* Back */}
-          <div className="mt-6 text-center">
-            <Button variant="ghost" onClick={() => navigate('/choose-type')} className="text-muted-foreground hover:text-foreground">
-              <ArrowLeft className="mr-2 h-4 w-4" />Voltar
-            </Button>
-          </div>
         </div>
       </div>
     </div>
