@@ -1407,7 +1407,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
                         {displayDays.map((day, i) => {
                           const slotInfo = getSlotType(day, time);
                           return (
-                            <div key={i} className="min-w-0 overflow-hidden border-r border-gray-400/10 last:border-r-0">
+                            <div key={i} className="min-w-0 overflow-visible border-r border-gray-400/10 last:border-r-0">
                               <TimeSlot
                                 time={time}
                                 type={slotInfo.type}
