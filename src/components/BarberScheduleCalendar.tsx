@@ -686,7 +686,7 @@ export const BarberScheduleCalendar = ({ barbershopId, barberIdFilter, readOnly 
       return;
     }
 
-    if (slotInfo.type === 'booked' || slotInfo.type === 'booked-external') {
+    if (slotInfo.type === 'booked' || slotInfo.type === 'booked-confirmed' || slotInfo.type === 'booked-external') {
       const booking = slotInfo.bookingId 
         ? bookings.find((b: Booking) => b.id === slotInfo.bookingId)
         : bookings.find((b: Booking) => {
