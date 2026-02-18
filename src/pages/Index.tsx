@@ -1,13 +1,8 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useCallback } from "react";
 import { Header } from "@/components/Header";
 import { BarberShopGrid } from "@/components/BarberShopGrid";
 import { AdvancedSearch, SearchType } from "@/components/AdvancedSearch";
-import FavoritesList from "@/components/FavoritesList";
 import { useAuth } from "@/hooks/useAuth";
-import { useUserAccess } from "@/hooks/useUserAccess";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import b360Logo from '@/assets/b360-logo.png';
 import { ClientBottomNav } from "@/components/ClientBottomNav";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -22,104 +17,27 @@ const Index = () => {
   const [isProximityActive, setIsProximityActive] = useState(false);
   
   const { user } = useAuth();
-  const { role, loading } = useUserAccess();
-  const navigate = useNavigate();
 
-  // Check if there's a pending MFA challenge
-  const hasMFAPending = useMemo(() => {
-    const mfaChallenge = sessionStorage.getItem('mfa_challenge');
-    return !!mfaChallenge;
-  }, []);
-
-  // Redirect users with internal roles to their dashboards
-  // BUT only if there's no pending MFA verification
-  useEffect(() => {
-    // CRITICAL: Don't redirect if MFA is pending
-    if (hasMFAPending) {
-      console.log('[Index] MFA pending - blocking auto-redirect to dashboard');
-      navigate('/verify-mfa', { replace: true });
-      return;
-    }
-    
-    if (!loading && user && (role === 'owner' || role === 'barber' || role === 'attendant')) {
-      if (role === 'owner') {
-        navigate('/dashboard', { replace: true });
-      } else if (role === 'barber') {
-        navigate('/barber/hoje', { replace: true });
-      } else if (role === 'attendant') {
-        navigate('/attendant/dashboard', { replace: true });
-      }
-    }
-  }, [user, role, loading, navigate, hasMFAPending]);
-
-  // Handle proximity search
   const handleProximitySearch = useCallback((lat: number, lng: number) => {
     setUserLatitude(lat);
     setUserLongitude(lng);
     setIsProximityActive(true);
   }, []);
 
-  // Clear proximity search
   const handleClearProximity = useCallback(() => {
     setUserLatitude(null);
     setUserLongitude(null);
     setIsProximityActive(false);
   }, []);
 
-  // Handle search type change
   const handleSearchTypeChange = (type: SearchType) => {
     setSearchType(type);
-    // Clear other search states when switching types
-    if (type !== 'name') {
-      setSearchQuery("");
-    }
-    if (type !== 'city') {
-      setSelectedCity(null);
-    }
-    if (type !== 'proximity') {
-      handleClearProximity();
-    }
+    if (type !== 'name') setSearchQuery("");
+    if (type !== 'city') setSelectedCity(null);
+    if (type !== 'proximity') handleClearProximity();
   };
 
-  // Show loading while checking user role
-  if (loading && user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <img src={b360Logo} alt="B360" className="h-16 mx-auto mb-4 animate-pulse" />
-          <p className="text-muted-foreground">Carregando...</p>
-        </div>
-      </div>
-    );
-  }
-
-  const renderSearchAndGrid = () => (
-    <>
-      <AdvancedSearch
-        searchType={searchType}
-        onSearchTypeChange={handleSearchTypeChange}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        selectedCity={selectedCity}
-        onCityChange={setSelectedCity}
-        onProximitySearch={handleProximitySearch}
-        onClearProximity={handleClearProximity}
-        isProximityActive={isProximityActive}
-      />
-      
-      <BarberShopGrid 
-        searchQuery={searchQuery}
-        activeFilters={[]}
-        location={location}
-        searchType={searchType}
-        selectedCity={selectedCity}
-        userLatitude={userLatitude}
-        userLongitude={userLongitude}
-      />
-    </>
-  );
-
-  const showClientNav = isMobile && (!user || role === 'client');
+  const showClientNav = isMobile;
 
   return (
     <div className="min-h-screen bg-background">
@@ -127,7 +45,27 @@ const Index = () => {
       
       <main className={showClientNav ? "pt-20 pb-24" : "pt-20"}>
         <section className="container mx-auto px-4 py-8">
-        {renderSearchAndGrid()}
+          <AdvancedSearch
+            searchType={searchType}
+            onSearchTypeChange={handleSearchTypeChange}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            selectedCity={selectedCity}
+            onCityChange={setSelectedCity}
+            onProximitySearch={handleProximitySearch}
+            onClearProximity={handleClearProximity}
+            isProximityActive={isProximityActive}
+          />
+          
+          <BarberShopGrid 
+            searchQuery={searchQuery}
+            activeFilters={[]}
+            location={location}
+            searchType={searchType}
+            selectedCity={selectedCity}
+            userLatitude={userLatitude}
+            userLongitude={userLongitude}
+          />
         </section>
       </main>
       {showClientNav && <ClientBottomNav />}

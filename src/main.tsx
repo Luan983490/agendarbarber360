@@ -5,13 +5,7 @@ import "./index.css";
 import { initSentry } from "./lib/sentry";
 import { setupGlobalErrorCapture } from "./services/logger";
 
-// Preload auth hero image so it's cached before auth pages render
-import authHeroUrl from "@/assets/auth-hero.jpg";
-const preloadLink = document.createElement("link");
-preloadLink.rel = "preload";
-preloadLink.as = "image";
-preloadLink.href = authHeroUrl;
-document.head.appendChild(preloadLink);
+// Auth hero preload removed (client-only app)
 
 // Inicializa o Sentry antes de renderizar a aplicação
 initSentry();

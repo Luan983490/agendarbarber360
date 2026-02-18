@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { User, Check, X, Eye, EyeOff, Loader2, Mail, AlertCircle, LogIn, Shield, Clock, Lock, Phone } from 'lucide-react';
 import { loginSchema, signUpSchema, validateWithSchema, formatValidationErrors } from '@/lib/validation-schemas';
 import b360Logo from '@/assets/b360-logo.png';
-import authHero from '@/assets/auth-hero.jpg';
+// auth hero image removed
 
 const checkPasswordStrength = (password: string) => {
   const checks = {
@@ -224,8 +224,7 @@ export const BookingAuthDialog = ({ open, onOpenChange, onAuthSuccess }: Booking
       <DialogContent className="w-[95vw] max-w-lg max-h-[90vh] overflow-y-auto p-0">
         {/* Hero Banner - matching ClientAuth mobile style */}
         <div
-          className="relative flex items-center justify-center p-6 min-h-[160px]"
-          style={{ backgroundImage: `url(${authHero})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+          className="relative flex items-center justify-center p-6 min-h-[160px] bg-gradient-to-br from-gray-900 to-black"
         >
           <div className="absolute inset-0 bg-black/50 rounded-t-lg" />
           <div className="relative z-10 text-center space-y-3">
