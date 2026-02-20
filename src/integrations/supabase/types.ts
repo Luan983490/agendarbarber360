@@ -14,6 +14,139 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_profile_members: {
+        Row: {
+          assigned_at: string
+          assigned_by: string
+          barber_id: string
+          created_at: string
+          deleted_at: string | null
+          id: string
+          profile_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by: string
+          barber_id: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          profile_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string
+          barber_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "access_profile_members_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "barbers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "access_profile_members_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "vw_barber_permissions_summary"
+            referencedColumns: ["barber_id"]
+          },
+          {
+            foreignKeyName: "access_profile_members_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "access_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      access_profile_permissions: {
+        Row: {
+          created_at: string
+          id: string
+          permission_id: string
+          profile_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          permission_id: string
+          profile_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          permission_id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "access_profile_permissions_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "access_profile_permissions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "access_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      access_profiles: {
+        Row: {
+          barbershop_id: string
+          created_at: string
+          created_by: string
+          deleted_at: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          barbershop_id: string
+          created_at?: string
+          created_by: string
+          deleted_at?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          barbershop_id?: string
+          created_at?: string
+          created_by?: string
+          deleted_at?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "access_profiles_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "barbershops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "access_profiles_barbershop_id_fkey"
+            columns: ["barbershop_id"]
+            isOneToOne: false
+            referencedRelation: "vw_barbershop_onboarding_status"
+            referencedColumns: ["barbershop_id"]
+          },
+        ]
+      }
       app_config: {
         Row: {
           created_at: string | null
@@ -362,18 +495,24 @@ export type Database = {
         Row: {
           barber_id: string
           created_at: string
+          custom_duration: number | null
+          custom_price: number | null
           id: string
           service_id: string
         }
         Insert: {
           barber_id: string
           created_at?: string
+          custom_duration?: number | null
+          custom_price?: number | null
           id?: string
           service_id: string
         }
         Update: {
           barber_id?: string
           created_at?: string
+          custom_duration?: number | null
+          custom_price?: number | null
           id?: string
           service_id?: string
         }
@@ -457,40 +596,73 @@ export type Database = {
       }
       barbers: {
         Row: {
+          available_in_app: boolean
+          available_in_presentation: boolean
           barbershop_id: string
+          birth_date: string | null
+          cpf_cnpj: string | null
           created_at: string
           deleted_at: string | null
+          email: string | null
+          gender: string | null
           id: string
           image_url: string | null
           is_active: boolean | null
+          landline_phone: string | null
           name: string
+          nickname: string | null
+          observations: string | null
           phone: string | null
+          professional_role: string
+          rg: string | null
           specialty: string | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
+          available_in_app?: boolean
+          available_in_presentation?: boolean
           barbershop_id: string
+          birth_date?: string | null
+          cpf_cnpj?: string | null
           created_at?: string
           deleted_at?: string | null
+          email?: string | null
+          gender?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean | null
+          landline_phone?: string | null
           name: string
+          nickname?: string | null
+          observations?: string | null
           phone?: string | null
+          professional_role?: string
+          rg?: string | null
           specialty?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
+          available_in_app?: boolean
+          available_in_presentation?: boolean
           barbershop_id?: string
+          birth_date?: string | null
+          cpf_cnpj?: string | null
           created_at?: string
           deleted_at?: string | null
+          email?: string | null
+          gender?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean | null
+          landline_phone?: string | null
           name?: string
+          nickname?: string | null
+          observations?: string | null
           phone?: string | null
+          professional_role?: string
+          rg?: string | null
           specialty?: string | null
           updated_at?: string
           user_id?: string | null
@@ -2102,10 +2274,14 @@ export type Database = {
           created_at: string
           description: string | null
           display_order: number | null
+          has_children: boolean
           icon: string | null
           id: string
           is_active: boolean | null
+          menu_path: string | null
           name: string
+          parent_id: string | null
+          system_menu_id: string | null
           updated_at: string
         }
         Insert: {
@@ -2113,10 +2289,14 @@ export type Database = {
           created_at?: string
           description?: string | null
           display_order?: number | null
+          has_children?: boolean
           icon?: string | null
           id?: string
           is_active?: boolean | null
+          menu_path?: string | null
           name: string
+          parent_id?: string | null
+          system_menu_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -2124,13 +2304,32 @@ export type Database = {
           created_at?: string
           description?: string | null
           display_order?: number | null
+          has_children?: boolean
           icon?: string | null
           id?: string
           is_active?: boolean | null
+          menu_path?: string | null
           name?: string
+          parent_id?: string | null
+          system_menu_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "permission_modules_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "permission_modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permission_modules_system_menu_id_fkey"
+            columns: ["system_menu_id"]
+            isOneToOne: false
+            referencedRelation: "system_menus"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       permissions: {
         Row: {
@@ -2739,6 +2938,56 @@ export type Database = {
           },
         ]
       }
+      system_menus: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          display_order: number
+          icon: string | null
+          id: string
+          is_active: boolean
+          name: string
+          parent_id: string | null
+          route: string | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          parent_id?: string | null
+          route?: string | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          parent_id?: string | null
+          route?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_menus_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "system_menus"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           barbershop_id: string
@@ -2980,7 +3229,7 @@ export type Database = {
           Tipo: string | null
           "Total de Agendamentos": number | null
           "Último Agendamento": string | null
-          "Valor Total Gasto": string | null
+          "Valor Total Gasto": number | null
         }
         Relationships: [
           {
@@ -3303,6 +3552,7 @@ export type Database = {
           permission_name: string
         }[]
       }
+      get_barber_profile_ids: { Args: { _user_id: string }; Returns: string[] }
       get_barbershop_cities: {
         Args: never
         Returns: {
@@ -3376,28 +3626,6 @@ export type Database = {
           updated_at: string
         }[]
       }
-      get_client_details_test: {
-        Args: { p_barbershop_id: string; p_client_id: string }
-        Returns: {
-          client_email: string
-          client_name: string
-          client_notes: string
-          client_phone: string
-          client_profile_id: string
-          created_at: string
-          favorite_barber_name: string
-          first_booking_date: string
-          id: string
-          is_active: boolean
-          last_booking_date: string
-          recent_bookings: Json
-          source: string
-          tags: string[]
-          total_bookings: number
-          total_spent: number
-          updated_at: string
-        }[]
-      }
       get_client_display_name: {
         Args: { p_client_id: string }
         Returns: string
@@ -3421,25 +3649,7 @@ export type Database = {
           Tipo: string
           "Total de Agendamentos": number
           "Último Agendamento": string
-          "Valor Total Gasto": string
-        }[]
-      }
-      get_clients_for_export_test: {
-        Args: { p_barbershop_id: string; p_include_inactive?: boolean }
-        Returns: {
-          "Barbeiro Favorito": string
-          "Data de Cadastro": string
-          Email: string
-          Nome: string
-          Notas: string
-          Origem: string
-          Status: string
-          Tags: string
-          Telefone: string
-          Tipo: string
-          "Total de Agendamentos": number
-          "Último Agendamento": string
-          "Valor Total Gasto": string
+          "Valor Total Gasto": number
         }[]
       }
       get_database_functions_info: {
@@ -3503,6 +3713,11 @@ export type Database = {
           revenue_variation: number
         }[]
       }
+      get_owned_barbershop_ids: {
+        Args: { _user_id: string }
+        Returns: string[]
+      }
+      get_owner_profile_ids: { Args: { _user_id: string }; Returns: string[] }
       get_revenue_report: {
         Args: {
           p_barber_filter?: string
@@ -3540,6 +3755,17 @@ export type Database = {
           barber_name: string
           occupancy_rate: number
           occupied_hours: number
+        }[]
+      }
+      get_staff_accessible_menus: {
+        Args: { p_barber_id: string }
+        Returns: {
+          display_order: number
+          menu_code: string
+          menu_icon: string
+          menu_name: string
+          menu_route: string
+          parent_code: string
         }[]
       }
       get_tables_schema_info: {
@@ -3609,6 +3835,12 @@ export type Database = {
         Args: { _barbershop_id: string; _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      get_visible_barber_ids: {
+        Args: { p_barber_id: string }
+        Returns: {
+          visible_barber_id: string
+        }[]
+      }
       grant_all_permissions: {
         Args: { p_barber_id: string; p_granted_by?: string }
         Returns: undefined
@@ -3626,10 +3858,6 @@ export type Database = {
         Returns: boolean
       }
       import_clients: {
-        Args: { p_barbershop_id: string; p_clients: Json }
-        Returns: Json
-      }
-      import_clients_test: {
         Args: { p_barbershop_id: string; p_clients: Json }
         Returns: Json
       }
@@ -3668,31 +3896,6 @@ export type Database = {
       }
       is_disposable_email: { Args: { check_email: string }; Returns: boolean }
       list_clients: {
-        Args: {
-          p_barbershop_id: string
-          p_include_inactive?: boolean
-          p_limit?: number
-          p_offset?: number
-          p_search?: string
-          p_tags?: string[]
-        }
-        Returns: {
-          client_email: string
-          client_name: string
-          client_notes: string
-          client_phone: string
-          client_profile_id: string
-          created_at: string
-          id: string
-          is_active: boolean
-          last_booking_date: string
-          source: string
-          tags: string[]
-          total_bookings: number
-          total_spent: number
-        }[]
-      }
-      list_clients_test: {
         Args: {
           p_barbershop_id: string
           p_include_inactive?: boolean
@@ -3766,6 +3969,18 @@ export type Database = {
           total_reviews: number
         }[]
       }
+      staff_has_menu_access: {
+        Args: { p_barber_id: string; p_menu_code: string }
+        Returns: boolean
+      }
+      sync_all_profile_members: {
+        Args: { _profile_id: string }
+        Returns: undefined
+      }
+      sync_profile_permissions_to_barber: {
+        Args: { _barber_id: string; _profile_id: string }
+        Returns: undefined
+      }
       user_has_role_at: {
         Args: { p_barbershop_id: string; p_user_id: string }
         Returns: boolean
@@ -3775,6 +3990,10 @@ export type Database = {
         Returns: boolean
       }
       user_owns_barbershop: { Args: { p_user_id: string }; Returns: string }
+      user_owns_barbershop_id: {
+        Args: { _barbershop_id: string; _user_id: string }
+        Returns: boolean
+      }
       verify_recovery_code: {
         Args: { p_code: string; p_user_id: string }
         Returns: Json

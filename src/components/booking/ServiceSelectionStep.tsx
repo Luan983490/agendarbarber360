@@ -34,6 +34,7 @@ interface Barber {
   specialty?: string;
   phone?: string;
   image_url?: string;
+  available_in_app?: boolean;
 }
 
 interface BarbershopDetails {
@@ -279,7 +280,7 @@ export const ServiceSelectionStep = ({
     fetchAllDetails();
   }, [barbershop.id, prefetchedBarbershopDetails]);
 
-  // Fetch barbers when tab changes
+  // Fetch barbers when tab changes - only available_in_presentation=true for showcase
   useEffect(() => {
     const fetchBarbers = async () => {
       if (activeTab === "barbers" && barbers.length === 0) {
@@ -287,9 +288,12 @@ export const ServiceSelectionStep = ({
         try {
           const { data } = await supabase
             .from("barbers")
-            .select("id, name, specialty, phone, image_url")
+            .select("id, name, specialty, phone, image_url, available_in_app")
             .eq("barbershop_id", barbershop.id)
-            .eq("is_active", true);
+            .eq("is_active", true)
+            .eq("available_in_presentation", true)
+            .is("deleted_at", null)
+            .order("name");
           setBarbers(data || []);
         } catch (error) {
           console.error("Error fetching barbers:", error);

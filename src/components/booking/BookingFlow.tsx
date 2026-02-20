@@ -137,7 +137,11 @@ export const BookingFlow = ({ children, barbershop, autoOpen = false, onBackFrom
         .from("barbers")
         .select("id, name, specialty, image_url")
         .eq("barbershop_id", barbershop.id)
-        .eq("is_active", true);
+        .eq("is_active", true)
+        .eq("available_in_app", true)
+        .eq("available_in_presentation", true)
+        .is("deleted_at", null)
+        .order("name");
 
       if (error) throw error;
       setBarbers(data || []);

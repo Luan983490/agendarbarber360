@@ -1,6 +1,7 @@
-import { User, Phone } from "lucide-react";
+import { User, Phone, Calendar } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 
 interface Barber {
   id: string;
@@ -8,14 +9,17 @@ interface Barber {
   specialty?: string;
   phone?: string;
   image_url?: string;
+  available_in_app?: boolean;
 }
 
 interface BarbersTabProps {
   barbers: Barber[];
   loading: boolean;
+  /** Optional: called when user clicks "Agendar" on a barber card */
+  onBook?: (barber: Barber) => void;
 }
 
-export const BarbersTab = ({ barbers, loading }: BarbersTabProps) => {
+export const BarbersTab = ({ barbers, loading, onBook }: BarbersTabProps) => {
   if (loading) {
     return (
       <p className="text-center text-muted-foreground py-8">
@@ -55,6 +59,18 @@ export const BarbersTab = ({ barbers, loading }: BarbersTabProps) => {
                 </div>
               )}
             </div>
+            {/* Only show booking button when barber is available_in_app */}
+            {barber.available_in_app !== false && onBook && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-shrink-0 gap-1.5"
+                onClick={() => onBook(barber)}
+              >
+                <Calendar className="h-3.5 w-3.5" strokeWidth={1.5} />
+                Agendar
+              </Button>
+            )}
           </CardContent>
         </Card>
       ))}
