@@ -91,7 +91,11 @@ const BarbershopPage = () => {
             .from("barbers")
             .select("id, name, specialty, image_url")
             .eq("barbershop_id", bData.id)
-            .eq("is_active", true),
+            .eq("is_active", true)
+            .eq("available_in_app", true)
+            .eq("available_in_presentation", true)
+            .is("deleted_at", null)
+            .order("name"),
           supabase
             .from("barber_working_hours")
             .select("barber_id, day_of_week, is_day_off, period1_start, period1_end, period2_start, period2_end, barbers!inner(barbershop_id, is_active)")
